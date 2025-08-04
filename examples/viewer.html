@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three.js 示例查看器</title>
+    <link rel="stylesheet" href="../css/example-viewer.css">
+    <link rel="stylesheet" href="../libs/bootstrap-icons/1.11.0/bootstrap-icons.css">
+    <link rel="stylesheet" href="../libs/prismjs/1.24.1/themes/prism-tomorrow.min.css">
+</head>
+<body>
+    <div class="info" id="exampleInfo">
+        <h2 id="exampleTitle">加载中...</h2>
+        <p id="exampleDescription">加载中...</p>
+        <p>使用的Three.js版本: <span id="exampleVersion">r150</span></p>
+    </div>
+    
+    <div class="top-buttons">
+        <button class="screenshot-btn" id="screenshotBtn" title="截图并下载为封面图">
+            <i class="bi bi-camera"></i> 截图封面
+        </button>
+        <a href="../index.html" class="back-btn">返回首页</a>
+    </div>
+    
+    <!-- 源代码切换按钮 -->
+    <button class="code-toggle" id="codeToggle">
+        <i class="bi bi-code-slash"></i> 查看源代码
+    </button>
+    
+    <!-- 源代码面板 -->
+    <div class="code-panel" id="codePanel">
+        <div class="code-editor" id="codeEditor"></div>
+    </div>
+    
+    <!-- 分割线 -->
+    <div class="resizer" id="resizer"></div>
+    
+    <!-- 示例iframe容器 -->
+    <!-- 加载中浮层 -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">加载中...</div>
+        <div class="loading-version">使用的Three.js版本: r150</div>
+    </div>
+    
+    <div class="example-container" id="exampleContainer">
+        <iframe id="exampleFrame" frameborder="0" allowfullscreen></iframe>
+    </div>
+    
+    <!-- 引入 Prism.js -->
+    <script src="../libs/prismjs/1.24.1/prism.min.js"></script>
+    <script src="../libs/prismjs/1.24.1/components/prism-markup.min.js"></script>
+    <script src="../libs/prismjs/1.24.1/components/prism-javascript.min.js"></script>
+    <script src="../libs/prismjs/1.24.1/components/prism-css.min.js"></script>
+    
+    <!-- 示例查看器脚本 -->
+    <script src="../js/example-viewer.js"></script>
+</body>
+</html>
