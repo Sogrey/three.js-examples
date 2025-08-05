@@ -15,12 +15,24 @@ if (codeToggle) {
     codeToggle.style.display = 'none';
 }
 
-// 从URL获取示例路径（使用hash方式，类似Three.js官网）
-const hash = window.location.hash.substring(1); // 移除开头的#
-const exampleUrl = hash || '';
+// 从URL获取示例路径
+let exampleUrl = '';
 
 // 初始化页面
 function initPage() {
+    // 从URL查询参数获取示例路径
+    const urlParams = new URLSearchParams(window.location.search);
+    const exampleParam = urlParams.get('example');
+    
+    // 如果查询参数中有example，使用它
+    if (exampleParam) {
+        exampleUrl = exampleParam;
+    } else {
+        // 否则尝试从hash中获取（兼容旧方式）
+        const hash = window.location.hash.substring(1);
+        exampleUrl = hash || '';
+    }
+    
     if (!exampleUrl) {
         exampleTitle.textContent = '未指定示例';
         exampleDescription.textContent = '请从首页选择一个示例';
@@ -261,8 +273,8 @@ function checkIf404Page() {
         const title = iframeDoc.title || iframeDoc.querySelector('title')?.textContent || '';
         const body = iframeDoc.body.textContent || '';
         
-        // 检查标题或内容是否包含404关键词
-        return title.includes('404') || body.includes('404') || title.includes('未找到') || body.includes('未找到');
+        // 更严格的404检查，必须明确包含404错误信息
+        return (title.includes('404') && title.includes('页面未找到'));
     } catch (error) {
         // 如果无法访问iframe内容，可能是跨域问题或其他错误
         console.error('检查404页面失败:', error);
@@ -284,6 +296,12 @@ function handle404Page() {
     const backBtn = document.querySelector('.back-btn');
     if (backBtn) {
         backBtn.style.display = 'none';
+    }
+    
+    // 隐藏右上角的截图封面按钮
+    const screenshotBtn = document.getElementById('screenshotBtn');
+    if (screenshotBtn) {
+        screenshotBtn.style.display = 'none';
     }
     
     // 隐藏左下角的源代码按钮
@@ -336,6 +354,18 @@ function handleNormalPage() {
         // 显示左上角信息区域
         if (exampleInfo) {
             exampleInfo.style.display = 'block';
+        }
+        
+        // 显示右上角的返回首页按钮
+        const backBtn = document.querySelector('.back-btn');
+        if (backBtn) {
+            backBtn.style.display = 'block';
+        }
+        
+        // 显示右上角的截图封面按钮
+        const screenshotBtn = document.getElementById('screenshotBtn');
+        if (screenshotBtn) {
+            screenshotBtn.style.display = 'block';
         }
         
         // 示例成功加载后，显示源代码按钮

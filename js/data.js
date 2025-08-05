@@ -177,20 +177,36 @@ const threejsData = {
                     name: "材质",
                     examples: [
                         {
-                            id: "basic-materials-standard",
-                            title: "标准材质",
-                            description: "展示 MeshStandardMaterial 的各种属性和效果",
-                            thumbnail: "images/basic-materials-standard.jpg",
-                            version: "r150",
-                            url: "examples/basic-materials-standard"
+                            id: "basic-materials-mesh",
+                            title: "网格材质对比",
+                            description: "展示并对比不同类型的网格材质及其特性",
+                            thumbnail: "images/basic-materials-mesh.jpg",
+                            version: "r179",
+                            url: "examples/basic-materials-mesh"
                         },
                         {
-                            id: "basic-materials-physical",
-                            title: "物理材质",
-                            description: "使用 MeshPhysicalMaterial 创建逼真的金属和玻璃效果",
-                            thumbnail: "images/basic-materials-physical.jpg",
-                            version: "r150",
-                            url: "examples/basic-materials-physical"
+                            id: "basic-materials-points",
+                            title: "点材质",
+                            description: "展示PointsMaterial的使用方法和效果，创建各种分布的粒子系统",
+                            thumbnail: "images/basic-materials-points.jpg",
+                            version: "r179",
+                            url: "examples/basic-materials-points"
+                        },
+                        {
+                            id: "basic-materials-lines",
+                            title: "线材质",
+                            description: "展示LineBasicMaterial和LineDashedMaterial的使用方法和效果对比",
+                            thumbnail: "images/basic-materials-lines.jpg",
+                            version: "r179",
+                            url: "examples/basic-materials-lines"
+                        },
+                        {
+                            id: "basic-materials-sprite",
+                            title: "精灵材质",
+                            description: "展示SpriteMaterial的使用方法和效果，创建各种分布的精灵系统",
+                            thumbnail: "images/basic-materials-sprite.jpg",
+                            version: "r179",
+                            url: "examples/basic-materials-sprite"
                         }
                     ]
                 }
@@ -210,23 +226,23 @@ const threejsData = {
                             title: "点光源",
                             description: "展示点光源的效果和阴影",
                             thumbnail: "images/lighting-point.jpg",
-                            version: "r150",
+                            version: "r179",
                             url: "examples/lighting-point"
                         },
                         {
                             id: "lighting-spot",
                             title: "聚光灯",
-                            description: "使用聚光灯创建舞台照明效果",
+                            description: "使用聚光灯创建舞台照明效果，展示聚光灯的特性和阴影",
                             thumbnail: "images/lighting-spot.jpg",
-                            version: "r150",
+                            version: "r179",
                             url: "examples/lighting-spot"
                         },
                         {
                             id: "lighting-directional",
                             title: "平行光",
-                            description: "模拟太阳光的平行光效果",
+                            description: "模拟太阳光的平行光效果，展示平行光的特性和阴影",
                             thumbnail: "images/lighting-directional.jpg",
-                            version: "r150",
+                            version: "r179",
                             url: "examples/lighting-directional"
                         }
                     ]
@@ -240,7 +256,7 @@ const threejsData = {
                             title: "阴影效果",
                             description: "展示不同类型的阴影映射技术",
                             thumbnail: "images/lighting-shadows.jpg",
-                            version: "r150",
+                            version: "r179",
                             url: "examples/lighting-shadows"
                         },
                         {
@@ -248,7 +264,7 @@ const threejsData = {
                             title: "环境光遮蔽",
                             description: "使用环境光遮蔽增强场景深度感",
                             thumbnail: "images/lighting-ambient-occlusion.jpg",
-                            version: "r150",
+                            version: "r179",
                             url: "examples/lighting-ambient-occlusion"
                         }
                     ]

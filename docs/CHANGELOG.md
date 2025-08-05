@@ -2,6 +2,16 @@
 
 本文档记录了Three.js示例导航项目的所有重要更新和变更。
 
+## 2025-08-05 - 光照效果示例完善
+
+- 添加了点光源示例(lighting-point.html)，展示点光源的效果和阴影
+- 添加了聚光灯示例(lighting-spot.html)，展示聚光灯的特性和阴影
+- 添加了平行光示例(lighting-directional.html)，模拟太阳光的平行光效果
+- 添加了阴影效果示例(lighting-shadows.html)，展示不同类型的阴影映射技术
+- 添加了环境光遮蔽示例(lighting-ambient-occlusion.html)，使用环境光遮蔽增强场景深度感
+- 修复了几何体类型切换功能不正常的问题，现在可以在GUI控制面板中切换不同的几何体类型
+- 优化了GUI控制面板初始化问题，解决了"GUI文件夹引用尚未初始化"的警告
+
 ## 2025-08-05 - Three.js升级与功能增强与几何体示例完善
 
 - 更新Three.js版本至r179，使用最新特性和优化
@@ -16,6 +26,11 @@
 - 添加了圆锥体（ConeGeometry）示例，展示圆锥体的基本属性和参数
 - 添加了环形扭结（TorusKnotGeometry）示例，展示复杂的参数化几何体
 - 完善了所有几何体示例，现在包含了Three.js中所有常用的几何体类型
+- 添加了网格材质对比示例(basic-materials-mesh.html)，展示和对比不同类型的网格材质效果
+- 添加了点材质示例(basic-materials-points.html)，展示PointsMaterial的使用方法和效果
+- 添加了线材质示例(basic-materials-lines.html)，展示LineBasicMaterial和LineDashedMaterial的使用方法和效果对比
+- 添加了精灵材质示例(basic-materials-sprite.html)，展示SpriteMaterial的使用方法和效果
+- 创建了项目开发回顾文档(review.md)，总结开发进度和经验
 
 ## 2025-08-04 - 初始功能实现
 

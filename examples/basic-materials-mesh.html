@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 页面描述，有助于SEO优化 -->
+    <meta name="description" content="Three.js网格材质对比示例 - 展示不同类型的网格材质及其特性">
+    <!-- Three.js版本信息 -->
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 网格材质对比</title>
+    <!-- 引入公共样式表 -->
+    <link rel="stylesheet" href="../css/example-common.css">
+</head>
+<body>
+    <!-- 3D场景容器 -->
+    <div class="three-container" id="threeContainer"></div>
+    
+    <!-- 
+    使用importmap定义模块导入映射
+    这是一种现代化的ES模块导入方式，可以简化导入路径
+    通过定义别名，可以使用简短的导入语句，如 import * as THREE from 'three'
+    -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../libs/three/r179/build/three.module.js",
+                "three/addons/": "../libs/three/r179/jsm/"
+            }
+        }
+    </script>
+    
+    <!-- 示例代码 - 网格材质对比 -->
+    <script type="module">
+        // 导入Three.js核心模块
+        import * as THREE from 'three';
+        // 导入轨道控制器，用于交互式旋转和缩放场景
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        // 导入GUI控制面板，用于调整参数
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+        
+        // Three.js 核心变量 - 暴露给全局作用域以便截图功能使用
+        window.scene = null;     // 场景对象，包含所有3D元素
+        window.camera = null;    // 相机对象，定义视角和视野
+        window.renderer = null;  // 渲染器对象，将场景渲染到canvas上
+        let controls;           // 轨道控制器对象
+        let currentMesh = null; // 当前显示的网格对象
+        
+        // 参数配置对象 - 用于GUI控制面板和创建3D对象
+        const params = {
+            // 几何体参数
+            geometry: 'sphere',  // 默认使用球体
+            size: 2,             // 几何体大小
+            
+            // 材质参数
+            materialType: 'MeshStandardMaterial', // 默认使用标准材质
+            color: 0x3498db,     // 颜色（蓝色）
+            wireframe: false,    // 是否显示线框模式
+            
+            // 标准材质和物理材质共有参数
+            metalness: 0.5,      // 金属度（0-1）
+            roughness: 0.5,      // 粗糙度（0-1）
+            
+            // 物理材质特有参数
+            clearcoat: 0.0,      // 清漆层强度
+            clearcoatRoughness: 0.0, // 清漆层粗糙度
+            
+            // Phong材质特有参数
+            shininess: 30,       // 高光亮度
+            specular: 0x111111,  // 高光颜色
+            
+            // 环境光参数
+            ambientIntensity: 0.5, // 环境光强度
+            
+            // 方向光参数
+            directionalIntensity: 1.0, // 方向光强度
+            
+            // 控制器参数
+            autoRotate: true     // 是否自动旋转
+        };
+        
+        // 材质类型列表 - 使用对象形式，键是实际的材质类型名称，值是显示在界面上的中文名称
+        const materialNameMap = {
+            '基础材质': 'MeshBasicMaterial',
+            'Lambert材质': 'MeshLambertMaterial',
+            'Phong材质': 'MeshPhongMaterial',
+            '标准材质': 'MeshStandardMaterial',
+            '物理材质': 'MeshPhysicalMaterial',
+            '深度材质': 'MeshDepthMaterial',
+            '法向量材质': 'MeshNormalMaterial'
+        }
+        
+        // 几何体类型列表
+        const geometryTypes = {
+             '球体': 'sphere',
+             '立方体': 'box',
+             '圆环': 'torus',
+             '茶壶': 'teapot',
+             '猴头': 'suzanne'
+        };
+        
+        // 光源对象
+        let ambientLight, directionalLight;
+        
+        // GUI文件夹引用
+        window.guiFolders = {};
+        
+        /**
+         * 初始化Three.js场景、相机、渲染器和控制器
+         * 这是整个应用的入口点
+         */
+        function init() {
+            // 创建场景 - 所有3D对象的容器
+            window.scene = new THREE.Scene();
+            // 设置场景背景色为深蓝灰色
+            window.scene.background = new THREE.Color(0x2c3e50);
+            
+            // 创建透视相机 - 模拟人眼视角
+            // 参数：视场角(FOV)，宽高比，近裁剪面，远裁剪面
+            window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            // 设置相机位置，以便能看到场景中的对象
+            window.camera.position.z = 5;
+            
+            // 创建WebGL渲染器 - 将3D场景渲染到canvas上
+            window.renderer = new THREE.WebGLRenderer({ antialias: true }); // 启用抗锯齿
+            // 设置渲染器尺寸为窗口大小
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            // 设置设备像素比，提高在高DPI设备上的清晰度
+            window.renderer.setPixelRatio(window.devicePixelRatio);
+            // 启用阴影
+            window.renderer.shadowMap.enabled = true;
+            // 将渲染器的canvas添加到DOM中
+            document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+            
+            // 添加轨道控制器 - 允许用户交互式旋转和缩放场景
+            controls = new OrbitControls(window.camera, window.renderer.domElement);
+            controls.enableDamping = true;       // 启用阻尼效果，使控制更平滑
+            controls.dampingFactor = 0.05;       // 阻尼系数
+            controls.autoRotate = params.autoRotate; // 设置是否自动旋转
+            
+            // 添加光源
+            setupLights();
+            
+            // 创建3D对象
+            updateMesh();
+            
+            // 初始化GUI控制面板
+            initGUI();
+            
+            // 监听窗口大小变化，调整场景
+            window.addEventListener('resize', onWindowResize);
+            
+            // 开始动画循环
+            animate();
+        }
+        
+        /**
+         * 设置场景光源
+         */
+        function setupLights() {
+            // 添加环境光 - 提供均匀的全局照明
+            ambientLight = new THREE.AmbientLight(0xffffff, params.ambientIntensity);
+            scene.add(ambientLight);
+            
+            // 添加方向光 - 模拟太阳光
+            directionalLight = new THREE.DirectionalLight(0xffffff, params.directionalIntensity);
+            directionalLight.position.set(5, 5, 5); // 设置光源位置
+            directionalLight.castShadow = true; // 启用阴影投射
+            
+            // 配置阴影参数
+            directionalLight.shadow.mapSize.width = 1024;
+            directionalLight.shadow.mapSize.height = 1024;
+            directionalLight.shadow.camera.near = 0.5;
+            directionalLight.shadow.camera.far = 50;
+            directionalLight.shadow.camera.left = -10;
+            directionalLight.shadow.camera.right = 10;
+            directionalLight.shadow.camera.top = 10;
+            directionalLight.shadow.camera.bottom = -10;
+            
+            scene.add(directionalLight);
+        }
+        
+        /**
+         * 处理窗口大小变化
+         * 调整相机和渲染器以适应新的窗口尺寸
+         */
+        function onWindowResize() {
+            // 更新相机宽高比
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            // 更新相机投影矩阵
+            window.camera.updateProjectionMatrix();
+            // 更新渲染器尺寸
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        /**
+         * 创建或更新当前网格对象
+         * @param {boolean} forceRecreateGeometry - 是否强制重新创建几何体
+         */
+        function updateMesh(forceRecreateGeometry = false) {
+            console.log('更新网格，当前几何体类型:', params.geometry, '大小:', params.size, '材质类型:', params.materialType);
+            
+            // 创建当前选择的材质
+            const material = createMaterial(params.materialType);
+            
+            if (!currentMesh || forceRecreateGeometry) {
+                // 如果没有当前网格或需要重新创建几何体
+                
+                // 清除现有的网格对象
+                if (currentMesh) {
+                    scene.remove(currentMesh);
+                    if (currentMesh.geometry) currentMesh.geometry.dispose();
+                    if (currentMesh.material) currentMesh.material.dispose();
+                    currentMesh = null;
+                }
+                
+                // 创建几何体
+                const geometry = createGeometry(params.geometry, params.size);
+                console.log('几何体已创建:', geometry);
+                
+                // 创建网格
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                mesh.materialType = params.materialType; // 存储材质类型
+                scene.add(mesh);
+                
+                // 保存当前网格引用
+                currentMesh = mesh;
+            } else {
+                // 如果已有网格且不需要重新创建几何体，只更新材质
+                if (currentMesh.material) currentMesh.material.dispose();
+                currentMesh.material = material;
+                currentMesh.materialType = params.materialType;
+            }
+            
+            // 更新GUI控制面板（仅当GUI已初始化时）
+            if (window.guiFolders) {
+                updateGUIVisibility(params.materialType);
+            }
+        }
+        
+        /**
+         * 根据类型创建几何体
+         */
+        function createGeometry(type, size) {
+            switch (type) {
+                case 'sphere':
+                    return new THREE.SphereGeometry(size / 2, 64, 32);
+                case 'box':
+                    return new THREE.BoxGeometry(size, size, size);
+                case 'torus':
+                    return new THREE.TorusGeometry(size / 2, size / 4, 30, 100);
+                case 'teapot':
+                    // 使用圆环结作为茶壶的替代（因为没有内置的茶壶几何体）
+                    return new THREE.TorusKnotGeometry(size / 3, size / 9, 100, 16);
+                case 'suzanne':
+                    // 使用八面体作为猴头的替代（因为没有内置的猴头几何体）
+                    return new THREE.OctahedronGeometry(size / 2, 2);
+                default:
+                    return new THREE.SphereGeometry(size / 2, 64, 32);
+            }
+        }
+        
+        /**
+         * 根据类型创建材质
+         */
+        function createMaterial(type) {
+            let material;
+            
+            switch (type) {
+                case 'MeshBasicMaterial':
+                    material = new THREE.MeshBasicMaterial({
+                        color: params.color,
+                        wireframe: params.wireframe
+                    });
+                    break;
+                    
+                case 'MeshLambertMaterial':
+                    material = new THREE.MeshLambertMaterial({
+                        color: params.color,
+                        wireframe: params.wireframe
+                    });
+                    break;
+                    
+                case 'MeshPhongMaterial':
+                    material = new THREE.MeshPhongMaterial({
+                        color: params.color,
+                        wireframe: params.wireframe,
+                        shininess: params.shininess,
+                        specular: new THREE.Color(params.specular)
+                    });
+                    break;
+                    
+                case 'MeshStandardMaterial':
+                    material = new THREE.MeshStandardMaterial({
+                        color: params.color,
+                        wireframe: params.wireframe,
+                        metalness: params.metalness,
+                        roughness: params.roughness
+                    });
+                    break;
+                    
+                case 'MeshPhysicalMaterial':
+                    material = new THREE.MeshPhysicalMaterial({
+                        color: params.color,
+                        wireframe: params.wireframe,
+                        metalness: params.metalness,
+                        roughness: params.roughness,
+                        clearcoat: params.clearcoat,
+                        clearcoatRoughness: params.clearcoatRoughness
+                    });
+                    break;
+                    
+                case 'MeshDepthMaterial':
+                    material = new THREE.MeshDepthMaterial({
+                        wireframe: params.wireframe
+                    });
+                    break;
+                    
+                case 'MeshNormalMaterial':
+                    material = new THREE.MeshNormalMaterial({
+                        wireframe: params.wireframe
+                    });
+                    break;
+                    
+                default:
+                    material = new THREE.MeshStandardMaterial({
+                        color: params.color,
+                        wireframe: params.wireframe
+                    });
+            }
+            
+            return material;
+        }
+        
+        /**
+         * 初始化GUI控制面板
+         */
+        function initGUI() {
+            // 创建GUI实例
+            const gui = new GUI({ title: '网格材质对比', width: 300 });
+            
+            // 调整GUI位置，避免与其他UI元素重叠
+            gui.domElement.style.position = 'absolute';
+            gui.domElement.style.top = '60px';
+            gui.domElement.style.right = '10px';
+            
+            // 确保GUI在所有环境下都可见
+            gui.domElement.style.zIndex = '1000';
+            gui.domElement.style.maxHeight = '80vh'; // 限制最大高度
+            gui.domElement.style.overflowY = 'auto'; // 允许垂直滚动
+            
+            // 确保GUI在页面加载后立即可见
+            setTimeout(() => {
+                gui.show();
+                // 强制更新GUI
+                for (const controller of gui.controllers) {
+                    controller.updateDisplay();
+                }
+            }, 100);
+            
+            // 材质类型选择
+            gui.add(params, 'materialType', materialNameMap)
+                .name('材质类型')
+                .onChange(value => {
+                    console.log('材质类型改变为:', value);
+                    
+                    // 在lil-gui中，当使用对象作为选项时，onChange回调中的value是对象的键
+                    // 所以这里value已经是实际的材质类型名称，不需要额外处理
+                    params.materialType = value;
+                    
+                    // 创建新材质
+                    const material = createMaterial(value);
+                    console.log('材质已创建:', material);
+                    
+                    // 更新当前网格的材质
+                    if (currentMesh) {
+                        if (currentMesh.material) currentMesh.material.dispose();
+                        currentMesh.material = material;
+                        currentMesh.materialType = value; // 更新材质类型标记
+                    }
+                    
+                    // 强制更新GUI控制面板
+                    updateGUIVisibility(value);
+                });
+                
+            // 几何体参数控制组
+            const geometryFolder = gui.addFolder('几何体参数');
+            
+            // 添加几何体类型选择
+            const geometryController = geometryFolder.add(params, 'geometry', geometryTypes).name('几何体类型');
+            
+            // 添加监听器
+            geometryController.onChange(function(value) {
+                console.log('几何体类型改变为:', value);
+                // 切换几何体类型时需要重建几何体
+                updateMesh(true);
+            });
+            
+            // 添加大小滑块
+            geometryFolder.add(params, 'size', 0.5, 5)
+                .name('大小')
+                .onChange(function(value) {
+                    console.log('几何体大小改变为:', value);
+                    // 改变大小时需要重建几何体
+                    updateMesh(true);
+                });
+            
+            // 默认展开此文件夹
+            geometryFolder.open();
+            
+            // 通用材质参数控制组
+            const commonFolder = gui.addFolder('通用材质参数');
+            // 添加颜色选择器
+            commonFolder.addColor(params, 'color')
+                .name('颜色')
+                .onChange(() => updateMesh(false)); // 只更新材质，不重建几何体
+            // 添加线框模式切换
+            commonFolder.add(params, 'wireframe')
+                .name('线框模式')
+                .onChange(() => updateMesh(false)); // 只更新材质，不重建几何体
+            // 默认展开此文件夹
+            commonFolder.open();
+            
+            // PBR材质参数控制组
+            const pbrFolder = gui.addFolder('PBR材质参数');
+            // 添加金属度滑块
+            pbrFolder.add(params, 'metalness', 0, 1)
+                .step(0.01)
+                .name('金属度')
+                .onChange(() => updateMesh(false)); // 只更新材质，不重建几何体
+            // 添加粗糙度滑块
+            pbrFolder.add(params, 'roughness', 0, 1)
+                .step(0.01)
+                .name('粗糙度')
+                .onChange(() => updateMesh(false)); // 只更新材质，不重建几何体
+            // 默认展开此文件夹
+            pbrFolder.open();
+            
+            // 物理材质特有参数控制组
+            const physicalFolder = gui.addFolder('物理材质特有参数');
+            // 添加清漆层强度滑块
+            physicalFolder.add(params, 'clearcoat', 0, 1)
+                .step(0.01)
+                .name('清漆层强度')
+                .onChange(() => updateMesh(false)); // 只更新材质，不重建几何体
+            // 添加清漆层粗糙度滑块
+            physicalFolder.add(params, 'clearcoatRoughness', 0, 1)
+                .step(0.01)
+                .name('清漆层粗糙度')
+                .onChange(() => updateMesh(false)); // 只更新材质，不重建几何体
+            // 默认展开此文件夹
+            physicalFolder.open();
+            
+            // Phong材质特有参数控制组
+            const phongFolder = gui.addFolder('Phong材质特有参数');
+            // 添加高光亮度滑块
+            phongFolder.add(params, 'shininess', 0, 100)
+                .name('高光亮度')
+                .onChange(() => updateMesh(false)); // 只更新材质，不重建几何体
+            // 添加高光颜色选择器
+            phongFolder.addColor(params, 'specular')
+                .name('高光颜色')
+                .onChange(() => updateMesh(false)); // 只更新材质，不重建几何体
+            // 默认展开此文件夹
+            phongFolder.open();
+            
+            // 光照参数控制组
+            const lightFolder = gui.addFolder('光照参数');
+            // 添加环境光强度滑块
+            lightFolder.add(params, 'ambientIntensity', 0, 1)
+                .step(0.01)
+                .name('环境光强度')
+                .onChange(value => {
+                    ambientLight.intensity = value;
+                });
+            // 添加方向光强度滑块
+            lightFolder.add(params, 'directionalIntensity', 0, 2)
+                .step(0.01)
+                .name('方向光强度')
+                .onChange(value => {
+                    directionalLight.intensity = value;
+                });
+            // 默认展开此文件夹
+            lightFolder.open();
+            
+            // 控制器参数控制组
+            const controlsFolder = gui.addFolder('控制器参数');
+            // 添加自动旋转切换
+            controlsFolder.add(params, 'autoRotate')
+                .name('自动旋转')
+                .onChange(value => {
+                    controls.autoRotate = value;
+                });
+            // 默认展开此文件夹
+            controlsFolder.open();
+            
+            // 存储文件夹引用，以便后续控制显示/隐藏
+            window.guiFolders = {
+                pbrFolder,
+                physicalFolder,
+                phongFolder
+            };
+            
+            // 初始化时更新GUI可见性
+            // 延迟一下，确保GUI已经完全初始化
+            setTimeout(() => {
+                updateGUIVisibility(params.materialType);
+            }, 100);
+        }
+        
+        /**
+         * 根据当前材质类型更新GUI控制面板的可见性
+         */
+        function updateGUIVisibility(materialType) {
+            // 确保window.guiFolders已定义
+            if (!window.guiFolders) {
+                console.warn('GUI文件夹引用尚未初始化');
+                return;
+            }
+            
+            // 获取GUI文件夹引用
+            const { pbrFolder, physicalFolder, phongFolder } = window.guiFolders;
+            
+            // 根据材质类型显示/隐藏相关控制项
+            if (pbrFolder) {
+                if (materialType === 'MeshStandardMaterial' || materialType === 'MeshPhysicalMaterial') {
+                    pbrFolder.show();
+                } else {
+                    pbrFolder.hide();
+                }
+            }
+            
+            if (physicalFolder) {
+                if (materialType === 'MeshPhysicalMaterial') {
+                    physicalFolder.show();
+                } else {
+                    physicalFolder.hide();
+                }
+            }
+            
+            if (phongFolder) {
+                if (materialType === 'MeshPhongMaterial') {
+                    phongFolder.show();
+                } else {
+                    phongFolder.hide();
+                }
+            }
+        }
+        
+        /**
+         * 动画循环函数
+         * 使用requestAnimationFrame实现平滑动画
+         * 每帧更新场景并渲染
+         */
+        function animate() {
+            // 请求下一帧动画
+            requestAnimationFrame(animate);
+            
+            // 更新轨道控制器
+            // 如果启用了阻尼效果，需要在每帧调用update
+            controls.update();
+            
+            // 渲染场景
+            window.renderer.render(window.scene, window.camera);
+        }
+        
+        // 初始化应用
+        init();
+    </script>
+    
+    <!-- 
+    ===================================================
+    截图功能脚本 - 请勿修改此部分
+    此脚本处理从父窗口发来的截图请求，用于生成示例封面，与示例业务并无关联
+    ===================================================
+    -->
+    <script>
+        // 全局变量，用于存储渲染器引用
+        let _screenshotRenderer;
+        
+        // 添加消息监听器，处理截图请求
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    // 获取当前渲染器
+                    if (!_screenshotRenderer && window.renderer) {
+                        _screenshotRenderer = window.renderer;
+                    }
+                    
+                    // 确保渲染器已经初始化
+                    if (!_screenshotRenderer) {
+                        throw new Error('渲染器未初始化');
+                    }
+                    
+                    // 强制渲染一帧，确保内容是最新的
+                    if (window.scene && window.camera) {
+                        _screenshotRenderer.render(window.scene, window.camera);
+                    }
+                    
+                    // 获取canvas的图像数据（使用较低的质量和尺寸以减小文件大小）
+                    const quality = event.data.quality || 0.8;
+                    const canvas = _screenshotRenderer.domElement;
+                    
+                    // 创建一个较小尺寸的临时canvas
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600; // 最大尺寸为600像素
+                    
+                    // 计算缩放比例，保持宽高比
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    
+                    // 在临时canvas上绘制缩小的图像
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    
+                    // 获取缩小后的图像数据
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    
+                    // 将图像数据发送回父窗口
+                    window.parent.postMessage({
+                        type: 'screenshot-data',
+                        dataUrl: dataUrl
+                    }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    // 发送错误信息回父窗口
+                    window.parent.postMessage({
+                        type: 'screenshot-error',
+                        error: error.message
+                    }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
