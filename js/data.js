@@ -11,28 +11,164 @@ const threejsData = {
                     name: "几何体",
                     examples: [
                         {
-                            id: "basic-cube",
+                            id: "basic-geometry-cube",
                             title: "立方体",
                             description: "创建一个简单的立方体，并添加基本的旋转动画",
-                            thumbnail: "images/basic-cube.jpg",
-                            version: "r150",
-                            url: "examples/basic-cube"
+                            thumbnail: "images/basic-geometry-cube.jpg",
+                            version: "r179",
+                            url: "examples/basic-geometry-cube"
                         },
                         {
-                            id: "basic-sphere",
+                            id: "basic-geometry-sphere",
                             title: "球体",
                             description: "创建一个带有纹理的球体，模拟行星效果",
-                            thumbnail: "images/basic-sphere.jpg",
-                            version: "r150",
-                            url: "examples/basic-sphere"
+                            thumbnail: "images/basic-geometry-sphere.jpg",
+                            version: "r179",
+                            url: "examples/basic-geometry-sphere"
                         },
                         {
-                            id: "basic-torus",
+                            id: "basic-geometry-cylinder",
+                            title: "圆柱体",
+                            description: "创建一个带有渐变材质的圆柱体，展示不同参数效果",
+                            thumbnail: "images/basic-geometry-cylinder.jpg",
+                            version: "r179",
+                            url: "examples/basic-geometry-cylinder"
+                        },
+                        {
+                            id: "basic-geometry-torus",
                             title: "圆环",
                             description: "创建一个带有金属材质的圆环，展示光照效果",
-                            thumbnail: "images/basic-torus.jpg",
-                            version: "r150",
-                            url: "examples/basic-torus"
+                            thumbnail: "images/basic-geometry-torus.jpg",
+                            version: "r179",
+                            url: "examples/basic-geometry-torus"
+                        },
+                        {
+                            id: "basic-geometry-tetrahedron",
+                            title: "正四面体",
+                            description: "创建一个正四面体，展示基本多面体几何形状",
+                            thumbnail: "images/basic-geometry-tetrahedron.jpg",
+                            version: "r179",
+                            url: "examples/basic-geometry-tetrahedron"
+                        },
+                        {
+                            id: "basic-geometry-octahedron",
+                            title: "正八面体",
+                            description: "创建一个正八面体，展示对称多面体结构",
+                            thumbnail: "images/basic-geometry-octahedron.jpg",
+                            version: "r179",
+                            url: "examples/basic-geometry-octahedron"
+                        },
+                        {
+                            id: "basic-geometry-dodecahedron",
+                            title: "正十二面体",
+                            description: "创建一个正十二面体，展示复杂多面体结构",
+                            thumbnail: "images/basic-geometry-dodecahedron.jpg",
+                            version: "r179",
+                            url: "examples/basic-geometry-dodecahedron"
+                        },
+                        {
+                            id: "basic-geometry-icosahedron",
+                            title: "正二十面体",
+                            description: "创建一个正二十面体，展示高复杂度多面体",
+                            thumbnail: "images/basic-geometry-icosahedron.jpg",
+                            version: "r179",
+                            url: "examples/basic-geometry-icosahedron"
+                        },
+                        {
+                            id: "basic-geometry-ring",
+                            title: "环平面",
+                            description: "创建一个环形平面，可调整内外半径和分段数",
+                            thumbnail: "images/basic-geometry-ring.jpg",
+                            version: "r179",
+                            url: "examples/basic-geometry-ring"
+                        },
+                        {
+                            id: "basic-geometry-plane",
+                            title: "矩形平面",
+                            description: "创建一个矩形平面，可调整宽度、高度和分段数",
+                            thumbnail: "images/basic-geometry-plane.jpg",
+                            version: "r179",
+                            url: "examples/basic-geometry-plane"
+                        },
+                        {
+                            id: "basic-geometry-circle",
+                            title: "圆平面",
+                            description: "创建一个圆形平面，可调整半径、分段数和扇形角度",
+                            thumbnail: "images/basic-geometry-circle.jpg",
+                            version: "r179",
+                            url: "examples/basic-geometry-circle"
+                        },
+                        {
+                            id: "basic-geometry-extrude",
+                            title: "拉伸几何体",
+                            description: "通过拉伸二维形状创建三维几何体，展示ExtrudeGeometry的用法",
+                            thumbnail: "images/basic-geometry-extrude.jpg",
+                            version: "r179",
+                            url: "examples/basic-geometry-extrude"
+                        },
+                        {
+                            id: "basic-geometry-lathe",
+                            title: "旋转几何体",
+                            description: "通过旋转轮廓线创建三维几何体，如花瓶或杯子",
+                            thumbnail: "images/basic-geometry-lathe.jpg",
+                            version: "r179",
+                            url: "examples/basic-geometry-lathe"
+                        },
+                        {
+                            id: "basic-geometry-tube",
+                            title: "管道几何体",
+                            description: "沿着三维路径创建管道几何体，可调整管径和分段数",
+                            thumbnail: "images/basic-geometry-tube.jpg",
+                            version: "r179",
+                            url: "examples/basic-geometry-tube"
+                        },
+                        {
+                            id: "basic-geometry-shape",
+                            title: "轮廓填充",
+                            description: "创建复杂的二维形状并进行填充，支持内部孔洞",
+                            thumbnail: "images/basic-geometry-shape.jpg",
+                            version: "r179",
+                            url: "examples/basic-geometry-shape"
+                        },
+                        {
+                            id: "basic-geometry-text",
+                            title: "文字几何体",
+                            description: "创建三维文字几何体，可调整字体、大小和厚度",
+                            thumbnail: "images/basic-geometry-text.jpg",
+                            version: "r179",
+                            url: "examples/basic-geometry-text"
+                        },
+                        {
+                            id: "basic-geometry-parametric",
+                            title: "参数化曲面",
+                            description: "通过数学函数创建参数化曲面，如波浪、螺旋等",
+                            thumbnail: "images/basic-geometry-parametric.jpg",
+                            version: "r179",
+                            url: "examples/basic-geometry-parametric"
+                        },
+                        {
+                            id: "basic-geometry-cone",
+                            title: "圆锥体",
+                            description: "创建一个圆锥体，可调整底部半径、高度和分段数",
+                            thumbnail: "images/basic-geometry-cone.jpg",
+                            version: "r179",
+                            url: "examples/basic-geometry-cone"
+                        },
+                        {
+                            id: "basic-geometry-torusknot",
+                            title: "环形扭结",
+                            description: "创建一个环形扭结，展示复杂的参数化几何体",
+                            thumbnail: "images/basic-geometry-torusknot.jpg",
+                            version: "r179",
+                            url: "examples/basic-geometry-torusknot"
+                        },
+                        {
+                            id: "basic-geometry-polyhedron",
+                            title: "多面体",
+                            description: "创建一个基于顶点和面的多面体，展示PolyhedronGeometry的用法。",
+                            thumbnail: "images/basic-geometry-polyhedron.jpg",
+                            version: "r179",
+                            url: "examples/basic-geometry-polyhedron"
                         }
                     ]
                 },

@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 页面描述，有助于SEO优化 -->
+    <meta name="description" content="使用ExtrudeGeometry创建拉伸几何体，展示2D形状的3D拉伸效果。">
+    <!-- Three.js版本信息 -->
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 拉伸几何体</title>
+    <!-- 引入公共样式表 -->
+    <link rel="stylesheet" href="../css/example-common.css">
+</head>
+<body>
+    <!-- 3D场景容器 -->
+    <div class="three-container" id="threeContainer"></div>
+    
+    <!-- 
+    使用importmap定义模块导入映射
+    这是一种现代化的ES模块导入方式，可以简化导入路径
+    通过定义别名，可以使用简短的导入语句，如 import * as THREE from 'three'
+    -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../libs/three/r179/build/three.module.js",
+                "three/addons/": "../libs/three/r179/jsm/"
+            }
+        }
+    </script>
+    
+    <!-- 示例代码 - 拉伸几何体示例 -->
+    <script type="module">
+        // 导入Three.js核心模块
+        import * as THREE from 'three';
+        // 导入轨道控制器，用于交互式旋转和缩放场景
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        // 导入GUI控制面板，用于调整参数
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+        
+        // Three.js 核心变量 - 暴露给全局作用域以便截图功能使用
+        window.scene = null;     // 场景对象，包含所有3D元素
+        window.camera = null;    // 相机对象，定义视角和视野
+        window.renderer = null;  // 渲染器对象，将场景渲染到canvas上
+        let mesh;               // 拉伸几何体网格对象
+        let controls;           // 轨道控制器对象
+        
+        // 参数配置对象 - 用于GUI控制面板和创建拉伸几何体
+        const params = {
+            // 几何体参数
+            depth: 2,              // 拉伸深度
+            bevelEnabled: true,    // 是否启用斜角
+            bevelThickness: 0.2,   // 斜角厚度
+            bevelSize: 0.1,        // 斜角大小
+            bevelSegments: 3,      // 斜角分段数
+            curveSegments: 12,     // 曲线分段数
+            steps: 1,              // 拉伸步数
+            shapeType: 'heart',    // 形状类型：'heart', 'star', 'triangle', 'custom'
+            
+            // 材质参数
+            color: 0xe74c3c,       // 颜色（红色）
+            metalness: 0.2,        // 金属度（0-1）
+            roughness: 0.5,        // 粗糙度（0-1）
+            wireframe: false,      // 是否显示线框模式
+            side: THREE.FrontSide, // 渲染面：正面(FrontSide)、背面(BackSide)或双面(DoubleSide)
+            
+            // 动画参数
+            rotationSpeedX: 0.01,  // X轴旋转速度
+            rotationSpeedY: 0.01,  // Y轴旋转速度
+            
+            // 控制器参数
+            autoRotate: true       // 是否自动旋转
+        };
+        
+        /**
+         * 初始化Three.js场景、相机、渲染器和控制器
+         * 这是整个应用的入口点
+         */
+        function init() {
+            // 创建场景 - 所有3D对象的容器
+            window.scene = new THREE.Scene();
+            // 设置场景背景色为深蓝灰色
+            window.scene.background = new THREE.Color(0x2c3e50);
+            
+            // 创建透视相机 - 模拟人眼视角
+            // 参数：视场角(FOV)，宽高比，近裁剪面，远裁剪面
+            window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            // 设置相机位置，以便能看到场景中的对象
+            window.camera.position.z = 5;
+            
+            // 创建WebGL渲染器 - 将3D场景渲染到canvas上
+            window.renderer = new THREE.WebGLRenderer({ antialias: true }); // 启用抗锯齿
+            // 设置渲染器尺寸为窗口大小
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            // 设置设备像素比，提高在高DPI设备上的清晰度
+            window.renderer.setPixelRatio(window.devicePixelRatio);
+            // 将渲染器的canvas添加到DOM中
+            document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+            
+            // 添加轨道控制器 - 允许用户交互式旋转和缩放场景
+            controls = new OrbitControls(window.camera, window.renderer.domElement);
+            controls.enableDamping = true;       // 启用阻尼效果，使控制更平滑
+            controls.dampingFactor = 0.05;       // 阻尼系数
+            controls.autoRotate = params.autoRotate; // 设置是否自动旋转
+            
+            // 创建拉伸几何体
+            createExtrudeGeometry();
+            
+            // 初始化GUI控制面板
+            initGUI();
+            
+            // 添加环境光 - 提供均匀的全局照明
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+            
+            // 添加主方向光 - 模拟太阳光
+            const directionalLight1 = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight1.position.set(5, 5, 5); // 设置光源位置
+            scene.add(directionalLight1);
+            
+            // 添加辅助方向光 - 提供补充照明，增加视觉深度
+            const directionalLight2 = new THREE.DirectionalLight(0x84c3be, 0.5);
+            directionalLight2.position.set(-5, -2, -5); // 从相反方向照射
+            scene.add(directionalLight2);
+            
+            // 添加网格辅助线 - 帮助理解3D空间
+            const gridHelper = new THREE.GridHelper(10, 10, 0x888888, 0x444444);
+            scene.add(gridHelper);
+            
+            // 监听窗口大小变化，调整场景
+            window.addEventListener('resize', onWindowResize);
+            
+            // 开始动画循环
+            animate();
+        }
+        
+        /**
+         * 处理窗口大小变化
+         * 调整相机和渲染器以适应新的窗口尺寸
+         */
+        function onWindowResize() {
+            // 更新相机宽高比
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            // 更新相机投影矩阵
+            window.camera.updateProjectionMatrix();
+            // 更新渲染器尺寸
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        /**
+         * 创建2D形状
+         * 根据选择的形状类型创建不同的2D形状
+         * @returns {THREE.Shape} 创建的2D形状
+         */
+        function createShape() {
+            let shape;
+            
+            switch(params.shapeType) {
+                case 'heart':
+                    // 创建心形
+                    shape = new THREE.Shape();
+                    
+                    // 心形的参数化方程
+                    const heartX = (t) => 16 * Math.pow(Math.sin(t), 3);
+                    const heartY = (t) => 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
+                    
+                    // 起始点
+                    const startAngle = 0;
+                    const endAngle = Math.PI * 2;
+                    const steps = 50;
+                    const stepSize = (endAngle - startAngle) / steps;
+                    
+                    // 缩放因子，使心形大小适中
+                    const scale = 0.1;
+                    
+                    // 绘制心形轮廓
+                    for (let i = 0; i <= steps; i++) {
+                        const t = startAngle + i * stepSize;
+                        const x = heartX(t) * scale;
+                        const y = heartY(t) * scale;
+                        
+                        if (i === 0) {
+                            shape.moveTo(x, y);
+                        } else {
+                            shape.lineTo(x, y);
+                        }
+                    }
+                    break;
+                    
+                case 'star':
+                    // 创建五角星
+                    shape = new THREE.Shape();
+                    
+                    const outerRadius = 1;
+                    const innerRadius = 0.4;
+                    const spikes = 5;
+                    
+                    for (let i = 0; i < spikes * 2; i++) {
+                        const radius = i % 2 === 0 ? outerRadius : innerRadius;
+                        const angle = Math.PI / spikes * i;
+                        const x = Math.cos(angle) * radius;
+                        const y = Math.sin(angle) * radius;
+                        
+                        if (i === 0) {
+                            shape.moveTo(x, y);
+                        } else {
+                            shape.lineTo(x, y);
+                        }
+                    }
+                    shape.closePath();
+                    break;
+                    
+                case 'triangle':
+                    // 创建等边三角形
+                    shape = new THREE.Shape();
+                    const size = 1;
+                    
+                    shape.moveTo(0, size);
+                    shape.lineTo(-size * Math.sqrt(3) / 2, -size / 2);
+                    shape.lineTo(size * Math.sqrt(3) / 2, -size / 2);
+                    shape.closePath();
+                    break;
+                    
+                case 'custom':
+                default:
+                    // 创建自定义形状（这里是一个带有孔洞的矩形）
+                    shape = new THREE.Shape();
+                    
+                    // 外部轮廓（矩形）
+                    shape.moveTo(-1, -1);
+                    shape.lineTo(-1, 1);
+                    shape.lineTo(1, 1);
+                    shape.lineTo(1, -1);
+                    shape.closePath();
+                    
+                    // 内部孔洞（圆形）
+                    const hole = new THREE.Path();
+                    hole.absarc(0, 0, 0.5, 0, Math.PI * 2, true);
+                    shape.holes.push(hole);
+                    break;
+            }
+            
+            return shape;
+        }
+        
+        /**
+         * 创建拉伸几何体
+         * 根据当前参数创建或更新拉伸几何体
+         */
+        function createExtrudeGeometry() {
+            // 如果已存在网格对象，则从场景中移除并释放资源
+            if (mesh) {
+                scene.remove(mesh);
+                // 释放几何体和材质的内存，避免内存泄漏
+                mesh.geometry.dispose();
+                mesh.material.dispose();
+            }
+            
+            // 创建2D形状
+            const shape = createShape();
+            
+            // 拉伸设置
+            const extrudeSettings = {
+                depth: params.depth,               // 拉伸深度
+                bevelEnabled: params.bevelEnabled, // 是否启用斜角
+                bevelThickness: params.bevelThickness, // 斜角厚度
+                bevelSize: params.bevelSize,       // 斜角大小
+                bevelSegments: params.bevelSegments, // 斜角分段数
+                curveSegments: params.curveSegments, // 曲线分段数
+                steps: params.steps                // 拉伸步数
+            };
+            
+            // 创建拉伸几何体
+            const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+            
+            // 创建标准材质 - 使用基于物理的渲染(PBR)
+            const material = new THREE.MeshStandardMaterial({ 
+                color: params.color,        // 材质颜色
+                metalness: params.metalness, // 金属度 - 影响反射特性
+                roughness: params.roughness, // 粗糙度 - 影响光的散射方式
+                wireframe: params.wireframe, // 是否显示线框模式
+                side: params.side           // 渲染面：正面、背面或双面
+            });
+            
+            // 创建网格 - 将几何体和材质结合
+            mesh = new THREE.Mesh(geometry, material);
+            
+            // 调整网格位置，使其居中
+            geometry.center();
+            
+            // 将网格添加到场景中
+            scene.add(mesh);
+        }
+        
+        /**
+         * 初始化GUI控制面板
+         * 创建用户可交互的控制界面，用于调整参数
+         */
+        function initGUI() {
+            // 创建GUI实例
+            const gui = new GUI({ title: '参数控制面板', width: 300 });
+            
+            // 调整GUI位置，避免与其他UI元素重叠
+            gui.domElement.style.position = 'absolute';
+            gui.domElement.style.top = '60px';
+            gui.domElement.style.right = '10px';
+            
+            // 确保GUI在所有环境下都可见
+            gui.domElement.style.zIndex = '1000';
+            gui.domElement.style.maxHeight = '80vh'; // 限制最大高度
+            gui.domElement.style.overflowY = 'auto'; // 允许垂直滚动
+            
+            // 确保GUI在页面加载后立即可见
+            setTimeout(() => {
+                gui.show();
+                // 强制更新GUI
+                for (const controller of gui.controllers) {
+                    controller.updateDisplay();
+                }
+            }, 100);
+            
+            // 几何体参数控制组
+            const geometryFolder = gui.addFolder('几何体参数');
+            // 添加形状类型选择
+            geometryFolder.add(params, 'shapeType', ['heart', 'star', 'triangle', 'custom'])
+                .onChange(createExtrudeGeometry)
+                .name('形状类型');
+            // 添加拉伸深度滑块
+            geometryFolder.add(params, 'depth', 0.1, 5)
+                .onChange(createExtrudeGeometry)
+                .name('拉伸深度');
+            // 添加拉伸步数滑块
+            geometryFolder.add(params, 'steps', 1, 10)
+                .step(1)
+                .onChange(createExtrudeGeometry)
+                .name('拉伸步数');
+            // 添加曲线分段数滑块
+            geometryFolder.add(params, 'curveSegments', 1, 30)
+                .step(1)
+                .onChange(createExtrudeGeometry)
+                .name('曲线分段数');
+            // 添加斜角启用切换
+            geometryFolder.add(params, 'bevelEnabled')
+                .onChange(createExtrudeGeometry)
+                .name('启用斜角');
+            // 添加斜角厚度滑块
+            geometryFolder.add(params, 'bevelThickness', 0.01, 0.5)
+                .onChange(createExtrudeGeometry)
+                .name('斜角厚度');
+            // 添加斜角大小滑块
+            geometryFolder.add(params, 'bevelSize', 0.01, 0.5)
+                .onChange(createExtrudeGeometry)
+                .name('斜角大小');
+            // 添加斜角分段数滑块
+            geometryFolder.add(params, 'bevelSegments', 1, 10)
+                .step(1)
+                .onChange(createExtrudeGeometry)
+                .name('斜角分段数');
+            // 默认展开此文件夹
+            geometryFolder.open();
+            
+            // 材质参数控制组
+            const materialFolder = gui.addFolder('材质参数');
+            // 添加金属度滑块
+            materialFolder.add(params, 'metalness', 0, 1)
+                .step(0.01) // 设置步长为0.01
+                .onChange(value => {
+                    // 直接更新材质属性，无需重新创建
+                    mesh.material.metalness = value;
+                })
+                .name('金属度');
+            // 添加粗糙度滑块
+            materialFolder.add(params, 'roughness', 0, 1)
+                .step(0.01)
+                .onChange(value => {
+                    mesh.material.roughness = value;
+                })
+                .name('粗糙度');
+            // 添加颜色选择器
+            materialFolder.addColor(params, 'color')
+                .onChange(value => {
+                    mesh.material.color.set(value);
+                })
+                .name('颜色');
+            // 添加线框模式切换
+            materialFolder.add(params, 'wireframe')
+                .onChange(value => {
+                    mesh.material.wireframe = value;
+                })
+                .name('线框模式');
+                
+            // 添加渲染面选择
+            const sideOptions = {
+                '正面': THREE.FrontSide,
+                '背面': THREE.BackSide,
+                '双面': THREE.DoubleSide
+            };
+            materialFolder.add(params, 'side', sideOptions)
+                .onChange(value => {
+                    mesh.material.side = value;
+                    mesh.material.needsUpdate = true;
+                })
+                .name('渲染面');
+            // 默认展开此文件夹
+            materialFolder.open();
+            
+            // 动画参数控制组
+            const animationFolder = gui.addFolder('动画参数');
+            // 添加X轴旋转速度滑块
+            animationFolder.add(params, 'rotationSpeedX', 0, 0.05)
+                .step(0.001)
+                .name('X轴旋转速度');
+            // 添加Y轴旋转速度滑块
+            animationFolder.add(params, 'rotationSpeedY', 0, 0.05)
+                .step(0.001)
+                .name('Y轴旋转速度');
+            // 添加自动旋转切换
+            animationFolder.add(params, 'autoRotate')
+                .name('自动旋转')
+                .onChange(value => {
+                    controls.autoRotate = value;
+                    // 同步更新params和controls的autoRotate值
+                    params.autoRotate = value;
+                });
+            // 默认展开此文件夹
+            animationFolder.open();
+        }
+        
+        /**
+         * 动画循环函数
+         * 使用requestAnimationFrame实现平滑动画
+         * 每帧更新场景并渲染
+         */
+        function animate() {
+            // 请求下一帧动画
+            requestAnimationFrame(animate);
+            
+            // 更新轨道控制器
+            // 如果启用了阻尼效果，需要在每帧调用update
+            controls.update();
+            
+            // 此处可以添加自定义的每帧更新逻辑
+            
+            
+            // 渲染场景
+            window.renderer.render(window.scene, window.camera);
+        }
+        
+        // 初始化应用
+        init();
+    </script>
+    
+    <!-- 
+    ===================================================
+    截图功能脚本 - 请勿修改此部分
+    此脚本处理从父窗口发来的截图请求，用于生成示例封面，与示例业务并无关联
+    ===================================================
+    -->
+    <script>
+        // 全局变量，用于存储渲染器引用
+        let _screenshotRenderer;
+        
+        // 添加消息监听器，处理截图请求
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    // 获取当前渲染器
+                    if (!_screenshotRenderer && window.renderer) {
+                        _screenshotRenderer = window.renderer;
+                    }
+                    
+                    // 确保渲染器已经初始化
+                    if (!_screenshotRenderer) {
+                        throw new Error('渲染器未初始化');
+                    }
+                    
+                    // 强制渲染一帧，确保内容是最新的
+                    if (window.scene && window.camera) {
+                        _screenshotRenderer.render(window.scene, window.camera);
+                    }
+                    
+                    // 获取canvas的图像数据（使用较低的质量和尺寸以减小文件大小）
+                    const quality = event.data.quality || 0.8;
+                    const canvas = _screenshotRenderer.domElement;
+                    
+                    // 创建一个较小尺寸的临时canvas
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600; // 最大尺寸为600像素
+                    
+                    // 计算缩放比例，保持宽高比
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    
+                    // 在临时canvas上绘制缩小的图像
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    
+                    // 获取缩小后的图像数据
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    
+                    // 将图像数据发送回父窗口
+                    window.parent.postMessage({
+                        type: 'screenshot-data',
+                        dataUrl: dataUrl
+                    }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    // 发送错误信息回父窗口
+                    window.parent.postMessage({
+                        type: 'screenshot-error',
+                        error: error.message
+                    }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

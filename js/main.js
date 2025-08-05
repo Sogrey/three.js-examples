@@ -194,7 +194,7 @@ function renderExampleCards(examples) {
                         </a>
                     </div>
                     <div class="meta" style="padding: 0.8rem; display: flex; justify-content: space-between; align-items: center;">
-                        <span class="version">Three.js ${example.version}</span>
+                        <span class="version">Three.js <a href="https://github.com/mrdoob/three.js/tree/${example.version}" target="_blank" title="查看 ${example.version} 版本的Three.js源码" style="text-decoration: underline; color: inherit;">${example.version}</a></span>
                         <a href="examples/viewer.html#${examplePath}" target="_blank">查看示例</a>
                     </div>
                 </div>
@@ -303,7 +303,7 @@ function performSearch() {
                         </a>
                     </div>
                     <div class="meta" style="padding: 0.8rem; display: flex; justify-content: space-between; align-items: center;">
-                        <span class="version">Three.js ${result.version}</span>
+                        <span class="version">Three.js <a href="https://github.com/mrdoob/three.js/tree/${result.version}" target="_blank" title="查看 ${result.version} 版本的Three.js源码" style="text-decoration: underline; color: inherit;">${result.version}</a></span>
                         <a href="examples/viewer.html#${examplePath}" target="_blank">查看示例</a>
                     </div>
                 </div>

@@ -11,12 +11,18 @@
     --border-radius: 8px;
     --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     --transition: all 0.3s ease;
+    --header-height: 70px; /* 新增：头部高度变量 */
 }
 
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    overflow: hidden; /* 防止整个页面滚动 */
 }
 
 body {
@@ -29,7 +35,7 @@ body {
 .container {
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
+    height: 100vh;
 }
 
 /* 顶部导航栏 */
@@ -41,6 +47,12 @@ header {
     justify-content: space-between;
     align-items: center;
     box-shadow: var(--box-shadow);
+    position: fixed; /* 固定在顶部 */
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--header-height);
+    z-index: 1000; /* 确保在最上层 */
 }
 
 .logo h1 {
@@ -82,6 +94,9 @@ header {
 .main-content {
     display: flex;
     flex-grow: 1;
+    margin-top: var(--header-height); /* 为固定的header留出空间 */
+    height: calc(100vh - var(--header-height)); /* 减去header高度 */
+    overflow: hidden; /* 防止整体滚动 */
 }
 
 /* 左侧边栏 */
@@ -90,8 +105,9 @@ header {
     background-color: var(--sidebar-bg);
     color: var(--text-light);
     padding: 1.5rem 1rem;
-    overflow-y: auto;
+    overflow-y: auto; /* 允许侧边栏独立滚动 */
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    height: 100%; /* 确保填满整个高度 */
 }
 
 .category-tree ul {
@@ -142,7 +158,8 @@ header {
 .examples-container {
     flex-grow: 1;
     padding: 2rem;
-    overflow-y: auto;
+    overflow-y: auto; /* 允许内容区域独立滚动 */
+    height: 100%; /* 确保填满整个高度 */
 }
 
 .category-title {
@@ -356,7 +373,16 @@ footer {
     color: var(--text-light);
     text-align: center;
     padding: 1rem;
-    margin-top: auto;
+    position: fixed; /* 固定在底部 */
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000; /* 确保在最上层 */
+}
+
+/* 为了防止内容被footer遮挡，给内容区域添加底部padding */
+.examples-container {
+    padding-bottom: 60px; /* 根据footer高度调整 */
 }
 
 /* 响应式设计 */
