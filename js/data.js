@@ -179,7 +179,7 @@ const threejsData = {
                         {
                             id: "basic-materials-mesh",
                             title: "网格材质对比",
-                            description: "展示并对比不同类型的网格材质及其特性",
+                            description: "展示和对比不同类型的网格材质效果",
                             thumbnail: "images/basic-materials-mesh.jpg",
                             version: "r179",
                             url: "examples/basic-materials-mesh"
@@ -207,6 +207,22 @@ const threejsData = {
                             thumbnail: "images/basic-materials-sprite.jpg",
                             version: "r179",
                             url: "examples/basic-materials-sprite"
+                        },
+                        {
+                            id: "basic-materials-raw-shader",
+                            title: "原始着色器材质",
+                            description: "使用RawShaderMaterial创建自定义着色器效果，展示GLSL着色器编程的基础知识",
+                            thumbnail: "images/basic-materials-raw-shader.jpg",
+                            version: "r179",
+                            url: "examples/basic-materials-raw-shader"
+                        },
+                        {
+                            id: "basic-materials-shader",
+                            title: "着色器材质",
+                            description: "使用ShaderMaterial创建自定义着色器效果，展示Three.js内置变量和着色器编程技术",
+                            thumbnail: "images/basic-materials-shader.jpg",
+                            version: "r179",
+                            url: "examples/basic-materials-shader"
                         }
                     ]
                 }
@@ -368,6 +384,159 @@ const threejsData = {
                             thumbnail: "images/advanced-physics-ammo.jpg",
                             version: "r150",
                             url: "examples/advanced-physics-ammo"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            id: "loaders",
+            name: "加载器",
+            icon: "bi-cloud-download",
+            subcategories: [
+                {
+                    id: "loaders-model",
+                    name: "模型加载器",
+                    examples: [
+                        {
+                            id: "loaders-model-gltf",
+                            title: "GLTF 模型加载器",
+                            description: "加载和显示 GLTF/GLB 格式的 3D 模型",
+                            thumbnail: "images/loaders-model-gltf.jpg",
+                            version: "r179",
+                            url: "examples/loaders-model-gltf"
+                        },
+                        {
+                            id: "loaders-model-obj",
+                            title: "OBJ 模型加载器",
+                            description: "加载和显示 OBJ 格式的 3D 模型及其材质",
+                            thumbnail: "images/loaders-model-obj.jpg",
+                            version: "r179",
+                            url: "examples/loaders-model-obj"
+                        },
+                        {
+                            id: "loaders-model-fbx",
+                            title: "FBX 模型加载器",
+                            description: "加载和显示 FBX 格式的 3D 模型及其动画",
+                            thumbnail: "images/loaders-model-fbx.jpg",
+                            version: "r179",
+                            url: "examples/loaders-model-fbx"
+                        },
+                        {
+                            id: "loaders-model-stl",
+                            title: "STL 模型加载器",
+                            description: "加载和显示 STL 格式的 3D 模型",
+                            thumbnail: "images/loaders-model-stl.jpg",
+                            version: "r179",
+                            url: "examples/loaders-model-stl"
+                        },
+                        {
+                            id: "loaders-model-dae",
+                            title: "DAE/COLLADA 模型加载器",
+                            description: "加载和显示 DAE/COLLADA 格式的 3D 模型",
+                            thumbnail: "images/loaders-model-dae.jpg",
+                            version: "r179",
+                            url: "examples/loaders-model-dae"
+                        },
+                        {
+                            id: "loaders-model-vtk",
+                            title: "VTK 模型加载器",
+                            description: "加载和显示 VTK 格式的 3D 模型",
+                            thumbnail: "images/loaders-model-vtk.jpg",
+                            version: "r179",
+                            url: "examples/loaders-model-vtk"
+                        },
+                        {
+                            id: "loaders-model-pcd",
+                            title: "PCD 点云模型加载器",
+                            description: "加载和显示 PCD 格式的点云模型",
+                            thumbnail: "images/loaders-model-pcd.jpg",
+                            version: "r179",
+                            url: "examples/loaders-model-pcd"
+                        },
+                        {
+                            id: "loaders-model-3ds",
+                            title: "3DS 模型加载器",
+                            description: "加载和显示 3DS 格式的 3D 模型",
+                            thumbnail: "images/loaders-model-3ds.jpg",
+                            version: "r179",
+                            url: "examples/loaders-model-3ds"
+                        },
+                        {
+                            id: "loaders-model-amf",
+                            title: "AMF 模型加载器",
+                            description: "加载和显示 AMF 格式的 3D 模型",
+                            thumbnail: "images/loaders-model-amf.jpg",
+                            version: "r179",
+                            url: "examples/loaders-model-amf"
+                        },
+                        {
+                            id: "loaders-model-gcode",
+                            title: "GCODE 模型加载器",
+                            description: "加载和显示 GCODE 格式的 3D 打印模型",
+                            thumbnail: "images/loaders-model-gcode.jpg",
+                            version: "r179",
+                            url: "examples/loaders-model-gcode"
+                        },
+                        {
+                            id: "loaders-model-multi",
+                            title: "多格式模型加载器",
+                            description: "使用统一接口加载多种格式的 3D 模型",
+                            thumbnail: "images/loaders-model-multi.jpg",
+                            version: "r179",
+                            url: "examples/loaders-model-multi"
+                        }
+                    ]
+                },
+                {
+                    id: "loaders-texture",
+                    name: "纹理加载器",
+                    examples: [
+                        {
+                            id: "loaders-texture-basic",
+                            title: "基础纹理加载器",
+                            description: "加载和应用各种图像格式的纹理",
+                            thumbnail: "images/loaders-texture-basic.jpg",
+                            version: "r179",
+                            url: "examples/loaders-texture-basic"
+                        },
+                        {
+                            id: "loaders-texture-hdr",
+                            title: "HDR 纹理加载器",
+                            description: "加载和应用高动态范围(HDR)纹理",
+                            thumbnail: "images/loaders-texture-hdr.jpg",
+                            version: "r179",
+                            url: "examples/loaders-texture-hdr"
+                        },
+                        {
+                            id: "loaders-texture-cube",
+                            title: "立方体纹理加载器",
+                            description: "加载和应用立方体贴图纹理",
+                            thumbnail: "images/loaders-texture-cube.jpg",
+                            version: "r179",
+                            url: "examples/loaders-texture-cube"
+                        }
+                    ]
+                },
+                {
+                    id: "loaders-other",
+                    name: "其他加载器",
+                    examples: [
+                        {
+                            id: "loaders-font",
+                            title: "字体加载器",
+                            description: "加载和使用 3D 文本字体",
+                            thumbnail: "images/loaders-font.jpg",
+                            version: "r179",
+                            url: "examples/loaders-font"
+                        },
+                        {
+                            id: "loaders-audio",
+                            title: "音频加载器",
+                            description: "加载和播放 3D 场景中的音频",
+                            thumbnail: "images/loaders-audio.jpg",
+                            version: "r179",
+                            url: "examples/loaders-audio"
                         }
                     ]
                 }

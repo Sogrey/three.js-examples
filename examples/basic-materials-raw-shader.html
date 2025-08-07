@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- 页面描述，有助于SEO优化 -->
-    <meta name="description" content="创建一个正八面体，展示对称多面体结构。">
+    <meta name="description" content="使用RawShaderMaterial创建自定义着色器效果，展示GLSL着色器编程的基础知识。">
     <!-- Three.js版本信息 -->
     <meta name="three-version" content="r179">
-    <title>Three.js 示例 - 正八面体</title>
+    <title>Three.js 示例 - 原始着色器材质</title>
     <!-- 引入公共样式表 -->
     <link rel="stylesheet" href="../css/example-common.css">
 </head>
@@ -29,7 +29,7 @@
         }
     </script>
     
-    <!-- 示例代码 - 正八面体示例 -->
+    <!-- 示例代码 - 原始着色器材质 -->
     <script type="module">
         // 导入Three.js核心模块
         import * as THREE from 'three';
@@ -42,26 +42,112 @@
         window.scene = null;     // 场景对象，包含所有3D元素
         window.camera = null;    // 相机对象，定义视角和视野
         window.renderer = null;  // 渲染器对象，将场景渲染到canvas上
-        let mesh;               // 正八面体网格对象
+        let mesh;               // 3D网格对象
         let controls;           // 轨道控制器对象
+        let clock;              // 时钟对象，用于动画
         
-        // 参数配置对象 - 用于GUI控制面板和创建正八面体
+        // 参数配置对象 - 用于GUI控制面板和创建3D对象
         const params = {
             // 几何体参数
-            radius: 2,              // 正八面体半径（从中心到顶点的距离）
-            detail: 0,              // 细节级别（0表示基本形状，值越大细分越多）
+            geometry: 'sphere',   // 几何体类型
+            radius: 1.0,          // 半径
+            segments: 32,         // 分段数
             
-            // 材质参数
-            color: 0x2ecc71,        // 颜色（绿色）
-            metalness: 0.2,         // 金属度（0-1）
-            roughness: 0.5,         // 粗糙度（0-1）
-            wireframe: false,       // 是否显示线框模式
-            flatShading: true,      // 是否使用平面着色
-            side: THREE.FrontSide,  // 渲染面：正面(FrontSide)、背面(BackSide)或双面(DoubleSide)
+            // 着色器参数
+            color1: '#ff0000',    // 颜色1（红色）
+            color2: '#0000ff',    // 颜色2（蓝色）
+            speed: 1.0,           // 动画速度
+            frequency: 3.0,       // 频率
+            noiseStrength: 0.5,   // 噪声强度
             
             // 控制器参数
-            autoRotate: true        // 是否自动旋转
+            autoRotate: true      // 是否自动旋转
         };
+        
+        // 顶点着色器代码 - 使用GLSL语言编写
+        const vertexShader = `
+            // RawShaderMaterial需要明确定义精度和属性
+            precision mediump float;
+            precision mediump int;
+            
+            // 属性 - 从几何体获取
+            attribute vec3 position;
+            attribute vec3 normal;
+            attribute vec2 uv;
+            
+            // 统一变量 - 从Three.js传递
+            uniform mat4 modelViewMatrix;
+            uniform mat4 projectionMatrix;
+            uniform mat3 normalMatrix;
+            uniform float time;
+            uniform float noiseStrength;
+            uniform float frequency;
+            
+            // 传递给片元着色器的变量
+            varying vec2 vUv;
+            varying vec3 vNormal;
+            varying float vNoise;
+            
+            // 噪声函数 - 简单的伪随机函数
+            float noise(vec3 p) {
+                float t = fract(sin(dot(p, vec3(12.9898, 78.233, 45.5432))) * 43758.5453);
+                return t;
+            }
+            
+            void main() {
+                // 传递UV坐标给片元着色器
+                vUv = uv;
+                
+                // 计算法线
+                vNormal = normalize(normalMatrix * normal);
+                
+                // 计算噪声值
+                float t = time * 0.5;
+                vec3 pos = position;
+                float noiseVal = noise(pos * frequency + t);
+                
+                // 根据噪声值调整顶点位置
+                vec3 newPosition = position + normal * noiseVal * noiseStrength;
+                
+                // 计算最终位置
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition, 1.0);
+                
+                // 传递噪声值给片元着色器
+                vNoise = noiseVal;
+            }
+        `;
+        
+        // 片元着色器代码 - 使用GLSL语言编写
+        const fragmentShader = `
+            // RawShaderMaterial需要明确定义精度
+            precision mediump float;
+            precision mediump int;
+            
+            // 从顶点着色器接收的变量
+            varying vec2 vUv;
+            varying vec3 vNormal;
+            varying float vNoise;
+            
+            // 统一变量 - 从Three.js传递
+            uniform float time;
+            uniform vec3 color1;
+            uniform vec3 color2;
+            
+            void main() {
+                // 计算光照效果 - 简单的漫反射
+                float light = dot(vNormal, normalize(vec3(1.0, 1.0, 1.0)));
+                light = 0.5 + 0.5 * light; // 将范围从[-1,1]映射到[0,1]
+                
+                // 混合两种颜色
+                vec3 color = mix(color1, color2, vNoise);
+                
+                // 应用光照
+                color *= light;
+                
+                // 设置最终颜色
+                gl_FragColor = vec4(color, 1.0);
+            }
+        `;
         
         /**
          * 初始化Three.js场景、相机、渲染器和控制器
@@ -77,7 +163,7 @@
             // 参数：视场角(FOV)，宽高比，近裁剪面，远裁剪面
             window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
             // 设置相机位置，以便能看到场景中的对象
-            window.camera.position.z = 5;
+            window.camera.position.z = 3;
             
             // 创建WebGL渲染器 - 将3D场景渲染到canvas上
             window.renderer = new THREE.WebGLRenderer({ antialias: true }); // 启用抗锯齿
@@ -94,25 +180,14 @@
             controls.dampingFactor = 0.05;       // 阻尼系数
             controls.autoRotate = params.autoRotate; // 设置是否自动旋转
             
-            // 创建正八面体
-            createOctahedron();
+            // 创建时钟对象 - 用于动画
+            clock = new THREE.Clock();
+            
+            // 创建3D对象
+            createMesh();
             
             // 初始化GUI控制面板
             initGUI();
-            
-            // 添加环境光 - 提供均匀的全局照明
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
-            scene.add(ambientLight);
-            
-            // 添加主方向光 - 模拟太阳光
-            const directionalLight1 = new THREE.DirectionalLight(0xffffff, 0.8);
-            directionalLight1.position.set(5, 5, 5); // 设置光源位置
-            scene.add(directionalLight1);
-            
-            // 添加辅助方向光 - 提供补充照明，增加视觉深度
-            const directionalLight2 = new THREE.DirectionalLight(0x84c3be, 0.5);
-            directionalLight2.position.set(-5, -2, -5); // 从相反方向照射
-            scene.add(directionalLight2);
             
             // 监听窗口大小变化，调整场景
             window.addEventListener('resize', onWindowResize);
@@ -135,11 +210,11 @@
         }
         
         /**
-         * 创建正八面体
-         * 根据当前参数创建或更新正八面体
+         * 创建3D网格对象
+         * 根据当前参数创建或更新3D对象
          */
-        function createOctahedron() {
-            // 如果已存在正八面体，则从场景中移除并释放资源
+        function createMesh() {
+            // 如果已存在网格对象，则从场景中移除并释放资源
             if (mesh) {
                 scene.remove(mesh);
                 // 释放几何体和材质的内存，避免内存泄漏
@@ -147,27 +222,65 @@
                 mesh.material.dispose();
             }
             
-            // 创建正八面体几何体
-            // OctahedronGeometry参数：
-            // 半径，细节级别（0表示基本形状，值越大细分越多）
-            const geometry = new THREE.OctahedronGeometry(
-                params.radius,
-                params.detail
-            );
+            // 根据选择的几何体类型创建几何体
+            let geometry;
+            switch (params.geometry) {
+                case 'sphere':
+                    geometry = new THREE.SphereGeometry(params.radius, params.segments, params.segments);
+                    break;
+                case 'box':
+                    geometry = new THREE.BoxGeometry(
+                        params.radius * 2, 
+                        params.radius * 2, 
+                        params.radius * 2, 
+                        params.segments, 
+                        params.segments, 
+                        params.segments
+                    );
+                    break;
+                case 'torus':
+                    geometry = new THREE.TorusGeometry(
+                        params.radius, 
+                        params.radius / 3, 
+                        params.segments / 2, 
+                        params.segments
+                    );
+                    break;
+                case 'torusKnot':
+                    geometry = new THREE.TorusKnotGeometry(
+                        params.radius, 
+                        params.radius / 3, 
+                        params.segments * 2, 
+                        params.segments / 2
+                    );
+                    break;
+                default:
+                    geometry = new THREE.SphereGeometry(params.radius, params.segments, params.segments);
+            }
             
-            // 创建标准材质 - 使用基于物理的渲染(PBR)
-            const material = new THREE.MeshStandardMaterial({ 
-                color: params.color,        // 材质颜色
-                metalness: params.metalness, // 金属度 - 影响反射特性
-                roughness: params.roughness, // 粗糙度 - 影响光的散射方式
-                wireframe: params.wireframe, // 是否显示线框模式
-                flatShading: params.flatShading, // 是否使用平面着色
-                side: params.side           // 渲染面：正面、背面或双面
+            // 解析颜色字符串为THREE.Color对象
+            const color1 = new THREE.Color(params.color1);
+            const color2 = new THREE.Color(params.color2);
+            
+            // 创建原始着色器材质
+            // RawShaderMaterial需要我们提供所有GLSL代码，包括属性和统一变量的定义
+            const material = new THREE.RawShaderMaterial({
+                uniforms: {
+                    time: { value: 0.0 },
+                    color1: { value: new THREE.Vector3(color1.r, color1.g, color1.b) },
+                    color2: { value: new THREE.Vector3(color2.r, color2.g, color2.b) },
+                    noiseStrength: { value: params.noiseStrength },
+                    frequency: { value: params.frequency }
+                },
+                vertexShader: vertexShader,
+                fragmentShader: fragmentShader,
+                wireframe: false,
+                side: THREE.DoubleSide
             });
             
             // 创建网格 - 将几何体和材质结合
             mesh = new THREE.Mesh(geometry, material);
-            // 将正八面体添加到场景中
+            // 将网格添加到场景中
             scene.add(mesh);
         }
         
@@ -200,81 +313,66 @@
             
             // 几何体参数控制组
             const geometryFolder = gui.addFolder('几何体参数');
+            // 添加几何体类型选择
+            geometryFolder.add(params, 'geometry', ['sphere', 'box', 'torus', 'torusKnot'])
+                .onChange(createMesh)
+                .name('几何体类型');
             // 添加半径滑块
-            geometryFolder.add(params, 'radius', 0.5, 5)
-                .onChange(createOctahedron) // 当值变化时重新创建正八面体
+            geometryFolder.add(params, 'radius', 0.5, 2)
+                .onChange(createMesh)
                 .name('半径');
-            // 添加细节级别滑块
-            geometryFolder.add(params, 'detail', 0, 5)
-                .step(1) // 设置步长为整数
-                .onChange(createOctahedron)
-                .name('细节级别');
+            // 添加分段数滑块
+            geometryFolder.add(params, 'segments', 8, 64)
+                .step(1)
+                .onChange(createMesh)
+                .name('分段数');
             // 默认展开此文件夹
             geometryFolder.open();
             
-            // 材质参数控制组
-            const materialFolder = gui.addFolder('材质参数');
-            // 添加金属度滑块
-            materialFolder.add(params, 'metalness', 0, 1)
-                .step(0.01) // 设置步长为0.01
+            // 着色器参数控制组
+            const shaderFolder = gui.addFolder('着色器参数');
+            // 添加颜色1选择器
+            shaderFolder.addColor(params, 'color1')
                 .onChange(value => {
-                    // 直接更新材质属性，无需重新创建
-                    mesh.material.metalness = value;
+                    const color = new THREE.Color(value);
+                    mesh.material.uniforms.color1.value.set(color.r, color.g, color.b);
                 })
-                .name('金属度');
-            // 添加粗糙度滑块
-            materialFolder.add(params, 'roughness', 0, 1)
-                .step(0.01)
+                .name('颜色1');
+            // 添加颜色2选择器
+            shaderFolder.addColor(params, 'color2')
                 .onChange(value => {
-                    mesh.material.roughness = value;
+                    const color = new THREE.Color(value);
+                    mesh.material.uniforms.color2.value.set(color.r, color.g, color.b);
                 })
-                .name('粗糙度');
-            // 添加颜色选择器
-            materialFolder.addColor(params, 'color')
+                .name('颜色2');
+            // 添加速度滑块
+            shaderFolder.add(params, 'speed', 0, 5)
+                .name('动画速度');
+            // 添加频率滑块
+            shaderFolder.add(params, 'frequency', 0.1, 10)
                 .onChange(value => {
-                    mesh.material.color.set(value);
+                    mesh.material.uniforms.frequency.value = value;
                 })
-                .name('颜色');
-            // 添加线框模式切换
-            materialFolder.add(params, 'wireframe')
+                .name('频率');
+            // 添加噪声强度滑块
+            shaderFolder.add(params, 'noiseStrength', 0, 1)
                 .onChange(value => {
-                    mesh.material.wireframe = value;
+                    mesh.material.uniforms.noiseStrength.value = value;
                 })
-                .name('线框模式');
-            // 添加平面着色切换
-            materialFolder.add(params, 'flatShading')
-                .onChange(value => {
-                    mesh.material.flatShading = value;
-                    mesh.material.needsUpdate = true; // 材质需要更新才能应用平面着色变化
-                })
-                .name('平面着色');
-                
-            // 添加渲染面选择
-            const sideOptions = {
-                '正面': THREE.FrontSide,
-                '背面': THREE.BackSide,
-                '双面': THREE.DoubleSide
-            };
-            materialFolder.add(params, 'side', sideOptions)
-                .onChange(value => {
-                    mesh.material.side = value;
-                    mesh.material.needsUpdate = true;
-                })
-                .name('渲染面');
+                .name('噪声强度');
             // 默认展开此文件夹
-            materialFolder.open();
+            shaderFolder.open();
             
-            // 动画参数控制组
-            const animationFolder = gui.addFolder('动画参数');
+            // 控制器参数控制组
+            const controlsFolder = gui.addFolder('控制器参数');
             // 添加自动旋转切换
-            animationFolder.add(params, 'autoRotate')
+            controlsFolder.add(params, 'autoRotate')
                 .name('自动旋转')
                 .onChange(value => {
                     controls.autoRotate = value;
-                    params.autoRotate = value; // 同时更新params中的值
                 });
             // 默认展开此文件夹
-            animationFolder.open();
+            controlsFolder.open();
         }
         
         /**
@@ -290,8 +388,11 @@
             // 如果启用了阻尼效果，需要在每帧调用update
             controls.update();
             
-            // 此处可以添加自定义的每帧更新逻辑
-            
+            // 更新着色器中的时间统一变量
+            if (mesh && mesh.material.uniforms) {
+                // 获取经过的时间并乘以速度参数
+                mesh.material.uniforms.time.value = clock.getElapsedTime() * params.speed;
+            }
             
             // 渲染场景
             window.renderer.render(window.scene, window.camera);

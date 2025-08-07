@@ -63,10 +63,6 @@
             wireframe: false,      // 是否显示线框模式
             side: THREE.FrontSide, // 渲染面：正面(FrontSide)、背面(BackSide)或双面(DoubleSide)
             
-            // 动画参数
-            rotationSpeedX: 0.01,  // X轴旋转速度
-            rotationSpeedY: 0.01,  // Y轴旋转速度
-            
             // 控制器参数
             autoRotate: true       // 是否自动旋转
         };
@@ -299,14 +295,6 @@
             
             // 动画参数控制组
             const animationFolder = gui.addFolder('动画参数');
-            // 添加X轴旋转速度滑块
-            animationFolder.add(params, 'rotationSpeedX', 0, 0.05)
-                .step(0.001)
-                .name('X轴旋转速度');
-            // 添加Y轴旋转速度滑块
-            animationFolder.add(params, 'rotationSpeedY', 0, 0.05)
-                .step(0.001)
-                .name('Y轴旋转速度');
             // 添加自动旋转切换
             animationFolder.add(params, 'autoRotate')
                 .name('自动旋转')

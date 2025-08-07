@@ -62,10 +62,6 @@
             side: 'double',         // 渲染面：'front'（正面）, 'back'（背面）, 'double'（双面）
             useTexture: true,       // 是否使用纹理
             
-            // 动画参数
-            rotationSpeedX: 0.01,   // X轴旋转速度
-            rotationSpeedY: 0.01,   // Y轴旋转速度
-            
             // 控制器参数
             autoRotate: true        // 是否自动旋转
         };
@@ -198,8 +194,6 @@
                 wireframe: params.wireframe, // 是否显示线框模式
                 side: side,                 // 渲染面
                 map: params.useTexture ? texture : null // 纹理贴图
-            , // 是否显示线框模式
-                side: params.side           // 渲染面：正面、背面或双面
             });
             
             // 创建网格 - 将几何体和材质结合
@@ -315,14 +309,6 @@
             
             // 动画参数控制组
             const animationFolder = gui.addFolder('动画参数');
-            // 添加X轴旋转速度滑块
-            animationFolder.add(params, 'rotationSpeedX', 0, 0.05)
-                .step(0.001)
-                .name('X轴旋转速度');
-            // 添加Y轴旋转速度滑块
-            animationFolder.add(params, 'rotationSpeedY', 0, 0.05)
-                .step(0.001)
-                .name('Y轴旋转速度');
             // 添加自动旋转切换
             animationFolder.add(params, 'autoRotate')
                 .name('自动旋转')
