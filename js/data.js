@@ -288,108 +288,6 @@ const threejsData = {
             ]
         },
         {
-            id: "animation",
-            name: "动画与交互",
-            icon: "bi-film",
-            subcategories: [
-                {
-                    id: "animation-basics",
-                    name: "基础动画",
-                    examples: [
-                        {
-                            id: "animation-keyframes",
-                            title: "关键帧动画",
-                            description: "使用关键帧创建复杂的动画序列",
-                            thumbnail: "images/animation-keyframes.jpg",
-                            version: "r150",
-                            url: "examples/animation-keyframes"
-                        },
-                        {
-                            id: "animation-morph",
-                            title: "变形动画",
-                            description: "在不同几何体之间平滑过渡的变形效果",
-                            thumbnail: "images/animation-morph.jpg",
-                            version: "r150",
-                            url: "examples/animation-morph"
-                        }
-                    ]
-                },
-                {
-                    id: "animation-interaction",
-                    name: "交互效果",
-                    examples: [
-                        {
-                            id: "animation-raycaster",
-                            title: "射线检测",
-                            description: "使用射线检测实现对象选择和交互",
-                            thumbnail: "images/animation-raycaster.jpg",
-                            version: "r150",
-                            url: "examples/animation-raycaster"
-                        },
-                        {
-                            id: "animation-drag",
-                            title: "拖拽控制",
-                            description: "实现3D对象的拖拽和放置功能",
-                            thumbnail: "images/animation-drag.jpg",
-                            version: "r150",
-                            url: "examples/animation-drag"
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            id: "advanced",
-            name: "高级技术",
-            icon: "bi-stars",
-            subcategories: [
-                {
-                    id: "advanced-shaders",
-                    name: "着色器",
-                    examples: [
-                        {
-                            id: "advanced-custom-shader",
-                            title: "自定义着色器",
-                            description: "创建自定义着色器实现特殊视觉效果",
-                            thumbnail: "images/advanced-custom-shader.jpg",
-                            version: "r150",
-                            url: "examples/advanced-custom-shader"
-                        },
-                        {
-                            id: "advanced-shader-patterns",
-                            title: "着色器图案",
-                            description: "使用着色器创建复杂的几何图案和纹理",
-                            thumbnail: "images/advanced-shader-patterns.jpg",
-                            version: "r150",
-                            url: "examples/advanced-shader-patterns"
-                        }
-                    ]
-                },
-                {
-                    id: "advanced-physics",
-                    name: "物理引擎",
-                    examples: [
-                        {
-                            id: "advanced-physics-cannon",
-                            title: "Cannon.js 物理",
-                            description: "使用 Cannon.js 实现物理碰撞和重力效果",
-                            thumbnail: "images/advanced-physics-cannon.jpg",
-                            version: "r150",
-                            url: "examples/advanced-physics-cannon"
-                        },
-                        {
-                            id: "advanced-physics-ammo",
-                            title: "Ammo.js 物理",
-                            description: "使用 Ammo.js 创建复杂的物理交互场景",
-                            thumbnail: "images/advanced-physics-ammo.jpg",
-                            version: "r150",
-                            url: "examples/advanced-physics-ammo"
-                        }
-                    ]
-                }
-            ]
-        },
-        {
             id: "loaders",
             name: "加载器",
             icon: "bi-cloud-download",
@@ -537,6 +435,108 @@ const threejsData = {
                             thumbnail: "images/loaders-audio.jpg",
                             version: "r179",
                             url: "examples/loaders-audio"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            id: "animation",
+            name: "动画与交互",
+            icon: "bi-film",
+            subcategories: [
+                {
+                    id: "animation-basics",
+                    name: "基础动画",
+                    examples: [
+                        {
+                            id: "animation-keyframes",
+                            title: "关键帧动画",
+                            description: "使用关键帧创建复杂的动画序列",
+                            thumbnail: "images/animation-keyframes.jpg",
+                            version: "r150",
+                            url: "examples/animation-keyframes"
+                        },
+                        {
+                            id: "animation-morph",
+                            title: "变形动画",
+                            description: "在不同几何体之间平滑过渡的变形效果",
+                            thumbnail: "images/animation-morph.jpg",
+                            version: "r150",
+                            url: "examples/animation-morph"
+                        }
+                    ]
+                },
+                {
+                    id: "animation-interaction",
+                    name: "交互效果",
+                    examples: [
+                        {
+                            id: "animation-raycaster",
+                            title: "射线检测",
+                            description: "使用射线检测实现对象选择和交互",
+                            thumbnail: "images/animation-raycaster.jpg",
+                            version: "r150",
+                            url: "examples/animation-raycaster"
+                        },
+                        {
+                            id: "animation-drag",
+                            title: "拖拽控制",
+                            description: "实现3D对象的拖拽和放置功能",
+                            thumbnail: "images/animation-drag.jpg",
+                            version: "r150",
+                            url: "examples/animation-drag"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            id: "advanced",
+            name: "高级技术",
+            icon: "bi-stars",
+            subcategories: [
+                {
+                    id: "advanced-shaders",
+                    name: "着色器",
+                    examples: [
+                        {
+                            id: "advanced-custom-shader",
+                            title: "自定义着色器",
+                            description: "创建自定义着色器实现特殊视觉效果",
+                            thumbnail: "images/advanced-custom-shader.jpg",
+                            version: "r150",
+                            url: "examples/advanced-custom-shader"
+                        },
+                        {
+                            id: "advanced-shader-patterns",
+                            title: "着色器图案",
+                            description: "使用着色器创建复杂的几何图案和纹理",
+                            thumbnail: "images/advanced-shader-patterns.jpg",
+                            version: "r150",
+                            url: "examples/advanced-shader-patterns"
+                        }
+                    ]
+                },
+                {
+                    id: "advanced-physics",
+                    name: "物理引擎",
+                    examples: [
+                        {
+                            id: "advanced-physics-cannon",
+                            title: "Cannon.js 物理",
+                            description: "使用 Cannon.js 实现物理碰撞和重力效果",
+                            thumbnail: "images/advanced-physics-cannon.jpg",
+                            version: "r150",
+                            url: "examples/advanced-physics-cannon"
+                        },
+                        {
+                            id: "advanced-physics-ammo",
+                            title: "Ammo.js 物理",
+                            description: "使用 Ammo.js 创建复杂的物理交互场景",
+                            thumbnail: "images/advanced-physics-ammo.jpg",
+                            version: "r150",
+                            url: "examples/advanced-physics-ammo"
                         }
                     ]
                 }

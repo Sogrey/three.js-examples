@@ -390,7 +390,7 @@ footer {
 
 /* 为了防止内容被footer遮挡，给内容区域添加底部padding */
 .examples-container {
-    padding-bottom: 60px; /* 根据footer高度调整 */
+    padding-bottom: 90px; /* 根据footer高度调整 */
 }
 
 /* 响应式设计 */
