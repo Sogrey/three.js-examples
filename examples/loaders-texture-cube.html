@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 页面描述，有助于SEO优化 -->
+    <meta name="description" content="加载和应用立方体贴图纹理">
+    <!-- Three.js版本信息 -->
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 立方体纹理加载器</title>
+    <!-- 引入公共样式表 -->
+    <link rel="stylesheet" href="../css/example-common.css">
+</head>
+<body>
+    <!-- 3D场景容器 -->
+    <div class="three-container" id="threeContainer"></div>
+    
+    <!-- 
+    使用importmap定义模块导入映射
+    这是一种现代化的ES模块导入方式，可以简化导入路径
+    通过定义别名，可以使用简短的导入语句，如 import * as THREE from 'three'
+    -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../libs/three/r179/build/three.module.js",
+                "three/addons/": "../libs/three/r179/jsm/"
+            }
+        }
+    </script>
+    
+    <!-- 示例代码 - 立方体纹理加载器 -->
+    <script type="module">
+        // 导入Three.js核心模块
+        import * as THREE from 'three';
+        // 导入轨道控制器，用于交互式旋转和缩放场景
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        // 导入GUI控制面板，用于调整参数
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+        
+        // Three.js 核心变量 - 暴露给全局作用域以便截图功能使用
+        window.scene = null;     // 场景对象，包含所有3D元素
+        window.camera = null;    // 相机对象，定义视角和视野
+        window.renderer = null;  // 渲染器对象，将场景渲染到canvas上
+        let sphere, cube, torus; // 3D网格对象
+        let controls;           // 轨道控制器对象
+        let cubeTexture;        // 立方体纹理
+        
+        // 参数配置对象 - 用于GUI控制面板和创建3D对象
+        const params = {
+            // 立方体纹理参数
+            cubeType: 'procedural',
+            reflectivity: 1.0,
+            refractionRatio: 0.98,
+            materialType: 'standard',
+            showSkybox: true,
+            skyboxIntensity: 1.0,
+            
+            // 控制器参数
+            autoRotate: true       // 是否自动旋转
+        };
+        
+        /**
+         * 初始化Three.js场景、相机、渲染器和控制器
+         * 这是整个应用的入口点
+         */
+        function init() {
+            // 创建场景 - 所有3D对象的容器
+            window.scene = new THREE.Scene();
+            
+            // 创建透视相机 - 模拟人眼视角
+            // 参数：视场角(FOV)，宽高比，近裁剪面，远裁剪面
+            window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            // 设置相机位置，以便能看到场景中的对象
+            window.camera.position.set(0, 0, 5);
+            
+            // 创建WebGL渲染器 - 将3D场景渲染到canvas上
+            window.renderer = new THREE.WebGLRenderer({ antialias: true }); // 启用抗锯齿
+            // 设置渲染器尺寸为窗口大小
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            // 设置设备像素比，提高在高DPI设备上的清晰度
+            window.renderer.setPixelRatio(window.devicePixelRatio);
+            window.renderer.outputColorSpace = THREE.SRGBColorSpace;
+            // 将渲染器的canvas添加到DOM中
+            document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+            
+            // 添加轨道控制器 - 允许用户交互式旋转和缩放场景
+            controls = new OrbitControls(window.camera, window.renderer.domElement);
+            controls.enableDamping = true;       // 启用阻尼效果，使控制更平滑
+            controls.dampingFactor = 0.05;       // 阻尼系数
+            controls.autoRotate = params.autoRotate; // 设置是否自动旋转
+            
+            // 创建3D对象
+            createGeometries();
+            
+            // 加载立方体纹理
+            loadCubeTexture();
+            
+            // 添加光源
+            addLights();
+            
+            // 初始化GUI控制面板
+            initGUI();
+            
+            // 监听窗口大小变化，调整场景
+            window.addEventListener('resize', onWindowResize);
+            
+            // 开始动画循环
+            animate();
+        }
+        
+        /**
+         * 处理窗口大小变化
+         * 调整相机和渲染器以适应新的窗口尺寸
+         */
+        function onWindowResize() {
+            // 更新相机宽高比
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            // 更新相机投影矩阵
+            window.camera.updateProjectionMatrix();
+            // 更新渲染器尺寸
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        /**
+         * 创建几何体
+         */
+        function createGeometries() {
+            // 球体 - 反射效果
+            const sphereGeometry = new THREE.SphereGeometry(0.8, 64, 32);
+            const sphereMaterial = new THREE.MeshStandardMaterial({
+                color: 0xffffff,
+                metalness: 1.0,
+                roughness: 0.0
+            });
+            sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+            sphere.position.x = -2.5;
+            window.scene.add(sphere);
+
+            // 立方体 - 折射效果
+            const cubeGeometry = new THREE.BoxGeometry(1.5, 1.5, 1.5);
+            const cubeMaterial = new THREE.MeshBasicMaterial({
+                color: 0xffffff,
+                transparent: true,
+                opacity: 0.8
+            });
+            cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+            cube.position.x = 0;
+            window.scene.add(cube);
+
+            // 圆环 - 混合效果
+            const torusGeometry = new THREE.TorusGeometry(0.8, 0.3, 16, 100);
+            const torusMaterial = new THREE.MeshStandardMaterial({
+                color: 0xffffff,
+                metalness: 0.5,
+                roughness: 0.2
+            });
+            torus = new THREE.Mesh(torusGeometry, torusMaterial);
+            torus.position.x = 2.5;
+            window.scene.add(torus);
+        }
+
+        // 加载立方体纹理
+        function loadCubeTexture() {
+            if (params.cubeType === 'procedural') {
+                // 创建程序化立方体纹理
+                cubeTexture = createProceduralCubeTexture();
+            } else {
+                // 这里可以加载真实的立方体贴图文件
+                // 由于没有实际的立方体贴图文件，我们使用程序化生成
+                cubeTexture = createProceduralCubeTexture();
+            }
+
+            // 设置场景背景
+            if (params.showSkybox) {
+                window.scene.background = cubeTexture;
+            }
+
+            // 更新材质
+            updateMaterials();
+
+            console.log('立方体纹理加载完成');
+        }
+
+        // 创建程序化立方体纹理
+        function createProceduralCubeTexture() {
+            const size = 256;
+            const cubeRenderTarget = new THREE.WebGLCubeRenderTarget(size);
+            
+            // 创建立方体相机
+            const cubeCamera = new THREE.CubeCamera(0.1, 1000, cubeRenderTarget);
+            
+            // 创建临时场景
+            const tempScene = new THREE.Scene();
+            
+            // 创建渐变背景
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const context = canvas.getContext('2d');
+            
+            const gradient = context.createRadialGradient(
+                size/2, size/2, 0,
+                size/2, size/2, size/2
+            );
+            gradient.addColorStop(0, '#ffffff');
+            gradient.addColorStop(0.5, '#87ceeb');
+            gradient.addColorStop(1, '#4169e1');
+            
+            context.fillStyle = gradient;
+            context.fillRect(0, 0, size, size);
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            tempScene.background = texture;
+            
+            // 渲染立方体纹理
+            cubeCamera.update(window.renderer, tempScene);
+            
+            return cubeRenderTarget.texture;
+        }
+
+        // 更新材质
+        function updateMaterials() {
+            // 更新球体材质 - 反射
+            if (sphere && cubeTexture) {
+                sphere.material.envMap = cubeTexture;
+                sphere.material.envMapIntensity = params.reflectivity;
+                sphere.material.needsUpdate = true;
+            }
+
+            // 更新立方体材质 - 折射
+            if (cube && cubeTexture) {
+                cube.material.envMap = cubeTexture;
+                cube.material.refractionRatio = params.refractionRatio;
+                cube.material.needsUpdate = true;
+            }
+
+            // 更新圆环材质 - 环境映射
+            if (torus && cubeTexture) {
+                torus.material.envMap = cubeTexture;
+                torus.material.envMapIntensity = params.reflectivity * 0.5;
+                torus.material.needsUpdate = true;
+            }
+        }
+
+        // 更新材质类型
+        function updateMaterialType() {
+            const objects = [sphere, cube, torus];
+            
+            objects.forEach((obj, index) => {
+                const geometry = obj.geometry;
+                let material;
+
+                switch (params.materialType) {
+                    case 'basic':
+                        material = new THREE.MeshBasicMaterial({
+                            color: 0xffffff,
+                            envMap: cubeTexture
+                        });
+                        break;
+                    case 'standard':
+                        material = new THREE.MeshStandardMaterial({
+                            color: 0xffffff,
+                            metalness: index === 0 ? 1.0 : 0.5,
+                            roughness: index === 0 ? 0.0 : 0.2,
+                            envMap: cubeTexture
+                        });
+                        break;
+                    case 'physical':
+                        material = new THREE.MeshPhysicalMaterial({
+                            color: 0xffffff,
+                            metalness: index === 0 ? 1.0 : 0.5,
+                            roughness: index === 0 ? 0.0 : 0.2,
+                            envMap: cubeTexture,
+                            clearcoat: 0.3,
+                            clearcoatRoughness: 0.25
+                        });
+                        break;
+                }
+
+                obj.material.dispose();
+                obj.material = material;
+            });
+
+            updateMaterials();
+        }
+
+        // 添加光源
+        function addLights() {
+            // 环境光
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
+            window.scene.add(ambientLight);
+            
+            // 平行光
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+            directionalLight.position.set(5, 5, 5);
+            window.scene.add(directionalLight);
+        }
+        
+        /**
+         * 初始化GUI控制面板
+         * 创建用户可交互的控制界面，用于调整参数
+         */
+        function initGUI() {
+            // 创建GUI实例
+            const gui = new GUI({ title: '立方体纹理加载器控制面板', width: 300 });
+            
+            // 调整GUI位置，避免与其他UI元素重叠
+            gui.domElement.style.position = 'absolute';
+            gui.domElement.style.top = '60px';
+            gui.domElement.style.right = '10px';
+            
+            // 确保GUI在所有环境下都可见
+            gui.domElement.style.zIndex = '1000';
+            gui.domElement.style.maxHeight = '80vh';
+            gui.domElement.style.overflowY = 'auto';
+            
+            // 确保GUI在页面加载后立即可见
+            setTimeout(() => {
+                gui.show();
+                for (const controller of gui.controllers) {
+                    controller.updateDisplay();
+                }
+            }, 100);
+
+            // 立方体纹理设置
+            const cubeFolder = gui.addFolder('立方体纹理');
+            
+            cubeFolder.add(params, 'cubeType', ['procedural'])
+                .name('纹理类型')
+                .onChange(loadCubeTexture);
+
+            cubeFolder.add(params, 'showSkybox')
+                .name('显示天空盒')
+                .onChange((value) => {
+                    window.scene.background = value ? cubeTexture : null;
+                });
+
+            cubeFolder.add(params, 'skyboxIntensity', 0, 2, 0.01)
+                .name('天空盒强度');
+
+            // 材质设置
+            const materialFolder = gui.addFolder('材质设置');
+            
+            materialFolder.add(params, 'materialType', ['basic', 'standard', 'physical'])
+                .name('材质类型')
+                .onChange(updateMaterialType);
+
+            materialFolder.add(params, 'reflectivity', 0, 2, 0.01)
+                .name('反射强度')
+                .onChange(updateMaterials);
+
+            materialFolder.add(params, 'refractionRatio', 0.5, 1.5, 0.01)
+                .name('折射比率')
+                .onChange(updateMaterials);
+
+            // 动画参数控制组
+            const animationFolder = gui.addFolder('动画参数');
+            animationFolder.add(params, 'autoRotate')
+                .name('自动旋转')
+                .onChange(value => {
+                    controls.autoRotate = value;
+                });
+
+            cubeFolder.open();
+            materialFolder.open();
+            animationFolder.open();
+        }
+        
+        /**
+         * 动画循环函数
+         * 使用requestAnimationFrame实现平滑动画
+         * 每帧更新场景并渲染
+         */
+        function animate() {
+            // 请求下一帧动画
+            requestAnimationFrame(animate);
+            
+            // 更新轨道控制器
+            controls.update();
+            
+            // 旋转几何体
+            if (sphere) sphere.rotation.y += 0.005;
+            if (cube) {
+                cube.rotation.x += 0.01;
+                cube.rotation.y += 0.005;
+            }
+            if (torus) {
+                torus.rotation.x += 0.008;
+                torus.rotation.z += 0.003;
+            }
+
+            // 渲染场景
+            window.renderer.render(window.scene, window.camera);
+        }
+        
+        // 初始化应用
+        init();
+    </script>
+    
+    <!-- 
+    ===================================================
+    截图功能脚本 - 请勿修改此部分
+    此脚本处理从父窗口发来的截图请求，用于生成示例封面，与示例业务并无关联
+    ===================================================
+    -->
+    <script>
+        // 全局变量，用于存储渲染器引用
+        let _screenshotRenderer;
+        
+        // 添加消息监听器，处理截图请求
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    // 获取当前渲染器
+                    if (!_screenshotRenderer && window.renderer) {
+                        _screenshotRenderer = window.renderer;
+                    }
+                    
+                    // 确保渲染器已经初始化
+                    if (!_screenshotRenderer) {
+                        throw new Error('渲染器未初始化');
+                    }
+                    
+                    // 强制渲染一帧，确保内容是最新的
+                    if (window.scene && window.camera) {
+                        _screenshotRenderer.render(window.scene, window.camera);
+                    }
+                    
+                    // 获取canvas的图像数据（使用较低的质量和尺寸以减小文件大小）
+                    const quality = event.data.quality || 0.8;
+                    const canvas = _screenshotRenderer.domElement;
+                    
+                    // 创建一个较小尺寸的临时canvas
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600; // 最大尺寸为600像素
+                    
+                    // 计算缩放比例，保持宽高比
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    
+                    // 在临时canvas上绘制缩小的图像
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    
+                    // 获取缩小后的图像数据
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    
+                    // 将图像数据发送回父窗口
+                    window.parent.postMessage({
+                        type: 'screenshot-data',
+                        dataUrl: dataUrl
+                    }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    // 发送错误信息回父窗口
+                    window.parent.postMessage({
+                        type: 'screenshot-error',
+                        error: error.message
+                    }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

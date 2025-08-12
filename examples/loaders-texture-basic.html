@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 页面描述，有助于SEO优化 -->
+    <meta name="description" content="加载和应用各种图像格式的纹理">
+    <!-- Three.js版本信息 -->
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 基础纹理加载器</title>
+    <!-- 引入公共样式表 -->
+    <link rel="stylesheet" href="../css/example-common.css">
+</head>
+<body>
+    <!-- 3D场景容器 -->
+    <div class="three-container" id="threeContainer"></div>
+    
+    <!-- 
+    使用importmap定义模块导入映射
+    这是一种现代化的ES模块导入方式，可以简化导入路径
+    通过定义别名，可以使用简短的导入语句，如 import * as THREE from 'three'
+    -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../libs/three/r179/build/three.module.js",
+                "three/addons/": "../libs/three/r179/jsm/"
+            }
+        }
+    </script>
+    
+    <!-- 示例代码 - 基础纹理加载器 -->
+    <script type="module">
+        // 导入Three.js核心模块
+        import * as THREE from 'three';
+        // 导入轨道控制器，用于交互式旋转和缩放场景
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        // 导入GUI控制面板，用于调整参数
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+        
+        // Three.js 核心变量 - 暴露给全局作用域以便截图功能使用
+        window.scene = null;     // 场景对象，包含所有3D元素
+        window.camera = null;    // 相机对象，定义视角和视野
+        window.renderer = null;  // 渲染器对象，将场景渲染到canvas上
+        let meshes = [];        // 3D网格对象数组
+        let controls;           // 轨道控制器对象
+        let loadingManager;     // 加载管理器
+        
+        // 参数配置对象 - 用于GUI控制面板和创建3D对象
+        const params = {
+            // 纹理参数
+            textureType: 'diffuse',
+            wrapS: THREE.RepeatWrapping,
+            wrapT: THREE.RepeatWrapping,
+            magFilter: THREE.LinearFilter,
+            minFilter: THREE.LinearMipmapLinearFilter,
+            repeatX: 1,
+            repeatY: 1,
+            offsetX: 0,
+            offsetY: 0,
+            rotation: 0,
+            flipY: true,
+            generateMipmaps: true,
+            
+            // 控制器参数
+            autoRotate: true       // 是否自动旋转
+        };
+
+        // 纹理类型映射
+        const textureTypes = {
+            'diffuse': '../images/textures/sprite-particle.png',
+            'checker': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAGklEQVQoU2NkYGBgYBhVwMjIyMjAyMjIwAAACQABQABmvQAAAABJRU5ErkJggg==',
+            'gradient': createGradientTexture(),
+            'noise': createNoiseTexture()
+        };
+        
+        /**
+         * 初始化Three.js场景、相机、渲染器和控制器
+         * 这是整个应用的入口点
+         */
+        function init() {
+            // 创建场景 - 所有3D对象的容器
+            window.scene = new THREE.Scene();
+            // 设置场景背景色为深蓝灰色
+            window.scene.background = new THREE.Color(0x2c3e50);
+            
+            // 创建透视相机 - 模拟人眼视角
+            // 参数：视场角(FOV)，宽高比，近裁剪面，远裁剪面
+            window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            // 设置相机位置，以便能看到场景中的对象
+            window.camera.position.set(0, 0, 8);
+            
+            // 创建WebGL渲染器 - 将3D场景渲染到canvas上
+            window.renderer = new THREE.WebGLRenderer({ antialias: true }); // 启用抗锯齿
+            // 设置渲染器尺寸为窗口大小
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            // 设置设备像素比，提高在高DPI设备上的清晰度
+            window.renderer.setPixelRatio(window.devicePixelRatio);
+            // 启用阴影
+            window.renderer.shadowMap.enabled = true;
+            window.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            // 将渲染器的canvas添加到DOM中
+            document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+            
+            // 添加轨道控制器 - 允许用户交互式旋转和缩放场景
+            controls = new OrbitControls(window.camera, window.renderer.domElement);
+            controls.enableDamping = true;       // 启用阻尼效果，使控制更平滑
+            controls.dampingFactor = 0.05;       // 阻尼系数
+            controls.autoRotate = params.autoRotate; // 设置是否自动旋转
+
+            // 创建加载管理器
+            loadingManager = new THREE.LoadingManager();
+            loadingManager.onLoad = () => {
+                console.log('所有纹理加载完成');
+            };
+            loadingManager.onProgress = (url, loaded, total) => {
+                console.log(`加载进度: ${loaded}/${total} - ${url}`);
+            };
+            loadingManager.onError = (url) => {
+                console.error('纹理加载失败:', url);
+            };
+            
+            // 创建3D对象
+            createMeshes();
+            
+            // 添加光源
+            addLights();
+            
+            // 初始化GUI控制面板
+            initGUI();
+            
+            // 监听窗口大小变化，调整场景
+            window.addEventListener('resize', onWindowResize);
+            
+            // 开始动画循环
+            animate();
+        }
+
+        // 创建渐变纹理
+        function createGradientTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const context = canvas.getContext('2d');
+            
+            const gradient = context.createLinearGradient(0, 0, 256, 256);
+            gradient.addColorStop(0, '#ff0000');
+            gradient.addColorStop(0.5, '#00ff00');
+            gradient.addColorStop(1, '#0000ff');
+            
+            context.fillStyle = gradient;
+            context.fillRect(0, 0, 256, 256);
+            
+            return canvas.toDataURL();
+        }
+
+        // 创建噪声纹理
+        function createNoiseTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const context = canvas.getContext('2d');
+            const imageData = context.createImageData(256, 256);
+            
+            for (let i = 0; i < imageData.data.length; i += 4) {
+                const value = Math.random() * 255;
+                imageData.data[i] = value;     // R
+                imageData.data[i + 1] = value; // G
+                imageData.data[i + 2] = value; // B
+                imageData.data[i + 3] = 255;   // A
+            }
+            
+            context.putImageData(imageData, 0, 0);
+            return canvas.toDataURL();
+        }
+        
+        /**
+         * 处理窗口大小变化
+         * 调整相机和渲染器以适应新的窗口尺寸
+         */
+        function onWindowResize() {
+            // 更新相机宽高比
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            // 更新相机投影矩阵
+            window.camera.updateProjectionMatrix();
+            // 更新渲染器尺寸
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        /**
+         * 创建3D网格对象
+         * 根据当前参数创建或更新3D对象
+         */
+        function createMeshes() {
+            // 清除现有网格
+            meshes.forEach(mesh => {
+                window.scene.remove(mesh);
+                mesh.geometry.dispose();
+                mesh.material.dispose();
+            });
+            meshes = [];
+
+            const geometries = [
+                new THREE.PlaneGeometry(2, 2),
+                new THREE.BoxGeometry(1.5, 1.5, 1.5),
+                new THREE.SphereGeometry(1, 32, 32),
+                new THREE.CylinderGeometry(1, 1, 2, 32)
+            ];
+
+            const positions = [
+                [-3, 1.5, 0],
+                [1, 1.5, 0],
+                [-3, -1.5, 0],
+                [1, -1.5, 0]
+            ];
+
+            geometries.forEach((geometry, index) => {
+                const material = new THREE.MeshStandardMaterial({
+                    color: 0xffffff,
+                    metalness: 0.1,
+                    roughness: 0.8
+                });
+
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.position.set(...positions[index]);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                window.scene.add(mesh);
+                meshes.push(mesh);
+            });
+
+            // 加载初始纹理
+            loadTexture();
+        }
+
+        // 加载纹理
+        function loadTexture() {
+            const textureLoader = new THREE.TextureLoader(loadingManager);
+            const textureUrl = textureTypes[params.textureType];
+
+            textureLoader.load(
+                textureUrl,
+                (texture) => {
+                    // 设置纹理参数
+                    texture.wrapS = params.wrapS;
+                    texture.wrapT = params.wrapT;
+                    texture.magFilter = params.magFilter;
+                    texture.minFilter = params.minFilter;
+                    texture.repeat.set(params.repeatX, params.repeatY);
+                    texture.offset.set(params.offsetX, params.offsetY);
+                    texture.rotation = params.rotation;
+                    texture.flipY = params.flipY;
+                    texture.generateMipmaps = params.generateMipmaps;
+
+                    // 应用纹理到所有材质
+                    meshes.forEach(mesh => {
+                        mesh.material.map = texture;
+                        mesh.material.needsUpdate = true;
+                    });
+
+                    console.log('纹理加载成功');
+                },
+                (progress) => {
+                    console.log('纹理加载进度:', (progress.loaded / progress.total * 100) + '%');
+                },
+                (error) => {
+                    console.error('纹理加载失败:', error);
+                }
+            );
+        }
+
+        // 更新纹理参数
+        function updateTextureParams() {
+            meshes.forEach(mesh => {
+                if (mesh.material.map) {
+                    const texture = mesh.material.map;
+                    texture.wrapS = params.wrapS;
+                    texture.wrapT = params.wrapT;
+                    texture.magFilter = params.magFilter;
+                    texture.minFilter = params.minFilter;
+                    texture.repeat.set(params.repeatX, params.repeatY);
+                    texture.offset.set(params.offsetX, params.offsetY);
+                    texture.rotation = params.rotation;
+                    texture.needsUpdate = true;
+                }
+            });
+        }
+
+        // 添加光源
+        function addLights() {
+            // 环境光
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+            window.scene.add(ambientLight);
+
+            // 平行光
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(5, 5, 5);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 2048;
+            directionalLight.shadow.mapSize.height = 2048;
+            window.scene.add(directionalLight);
+
+            // 点光源
+            const pointLight = new THREE.PointLight(0xffffff, 0.5, 100);
+            pointLight.position.set(-5, 5, 5);
+            window.scene.add(pointLight);
+        }
+        
+        /**
+         * 初始化GUI控制面板
+         * 创建用户可交互的控制界面，用于调整参数
+         */
+        function initGUI() {
+            // 创建GUI实例
+            const gui = new GUI({ title: '纹理加载器控制面板', width: 300 });
+            
+            // 调整GUI位置，避免与其他UI元素重叠
+            gui.domElement.style.position = 'absolute';
+            gui.domElement.style.top = '60px';
+            gui.domElement.style.right = '10px';
+            
+            // 确保GUI在所有环境下都可见
+            gui.domElement.style.zIndex = '1000';
+            gui.domElement.style.maxHeight = '80vh';
+            gui.domElement.style.overflowY = 'auto';
+            
+            // 确保GUI在页面加载后立即可见
+            setTimeout(() => {
+                gui.show();
+                for (const controller of gui.controllers) {
+                    controller.updateDisplay();
+                }
+            }, 100);
+
+            // 纹理类型
+            gui.add(params, 'textureType', Object.keys(textureTypes))
+                .name('纹理类型')
+                .onChange(loadTexture);
+
+            // 纹理包装模式
+            const wrapModes = {
+                'RepeatWrapping': THREE.RepeatWrapping,
+                'ClampToEdgeWrapping': THREE.ClampToEdgeWrapping,
+                'MirroredRepeatWrapping': THREE.MirroredRepeatWrapping
+            };
+
+            gui.add(params, 'wrapS', wrapModes)
+                .name('水平包装')
+                .onChange(updateTextureParams);
+
+            gui.add(params, 'wrapT', wrapModes)
+                .name('垂直包装')
+                .onChange(updateTextureParams);
+
+            // 纹理过滤
+            const filterModes = {
+                'NearestFilter': THREE.NearestFilter,
+                'LinearFilter': THREE.LinearFilter,
+                'NearestMipmapNearestFilter': THREE.NearestMipmapNearestFilter,
+                'NearestMipmapLinearFilter': THREE.NearestMipmapLinearFilter,
+                'LinearMipmapNearestFilter': THREE.LinearMipmapNearestFilter,
+                'LinearMipmapLinearFilter': THREE.LinearMipmapLinearFilter
+            };
+
+            gui.add(params, 'magFilter', filterModes)
+                .name('放大过滤')
+                .onChange(updateTextureParams);
+
+            gui.add(params, 'minFilter', filterModes)
+                .name('缩小过滤')
+                .onChange(updateTextureParams);
+
+            // 纹理变换
+            const transformFolder = gui.addFolder('纹理变换');
+            transformFolder.add(params, 'repeatX', 0.1, 5, 0.1)
+                .name('水平重复')
+                .onChange(updateTextureParams);
+
+            transformFolder.add(params, 'repeatY', 0.1, 5, 0.1)
+                .name('垂直重复')
+                .onChange(updateTextureParams);
+
+            transformFolder.add(params, 'offsetX', -1, 1, 0.01)
+                .name('水平偏移')
+                .onChange(updateTextureParams);
+
+            transformFolder.add(params, 'offsetY', -1, 1, 0.01)
+                .name('垂直偏移')
+                .onChange(updateTextureParams);
+
+            transformFolder.add(params, 'rotation', 0, Math.PI * 2, 0.01)
+                .name('旋转角度')
+                .onChange(updateTextureParams);
+
+            // 纹理选项
+            const optionsFolder = gui.addFolder('纹理选项');
+            optionsFolder.add(params, 'flipY')
+                .name('垂直翻转')
+                .onChange(loadTexture);
+
+            optionsFolder.add(params, 'generateMipmaps')
+                .name('生成Mipmap')
+                .onChange(loadTexture);
+
+            // 动画参数控制组
+            const animationFolder = gui.addFolder('动画参数');
+            animationFolder.add(params, 'autoRotate')
+                .name('自动旋转')
+                .onChange(value => {
+                    controls.autoRotate = value;
+                });
+
+            transformFolder.open();
+            optionsFolder.open();
+            animationFolder.open();
+        }
+        
+        /**
+         * 动画循环函数
+         * 使用requestAnimationFrame实现平滑动画
+         * 每帧更新场景并渲染
+         */
+        function animate() {
+            // 请求下一帧动画
+            requestAnimationFrame(animate);
+            
+            // 更新轨道控制器
+            controls.update();
+            
+            // 旋转网格
+            meshes.forEach((mesh, index) => {
+                mesh.rotation.y += 0.005 * (index + 1);
+            });
+
+            // 渲染场景
+            window.renderer.render(window.scene, window.camera);
+        }
+        
+        // 初始化应用
+        init();
+    </script>
+    
+    <!-- 
+    ===================================================
+    截图功能脚本 - 请勿修改此部分
+    此脚本处理从父窗口发来的截图请求，用于生成示例封面，与示例业务并无关联
+    ===================================================
+    -->
+    <script>
+        // 全局变量，用于存储渲染器引用
+        let _screenshotRenderer;
+        
+        // 添加消息监听器，处理截图请求
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    // 获取当前渲染器
+                    if (!_screenshotRenderer && window.renderer) {
+                        _screenshotRenderer = window.renderer;
+                    }
+                    
+                    // 确保渲染器已经初始化
+                    if (!_screenshotRenderer) {
+                        throw new Error('渲染器未初始化');
+                    }
+                    
+                    // 强制渲染一帧，确保内容是最新的
+                    if (window.scene && window.camera) {
+                        _screenshotRenderer.render(window.scene, window.camera);
+                    }
+                    
+                    // 获取canvas的图像数据（使用较低的质量和尺寸以减小文件大小）
+                    const quality = event.data.quality || 0.8;
+                    const canvas = _screenshotRenderer.domElement;
+                    
+                    // 创建一个较小尺寸的临时canvas
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600; // 最大尺寸为600像素
+                    
+                    // 计算缩放比例，保持宽高比
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    
+                    // 在临时canvas上绘制缩小的图像
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    
+                    // 获取缩小后的图像数据
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    
+                    // 将图像数据发送回父窗口
+                    window.parent.postMessage({
+                        type: 'screenshot-data',
+                        dataUrl: dataUrl
+                    }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    // 发送错误信息回父窗口
+                    window.parent.postMessage({
+                        type: 'screenshot-error',
+                        error: error.message
+                    }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

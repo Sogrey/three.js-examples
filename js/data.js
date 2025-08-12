@@ -454,7 +454,7 @@ const threejsData = {
                             title: "关键帧动画",
                             description: "使用关键帧创建复杂的动画序列",
                             thumbnail: "images/animation-keyframes.jpg",
-                            version: "r150",
+                            version: "r179",
                             url: "examples/animation-keyframes"
                         },
                         {
@@ -462,7 +462,7 @@ const threejsData = {
                             title: "变形动画",
                             description: "在不同几何体之间平滑过渡的变形效果",
                             thumbnail: "images/animation-morph.jpg",
-                            version: "r150",
+                            version: "r179",
                             url: "examples/animation-morph"
                         }
                     ]
@@ -476,7 +476,7 @@ const threejsData = {
                             title: "射线检测",
                             description: "使用射线检测实现对象选择和交互",
                             thumbnail: "images/animation-raycaster.jpg",
-                            version: "r150",
+                            version: "r179",
                             url: "examples/animation-raycaster"
                         },
                         {
@@ -484,7 +484,7 @@ const threejsData = {
                             title: "拖拽控制",
                             description: "实现3D对象的拖拽和放置功能",
                             thumbnail: "images/animation-drag.jpg",
-                            version: "r150",
+                            version: "r179",
                             url: "examples/animation-drag"
                         }
                     ]

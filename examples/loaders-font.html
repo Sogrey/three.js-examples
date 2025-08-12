@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- 页面描述，有助于SEO优化 -->
-    <meta name="description" content="使用TextGeometry创建3D文字几何体，展示立体文字效果。">
+    <meta name="description" content="加载和使用 3D 文本字体">
     <!-- Three.js版本信息 -->
     <meta name="three-version" content="r179">
-    <title>Three.js 示例 - 文字几何体</title>
+    <title>Three.js 示例 - 字体加载器</title>
     <!-- 引入公共样式表 -->
     <link rel="stylesheet" href="../css/example-common.css">
 </head>
@@ -29,51 +29,58 @@
         }
     </script>
     
-    <!-- 示例代码 - 文字几何体示例 -->
+    <!-- 示例代码 - 字体加载器 -->
     <script type="module">
         // 导入Three.js核心模块
         import * as THREE from 'three';
         // 导入轨道控制器，用于交互式旋转和缩放场景
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        // 导入字体加载器
+        import { FontLoader } from 'three/addons/loaders/FontLoader.js';
+        // 导入文本几何体
+        import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
         // 导入GUI控制面板，用于调整参数
         import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
-        // 导入字体加载器，用于加载字体文件
-        import { FontLoader } from 'three/addons/loaders/FontLoader.js';
-        // 导入文字几何体，用于创建3D文字
-        import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
         
         // Three.js 核心变量 - 暴露给全局作用域以便截图功能使用
         window.scene = null;     // 场景对象，包含所有3D元素
         window.camera = null;    // 相机对象，定义视角和视野
         window.renderer = null;  // 渲染器对象，将场景渲染到canvas上
-        let mesh;               // 文字网格对象
+        let textMesh;           // 3D文本网格对象
         let controls;           // 轨道控制器对象
         let font;               // 字体对象
         let loadingText;        // 加载提示文本
         
-        // 参数配置对象 - 用于GUI控制面板和创建文字几何体
+        // 参数配置对象 - 用于GUI控制面板和创建3D对象
+        // 参考 basic-geometry-text 示例的优化参数，解决中文拉伸问题
         const params = {
-            // 文字内容
+            // 文本参数
             text: 'Three.js',
-            
-            // 几何体参数 - 严格参考官方示例比例
-            size: 70,              // 文字大小
-            depth: 20,             // 文字厚度（深度）
-            curveSegments: 4,      // 曲线分段数
-            bevelEnabled: true,    // 是否启用斜角
-            bevelThickness: 2,     // 斜角厚度
-            bevelSize: 1.5,        // 斜角大小
-            bevelSegments: 3,      // 斜角分段数
-            
-            // 材质参数
-            color: 0xf39c12,       // 颜色（橙色）
-            metalness: 0.3,        // 金属度（0-1）
-            roughness: 0.4,        // 粗糙度（0-1）
-            wireframe: false,      // 是否显示线框模式
-            side: THREE.FrontSide, // 渲染面：正面(FrontSide)、背面(BackSide)或双面(DoubleSide)
+            fontName: 'helvetiker_regular',
+            size: 70,              // 增大字体大小，解决中文拉伸问题
+            height: 20,            // 增加厚度，与 basic-geometry-text 一致
+            curveSegments: 4,      // 减少曲线分段，提高性能
+            bevelEnabled: true,
+            bevelThickness: 2,     // 增加斜角厚度
+            bevelSize: 1.5,        // 增加斜角大小
+            bevelOffset: 0,
+            bevelSegments: 3,      // 减少斜角分段，提高性能
+            materialType: 'standard',
+            color: 0xf39c12,       // 使用橙色，与 basic-geometry-text 一致
+            wireframe: false,
             
             // 控制器参数
             autoRotate: true       // 是否自动旋转
+        };
+
+        // 可用字体
+        const availableFonts = {
+            'helvetiker_regular': '../libs/three/r179/fonts/helvetiker_regular.typeface.json',
+            'helvetiker_bold': '../libs/three/r179/fonts/helvetiker_bold.typeface.json',
+            'optimer_regular': '../libs/three/r179/fonts/optimer_regular.typeface.json',
+            'optimer_bold': '../libs/three/r179/fonts/optimer_bold.typeface.json',
+            'gentilis_regular': '../libs/three/r179/fonts/gentilis_regular.typeface.json',
+            'gentilis_bold': '../libs/three/r179/fonts/gentilis_bold.typeface.json'
         };
         
         /**
@@ -88,9 +95,10 @@
             
             // 创建透视相机 - 模拟人眼视角
             // 参数：视场角(FOV)，宽高比，近裁剪面，远裁剪面
+            // 调整视场角，与 basic-geometry-text 一致
             window.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
             // 设置相机位置，以便能看到立起的文字
-            window.camera.position.set(0, 150, 150); // 从斜上方观察立起的文字
+            window.camera.position.set(0, 300, 300); // 从斜上方观察立起的文字
             
             // 创建WebGL渲染器 - 将3D场景渲染到canvas上
             window.renderer = new THREE.WebGLRenderer({ antialias: true }); // 启用抗锯齿
@@ -98,6 +106,9 @@
             window.renderer.setSize(window.innerWidth, window.innerHeight);
             // 设置设备像素比，提高在高DPI设备上的清晰度
             window.renderer.setPixelRatio(window.devicePixelRatio);
+            // 启用阴影
+            window.renderer.shadowMap.enabled = true;
+            window.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             // 将渲染器的canvas添加到DOM中
             document.getElementById('threeContainer').appendChild(window.renderer.domElement);
             
@@ -107,23 +118,8 @@
             controls.dampingFactor = 0.05;       // 阻尼系数
             controls.autoRotate = params.autoRotate; // 设置是否自动旋转
             
-            // 添加环境光 - 提供均匀的全局照明
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-            scene.add(ambientLight);
-            
-            // 添加主方向光 - 模拟太阳光
-            const directionalLight1 = new THREE.DirectionalLight(0xffffff, 0.8);
-            directionalLight1.position.set(5, 5, 5); // 设置光源位置
-            scene.add(directionalLight1);
-            
-            // 添加辅助方向光 - 提供补充照明，增加视觉深度
-            const directionalLight2 = new THREE.DirectionalLight(0x84c3be, 0.5);
-            directionalLight2.position.set(-5, -2, -5); // 从相反方向照射
-            scene.add(directionalLight2);
-            
-            // 添加网格辅助线 - 帮助理解3D空间
-            const gridHelper = new THREE.GridHelper(200, 20, 0x888888, 0x444444);
-            scene.add(gridHelper);
+            // 添加光源
+            addLights();
             
             // 创建加载提示文本
             createLoadingText();
@@ -144,7 +140,7 @@
          */
         function createLoadingText() {
             // 创建一个简单的平面几何体
-            const geometry = new THREE.PlaneGeometry(2, 0.5);
+            const geometry = new THREE.PlaneGeometry(200, 50);
             
             // 创建画布纹理
             const canvas = document.createElement('canvas');
@@ -173,34 +169,7 @@
             loadingText = new THREE.Mesh(geometry, material);
             
             // 将网格添加到场景中
-            scene.add(loadingText);
-        }
-        
-        /**
-         * 加载字体
-         * 使用FontLoader加载字体文件
-         */
-        function loadFont() {
-            const fontLoader = new FontLoader();
-            
-            // 加载字体文件
-            fontLoader.load('../libs/three/r179/fonts/helvetiker_regular.typeface.json', function(loadedFont) {
-                font = loadedFont;
-                
-                // 移除加载提示文本
-                if (loadingText) {
-                    scene.remove(loadingText);
-                    loadingText.geometry.dispose();
-                    loadingText.material.dispose();
-                    loadingText = null;
-                }
-                
-                // 创建文字几何体
-                createTextGeometry();
-                
-                // 初始化GUI控制面板
-                initGUI();
-            });
+            window.scene.add(loadingText);
         }
         
         /**
@@ -215,67 +184,163 @@
             // 更新渲染器尺寸
             window.renderer.setSize(window.innerWidth, window.innerHeight);
         }
+
+        // 加载字体
+        function loadFont() {
+            const fontLoader = new FontLoader();
+            const fontPath = availableFonts[params.fontName];
+
+            fontLoader.load(
+                fontPath,
+                (loadedFont) => {
+                    font = loadedFont;
+                    
+                    // 移除加载提示文本
+                    if (loadingText) {
+                        window.scene.remove(loadingText);
+                        loadingText.geometry.dispose();
+                        loadingText.material.dispose();
+                        loadingText = null;
+                    }
+                    
+                    createText();
+                    
+                    // 初始化GUI控制面板（在字体加载完成后）
+                    initGUI();
+                    
+                    console.log('字体加载成功:', params.fontName);
+                },
+                (progress) => {
+                    // 修复进度计算异常问题
+                    if (progress && progress.total && progress.total > 0) {
+                        const percentage = Math.round((progress.loaded / progress.total) * 100);
+                        console.log('字体加载进度:', percentage + '%');
+                    } else {
+                        console.log('字体加载中...');
+                    }
+                },
+                (error) => {
+                    console.error('字体加载失败:', error);
+                }
+            );
+        }
         
         /**
-         * 创建文字几何体
-         * 根据当前参数创建或更新文字几何体
+         * 创建文本
          */
-        function createTextGeometry() {
-            // 如果字体未加载完成，则返回
+        function createText() {
             if (!font) return;
-            
-            // 如果已存在网格对象，则从场景中移除并释放资源
-            if (mesh) {
-                scene.remove(mesh);
-                // 释放几何体和材质的内存，避免内存泄漏
-                mesh.geometry.dispose();
-                mesh.material.dispose();
+
+            // 移除旧的文本网格
+            if (textMesh) {
+                window.scene.remove(textMesh);
+                textMesh.geometry.dispose();
+                textMesh.material.dispose();
             }
-            
-            // 创建文字几何体
-            // TextGeometry参数：
-            // 文字内容，配置对象（包含字体、大小、厚度等参数）
-            const geometry = new TextGeometry(params.text, {
+
+            // 创建文本几何体
+            const textGeometry = new TextGeometry(params.text, {
                 font: font,
                 size: params.size,
-                depth: params.depth,
+                height: params.height,
                 curveSegments: params.curveSegments,
                 bevelEnabled: params.bevelEnabled,
                 bevelThickness: params.bevelThickness,
                 bevelSize: params.bevelSize,
+                bevelOffset: params.bevelOffset,
                 bevelSegments: params.bevelSegments
             });
-            
-            // 居中几何体
-            geometry.computeBoundingBox();
-            const textWidth = geometry.boundingBox.max.x - geometry.boundingBox.min.x;
-            const textHeight = geometry.boundingBox.max.y - geometry.boundingBox.min.y;
+
+            // 计算边界框并居中
+            textGeometry.computeBoundingBox();
+            const textWidth = textGeometry.boundingBox.max.x - textGeometry.boundingBox.min.x;
+            const textHeight = textGeometry.boundingBox.max.y - textGeometry.boundingBox.min.y;
             
             // 水平居中，垂直方向保持在底部
-            geometry.translate(-textWidth / 2, 0, 0);
+            textGeometry.translate(-textWidth / 2, 0, 0);
+
+            // 创建材质
+            let material;
+            switch (params.materialType) {
+                case 'basic':
+                    material = new THREE.MeshBasicMaterial({
+                        color: params.color,
+                        wireframe: params.wireframe
+                    });
+                    break;
+                case 'standard':
+                    material = new THREE.MeshStandardMaterial({
+                        color: params.color,
+                        metalness: 0.3,
+                        roughness: 0.4,
+                        wireframe: params.wireframe
+                    });
+                    break;
+                case 'physical':
+                    material = new THREE.MeshPhysicalMaterial({
+                        color: params.color,
+                        metalness: 0.5,
+                        roughness: 0.2,
+                        clearcoat: 0.3,
+                        clearcoatRoughness: 0.25,
+                        wireframe: params.wireframe
+                    });
+                    break;
+                case 'lambert':
+                    material = new THREE.MeshLambertMaterial({
+                        color: params.color,
+                        wireframe: params.wireframe
+                    });
+                    break;
+                case 'phong':
+                    material = new THREE.MeshPhongMaterial({
+                        color: params.color,
+                        shininess: 100,
+                        wireframe: params.wireframe
+                    });
+                    break;
+            }
+
+            // 创建文本网格
+            textMesh = new THREE.Mesh(textGeometry, material);
+            textMesh.castShadow = true;
+            textMesh.receiveShadow = true;
             
-            // 创建标准材质 - 使用基于物理的渲染(PBR)
-            const material = new THREE.MeshStandardMaterial({ 
-                color: params.color,        // 材质颜色
-                metalness: params.metalness, // 金属度 - 影响反射特性
-                roughness: params.roughness, // 粗糙度 - 影响光的散射方式
-                wireframe: params.wireframe, // 是否显示线框模式
-                side: params.side           // 渲染面：正面、背面或双面
-            });
+            // 让文字立起来 - 旋转90度，使其垂直向上
+            textMesh.rotation.x = -Math.PI / 2;
             
-            // 创建网格 - 将几何体和材质结合
-            mesh = new THREE.Mesh(geometry, material);
+            window.scene.add(textMesh);
             
-            // 旋转文字，使其垂直向上（与官方示例一致）
-            mesh.rotation.x = -Math.PI / 2;
-            
-            // 将网格添加到场景中
-            scene.add(mesh);
-            
-            // 调整相机位置以适应文字大小
+            // 调整相机位置以适应立起的文字
             const distance = Math.max(textWidth, textHeight) * 2;
-            window.camera.position.set(0, distance, 0);
+            window.camera.position.set(0, distance, distance); // 从斜上方观察
             window.camera.lookAt(0, 0, 0);
+        }
+
+        // 添加光源
+        function addLights() {
+            // 环境光 - 提供均匀的全局照明
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            window.scene.add(ambientLight);
+
+            // 主方向光 - 模拟太阳光
+            const directionalLight1 = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight1.position.set(500, 500, 500); // 调整光源位置以适应新的尺度
+            directionalLight1.castShadow = true;
+            directionalLight1.shadow.mapSize.width = 2048;
+            directionalLight1.shadow.mapSize.height = 2048;
+            directionalLight1.shadow.camera.near = 0.5;
+            directionalLight1.shadow.camera.far = 1500;
+            window.scene.add(directionalLight1);
+
+            // 辅助方向光 - 提供补充照明，增加视觉深度
+            const directionalLight2 = new THREE.DirectionalLight(0x84c3be, 0.5);
+            directionalLight2.position.set(-500, -200, -500); // 从相反方向照射
+            window.scene.add(directionalLight2);
+
+            // 添加网格辅助线 - 帮助理解3D空间
+            const gridHelper = new THREE.GridHelper(2000, 20, 0x888888, 0x444444);
+            window.scene.add(gridHelper);
         }
         
         /**
@@ -287,7 +352,7 @@
             if (!font) return;
             
             // 创建GUI实例
-            const gui = new GUI({ title: '参数控制面板', width: 300 });
+            const gui = new GUI({ title: '字体加载器控制面板', width: 300 });
             
             // 调整GUI位置，避免与其他UI元素重叠
             gui.domElement.style.position = 'absolute';
@@ -296,120 +361,86 @@
             
             // 确保GUI在所有环境下都可见
             gui.domElement.style.zIndex = '1000';
-            gui.domElement.style.maxHeight = '80vh'; // 限制最大高度
-            gui.domElement.style.overflowY = 'auto'; // 允许垂直滚动
+            gui.domElement.style.maxHeight = '80vh';
+            gui.domElement.style.overflowY = 'auto';
             
             // 确保GUI在页面加载后立即可见
             setTimeout(() => {
                 gui.show();
-                // 强制更新GUI
                 for (const controller of gui.controllers) {
                     controller.updateDisplay();
                 }
             }, 100);
-            
-            // 文字内容控制组
-            const textFolder = gui.addFolder('文字内容');
-            // 添加文字输入框
+
+            // 文本设置
+            const textFolder = gui.addFolder('文本设置');
             textFolder.add(params, 'text')
-                .onChange(createTextGeometry)
-                .name('文字');
-            // 默认展开此文件夹
-            textFolder.open();
-            
-            // 几何体参数控制组
-            const geometryFolder = gui.addFolder('几何体参数');
-            // 添加文字大小滑块
-            geometryFolder.add(params, 'size', 10, 150)
-                .onChange(createTextGeometry)
-                .name('文字大小');
-            // 添加文字厚度滑块
-            geometryFolder.add(params, 'depth', 1, 50)
-                .onChange(createTextGeometry)
-                .name('文字厚度');
-            // 添加曲线分段数滑块
-            geometryFolder.add(params, 'curveSegments', 1, 10)
-                .step(1)
-                .onChange(createTextGeometry)
-                .name('曲线分段数');
-            // 添加斜角启用切换
-            geometryFolder.add(params, 'bevelEnabled')
-                .onChange(createTextGeometry)
-                .name('启用斜角');
-            // 添加斜角厚度滑块
-            geometryFolder.add(params, 'bevelThickness', 0.1, 5)
-                .onChange(createTextGeometry)
-                .name('斜角厚度');
-            // 添加斜角大小滑块
-            geometryFolder.add(params, 'bevelSize', 0.1, 5)
-                .onChange(createTextGeometry)
-                .name('斜角大小');
-            // 添加斜角分段数滑块
-            geometryFolder.add(params, 'bevelSegments', 1, 10)
-                .step(1)
-                .onChange(createTextGeometry)
-                .name('斜角分段数');
-            // 默认展开此文件夹
-            geometryFolder.open();
-            
-            // 材质参数控制组
-            const materialFolder = gui.addFolder('材质参数');
-            // 添加金属度滑块
-            materialFolder.add(params, 'metalness', 0, 1)
-                .step(0.01) // 设置步长为0.01
-                .onChange(value => {
-                    // 直接更新材质属性，无需重新创建
-                    if (mesh) mesh.material.metalness = value;
-                })
-                .name('金属度');
-            // 添加粗糙度滑块
-            materialFolder.add(params, 'roughness', 0, 1)
-                .step(0.01)
-                .onChange(value => {
-                    if (mesh) mesh.material.roughness = value;
-                })
-                .name('粗糙度');
-            // 添加颜色选择器
+                .name('文本内容')
+                .onChange(createText);
+
+            textFolder.add(params, 'fontName', Object.keys(availableFonts))
+                .name('字体')
+                .onChange(loadFont);
+
+            // 调整参数范围以适应新的尺度
+            textFolder.add(params, 'size', 10, 150)
+                .name('字体大小')
+                .onChange(createText);
+
+            textFolder.add(params, 'height', 1, 50)
+                .name('厚度')
+                .onChange(createText);
+
+            textFolder.add(params, 'curveSegments', 1, 10, 1)
+                .name('曲线分段')
+                .onChange(createText);
+
+            // 倒角设置
+            const bevelFolder = gui.addFolder('倒角设置');
+            bevelFolder.add(params, 'bevelEnabled')
+                .name('启用倒角')
+                .onChange(createText);
+
+            bevelFolder.add(params, 'bevelThickness', 0.1, 5)
+                .name('倒角厚度')
+                .onChange(createText);
+
+            bevelFolder.add(params, 'bevelSize', 0.1, 5)
+                .name('倒角大小')
+                .onChange(createText);
+
+            bevelFolder.add(params, 'bevelOffset', -2, 2, 0.1)
+                .name('倒角偏移')
+                .onChange(createText);
+
+            bevelFolder.add(params, 'bevelSegments', 1, 10, 1)
+                .name('倒角分段')
+                .onChange(createText);
+
+            // 材质设置
+            const materialFolder = gui.addFolder('材质设置');
+            materialFolder.add(params, 'materialType', ['basic', 'standard', 'physical', 'lambert', 'phong'])
+                .name('材质类型')
+                .onChange(createText);
+
             materialFolder.addColor(params, 'color')
-                .onChange(value => {
-                    if (mesh) mesh.material.color.set(value);
-                })
-                .name('颜色');
-            // 添加线框模式切换
+                .name('颜色')
+                .onChange(createText);
+
             materialFolder.add(params, 'wireframe')
-                .onChange(value => {
-                    if (mesh) mesh.material.wireframe = value;
-                })
-                .name('线框模式');
-            
-            // 添加渲染面选择
-            const sideOptions = {
-                '正面': THREE.FrontSide,
-                '背面': THREE.BackSide,
-                '双面': THREE.DoubleSide
-            };
-            materialFolder.add(params, 'side', sideOptions)
-                .onChange(value => {
-                    if (mesh) {
-                        mesh.material.side = value;
-                        mesh.material.needsUpdate = true;
-                    }
-                })
-                .name('渲染面');
-            // 默认展开此文件夹
-            materialFolder.open();
-            
+                .name('线框模式')
+                .onChange(createText);
+
             // 动画参数控制组
             const animationFolder = gui.addFolder('动画参数');
-            // 添加自动旋转切换
             animationFolder.add(params, 'autoRotate')
                 .name('自动旋转')
                 .onChange(value => {
                     controls.autoRotate = value;
-                    // 同步更新params和controls的autoRotate值
-                    params.autoRotate = value;
                 });
-            // 默认展开此文件夹
+
+            textFolder.open();
+            materialFolder.open();
             animationFolder.open();
         }
         
@@ -423,12 +454,10 @@
             requestAnimationFrame(animate);
             
             // 更新轨道控制器
-            // 如果启用了阻尼效果，需要在每帧调用update
             controls.update();
             
             // 此处可以添加自定义的每帧更新逻辑
-            
-            
+
             // 渲染场景
             window.renderer.render(window.scene, window.camera);
         }

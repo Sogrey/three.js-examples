@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 页面描述，有助于SEO优化 -->
+    <meta name="description" content="加载和使用 3D 空间音频">
+    <!-- Three.js版本信息 -->
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 音频加载器</title>
+    <!-- 引入公共样式表 -->
+    <link rel="stylesheet" href="../css/example-common.css">
+</head>
+<body>
+    <!-- 3D场景容器 -->
+    <div class="three-container" id="threeContainer"></div>
+    
+    <!-- 
+    使用importmap定义模块导入映射
+    这是一种现代化的ES模块导入方式，可以简化导入路径
+    通过定义别名，可以使用简短的导入语句，如 import * as THREE from 'three'
+    -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../libs/three/r179/build/three.module.js",
+                "three/addons/": "../libs/three/r179/jsm/"
+            }
+        }
+    </script>
+    
+    <!-- 示例代码 - 音频加载器 -->
+    <script type="module">
+        // 导入Three.js核心模块
+        import * as THREE from 'three';
+        // 导入轨道控制器，用于交互式旋转和缩放场景
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        // 导入GUI控制面板，用于调整参数
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+        
+        // Three.js 核心变量 - 暴露给全局作用域以便截图功能使用
+        window.scene = null;     // 场景对象，包含所有3D元素
+        window.camera = null;    // 相机对象，定义视角和视野
+        window.renderer = null;  // 渲染器对象，将场景渲染到canvas上
+        let controls;           // 轨道控制器对象
+        let audioListener;      // 音频监听器
+        let sound1, sound2, sound3; // 音频对象
+        let audioLoader;        // 音频加载器
+        let analyser1, analyser2, analyser3; // 音频分析器
+        let sphere1, sphere2, sphere3; // 音频可视化球体
+        let audioContext;       // 音频上下文
+        
+        // 参数配置对象 - 用于GUI控制面板和创建3D对象
+        const params = {
+            // 音频参数
+            masterVolume: 0.5,
+            sound1Volume: 0.5,
+            sound2Volume: 0.5,
+            sound3Volume: 0.5,
+            sound1Playing: false,
+            sound2Playing: false,
+            sound3Playing: false,
+            spatialAudio: true,
+            refDistance: 1,
+            rolloffFactor: 1,
+            maxDistance: 1000,
+            
+            // 可视化参数
+            showVisualization: true,
+            visualizationScale: 1.0,
+            
+            // 控制器参数
+            autoRotate: true       // 是否自动旋转
+        };
+        
+        /**
+         * 初始化Three.js场景、相机、渲染器和控制器
+         * 这是整个应用的入口点
+         */
+        function init() {
+            // 创建场景 - 所有3D对象的容器
+            window.scene = new THREE.Scene();
+            // 设置场景背景色为深色
+            window.scene.background = new THREE.Color(0x1a1a1a);
+            
+            // 创建透视相机 - 模拟人眼视角
+            // 参数：视场角(FOV)，宽高比，近裁剪面，远裁剪面
+            window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            // 设置相机位置，以便能看到场景中的对象
+            window.camera.position.set(0, 0, 10);
+            
+            // 创建WebGL渲染器 - 将3D场景渲染到canvas上
+            window.renderer = new THREE.WebGLRenderer({ antialias: true }); // 启用抗锯齿
+            // 设置渲染器尺寸为窗口大小
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            // 设置设备像素比，提高在高DPI设备上的清晰度
+            window.renderer.setPixelRatio(window.devicePixelRatio);
+            // 将渲染器的canvas添加到DOM中
+            document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+            
+            // 添加轨道控制器 - 允许用户交互式旋转和缩放场景
+            controls = new OrbitControls(window.camera, window.renderer.domElement);
+            controls.enableDamping = true;       // 启用阻尼效果，使控制更平滑
+            controls.dampingFactor = 0.05;       // 阻尼系数
+            controls.autoRotate = params.autoRotate; // 设置是否自动旋转
+            
+            // 初始化音频系统
+            initAudio();
+            
+            // 创建3D对象
+            createObjects();
+            
+            // 添加光源
+            addLights();
+            
+            // 初始化GUI控制面板
+            initGUI();
+            
+            // 监听窗口大小变化，调整场景
+            window.addEventListener('resize', onWindowResize);
+            
+            // 开始动画循环
+            animate();
+        }
+        
+        /**
+         * 处理窗口大小变化
+         * 调整相机和渲染器以适应新的窗口尺寸
+         */
+        function onWindowResize() {
+            // 更新相机宽高比
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            // 更新相机投影矩阵
+            window.camera.updateProjectionMatrix();
+            // 更新渲染器尺寸
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // 初始化音频系统
+        function initAudio() {
+            // 创建音频监听器
+            audioListener = new THREE.AudioListener();
+            window.camera.add(audioListener);
+
+            // 创建音频加载器
+            audioLoader = new THREE.AudioLoader();
+
+            // 由于没有实际的音频文件，我们创建程序化音频
+            createProceduralAudio();
+
+            console.log('音频系统初始化完成');
+        }
+
+        // 创建程序化音频
+        function createProceduralAudio() {
+            try {
+                // 创建音频上下文
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+                // 创建三个不同频率的音频源
+                createAudioSource(1, 440, -3, 0, 0); // A4音符，左侧
+                createAudioSource(2, 554.37, 3, 0, 0); // C#5音符，右侧
+                createAudioSource(3, 659.25, 0, 3, 0); // E5音符，上方
+
+            } catch (error) {
+                console.error('音频上下文创建失败:', error);
+            }
+        }
+
+        // 创建音频源
+        function createAudioSource(id, frequency, x, y, z) {
+            // 创建振荡器
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            // 设置振荡器参数
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+            
+            // 设置音量
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            
+            // 连接音频节点
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            // 启动振荡器
+            oscillator.start();
+
+            // 创建Three.js音频对象（用于3D定位）
+            const sound = new THREE.PositionalAudio(audioListener);
+            sound.setRefDistance(params.refDistance);
+            sound.setRolloffFactor(params.rolloffFactor);
+            sound.setMaxDistance(params.maxDistance);
+            sound.setVolume(params[`sound${id}Volume`]);
+
+            // 创建音频分析器
+            const analyser = new THREE.AudioAnalyser(sound, 32);
+
+            // 存储引用
+            window[`sound${id}`] = sound;
+            window[`analyser${id}`] = analyser;
+            window[`oscillator${id}`] = oscillator;
+            window[`gainNode${id}`] = gainNode;
+
+            // 创建可视化球体
+            const sphereGeometry = new THREE.SphereGeometry(0.5, 32, 16);
+            const sphereMaterial = new THREE.MeshStandardMaterial({
+                color: id === 1 ? 0xff4444 : id === 2 ? 0x44ff44 : 0x4444ff,
+                emissive: id === 1 ? 0x440000 : id === 2 ? 0x004400 : 0x000044,
+                transparent: true,
+                opacity: 0.8
+            });
+            const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+            sphere.position.set(x, y, z);
+            window.scene.add(sphere);
+
+            // 添加音频到球体
+            sphere.add(sound);
+
+            // 存储球体引用
+            window[`sphere${id}`] = sphere;
+        }
+
+        // 播放/停止音频
+        function toggleAudio(id) {
+            const isPlaying = params[`sound${id}Playing`];
+            const gainNode = window[`gainNode${id}`];
+            const volume = params[`sound${id}Volume`] * params.masterVolume;
+
+            if (isPlaying) {
+                // 淡入
+                gainNode.gain.cancelScheduledValues(audioContext.currentTime);
+                gainNode.gain.setValueAtTime(gainNode.gain.value, audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + 0.1);
+            } else {
+                // 淡出
+                gainNode.gain.cancelScheduledValues(audioContext.currentTime);
+                gainNode.gain.setValueAtTime(gainNode.gain.value, audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.1);
+            }
+        }
+
+        // 更新音频音量
+        function updateVolume(id) {
+            const gainNode = window[`gainNode${id}`];
+            const isPlaying = params[`sound${id}Playing`];
+            const volume = params[`sound${id}Volume`] * params.masterVolume;
+
+            if (isPlaying && gainNode) {
+                gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
+            }
+        }
+
+        // 创建3D对象
+        function createObjects() {
+            // 创建中心指示器
+            const centerGeometry = new THREE.SphereGeometry(0.1, 16, 8);
+            const centerMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            const centerSphere = new THREE.Mesh(centerGeometry, centerMaterial);
+            window.scene.add(centerSphere);
+
+            // 创建坐标轴辅助器
+            const axesHelper = new THREE.AxesHelper(5);
+            window.scene.add(axesHelper);
+
+            // 创建网格辅助器
+            const gridHelper = new THREE.GridHelper(20, 20, 0x444444, 0x222222);
+            window.scene.add(gridHelper);
+        }
+
+        // 添加光源
+        function addLights() {
+            // 环境光
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            window.scene.add(ambientLight);
+
+            // 平行光
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(5, 5, 5);
+            window.scene.add(directionalLight);
+
+            // 点光源
+            const pointLight1 = new THREE.PointLight(0xff4444, 1, 100);
+            pointLight1.position.set(-3, 0, 0);
+            window.scene.add(pointLight1);
+
+            const pointLight2 = new THREE.PointLight(0x44ff44, 1, 100);
+            pointLight2.position.set(3, 0, 0);
+            window.scene.add(pointLight2);
+
+            const pointLight3 = new THREE.PointLight(0x4444ff, 1, 100);
+            pointLight3.position.set(0, 3, 0);
+            window.scene.add(pointLight3);
+        }
+        
+        /**
+         * 初始化GUI控制面板
+         * 创建用户可交互的控制界面，用于调整参数
+         */
+        function initGUI() {
+            // 创建GUI实例
+            const gui = new GUI({ title: '音频加载器控制面板', width: 300 });
+            
+            // 调整GUI位置，避免与其他UI元素重叠
+            gui.domElement.style.position = 'absolute';
+            gui.domElement.style.top = '60px';
+            gui.domElement.style.right = '10px';
+            
+            // 确保GUI在所有环境下都可见
+            gui.domElement.style.zIndex = '1000';
+            gui.domElement.style.maxHeight = '80vh';
+            gui.domElement.style.overflowY = 'auto';
+            
+            // 确保GUI在页面加载后立即可见
+            setTimeout(() => {
+                gui.show();
+                for (const controller of gui.controllers) {
+                    controller.updateDisplay();
+                }
+            }, 100);
+
+            // 主音量控制
+            const masterFolder = gui.addFolder('主控制');
+            masterFolder.add(params, 'masterVolume', 0, 1, 0.01)
+                .name('主音量')
+                .onChange(() => {
+                    updateVolume(1);
+                    updateVolume(2);
+                    updateVolume(3);
+                });
+
+            // 音频控制
+            const audioFolder = gui.addFolder('音频控制');
+            
+            // 音频1控制
+            const audio1Folder = audioFolder.addFolder('音频1 (A4-440Hz)');
+            audio1Folder.add(params, 'sound1Playing')
+                .name('播放')
+                .onChange(() => toggleAudio(1));
+            audio1Folder.add(params, 'sound1Volume', 0, 1, 0.01)
+                .name('音量')
+                .onChange(() => updateVolume(1));
+
+            // 音频2控制
+            const audio2Folder = audioFolder.addFolder('音频2 (C#5-554Hz)');
+            audio2Folder.add(params, 'sound2Playing')
+                .name('播放')
+                .onChange(() => toggleAudio(2));
+            audio2Folder.add(params, 'sound2Volume', 0, 1, 0.01)
+                .name('音量')
+                .onChange(() => updateVolume(2));
+
+            // 音频3控制
+            const audio3Folder = audioFolder.addFolder('音频3 (E5-659Hz)');
+            audio3Folder.add(params, 'sound3Playing')
+                .name('播放')
+                .onChange(() => toggleAudio(3));
+            audio3Folder.add(params, 'sound3Volume', 0, 1, 0.01)
+                .name('音量')
+                .onChange(() => updateVolume(3));
+
+            // 空间音频设置
+            const spatialFolder = gui.addFolder('空间音频');
+            spatialFolder.add(params, 'spatialAudio')
+                .name('启用空间音频');
+            spatialFolder.add(params, 'refDistance', 0.1, 10, 0.1)
+                .name('参考距离');
+            spatialFolder.add(params, 'rolloffFactor', 0.1, 5, 0.1)
+                .name('衰减因子');
+            spatialFolder.add(params, 'maxDistance', 100, 2000, 100)
+                .name('最大距离');
+
+            // 可视化设置
+            const visualFolder = gui.addFolder('可视化');
+            visualFolder.add(params, 'showVisualization')
+                .name('显示可视化');
+            visualFolder.add(params, 'visualizationScale', 0.1, 3, 0.1)
+                .name('可视化缩放');
+
+            // 动画参数控制组
+            const animationFolder = gui.addFolder('动画参数');
+            animationFolder.add(params, 'autoRotate')
+                .name('自动旋转')
+                .onChange(value => {
+                    controls.autoRotate = value;
+                });
+
+            // 添加启动音频上下文的按钮
+            const startAudioButton = {
+                startAudio: () => {
+                    if (audioContext && audioContext.state === 'suspended') {
+                        audioContext.resume().then(() => {
+                            console.log('音频上下文已启动');
+                        });
+                    }
+                }
+            };
+            masterFolder.add(startAudioButton, 'startAudio').name('启动音频');
+
+            masterFolder.open();
+            audioFolder.open();
+            spatialFolder.open();
+            visualFolder.open();
+            animationFolder.open();
+        }
+        
+        /**
+         * 动画循环函数
+         * 使用requestAnimationFrame实现平滑动画
+         * 每帧更新场景并渲染
+         */
+        function animate() {
+            // 请求下一帧动画
+            requestAnimationFrame(animate);
+            
+            // 更新轨道控制器
+            controls.update();
+            
+            // 更新音频可视化
+            if (params.showVisualization) {
+                updateAudioVisualization();
+            }
+
+            // 渲染场景
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        // 更新音频可视化
+        function updateAudioVisualization() {
+            for (let i = 1; i <= 3; i++) {
+                const sphere = window[`sphere${i}`];
+                const analyser = window[`analyser${i}`];
+                const isPlaying = params[`sound${i}Playing`];
+
+                if (sphere && isPlaying) {
+                    // 模拟音频数据（因为我们使用的是程序化音频）
+                    const time = Date.now() * 0.001;
+                    const amplitude = Math.sin(time * (i + 1)) * 0.5 + 0.5;
+                    
+                    // 更新球体大小
+                    const scale = 1 + amplitude * params.visualizationScale;
+                    sphere.scale.setScalar(scale);
+                    
+                    // 更新发光强度
+                    const emissiveIntensity = amplitude * 0.5;
+                    sphere.material.emissiveIntensity = emissiveIntensity;
+                    
+                    // 旋转球体
+                    sphere.rotation.y += 0.01 * i;
+                    sphere.rotation.x += 0.005 * i;
+                }
+            }
+        }
+        
+        // 初始化应用
+        init();
+    </script>
+    
+    <!-- 
+    ===================================================
+    截图功能脚本 - 请勿修改此部分
+    此脚本处理从父窗口发来的截图请求，用于生成示例封面，与示例业务并无关联
+    ===================================================
+    -->
+    <script>
+        // 全局变量，用于存储渲染器引用
+        let _screenshotRenderer;
+        
+        // 添加消息监听器，处理截图请求
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    // 获取当前渲染器
+                    if (!_screenshotRenderer && window.renderer) {
+                        _screenshotRenderer = window.renderer;
+                    }
+                    
+                    // 确保渲染器已经初始化
+                    if (!_screenshotRenderer) {
+                        throw new Error('渲染器未初始化');
+                    }
+                    
+                    // 强制渲染一帧，确保内容是最新的
+                    if (window.scene && window.camera) {
+                        _screenshotRenderer.render(window.scene, window.camera);
+                    }
+                    
+                    // 获取canvas的图像数据（使用较低的质量和尺寸以减小文件大小）
+                    const quality = event.data.quality || 0.8;
+                    const canvas = _screenshotRenderer.domElement;
+                    
+                    // 创建一个较小尺寸的临时canvas
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600; // 最大尺寸为600像素
+                    
+                    // 计算缩放比例，保持宽高比
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    
+                    // 在临时canvas上绘制缩小的图像
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    
+                    // 获取缩小后的图像数据
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    
+                    // 将图像数据发送回父窗口
+                    window.parent.postMessage({
+                        type: 'screenshot-data',
+                        dataUrl: dataUrl
+                    }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    // 发送错误信息回父窗口
+                    window.parent.postMessage({
+                        type: 'screenshot-error',
+                        error: error.message
+                    }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
