@@ -1,262 +1,271 @@
-# Three.js 示例导航
+# Three.js Showcase Navigator
 
-这是一个专业的 Three.js 示例导航网站，提供了丰富的 Three.js 示例，包括基础示例、光照效果、动画与交互、高级技术和性能优化等分类。网站采用现代化的设计和交互方式，为用户提供流畅的浏览和学习体验。所有资源均已本地化，无需依赖外部CDN，确保在任何网络环境下都能正常运行。最新版本使用Three.js r179，并采用ES模块导入方式。
+<p align="center">
+    <br> English | <a href="README-zh.md">中文</a>
+</p>
 
-## 最新更新 (2025年1月)
+Welcome to the Three.js Showcase Navigator—a professional, feature-rich platform offering an extensive array of Three.js examples. These examples span a broad spectrum from foundational concepts, lighting effects, animations, and interactions to advanced techniques and performance optimization. Designed with a modern and intuitive interface, the site promises a seamless browsing and learning experience for all users. Every asset is localized to ensure smooth performance in any network condition. The latest update uses Three.js r179 and incorporates ES module imports for a streamlined experience.
 
-### 🎯 动画与交互系列示例
-- 新增**关键帧动画**示例，使用Three.js AnimationMixer创建复杂动画序列，支持位置、旋转、缩放动画
-- 新增**变形动画**示例，实现不同几何体之间的平滑顶点插值变形效果
-- 新增**射线检测**示例，使用Raycaster实现鼠标与3D对象的交互检测和选择
-- 新增**拖拽控制**示例，实现完整的3D对象拖拽和放置系统
+## Latest Updates (August 2025)
 
-### 🖼️ 纹理加载器系列示例
-- 新增**基础纹理加载器**示例，支持多种图像格式纹理的加载和应用
-- 新增**HDR 纹理加载器**示例，使用RGBELoader加载高动态范围环境贴图
-- 新增**立方体纹理加载器**示例，创建沉浸式天空盒环境效果
+### 🎯 Animations & Interactions Series
 
-### 🔤 字体和音频加载器优化
-- 优化**字体加载器**示例，修复中文字体拉伸问题，实现文字立体显示效果
-- 新增**音频加载器**示例，集成3D位置音频系统和音频可视化效果
+- **Keyframe Animation**: Explore complex animation sequences using Three.js AnimationMixer, supporting position, rotation, and scale animations.
+- **Morph Animation**: Discover smooth vertex interpolation between different geometries for dynamic morphing effects.
+- **Raycasting**: Learn mouse and 3D object interaction detection and selection with Raycaster.
+- **Drag-and-Drop Control**: Implement a comprehensive 3D object drag-and-drop system.
 
-### 🏗️ 模型加载器系列示例
-- 新增**多格式模型加载器**示例，支持多种 3D 模型格式的加载和显示
-- 新增**GLTF 模型加载器**示例，加载和显示 GLTF/GLB 格式的 3D 模型
-- 新增**OBJ 模型加载器**示例，加载和显示 OBJ 格式的 3D 模型及其材质
-- 新增**FBX 模型加载器**示例，加载和显示 FBX 格式的 3D 模型及其动画
-- 新增**STL 模型加载器**示例，加载和显示 STL 格式的 3D 模型
-- 新增**DAE/COLLADA 模型加载器**示例，加载和显示 DAE 格式的 3D 模型
-- 新增**VTK 模型加载器**示例，加载和显示 VTK 格式的 3D 模型
-- 新增**PCD 点云模型加载器**示例，加载和显示 PCD 格式的点云数据
-- 新增**3DS 模型加载器**示例，加载和显示 3DS 格式的 3D 模型
-- 新增**AMF 模型加载器**示例，加载和显示 AMF 格式的 3D 模型
-- 新增**GCODE 模型加载器**示例，加载和显示 GCODE 格式的 3D 打印模型
+### 🖼️ Texture Loader Series
 
-### 📚 文档和模板优化
-- 完善**示例模板结构**，严格按照统一标准创建所有新示例
-- 优化**创建示例指南**文档，提供详细的开发流程和最佳实践
-- 更新**项目回顾文档**，总结开发经验和技术要点
+- **Basic Texture Loader**: Support for loading and applying textures of various image formats.
+- **HDR Texture Loader**: Leverage RGBELoader to integrate high dynamic range environmental mapping.
+- **Cubemap Texture Loader**: Create immersive skybox environments for enhanced visual effects.
 
-## 功能特点
+### 🔤 Font & Audio Loader Optimization
 
-- **分类导航**：左侧分类结构树，方便浏览不同类别的示例
-- **示例展示**：右侧示例卡片展示，包含直观的视觉效果和简短描述
-- **搜索功能**：可以快速查找特定示例
-- **响应式设计**：自适应不同屏幕尺寸，从桌面到移动设备均有良好体验
-- **科技感界面**：简洁优美的界面设计，采用现代化的配色和动画效果
-- **源代码查看**：示例页面内置源代码查看功能，支持语法高亮
-- **随机和谐颜色**：示例卡片在没有缩略图时显示随机和谐的颜色背景和居中图标
-- **加载动画**：示例页面加载过程中显示加载动画，提升用户体验
-- **可拖拽分割线**：源代码查看模式下，可以通过拖拽分割线调整源代码和示例预览的宽度比例
-- **404页面优化**：当访问不存在的示例时，显示简洁的404页面，隐藏不必要的UI元素
-- **动态页脚**：页脚显示动态更新的年份范围和相关链接
-- **示例截图功能**：内置截图工具，可以轻松生成示例缩略图，便于创建新示例
-- **本地化资源**：所有第三方库和资源均已本地化，无需依赖外部CDN
-- **参数调试面板**：所有示例都集成了参数调试面板，可以实时调整几何体、材质和动画参数
-- **轨道控制器**：集成OrbitControls，可以自由旋转和缩放场景
+- **Font Loader Improvements**: Fix issues with Chinese font stretching for a 3D text display.
+- **Audio Loader**: Integrate a 3D spatial audio system paired with audio visualization effects.
 
-## 使用说明
+### 🏗️ Model Loader Series
 
-1. 打开 `index.html` 文件启动网站
-2. 通过左侧分类树浏览不同类别的示例
-3. 点击示例卡片直接查看示例
-4. 使用顶部搜索框搜索特定示例
-5. 在示例页面中，点击左下角的"查看源代码"按钮可以查看该示例的完整源代码
-6. 在源代码查看模式下，可以通过拖拽中间的分割线调整源代码和示例预览的宽度比例
-7. 点击右上角的"返回首页"按钮可以返回到示例列表页面
-8. 在示例预览页面，点击右上角的"截图封面"按钮可以生成示例缩略图
+- **Multi-format Model Loader**: Support for loading and displaying various 3D model formats
+- **GLTF Model Loader**: Load and display GLTF/GLB format 3D models
+- **OBJ Model Loader**: Load and display OBJ format 3D models with materials
+- **FBX Model Loader**: Load and display FBX format 3D models with animations
+- **STL Model Loader**: Load and display STL format 3D models
+- **DAE/COLLADA Model Loader**: Load and display DAE format 3D models
+- **VTK Model Loader**: Load and display VTK format 3D models
+- **PCD Point Cloud Model Loader**: Load and display PCD format point cloud data
+- **3DS Model Loader**: Load and display 3DS format 3D models
+- **AMF Model Loader**: Load and display AMF format 3D models
+- **GCODE Model Loader**: Load and display GCODE format 3D printing models
 
-## 示例分类
+### 📚 Documentation and Template Enhancement
 
-网站包含以下主要分类：
+- **Example Template Structure**: Strictly follow unified standards for all new examples
+- **Creating Examples Guide**: Provide detailed development workflow and best practices
+- **Project Review Documentation**: Summarize development experience and technical points
 
-1. **基础示例**
-   - 几何体（立方体、球体、圆柱体、圆环等）
-   - 材质（标准材质、物理材质等）
+## Features
 
-2. **光照效果**
-   - 光源类型（点光源、聚光灯、平行光等）
-   - 特殊效果（阴影效果、环境光遮蔽等）
+- **Categorized Navigation**: Easily browse examples through a structured sidebar.
+- **Dynamic Display**: Each example is showcased with intuitive visuals and concise descriptions.
+- **Search Functionality**: Quickly locate specific examples with built-in search.
+- **Responsive Design**: Enjoy optimal viewing across all device sizes.
+- **Futuristic Interface**: Modern design with sleek animations and theme.
+- **Code Accessibility**: Integrated code viewing with syntax highlighting.
+- **Adaptive Backgrounds**: Placeholder thumbnails with harmonious colors and icons.
+- **Loading Animations**: Enhance loading phase with engaging animations.
+- **Adjustable Dividers**: Resize the view between code and example previews by dragging.
+- **404 Optimization**: Clean, simplified 404 pages for non-existent routes.
+- **Dynamic Footers**: Auto-updating year range in the footer.
+- **Screenshot Feature**: Quickly generate example thumbnails for new demos.
+- **Localized Assets**: All third-party libraries and resources are localized for speed.
+- **Parameter Tuning Panel**: Real-time adjustment of geometry, materials, and animations parameters.
+- **Orbit Controls**: Navigate through scenes with OrbitControls for an enhanced experience.
 
-3. **动画与交互**
-   - 基础动画（关键帧动画、变形动画）
-   - 交互效果（射线检测、拖拽控制）
+## Quick Start
 
-4. **高级技术**
-   - 着色器（自定义着色器、着色器图案等）
-   - 物理引擎（Cannon.js、Ammo.js等）
+1. Open `index.html` to launch the site.
+2. Explore categories via the left sidebar.
+3. Click example cards for direct viewing.
+4. Use the top search bar to find samples.
+5. Access complete source code via the "View Source" button.
+6. Adjust preview layout with the draggable divider.
+7. Return to the home page with the "Back to Home" button.
+8. Capture thumbnails using the "Screenshot Cover" button in preview mode.
 
-5. **加载器**
-   - 模型加载器（GLTF、OBJ、FBX、STL、DAE、VTK、PCD、3DS、AMF、GCODE等）
-   - 纹理加载器（基础纹理、HDR纹理、立方体纹理等）
-   - 其他加载器（字体、音频等）
+## Example Categories
 
-6. **性能优化**
-   - 优化技术（实例化渲染、LOD技术等）
+The site features a diverse collection of categories:
 
-## 项目结构
+1. **Basic Examples**
+   - Geometries (cube, sphere, cylinder, torus, etc.)
+   - Materials (standard materials, physical materials, etc.)
+
+2. **Lighting Effects**
+   - Light Types (point light, spotlight, directional light, etc.)
+   - Special Effects (shadow effects, ambient occlusion, etc.)
+
+3. **Animations & Interactions**
+   - Basic Animations (keyframe animation, morph animation)
+   - Interactive Effects (raycasting, drag-and-drop control)
+
+4. **Advanced Techniques**
+   - Shaders (custom shaders, shader patterns, etc.)
+   - Physics Engines (Cannon.js, Ammo.js, etc.)
+
+5. **Loaders**
+   - Model Loaders (GLTF, OBJ, FBX, STL, DAE, VTK, PCD, 3DS, AMF, GCODE, etc.)
+   - Texture Loaders (basic textures, HDR textures, cubemap textures, etc.)
+   - Other Loaders (fonts, audio, etc.)
+
+6. **Performance Optimization**
+   - Optimization Techniques (instanced rendering, LOD techniques, etc.)
+
+## Project Structure
 
 ```
 /
-├── index.html          # 主页面
+├── index.html          # Main page
 ├── css/
-│   ├── style.css       # 主页样式文件（包含响应式设计和动画效果）
-│   ├── example-viewer.css # 示例查看器样式文件
-│   └── example-common.css # 示例页面公共样式文件
+│   ├── style.css       # Main stylesheet (includes responsive design and animations)
+│   ├── example-viewer.css # Example viewer stylesheet
+│   └── example-common.css # Common example page stylesheet
 ├── js/
-│   ├── data.js         # 示例数据（包含所有分类和示例信息）
-│   ├── main.js         # 主要脚本（处理UI交互和示例展示）
-│   └── example-viewer.js # 示例查看器脚本（处理示例页面的交互和源代码查看）
-├── libs/               # 第三方库目录（所有资源已本地化）
-│   ├── three/          # Three.js库
-│   │   ├── 0.150.0/    # Three.js旧版本
-│   │   │   ├── three.min.js # Three.js压缩文件
-│   │   │   └── three.module.js # Three.js模块文件
-│   │   └── r179/       # Three.js最新版本
-│   │       ├── build/  # 构建文件
-│   │       │   └── three.module.js # Three.js模块文件
-│   │       └── jsm/    # 扩展模块
-│   │           ├── controls/ # 控制器
-│   │           │   └── OrbitControls.js # 轨道控制器
-│   │           └── libs/ # 辅助库
-│   │               └── lil-gui.module.min.js # GUI控制面板
-│   ├── bootstrap-icons/ # Bootstrap图标库
-│   │   └── 1.11.0/     # Bootstrap图标版本
-│   │       ├── bootstrap-icons.css # Bootstrap图标CSS
-│   │       └── fonts/   # Bootstrap图标字体文件
-│   ├── dat.gui/        # dat.GUI库
-│   │   └── 0.7.9/      # dat.GUI版本
-│   │       └── dat.gui.min.js # dat.GUI压缩文件
-│   └── prismjs/        # Prism.js代码高亮库
-│       └── 1.24.1/     # Prism.js版本
-│           ├── prism.min.js # Prism.js核心文件
-│           ├── themes/  # Prism.js主题
-│           │   └── prism-tomorrow.min.css # 明日主题
-│           └── components/ # Prism.js语言组件
-│               ├── prism-markup.min.js # HTML语法高亮
-│               ├── prism-javascript.min.js # JavaScript语法高亮
-│               └── prism-css.min.js # CSS语法高亮
-├── images/             # 示例图片目录
-├── docs/               # 文档目录
-│   └── creating-examples.md # 创建示例指南
-└── examples/           # 示例页面目录
-    ├── viewer.html     # 示例查看器页面（用于展示示例和源代码）
-    ├── template.html   # 示例模板页面（用于创建新示例）
-    └── ...             # 其他示例页面
+│   ├── data.js         # Example data (contains all categories and example information)
+│   ├── main.js         # Main script (handles UI interaction and example display)
+│   └── example-viewer.js # Example viewer script (handles example page interaction and source code viewing)
+├── libs/               # Third-party libraries directory (all resources localized)
+│   ├── three/          # Three.js library
+│   │   ├── 0.150.0/    # Three.js older version
+│   │   │   ├── three.min.js # Three.js minified file
+│   │   │   └── three.module.js # Three.js module file
+│   │   └── r179/       # Three.js latest version
+│   │       ├── build/  # Build files
+│   │       │   └── three.module.js # Three.js module file
+│   │       └── jsm/    # Extension modules
+│   │           ├── controls/ # Controllers
+│   │           │   └── OrbitControls.js # Orbit controller
+│   │           └── libs/ # Helper libraries
+│   │               └── lil-gui.module.min.js # GUI control panel
+│   ├── bootstrap-icons/ # Bootstrap Icons library
+│   │   └── 1.11.0/     # Bootstrap Icons version
+│   │       ├── bootstrap-icons.css # Bootstrap Icons CSS
+│   │       └── fonts/   # Bootstrap Icons font files
+│   ├── dat.gui/        # dat.GUI library
+│   │   └── 0.7.9/      # dat.GUI version
+│   │       └── dat.gui.min.js # dat.GUI minified file
+│   └── prismjs/        # Prism.js code highlighting library
+│       └── 1.24.1/     # Prism.js version
+│           ├── prism.min.js # Prism.js core file
+│           ├── themes/  # Prism.js themes
+│           │   └── prism-tomorrow.min.css # Tomorrow theme
+│           └── components/ # Prism.js language components
+│               ├── prism-markup.min.js # HTML syntax highlighting
+│               ├── prism-javascript.min.js # JavaScript syntax highlighting
+│               └── prism-css.min.js # CSS syntax highlighting
+├── images/             # Example images directory
+├── docs/               # Documentation directory
+│   └── creating-examples.md # Creating examples guide
+└── examples/           # Example pages directory
+    ├── viewer.html     # Example viewer page (for displaying examples and source code)
+    ├── template.html   # Example template page (for creating new examples)
+    └── ...             # Other example pages
 ```
 
-## 技术特点
+## Technical Features
 
-- **现代化UI**：使用CSS变量、Flexbox和Grid布局实现响应式设计
-- **动态内容加载**：通过JavaScript动态生成分类树和示例卡片
-- **交互式体验**：示例页面支持交互控制和源代码查看
-- **代码高亮**：使用Prism.js实现源代码语法高亮
-- **优雅动画**：使用CSS动画和过渡效果增强用户体验
-- **模块化结构**：示例代码与公共资源分离，便于维护和扩展
-- **高性能拖拽**：优化的拖拽实现，确保分割线拖拽的流畅性和可靠性
-- **加载状态反馈**：示例加载过程中显示加载动画，提升用户体验
-- **随机和谐颜色**：示例卡片在没有缩略图时显示随机和谐的颜色背景
-- **智能404处理**：自动检测404页面并优化显示效果
-- **动态年份计算**：页脚年份范围自动更新，无需手动维护
-- **封装的截图功能**：示例页面内置截图功能，与业务代码分离，便于维护
-- **资源本地化**：所有第三方库和资源均已本地化，提高加载速度和可靠性
-- **ES模块导入**：使用现代化的ES模块导入方式，代码结构更清晰
-- **参数调试面板**：集成lil-gui，可以实时调整几何体、材质和动画参数
-- **轨道控制器**：集成OrbitControls，提供更好的场景交互体验
+- **Modern UI**: Using CSS variables, Flexbox, and Grid layout for responsive design
+- **Dynamic Content Loading**: JavaScript-generated category tree and example cards
+- **Interactive Experience**: Example pages support interactive controls and source code viewing
+- **Code Highlighting**: Using Prism.js for source code syntax highlighting
+- **Elegant Animations**: CSS animations and transitions enhance user experience
+- **Modular Structure**: Example code separated from common resources for easy maintenance and extension
+- **High-Performance Dragging**: Optimized drag implementation ensures smooth and reliable divider dragging
+- **Loading State Feedback**: Loading animations during example loading improve user experience
+- **Harmonious Random Colors**: Example cards display harmonious random color backgrounds when no thumbnail is available
+- **Smart 404 Handling**: Automatic detection of 404 pages and optimized display
+- **Dynamic Year Calculation**: Footer year range automatically updates, no manual maintenance required
+- **Encapsulated Screenshot Function**: Built-in screenshot functionality, separated from business code for easy maintenance
+- **Resource Localization**: All third-party libraries and resources are localized for faster loading and reliability
+- **ES Module Imports**: Using modern ES module import approach for clearer code structure
+- **Parameter Debugging Panel**: Integrated lil-gui for real-time adjustment of geometry, material, and animation parameters
+- **Orbit Controller**: Integrated OrbitControls for better scene interaction experience
 
-## 项目完成情况
+## Project Completion Status
 
-### 📊 示例统计
-- **总示例数量**：60+ 个完整示例
-- **主要分类**：6 大类别，15+ 子分类
-- **技术覆盖**：从基础几何体到高级交互，全面覆盖 Three.js 功能
+### 📊 Example Statistics
+- **Total Examples**: 60+ complete examples
+- **Main Categories**: 6 major categories, 15+ subcategories
+- **Technology Coverage**: From basic geometries to advanced interactions, comprehensive coverage of Three.js functionality
 
-### 🎯 核心功能完成度
-- ✅ **基础示例系列**：几何体、材质示例完整
-- ✅ **光照效果系列**：各种光源类型和特殊效果
-- ✅ **加载器系列**：模型、纹理、字体、音频加载器全覆盖
-- ✅ **动画与交互系列**：关键帧、变形、射线检测、拖拽控制
-- 🔄 **高级技术系列**：着色器、物理引擎（部分完成）
-- 🔄 **性能优化系列**：实例化渲染、LOD技术（部分完成）
+### 🎯 Core Functionality Completion
+- ✅ **Basic Examples Series**: Geometry and material examples complete
+- ✅ **Lighting Effects Series**: Various light types and special effects
+- ✅ **Loaders Series**: Full coverage of model, texture, font, and audio loaders
+- ✅ **Animation & Interaction Series**: Keyframes, morphing, raycasting, drag-and-drop control
+- 🔄 **Advanced Techniques Series**: Shaders, physics engines (partially complete)
+- 🔄 **Performance Optimization Series**: Instanced rendering, LOD techniques (partially complete)
 
-### 🛠️ 技术架构特点
-- **统一模板**：所有示例基于标准模板创建，确保代码一致性
-- **现代化导入**：使用 ES 模块和 importmap，代码结构清晰
-- **交互体验**：集成 lil-gui 和 OrbitControls，提供丰富的用户交互
-- **完整文档**：详细的中文注释和开发指南
-- **截图功能**：内置截图工具，便于生成示例缩略图
+### 🛠️ Technical Architecture Features
+- **Unified Templates**: All examples created based on standard templates, ensuring code consistency
+- **Modern Imports**: Using ES modules and importmap for clear code structure
+- **Interactive Experience**: Integrated lil-gui and OrbitControls for rich user interaction
+- **Complete Documentation**: Detailed comments and development guides
+- **Screenshot Functionality**: Built-in screenshot tool for generating example thumbnails
 
-### 🎨 用户体验优化
-- **响应式设计**：适配各种屏幕尺寸
-- **加载优化**：本地化资源，无需外部依赖
-- **搜索功能**：快速定位所需示例
-- **源码查看**：支持语法高亮的代码查看
-- **参数调试**：实时调整示例参数
+### 🎨 User Experience Optimization
+- **Responsive Design**: Adapts to various screen sizes
+- **Loading Optimization**: Localized resources, no external dependencies
+- **Search Functionality**: Quickly locate needed examples
+- **Source Code Viewing**: Code viewing with syntax highlighting
+- **Parameter Debugging**: Real-time adjustment of example parameters
 
-## 技术栈
+## Technology Stack
 
 - HTML5
-- CSS3（变量、Flexbox、Grid、动画）
+- CSS3 (variables, Flexbox, Grid, animations)
 - JavaScript (ES6+)
 - Three.js r179
-- ES模块导入
-- lil-gui（参数调试面板）
-- OrbitControls（轨道控制器）
-- Bootstrap Icons（图标库）
-- Prism.js（代码高亮）
+- ES module imports
+- lil-gui (parameter debugging panel)
+- OrbitControls (orbit controller)
+- Bootstrap Icons (icon library)
+- Prism.js (code highlighting)
 
-## 示例创建指南
+## Example Creation Guide
 
-要创建新的Three.js示例，请按照以下步骤操作：
+To create new Three.js examples, follow these steps:
 
-1. 复制 `examples/template.html` 文件，并根据示例内容命名
-2. 修改文件中的元数据（标题、描述、版本等）
-3. 在 `js/data.js` 文件中添加新示例的信息
-4. 实现示例的Three.js代码
-5. 使用内置的截图功能生成示例缩略图：
-   - 打开示例预览页面
-   - 调整示例到最佳视觉效果
-   - 点击右上角的"截图封面"按钮
-   - 保存生成的图片到 `images` 目录
-   - 在 `js/data.js` 中引用该图片作为示例的缩略图
+1. Copy the `examples/template.html` file and name it according to the example content
+2. Modify the metadata in the file (title, description, version, etc.)
+3. Add information about the new example in the `js/data.js` file
+4. Implement the Three.js code for the example
+5. Use the built-in screenshot functionality to generate an example thumbnail:
+   - Open the example preview page
+   - Adjust the example to the best visual effect
+   - Click the "Screenshot Cover" button in the top right corner
+   - Save the generated image to the `images` directory
+   - Reference the image as the example thumbnail in `js/data.js`
 
-详细的创建示例指南请参阅 [docs/creating-examples.md](docs/creating-examples.md) 文件。
+For detailed example creation guidelines, please refer to the [docs/creating-examples.md](docs/creating-examples.md) file.
 
-## 扩展建议
+## Extension Suggestions
 
-1. **内容扩展**：添加更多Three.js示例，覆盖更多高级特性
-2. **功能增强**：
-   - 添加暗色模式切换
-   - 实现示例代码在线编辑功能
-   - 添加示例参数实时调整功能
-   - 增强截图功能，支持自定义尺寸和格式
-3. **性能优化**：
-   - 实现示例代码的懒加载
-   - 优化大型示例的加载性能
-   - 添加资源预加载功能
-4. **社区功能**：
-   - 添加用户评论和分享功能
-   - 实现示例评分系统
-   - 添加示例收藏功能
-5. **教程集成**：
-   - 为每个示例添加详细教程说明
-   - 集成更多Three.js扩展库的示例和教程
-   - 添加交互式学习路径
+1. **Content Extension**: Add more Three.js examples covering more advanced features
+2. **Feature Enhancement**:
+   - Add dark mode toggle
+   - Implement online example code editing functionality
+   - Add real-time example parameter adjustment functionality
+   - Enhance screenshot functionality to support custom sizes and formats
+3. **Performance Optimization**:
+   - Implement lazy loading for example code
+   - Optimize loading performance for large examples
+   - Add resource preloading functionality
+4. **Community Features**:
+   - Add user comments and sharing functionality
+   - Implement example rating system
+   - Add example collection functionality
+5. **Tutorial Integration**:
+   - Add detailed tutorial explanations for each example
+   - Integrate examples and tutorials for more Three.js extension libraries
+   - Add interactive learning paths
 
-## 贡献指南
+## Contribution Guidelines
 
-欢迎为本项目贡献代码或提供改进建议。如果您想贡献新的示例或功能，请遵循以下步骤：
+Contributions to this project are welcome. If you want to contribute new examples or features, please follow these steps:
 
-1. Fork 本仓库
-2. 创建您的特性分支 (`git checkout -b feature/amazing-feature`)
-3. 提交您的更改 (`git commit -m 'Add some amazing feature'`)
-4. 推送到分支 (`git push origin feature/amazing-feature`)
-5. 打开一个 Pull Request
+1. Fork this repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## 更新日志
+## Changelog
 
-项目的所有更新和变更记录已移至单独的文件中，请查看 [更新日志](docs/CHANGELOG.md) 获取详细信息。
+All updates and changes to the project have been moved to a separate file. Please see the [Changelog](docs/CHANGELOG.md) for detailed information.
 
-## 许可证
+## License
 
-本项目采用 MIT 许可证 - 详情请参阅 [LICENSE](LICENSE) 文件
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
