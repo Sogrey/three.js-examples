@@ -570,6 +570,165 @@ const threejsData = {
                     ]
                 }
             ]
+        },
+        {
+            id: "digital-twin",
+            name: "数字孪生",
+            icon: "bi-diagram-3",
+            subcategories: [
+                {
+                    id: "digital-twin-effects",
+                    name: "场景特效",
+                    examples: [
+                        {
+                            id: "digital-twin-particle-system",
+                            title: "粒子系统",
+                            description: "创建各种粒子特效，如烟雾、火焰、雨雪等环境效果",
+                            thumbnail: "images/digital-twin-particle-system.jpg",
+                            version: "r179",
+                            url: "examples/digital-twin-particle-system"
+                        },
+                        {
+                            id: "digital-twin-water-simulation",
+                            title: "水面模拟",
+                            description: "模拟真实的水面波动效果，适用于海洋、湖泊场景",
+                            thumbnail: "images/digital-twin-water-simulation.jpg",
+                            version: "r179",
+                            url: "examples/digital-twin-water-simulation"
+                        },
+                        {
+                            id: "digital-twin-fog-atmosphere",
+                            title: "雾气大气",
+                            description: "创建逼真的雾气和大气散射效果，增强场景真实感",
+                            thumbnail: "images/digital-twin-fog-atmosphere.jpg",
+                            version: "r179",
+                            url: "examples/digital-twin-fog-atmosphere"
+                        },
+                        {
+                            id: "digital-twin-volumetric-lighting",
+                            title: "体积光照",
+                            description: "实现体积光照效果，如光束、光柱等戏剧性光照",
+                            thumbnail: "images/digital-twin-volumetric-lighting.jpg",
+                            version: "r179",
+                            url: "examples/digital-twin-volumetric-lighting"
+                        }
+                    ]
+                },
+                {
+                    id: "digital-twin-visualization",
+                    name: "数据可视化",
+                    examples: [
+                        {
+                            id: "digital-twin-data-flow",
+                            title: "数据流动画",
+                            description: "可视化数据在系统中的流动过程，适用于网络拓扑展示",
+                            thumbnail: "images/digital-twin-data-flow.jpg",
+                            version: "r179",
+                            url: "examples/digital-twin-data-flow"
+                        },
+                        {
+                            id: "digital-twin-heatmap",
+                            title: "热力图显示",
+                            description: "在3D场景中展示热力图数据，如温度分布、人流密度等",
+                            thumbnail: "images/digital-twin-heatmap.jpg",
+                            version: "r179",
+                            url: "examples/digital-twin-heatmap"
+                        },
+                        {
+                            id: "digital-twin-sensor-visualization",
+                            title: "传感器可视化",
+                            description: "实时显示传感器数据，包括状态指示和数据变化动画",
+                            thumbnail: "images/digital-twin-sensor-visualization.jpg",
+                            version: "r179",
+                            url: "examples/digital-twin-sensor-visualization"
+                        },
+                        {
+                            id: "digital-twin-timeline-animation",
+                            title: "时间轴动画",
+                            description: "基于时间轴的数据回放和预测动画，展示历史和未来趋势",
+                            thumbnail: "images/digital-twin-timeline-animation.jpg",
+                            version: "r179",
+                            url: "examples/digital-twin-timeline-animation"
+                        }
+                    ]
+                },
+                {
+                    id: "digital-twin-interaction",
+                    name: "交互控制",
+                    examples: [
+                        {
+                            id: "digital-twin-device-control",
+                            title: "设备控制面板",
+                            description: "3D场景中的设备控制界面，支持实时操作和状态反馈",
+                            thumbnail: "images/digital-twin-device-control.jpg",
+                            version: "r179",
+                            url: "examples/digital-twin-device-control"
+                        },
+                        {
+                            id: "digital-twin-path-planning",
+                            title: "路径规划",
+                            description: "可视化路径规划算法，适用于机器人导航和物流优化",
+                            thumbnail: "images/digital-twin-path-planning.jpg",
+                            version: "r179",
+                            url: "examples/digital-twin-path-planning"
+                        },
+                        {
+                            id: "digital-twin-alarm-system",
+                            title: "报警系统",
+                            description: "3D场景中的报警提示和状态指示，包括声光报警效果",
+                            thumbnail: "images/digital-twin-alarm-system.jpg",
+                            version: "r179",
+                            url: "examples/digital-twin-alarm-system"
+                        },
+                        {
+                            id: "digital-twin-virtual-assembly",
+                            title: "虚拟装配",
+                            description: "模拟产品装配过程，支持拖拽组装和碰撞检测",
+                            thumbnail: "images/digital-twin-virtual-assembly.jpg",
+                            version: "r179",
+                            url: "examples/digital-twin-virtual-assembly"
+                        }
+                    ]
+                },
+                {
+                    id: "digital-twin-simulation",
+                    name: "仿真模拟",
+                    examples: [
+                        {
+                            id: "digital-twin-factory-simulation",
+                            title: "工厂仿真",
+                            description: "完整的工厂生产线仿真，包括设备运行和产品流转",
+                            thumbnail: "images/digital-twin-factory-simulation.jpg",
+                            version: "r179",
+                            url: "examples/digital-twin-factory-simulation"
+                        },
+                        {
+                            id: "digital-twin-city-simulation",
+                            title: "城市仿真",
+                            description: "智慧城市场景仿真，包括交通流、人流和基础设施",
+                            thumbnail: "images/digital-twin-city-simulation.jpg",
+                            version: "r179",
+                            url: "examples/digital-twin-city-simulation"
+                        },
+                        {
+                            id: "digital-twin-building-bim",
+                            title: "建筑BIM",
+                            description: "建筑信息模型展示，支持楼层切换和构件信息查看",
+                            thumbnail: "images/digital-twin-building-bim.jpg",
+                            version: "r179",
+                            url: "examples/digital-twin-building-bim"
+                        },
+                        {
+                            id: "digital-twin-energy-flow",
+                            title: "能源流动",
+                            description: "可视化能源系统中的电力、热力等能源流动过程",
+                            thumbnail: "images/digital-twin-energy-flow.jpg",
+                            version: "r179",
+                            url: "examples/digital-twin-energy-flow"
+                        }
+                    ]
+                }
+            ]
         }
     ]
 };

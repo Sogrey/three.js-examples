@@ -20,6 +20,7 @@ yarn-error.log*
 # 临时文件
 .tmp/
 .temp/
+.codebuddy/
 
 # 构建输出
 /dist
