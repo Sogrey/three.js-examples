@@ -515,7 +515,15 @@ const threejsData = {
                             thumbnail: "images/advanced-shader-patterns.jpg",
                             version: "r150",
                             url: "examples/advanced-shader-patterns"
-                        }
+                        },
+                        {
+                            id: "advanced-cyberpunk-tunnel",
+                            title: "赛博朋克闪电隧道",
+                            description: "使用自定义着色器和后处理实现高速飞行的赛博朋克数据隧道效果",
+                            thumbnail: "images/advanced-cyberpunk-tunnel.jpg",
+                            version: "r179",
+                            url: "examples/cyberpunk-lightning-tunnel"
+                        },
                     ]
                 },
                 {

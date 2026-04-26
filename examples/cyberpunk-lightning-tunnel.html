@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Three.js赛博朋克闪电隧道 - 高速飞行的数据隧道效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 赛博朋克闪电隧道</title>
+    <link rel="stylesheet" href="../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+    
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../libs/three/r179/build/three.module.js",
+                "three/addons/": "../libs/three/r179/jsm/"
+            }
+        }
+    </script>
+    
+    <script type="module">
+        import * as THREE from 'three';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+        
+        window.scene = null;
+        window.camera = null;
+        window.renderer = null;
+        
+        const config = {
+            flightSpeed: 8.7,
+            tunnelRadius: 20.9,
+            tunnelLength: 50.0,
+            chunkCount: 6,
+            strandsPerChunk: 38,
+            displacement: 0.4802,
+            radialNoise: 1.5,
+            twistAmount: 0.0,
+            detailLevel: 6,
+            branchProbability: 0.25,
+            numberSize: 5.0,
+            numbersDensity: 0.5439,
+            baseColor: "#5099dc",
+            flashColor: "#88ccff",
+            flashIntensity: 4.0,
+            minFlashInterval: 0.6,
+            maxFlashInterval: 2.0,
+            flashDuration: 0.36955,
+            doubleFlashProbability: 0.4,
+            bloomStrength: 0.97,
+            bloomRadius: 0.6,
+            bloomThreshold: 0.3,
+            triggerFlash: () => forceFlash()
+        };
+        
+        let composer, bloomPass;
+        const chunks = [];
+        let allStrands = [];
+        const scheduledFlashes = [];
+        let timeSinceLastFlash = 0;
+        let nextFlashTime = 0;
+        const clock = new THREE.Clock();
+        
+        const colorBase = new THREE.Color(config.baseColor);
+        const colorFlash = new THREE.Color(config.flashColor);
+        let colorGlow = colorFlash.clone().multiplyScalar(config.flashIntensity);
+        
+        let digitTexture = null;
+        
+        init();
+        animate();
+        
+        function init() {
+            window.scene = new THREE.Scene();
+            window.scene.background = new THREE.Color(0x000000);
+            
+            const fogNear = config.tunnelLength * 2.0;
+            const fogFar = config.tunnelLength * (config.chunkCount - 1.0);
+            window.scene.fog = new THREE.Fog(0x000000, fogNear, fogFar);
+            
+            window.camera = new THREE.PerspectiveCamera(
+                70,
+                window.innerWidth / window.innerHeight,
+                0.1,
+                1000
+            );
+            window.camera.position.set(0, 0, 0);
+            
+            window.renderer = new THREE.WebGLRenderer({ antialias: false });
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            window.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            window.renderer.toneMapping = THREE.ReinhardToneMapping;
+            document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+            
+            const renderScene = new RenderPass(window.scene, window.camera);
+            bloomPass = new UnrealBloomPass(
+                new THREE.Vector2(window.innerWidth, window.innerHeight),
+                config.bloomStrength,
+                config.bloomRadius,
+                config.bloomThreshold
+            );
+            const outputPass = new OutputPass();
+            composer = new EffectComposer(window.renderer);
+            composer.addPass(renderScene);
+            composer.addPass(bloomPass);
+            composer.addPass(outputPass);
+            
+            buildTunnel();
+            
+            window.addEventListener('resize', onWindowResize);
+            setupGUI();
+            setNextFlashTime();
+        }
+        
+        function setupGUI() {
+            const gui = new GUI({ title: '隧道设置', width: 300 });
+            
+            gui.domElement.style.position = 'absolute';
+            gui.domElement.style.top = '60px';
+            gui.domElement.style.right = '10px';
+            gui.domElement.style.zIndex = '1000';
+            gui.domElement.style.maxHeight = '80vh';
+            gui.domElement.style.overflowY = 'auto';
+            
+            setTimeout(() => {
+                gui.show();
+            }, 100);
+            
+            const moveFolder = gui.addFolder('运动与形状');
+            moveFolder.add(config, 'flightSpeed', 0, 150).name('飞行速度');
+            moveFolder.add(config, 'tunnelRadius', 5, 30).name('隧道半径').onChange(rebuildTunnel);
+            moveFolder.add(config, 'twistAmount', 0, Math.PI * 2).name('扭曲程度').onChange(rebuildTunnel);
+            
+            const appearanceFolder = gui.addFolder('闪电结构');
+            appearanceFolder.add(config, 'strandsPerChunk', 2, 50).step(1).name('闪电密度').onChange(rebuildTunnel);
+            appearanceFolder.add(config, 'displacement', 0.1, 5.0).name('锯齿程度').onChange(rebuildTunnel);
+            appearanceFolder.add(config, 'detailLevel', 3, 8).step(1).name('细节层次').onChange(rebuildTunnel);
+            appearanceFolder.add(config, 'numberSize', 1.0, 50.0).name('数字大小').onChange((v) => {
+                allStrands.forEach((strand) => {
+                    strand.userData.pointMesh.material.uniforms.uSize.value = v;
+                });
+            });
+            appearanceFolder.add(config, 'numbersDensity', 0.1, 5.0).name('数字密度').onChange(rebuildTunnel);
+            appearanceFolder.addColor(config, 'baseColor').name('基础颜色').onChange(updateColors);
+            
+            const flashFolder = gui.addFolder('闪电效果');
+            flashFolder.add(config, 'minFlashInterval', 0.05, 2.0).name('最小间隔(秒)');
+            flashFolder.add(config, 'maxFlashInterval', 0.1, 5.0).name('最大间隔(秒)');
+            flashFolder.add(config, 'flashDuration', 0.05, 1.0).name('闪光持续(秒)');
+            flashFolder.add(config, 'doubleFlashProbability', 0.0, 1.0).name('双闪概率');
+            flashFolder.addColor(config, 'flashColor').name('闪光颜色').onChange(updateColors);
+            flashFolder.add(config, 'triggerFlash').name('立即触发闪光');
+            
+            const postProcessingFolder = gui.addFolder('泛光效果');
+            postProcessingFolder.add(config, 'bloomStrength', 0.0, 5.0).name('强度').onChange((v) => (bloomPass.strength = v));
+            postProcessingFolder.add(config, 'bloomRadius', 0.0, 2.0).name('半径').onChange((v) => (bloomPass.radius = v));
+            postProcessingFolder.add(config, 'bloomThreshold', 0.0, 1.0).name('阈值').onChange((v) => (bloomPass.threshold = v));
+            
+            gui.close();
+        }
+        
+        function updateColors() {
+            colorBase.set(config.baseColor);
+            colorFlash.set(config.flashColor);
+            colorGlow.copy(colorFlash).multiplyScalar(config.flashIntensity);
+            allStrands.forEach((strand) => {
+                strand.userData.pointMesh.material.uniforms.uColor.value.copy(colorBase);
+                strand.userData.lineMesh.material.uniforms.uColor.value.copy(colorGlow);
+            });
+        }
+        
+        function getDigitTexture() {
+            if (digitTexture) return digitTexture;
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 48px monospace';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            for (let i = 0; i < 10; i++) {
+                ctx.fillText(i.toString(), i * 51.2 + 25.6, 32);
+            }
+            digitTexture = new THREE.CanvasTexture(canvas);
+            return digitTexture;
+        }
+        
+        function createDigitMaterial(colorHex) {
+            return new THREE.ShaderMaterial({
+                uniforms: THREE.UniformsUtils.merge([
+                    THREE.UniformsLib['fog'],
+                    {
+                        digitMap: { value: getDigitTexture() },
+                        uColor: { value: new THREE.Color(colorHex) },
+                        uOpacity: { value: 1.0 },
+                        uSize: { value: config.numberSize }
+                    }
+                ]),
+                fog: true,
+                vertexShader: `
+                    attribute float digitIndex;
+                    attribute float aProgress;
+                    varying float vDigitIndex;
+                    varying float vProgress;
+                    uniform float uSize;
+                    #include <fog_pars_vertex>
+                    void main() {
+                        vDigitIndex = digitIndex;
+                        vProgress = aProgress;
+                        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                        float taper = smoothstep(0.0, 0.05, aProgress) * smoothstep(1.0, 0.95, aProgress);
+                        gl_PointSize = uSize * (100.0 / -mvPosition.z) * max(taper, 0.01);
+                        gl_Position = projectionMatrix * mvPosition;
+                        #include <fog_vertex>
+                    }
+                `,
+                fragmentShader: `
+                    uniform sampler2D digitMap;
+                    uniform vec3 uColor;
+                    uniform float uOpacity;
+                    varying float vDigitIndex;
+                    varying float vProgress;
+                    #include <fog_pars_fragment>
+                    void main() {
+                        vec2 uv = vec2(
+                            (gl_PointCoord.x + vDigitIndex) / 10.0,
+                            1.0 - gl_PointCoord.y
+                        );
+                        vec4 texColor = texture2D(digitMap, uv);
+                        if (texColor.a < 0.1) discard;
+                        float taper = smoothstep(0.0, 0.05, vProgress) * smoothstep(1.0, 0.95, vProgress);
+                        gl_FragColor = vec4(uColor, uOpacity * texColor.a * taper);
+                        #include <fog_fragment>
+                    }
+                `,
+                transparent: true,
+                depthWrite: false,
+                blending: THREE.NormalBlending
+            });
+        }
+        
+        function createLineMaterial(baseColorObj) {
+            return new THREE.ShaderMaterial({
+                uniforms: THREE.UniformsUtils.merge([
+                    THREE.UniformsLib['fog'],
+                    {
+                        uColor: { value: baseColorObj.clone() },
+                        uOpacity: { value: 0.0 }
+                    }
+                ]),
+                fog: true,
+                vertexShader: `
+                    attribute float aProgress;
+                    varying float vProgress;
+                    #include <fog_pars_vertex>
+                    void main() {
+                        vProgress = aProgress;
+                        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                        gl_Position = projectionMatrix * mvPosition;
+                        #include <fog_vertex>
+                    }
+                `,
+                fragmentShader: `
+                    uniform vec3 uColor;
+                    uniform float uOpacity;
+                    varying float vProgress;
+                    #include <fog_pars_fragment>
+                    void main() {
+                        float taper = smoothstep(0.0, 0.05, vProgress) * smoothstep(1.0, 0.95, vProgress);
+                        gl_FragColor = vec4(uColor, uOpacity * taper);
+                        #include <fog_fragment>
+                    }
+                `,
+                transparent: true,
+                depthWrite: false,
+                blending: THREE.AdditiveBlending
+            });
+        }
+        
+        function createPointsGeometry(lineGeometry) {
+            const posArray = lineGeometry.attributes.position.array;
+            const progressArray = lineGeometry.attributes.aProgress.array;
+            const ptPositions = [];
+            const ptDigits = [];
+            const ptProgresses = [];
+            
+            for (let j = 0; j < posArray.length; j += 6) {
+                const p1 = new THREE.Vector3(posArray[j], posArray[j + 1], posArray[j + 2]);
+                const p2 = new THREE.Vector3(posArray[j + 3], posArray[j + 4], posArray[j + 5]);
+                const t1 = progressArray[j / 3];
+                const t2 = progressArray[j / 3 + 1];
+                const dist = p1.distanceTo(p2);
+                const numPoints = Math.max(1, Math.floor(dist * config.numbersDensity));
+                
+                for (let k = 0; k < numPoints; k++) {
+                    const lerpFactor = k / numPoints;
+                    const pt = p1.clone().lerp(p2, lerpFactor);
+                    const ptT = t1 + (t2 - t1) * lerpFactor;
+                    ptPositions.push(pt.x, pt.y, pt.z);
+                    ptDigits.push(Math.floor(Math.random() * 10));
+                    ptProgresses.push(ptT);
+                }
+            }
+            
+            const pointGeo = new THREE.BufferGeometry();
+            pointGeo.setAttribute('position', new THREE.Float32BufferAttribute(ptPositions, 3));
+            pointGeo.setAttribute('digitIndex', new THREE.Float32BufferAttribute(ptDigits, 1));
+            pointGeo.setAttribute('aProgress', new THREE.Float32BufferAttribute(ptProgresses, 1));
+            
+            return pointGeo;
+        }
+        
+        function buildTunnel() {
+            scheduledFlashes.length = 0;
+            chunks.forEach((chunk) => {
+                window.scene.remove(chunk.group);
+                chunk.group.children.forEach((strandGroup) => {
+                    strandGroup.userData.lineMesh.geometry.dispose();
+                    strandGroup.userData.lineMesh.material.dispose();
+                    strandGroup.userData.pointMesh.geometry.dispose();
+                    strandGroup.userData.pointMesh.material.dispose();
+                });
+            });
+            chunks.length = 0;
+            allStrands.length = 0;
+            
+            for (let i = 0; i < config.chunkCount; i++) {
+                const zOffset = -i * config.tunnelLength;
+                createChunk(zOffset);
+            }
+        }
+        
+        function rebuildTunnel() {
+            window.camera.position.set(0, 0, 0);
+            buildTunnel();
+        }
+        
+        function createChunk(zPos) {
+            const group = new THREE.Group();
+            group.position.z = zPos;
+            
+            for (let i = 0; i < config.strandsPerChunk; i++) {
+                const geometry = generateCylindricalLightning(config);
+                const lineMat = createLineMaterial(colorGlow);
+                const lineMesh = new THREE.LineSegments(geometry, lineMat);
+                const pointGeo = createPointsGeometry(geometry);
+                const pointMat = createDigitMaterial(config.baseColor);
+                const pointMesh = new THREE.Points(pointGeo, pointMat);
+                
+                const strandGroup = new THREE.Group();
+                strandGroup.add(lineMesh);
+                strandGroup.add(pointMesh);
+                strandGroup.userData = {
+                    flashValue: 0.0,
+                    lineMesh: lineMesh,
+                    pointMesh: pointMesh
+                };
+                group.add(strandGroup);
+                allStrands.push(strandGroup);
+            }
+            
+            window.scene.add(group);
+            chunks.push({ group: group });
+        }
+        
+        function generateCylindricalLightning(cfg) {
+            const startAngle = Math.random() * Math.PI * 2;
+            const endAngle = startAngle + (Math.random() - 0.5) * cfg.twistAmount;
+            const start = new THREE.Vector3(
+                Math.cos(startAngle) * cfg.tunnelRadius,
+                Math.sin(startAngle) * cfg.tunnelRadius,
+                0
+            );
+            const end = new THREE.Vector3(
+                Math.cos(endAngle) * cfg.tunnelRadius,
+                Math.sin(endAngle) * cfg.tunnelRadius,
+                -cfg.tunnelLength
+            );
+            
+            let segments = [
+                { start: start, end: end, generation: 0, tStart: 0.0, tEnd: 1.0 }
+            ];
+            
+            for (let i = 0; i < cfg.detailLevel; i++) {
+                let nextSegments = [];
+                for (let seg of segments) {
+                    const p1 = seg.start;
+                    const p2 = seg.end;
+                    const mid = p1.clone().lerp(p2, 0.5);
+                    const direction = p2.clone().sub(p1).normalize();
+                    const length = p1.distanceTo(p2);
+                    const tMid = seg.tStart + (seg.tEnd - seg.tStart) * 0.5;
+                    const randomVec = new THREE.Vector3(
+                        Math.random() - 0.5,
+                        Math.random() - 0.5,
+                        Math.random() - 0.5
+                    );
+                    const perpendicular = randomVec.cross(direction).normalize();
+                    const offset = perpendicular.multiplyScalar(
+                        (Math.random() - 0.5) * length * cfg.displacement
+                    );
+                    mid.add(offset);
+                    
+                    const currentRad = Math.sqrt(mid.x * mid.x + mid.y * mid.y);
+                    const targetRad = cfg.tunnelRadius + (Math.random() - 0.5) * cfg.radialNoise;
+                    const scale = targetRad / currentRad;
+                    mid.x *= scale;
+                    mid.y *= scale;
+                    
+                    nextSegments.push({ start: p1, end: mid, generation: seg.generation + 1, tStart: seg.tStart, tEnd: tMid });
+                    nextSegments.push({ start: mid, end: p2, generation: seg.generation + 1, tStart: tMid, tEnd: seg.tEnd });
+                    
+                    if (Math.random() < cfg.branchProbability && seg.generation < cfg.detailLevel - 2) {
+                        const branchDir = direction.clone();
+                        branchDir.applyAxisAngle(new THREE.Vector3(0, 0, 1), (Math.random() - 0.5) * 1.5);
+                        branchDir.applyAxisAngle(direction, Math.random() * Math.PI * 2);
+                        const branchLength = length * (0.6 + Math.random() * 0.4);
+                        const branchEnd = mid.clone().add(branchDir.multiplyScalar(branchLength));
+                        const brCurrentRad = Math.sqrt(branchEnd.x * branchEnd.x + branchEnd.y * branchEnd.y);
+                        const brTargetRad = cfg.tunnelRadius + (Math.random() - 0.5) * cfg.radialNoise;
+                        const brScale = brTargetRad / brCurrentRad;
+                        branchEnd.x *= brScale;
+                        branchEnd.y *= brScale;
+                        nextSegments.push({ start: mid, end: branchEnd, generation: seg.generation + 1, tStart: tMid, tEnd: 1.0 });
+                    }
+                }
+                segments = nextSegments;
+            }
+            
+            const positions = [];
+            const progresses = [];
+            
+            for (let seg of segments) {
+                positions.push(seg.start.x, seg.start.y, seg.start.z);
+                progresses.push(seg.tStart);
+                positions.push(seg.end.x, seg.end.y, seg.end.z);
+                progresses.push(seg.tEnd);
+            }
+            
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            geometry.setAttribute('aProgress', new THREE.Float32BufferAttribute(progresses, 1));
+            
+            return geometry;
+        }
+        
+        function setNextFlashTime() {
+            nextFlashTime = config.minFlashInterval + Math.random() * (config.maxFlashInterval - config.minFlashInterval);
+            timeSinceLastFlash = 0;
+        }
+        
+        function forceFlash() {
+            scheduledFlashes.push({ delay: 0, duration: config.flashDuration });
+            if (Math.random() < config.doubleFlashProbability) {
+                scheduledFlashes.push({ delay: 0.1, duration: config.flashDuration });
+            }
+        }
+        
+        function onWindowResize() {
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            const delta = clock.getDelta();
+            timeSinceLastFlash += delta;
+            
+            if (timeSinceLastFlash >= nextFlashTime) {
+                forceFlash();
+                setNextFlashTime();
+            }
+            
+            for (let i = scheduledFlashes.length - 1; i >= 0; i--) {
+                scheduledFlashes[i].delay -= delta;
+                if (scheduledFlashes[i].delay <= 0) {
+                    const duration = scheduledFlashes[i].duration;
+                    const opacity = Math.max(0, 1.0 - (-scheduledFlashes[i].delay) / duration);
+                    
+                    allStrands.forEach((strand) => {
+                        strand.userData.lineMesh.material.uniforms.uOpacity.value = opacity * config.flashIntensity;
+                        strand.userData.pointMesh.material.uniforms.uOpacity.value = opacity * 0.5 + 0.5;
+                    });
+                    
+                    if (-scheduledFlashes[i].delay >= duration) {
+                        scheduledFlashes.splice(i, 1);
+                        if (scheduledFlashes.length === 0) {
+                            allStrands.forEach((strand) => {
+                                strand.userData.lineMesh.material.uniforms.uOpacity.value = 0.0;
+                                strand.userData.pointMesh.material.uniforms.uOpacity.value = 1.0;
+                            });
+                        }
+                    }
+                }
+            }
+            
+            for (let i = 0; i < chunks.length; i++) {
+                chunks[i].group.position.z += config.flightSpeed * delta;
+                if (chunks[i].group.position.z > config.tunnelLength * 0.5) {
+                    chunks[i].group.position.z -= config.chunkCount * config.tunnelLength;
+                    regenerateChunkGeometry(chunks[i]);
+                }
+            }
+            
+            composer.render();
+        }
+    </script>
+    
+    <script>
+        let _screenshotRenderer;
+        
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (!_screenshotRenderer && window.renderer) {
+                        _screenshotRenderer = window.renderer;
+                    }
+                    
+                    if (!_screenshotRenderer) {
+                        throw new Error('渲染器未初始化');
+                    }
+                    
+                    if (window.scene && window.camera) {
+                        _screenshotRenderer.render(window.scene, window.camera);
+                    }
+                    
+                    const quality = event.data.quality || 0.8;
+                    const canvas = _screenshotRenderer.domElement;
+                    
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    
+                    window.parent.postMessage({
+                        type: 'screenshot-data',
+                        dataUrl: dataUrl
+                    }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
