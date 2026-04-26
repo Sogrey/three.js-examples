@@ -32,3 +32,8 @@ yarn-error.log*
 .env.development.local
 .env.test.local
 .env.production.local
+
+# 排除 models 目录下的所有子目录及文件
+/models/*
+# 但保留 models 根目录下的文件
+!/models/*.*
