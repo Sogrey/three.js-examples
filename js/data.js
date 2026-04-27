@@ -524,6 +524,14 @@ const threejsData = {
                             version: "r179",
                             url: "examples/cyberpunk-lightning-tunnel"
                         },
+                        {
+                            id: "visualization-custom-shader-lines",
+                            title: "自定义shader线元素",
+                            description: "使用自定义着色器实现渐变色和流光效果的线元素",
+                            thumbnail: "images/visualization-custom-shader-lines.jpg",
+                            version: "r179",
+                            url: "examples/visualization-custom-shader-lines"
+                        },
                     ]
                 },
                 {
