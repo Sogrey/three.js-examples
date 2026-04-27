@@ -323,32 +323,38 @@ function handleNormalPage() {
         const iframeDoc = exampleFrame.contentDocument || exampleFrame.contentWindow.document;
         const iframeTitle = iframeDoc.querySelector('title').textContent.replace('Three.js 示例 - ', '');
         const iframeDescription = iframeDoc.querySelector('meta[name="description"]')?.content || '无描述';
-        const iframeVersion = iframeDoc.querySelector('meta[name="three-version"]')?.content || 'r150';
-        
+        const iframeVersion = iframeDoc.querySelector('meta[name="three-version"]')?.content || '';
+
         // 更新页面标题和信息
         document.title = `Three.js 示例 - ${iframeTitle}`;
         exampleTitle.textContent = iframeTitle;
         exampleDescription.textContent = iframeDescription;
-        
-        // 创建版本号链接到GitHub仓库
-        const versionLink = document.createElement('a');
-        versionLink.href = `https://github.com/mrdoob/three.js/tree/${iframeVersion}`;
-        versionLink.textContent = iframeVersion;
-        versionLink.target = '_blank'; // 在新标签页中打开
-        versionLink.title = `查看 ${iframeVersion} 版本的Three.js源码`;
-        versionLink.style.color = 'inherit'; // 保持原有颜色
-        versionLink.style.textDecoration = 'underline'; // 添加下划线表示可点击
-        
-        // 清空并添加链接
-        exampleVersion.innerHTML = '';
-        exampleVersion.appendChild(versionLink);
-        
-        // 更新加载浮层中的版本号也为链接
-        const loadingVersion = document.querySelector('.loading-version');
-        if (loadingVersion) {
-            const loadingVersionLink = versionLink.cloneNode(true);
-            loadingVersion.innerHTML = `使用的Three.js版本: `;
-            loadingVersion.appendChild(loadingVersionLink);
+
+        // 只有指定了版本才显示版本信息
+        if (iframeVersion) {
+            const versionLink = document.createElement('a');
+            versionLink.href = `https://github.com/mrdoob/three.js/tree/${iframeVersion}`;
+            versionLink.textContent = iframeVersion;
+            versionLink.target = '_blank';
+            versionLink.title = `查看 ${iframeVersion} 版本的Three.js源码`;
+            versionLink.style.color = 'inherit';
+            versionLink.style.textDecoration = 'underline';
+
+            exampleVersion.innerHTML = '';
+            exampleVersion.appendChild(versionLink);
+            exampleVersion.parentElement.style.display = '';
+
+            const loadingVersion = document.querySelector('.loading-version');
+            if (loadingVersion) {
+                loadingVersion.innerHTML = `使用的Three.js版本: `;
+                loadingVersion.appendChild(versionLink.cloneNode(true));
+            }
+        } else {
+            exampleVersion.parentElement.style.display = 'none';
+            const loadingVersion = document.querySelector('.loading-version');
+            if (loadingVersion) {
+                loadingVersion.style.display = 'none';
+            }
         }
         
         // 显示左上角信息区域

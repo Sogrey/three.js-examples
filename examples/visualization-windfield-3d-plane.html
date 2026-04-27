@@ -133,11 +133,10 @@
                 },
                 vertexShader: `
                     attribute float size;
-                    attribute vec3 color;
                     varying vec3 vColor;
                     varying float vAlpha;
                     uniform float uTime;
-                    
+
                     void main() {
                         vColor = color;
                         
@@ -190,35 +189,41 @@
                     child.material.dispose();
                 });
             }
-            
+
             arrows = new THREE.Group();
-            
+
             const gridSize = params.arrowDensity;
             const spacing = 20 / gridSize;
-            
+
             for (let i = 0; i < gridSize; i++) {
                 for (let j = 0; j < gridSize; j++) {
                     const x = -10 + i * spacing;
                     const z = -10 + j * spacing;
                     const wind = getWindField(x, z, 0);
-                    
+
                     const color = getWindSpeedColor(wind.speed);
-                    
+
+                    const dir = new THREE.Vector3(wind.x, 0, wind.z);
+                    if (dir.lengthSq() < 0.0001) {
+                        dir.set(1, 0, 0);
+                    }
+                    dir.normalize();
+
                     const arrowHelper = new THREE.ArrowHelper(
-                        new THREE.Vector3(wind.x, 0, wind.z).normalize(),
+                        dir,
                         new THREE.Vector3(x, 0.5, z),
                         params.arrowScale * Math.sqrt(wind.speed + 0.5),
                         color.getHex(),
                         params.arrowScale * 0.3,
                         params.arrowScale * 0.15
                     );
-                    
+
                     arrows.add(arrowHelper);
                 }
             }
-            
+
             window.scene.add(arrows);
-            
+
             if (params.showGrid) {
                 const gridHelper = new THREE.GridHelper(20, 20, 0x333333, 0x222222);
                 arrows.add(gridHelper);
@@ -229,20 +234,36 @@
             const gridSize = params.arrowDensity;
             const spacing = 20 / gridSize;
             let index = params.showGrid ? 1 : 0;
-            
+
             for (let i = 0; i < gridSize; i++) {
                 for (let j = 0; j < gridSize; j++) {
                     if (index >= arrows.children.length) break;
-                    
+
                     const x = -10 + i * spacing;
                     const z = -10 + j * spacing;
                     const wind = getWindField(x, z, time);
-                    
+
                     const arrow = arrows.children[index];
-                    arrow.setDirection(new THREE.Vector3(wind.x, 0, wind.z).normalize());
-                    arrow.setLength(params.arrowScale * Math.sqrt(wind.speed + 0.5));
-                    arrow.setColor(getWindSpeedColor(wind.speed));
-                    
+                    const dir = new THREE.Vector3(wind.x, 0, wind.z);
+                    if (dir.lengthSq() < 0.0001) {
+                        dir.set(1, 0, 0);
+                    }
+                    dir.normalize();
+
+                    arrow.position.set(x, 0.5, z);
+                    const len = params.arrowScale * Math.sqrt(wind.speed + 0.5);
+                    if (arrow.setLength) {
+                        arrow.setLength(len);
+                    }
+                    if (arrow.setColor) {
+                        arrow.setColor(getWindSpeedColor(wind.speed));
+                    }
+                    if (arrow.setDirection) {
+                        arrow.setDirection(dir);
+                    } else {
+                        arrow.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+                    }
+
                     index++;
                 }
             }

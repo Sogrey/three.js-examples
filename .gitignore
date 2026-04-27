@@ -37,3 +37,5 @@ yarn-error.log*
 /models/*
 # 但保留 models 根目录下的文件
 !/models/*.*
+
+tmp

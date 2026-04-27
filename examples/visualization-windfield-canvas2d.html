@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Three.js canvas 2D风场图 - 使用canvas绘制的风场流向图">
-    <meta name="three-version" content="r179">
-    <title>Three.js 示例 - canvas 2D风场图</title>
+    <meta name="description" content="canvas 2D风场图 - 使用Canvas绘制的风场流向图">
+    <title>示例 - canvas 2D风场图</title>
     <link rel="stylesheet" href="../css/example-common.css">
     <style>
-        body { margin: 0; overflow: hidden; }
+        body { margin: 0; overflow: hidden; background: #0a0a1a; }
         #canvas2d {
             position: absolute;
             top: 0;
@@ -18,26 +17,9 @@
     </style>
 </head>
 <body>
-    <div class="three-container" id="threeContainer"></div>
     <canvas id="canvas2d"></canvas>
-    
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "../libs/three/r179/build/three.module.js",
-                "three/addons/": "../libs/three/r179/jsm/"
-            }
-        }
-    </script>
-    
-    <script type="module">
-        import * as THREE from 'three';
-        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
-        
-        window.scene = null;
-        window.camera = null;
-        window.renderer = null;
-        
+
+    <script>
         const params = {
             gridWidth: 40,
             gridHeight: 30,
@@ -51,57 +33,57 @@
             showGrid: true,
             showParticles: true
         };
-        
+
         let canvas2d, ctx2d;
         let particles = [];
         let grid = [];
         let animationId;
-        
+        let lastTime = 0;
+
         init();
         animate();
-        
+
         function init() {
             canvas2d = document.getElementById('canvas2d');
             ctx2d = canvas2d.getContext('2d');
-            
+
             resizeCanvas();
             window.addEventListener('resize', resizeCanvas);
-            
+
             initGrid();
             initParticles();
-            initGUI();
         }
-        
+
         function resizeCanvas() {
             canvas2d.width = window.innerWidth;
             canvas2d.height = window.innerHeight;
         }
-        
+
         function getWindField(x, y, time) {
             const windX = Math.sin(x * 0.1 + time) * Math.cos(y * 0.08 + time * 0.7);
             const windY = Math.cos(x * 0.08 - time * 0.5) * Math.sin(y * 0.1 + time * 0.3);
             const speed = Math.sqrt(windX * windX + windY * windY);
             return { x: windX, y: windY, speed: speed };
         }
-        
+
         function getWindSpeedColor(speed) {
             let r, g, b;
-            
+
             if (speed < 0.5) {
                 const t = speed * 2;
-                r = Math.floor(0 + (0 - 0) * t);
-                g = Math.floor(0 + (255 - 0) * t);
-                b = Math.floor(255 + (0 - 255) * t);
+                r = Math.floor(0);
+                g = Math.floor(255 * t);
+                b = Math.floor(255 * (1 - t));
             } else {
                 const t = (speed - 0.5) * 2;
-                r = Math.floor(0 + (255 - 0) * t);
-                g = Math.floor(255 + (0 - 255) * t);
+                r = Math.floor(255 * t);
+                g = Math.floor(255 * (1 - t));
                 b = Math.floor(0);
             }
-            
+
             return `rgb(${r}, ${g}, ${b})`;
         }
-        
+
         function initGrid() {
             grid = [];
             for (let i = 0; i <= params.gridWidth; i++) {
@@ -111,14 +93,14 @@
                 }
             }
         }
-        
+
         function initParticles() {
             particles = [];
             for (let i = 0; i < params.particleCount; i++) {
                 particles.push(createParticle());
             }
         }
-        
+
         function createParticle() {
             return {
                 x: Math.random() * canvas2d.width,
@@ -127,11 +109,11 @@
                 maxAge: params.trailLength + Math.random() * 10
             };
         }
-        
+
         function updateGrid(time) {
             const cellWidth = canvas2d.width / params.gridWidth;
             const cellHeight = canvas2d.height / params.gridHeight;
-            
+
             for (let i = 0; i <= params.gridWidth; i++) {
                 for (let j = 0; j <= params.gridHeight; j++) {
                     const x = (i + 0.5) * cellWidth;
@@ -141,46 +123,46 @@
                 }
             }
         }
-        
+
         function updateParticles(deltaTime) {
             const speed = params.particleSpeed * deltaTime * 60;
-            
+
             for (let i = 0; i < particles.length; i++) {
                 const p = particles[i];
-                
+
                 const gridX = Math.floor(p.x / canvas2d.width * params.gridWidth);
                 const gridY = Math.floor(p.y / canvas2d.height * params.gridHeight);
-                
+
                 if (gridX >= 0 && gridX < params.gridWidth && gridY >= 0 && gridY < params.gridHeight) {
                     const wind = grid[gridX][gridY];
                     p.x += wind.x * speed;
                     p.y += wind.y * speed;
                 }
-                
+
                 p.age++;
-                
+
                 if (p.age >= p.maxAge || p.x < 0 || p.x > canvas2d.width || p.y < 0 || p.y > canvas2d.height) {
                     Object.assign(p, createParticle());
                 }
             }
         }
-        
+
         function drawGrid() {
             if (!params.showGrid) return;
-            
+
             const cellWidth = canvas2d.width / params.gridWidth;
             const cellHeight = canvas2d.height / params.gridHeight;
-            
+
             ctx2d.strokeStyle = 'rgba(50, 50, 50, 0.3)';
             ctx2d.lineWidth = 0.5;
-            
+
             for (let i = 0; i <= params.gridWidth; i++) {
                 ctx2d.beginPath();
                 ctx2d.moveTo(i * cellWidth, 0);
                 ctx2d.lineTo(i * cellWidth, canvas2d.height);
                 ctx2d.stroke();
             }
-            
+
             for (let j = 0; j <= params.gridHeight; j++) {
                 ctx2d.beginPath();
                 ctx2d.moveTo(0, j * cellHeight);
@@ -188,22 +170,22 @@
                 ctx2d.stroke();
             }
         }
-        
+
         function drawParticles() {
             if (!params.showParticles) return;
-            
+
             for (let i = 0; i < particles.length; i++) {
                 const p = particles[i];
                 const lifeRatio = p.age / p.maxAge;
                 const alpha = Math.sin(lifeRatio * Math.PI) * 0.8;
-                
+
                 const gridX = Math.floor(p.x / canvas2d.width * params.gridWidth);
                 const gridY = Math.floor(p.y / canvas2d.height * params.gridHeight);
-                
+
                 if (gridX >= 0 && gridX < params.gridWidth && gridY >= 0 && gridY < params.gridHeight) {
                     const wind = grid[gridX][gridY];
                     const color = getWindSpeedColor(wind.speed);
-                    
+
                     ctx2d.fillStyle = color;
                     ctx2d.globalAlpha = alpha;
                     ctx2d.beginPath();
@@ -213,76 +195,35 @@
             }
             ctx2d.globalAlpha = 1;
         }
-        
+
         function draw(time) {
             ctx2d.fillStyle = params.backgroundColor;
             ctx2d.fillRect(0, 0, canvas2d.width, canvas2d.height);
-            
+
             updateGrid(time);
-            
+
             drawGrid();
             drawParticles();
         }
-        
-        function initGUI() {
-            const gui = new GUI({ title: '风场参数控制', width: 300 });
-            
-            gui.domElement.style.position = 'absolute';
-            gui.domElement.style.top = '60px';
-            gui.domElement.style.right = '10px';
-            gui.domElement.style.zIndex = '1000';
-            gui.domElement.style.maxHeight = '80vh';
-            gui.domElement.style.overflowY = 'auto';
-            
-            setTimeout(() => {
-                gui.show();
-            }, 100);
-            
-            const particleFolder = gui.addFolder('粒子设置');
-            particleFolder.add(params, 'particleCount', 500, 5000).step(100).name('粒子数量').onChange(() => {
-                initParticles();
-            });
-            particleFolder.add(params, 'trailLength', 5, 30).step(1).name('轨迹长度').onChange(() => {
-                initParticles();
-            });
-            particleFolder.add(params, 'particleSpeed', 0.5, 5.0).name('粒子速度');
-            particleFolder.open();
-            
-            const gridFolder = gui.addFolder('网格设置');
-            gridFolder.add(params, 'gridWidth', 10, 80).step(1).name('网格宽度').onChange(() => {
-                initGrid();
-            });
-            gridFolder.add(params, 'gridHeight', 10, 60).step(1).name('网格高度').onChange(() => {
-                initGrid();
-            });
-            gridFolder.add(params, 'showGrid').name('显示网格');
-            gridFolder.add(params, 'showParticles').name('显示粒子');
-            gridFolder.open();
-            
-            const colorFolder = gui.addFolder('颜色设置');
-            colorFolder.addColor(params, 'backgroundColor').name('背景颜色');
-            colorFolder.open();
-        }
-        
-        let lastTime = 0;
+
         function animate(currentTime = 0) {
             animationId = requestAnimationFrame(animate);
-            
+
             const deltaTime = Math.min((currentTime - lastTime) / 1000, 0.1);
             lastTime = currentTime;
-            
+
             const time = currentTime * 0.001;
-            
+
             updateParticles(deltaTime);
             draw(time);
         }
-        
+
         function stopAnimation() {
             if (animationId) {
                 cancelAnimationFrame(animationId);
             }
         }
-        
+
         window.addEventListener('message', function(event) {
             if (event.data && event.data.type === 'take-screenshot') {
                 stopAnimation();

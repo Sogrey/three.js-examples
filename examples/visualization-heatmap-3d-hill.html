@@ -158,11 +158,10 @@
                     uLightDirection: { value: new THREE.Vector3(1, 1, 0.5).normalize() }
                 },
                 vertexShader: `
-                    attribute vec3 color;
                     varying vec3 vColor;
                     varying vec3 vNormal;
                     varying vec3 vPosition;
-                    
+
                     void main() {
                         vColor = color;
                         vNormal = normalize(normalMatrix * normal);
@@ -177,19 +176,19 @@
                     uniform vec3 uColorMid;
                     uniform vec3 uColorHigh;
                     uniform vec3 uLightDirection;
-                    
+
                     varying vec3 vColor;
                     varying vec3 vNormal;
                     varying vec3 vPosition;
-                    
+
                     void main() {
                         float diffuse = max(dot(vNormal, uLightDirection), 0.3);
-                        
+
                         float height = vPosition.z / uMaxHeight;
                         vec3 rimColor = mix(uColorMid, uColorHigh, height);
-                        
+
                         vec3 finalColor = vColor * diffuse + rimColor * 0.2;
-                        
+
                         float alpha = 0.9;
                         gl_FragColor = vec4(finalColor, alpha);
                     }
@@ -304,15 +303,14 @@
         
         function animate() {
             requestAnimationFrame(animate);
-            
+
             controls.update();
-            
+
             if (heatMaterial) {
-                const time = heatMaterial.uniforms.uTime.value;
                 heatMaterial.uniforms.uTime.value += 0.016 * params.animationSpeed;
-                updateHeatHill(time);
+                updateHeatHill(heatMaterial.uniforms.uTime.value);
             }
-            
+
             window.renderer.render(window.scene, window.camera);
         }
     </script>

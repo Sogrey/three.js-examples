@@ -767,11 +767,67 @@ const threejsData = {
                             url: "examples/visualization-windfield-3d-globe"
                         },
                         {
+                            id: "visualization-earth-texture",
+                            title: "地球贴图",
+                            description: "带有纹理贴图的旋转地球",
+                            thumbnail: "images/visualization-earth-texture.jpg",
+                            version: "r179",
+                            url: "examples/visualization-earth-texture"
+                        },
+                        {
+                            id: "visualization-earth-columns",
+                            title: "地球柱体",
+                            description: "使用InstancedMesh实现的地球柱状图",
+                            thumbnail: "images/visualization-earth-columns.jpg",
+                            version: "r179",
+                            url: "examples/visualization-earth-columns"
+                        },
+                        {
+                            id: "visualization-earth-columns-optimized",
+                            title: "地球柱体优化",
+                            description: "使用BufferGeometryUtils.mergeGeometries合并优化的地球柱状图",
+                            thumbnail: "images/visualization-earth-columns-optimized.jpg",
+                            version: "r179",
+                            url: "examples/visualization-earth-columns-optimized"
+                        },
+                        {
+                            id: "visualization-gradient-fence",
+                            title: "渐变围栏 3D 区块",
+                            description: "带渐变色的围栏效果",
+                            thumbnail: "images/visualization-gradient-fence.jpg",
+                            version: "r179",
+                            url: "examples/visualization-gradient-fence"
+                        },
+                        {
+                            id: "visualization-multi-gradient-fence",
+                            title: "多重渐变围栏",
+                            description: "多层渐变围栏组合效果",
+                            thumbnail: "images/visualization-multi-gradient-fence.jpg",
+                            version: "r179",
+                            url: "examples/visualization-multi-gradient-fence"
+                        },
+                        {
+                            id: "visualization-earth-sweep",
+                            title: "地球渐变扫光",
+                            description: "地球表面的渐变扫描光效果",
+                            thumbnail: "images/visualization-earth-sweep.jpg",
+                            version: "r179",
+                            url: "examples/visualization-earth-sweep"
+                        },
+                        {
+                            id: "visualization-earth-spot-sweep",
+                            title: "地球斑点扫光",
+                            description: "地球表面的斑点状扫描光效果",
+                            thumbnail: "images/visualization-earth-spot-sweep.jpg",
+                            version: "r179",
+                            url: "examples/visualization-earth-spot-sweep"
+                        },
+                        {
                             id: "visualization-windfield-canvas2d",
                             title: "canvas 2D风场图",
                             description: "使用canvas绘制的2D风场流向图",
                             thumbnail: "images/visualization-windfield-canvas2d.jpg",
-                            version: "r179",
+                            // version: "r179",
                             url: "examples/visualization-windfield-canvas2d"
                         },
                         {

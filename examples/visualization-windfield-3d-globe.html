@@ -223,38 +223,43 @@
                 vertexShader: `
                     attribute float size;
                     attribute float random;
-                    attribute vec3 color;
                     varying vec3 vColor;
                     uniform float uTime;
                     uniform float uParticleSize;
-                    
+
                     void main() {
                         vColor = color;
-                        
+
                         vec3 pos = position;
                         float time = uTime * 0.5 + random * 100.0;
-                        
-                        float lat = asin(pos.y / 2.05);
+
+                        float lat = asin(clamp(pos.y / 2.05, -1.0, 1.0));
                         float lon = atan(pos.z, pos.x);
-                        
+
                         vec3 wind = vec3(
                             sin(lat * 2.0 + time) * cos(lon * 3.0 + time * 0.7),
                             sin(lat * 1.5 - time * 0.3) * cos(lon * 2.0),
                             cos(lat * 2.5 + time * 0.5) * sin(lon * 2.5)
                         );
-                        float speed = length(wind);
-                        wind = wind / (speed + 0.1);
-                        
-                        float moveSpeed = 0.02 * speed;
+                        float windSpeed = length(wind);
+                        if (windSpeed > 0.001) {
+                            wind = wind / windSpeed;
+                        }
+
+                        float moveSpeed = 0.02 * min(windSpeed, 1.0);
                         lat += wind.x * moveSpeed;
                         lon += wind.z * moveSpeed;
-                        
+
                         lat = clamp(lat, -1.55, 1.55);
-                        
-                        pos.x = sin(acos(clamp(cos(lat), 0.0, 1.0))) * cos(lon) * 2.05;
-                        pos.y = sin(lat) * 2.05;
-                        pos.z = sin(acos(clamp(cos(lat), 0.0, 1.0))) * sin(lon) * 2.05;
-                        
+
+                        float newX = sin(clamp(lat, -1.55, 1.55)) * cos(lon) * 2.05;
+                        float newY = sin(clamp(lat, -1.55, 1.55));
+                        float newZ = sin(clamp(lat, -1.55, 1.55)) * sin(lon) * 2.05;
+
+                        pos.x = newX;
+                        pos.y = newY;
+                        pos.z = newZ;
+
                         vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
                         gl_PointSize = uParticleSize * size * (200.0 / -mvPosition.z);
                         gl_Position = projectionMatrix * mvPosition;
@@ -262,11 +267,11 @@
                 `,
                 fragmentShader: `
                     varying vec3 vColor;
-                    
+
                     void main() {
                         float dist = length(gl_PointCoord - vec2(0.5));
                         if (dist > 0.5) discard;
-                        
+
                         float alpha = smoothstep(0.5, 0.2, dist) * 0.8;
                         gl_FragColor = vec4(vColor, alpha);
                     }
