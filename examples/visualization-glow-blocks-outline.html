@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Three.js 泛光轮廓3D区块 - 带轮廓的发光方块可视化">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 泛光轮廓3D区块</title>
+    <link rel="stylesheet" href="../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+    
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../libs/three/r179/build/three.module.js",
+                "three/addons/": "../libs/three/r179/jsm/"
+            }
+        }
+    </script>
+    
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+        import { OutlinePass } from 'three/addons/postprocessing/OutlinePass.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+        
+        window.scene = null;
+        window.camera = null;
+        window.renderer = null;
+        
+        const params = {
+            bloomStrength: 1.2,
+            bloomRadius: 0.5,
+            bloomThreshold: 0.1,
+            outlineColor: '#00ffff',
+            outlineThickness: 2.0,
+            blockCount: 12,
+            blockSize: 1.2,
+            autoRotate: true,
+            rotationSpeed: 0.5,
+            color1: '#ff3366',
+            color2: '#33ff99',
+            color3: '#3366ff',
+            backgroundColor: '#0a0a1a'
+        };
+        
+        let composer;
+        let bloomPass;
+        let outlinePass;
+        let blocks = [];
+        let controls;
+        let selectedBlock = null;
+        
+        init();
+        animate();
+        
+        function init() {
+            window.scene = new THREE.Scene();
+            window.scene.background = new THREE.Color(params.backgroundColor);
+            
+            window.camera = new THREE.PerspectiveCamera(
+                60,
+                window.innerWidth / window.innerHeight,
+                0.1,
+                1000
+            );
+            window.camera.position.set(12, 10, 12);
+            window.camera.lookAt(0, 0, 0);
+            
+            window.renderer = new THREE.WebGLRenderer({ antialias: true });
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            window.renderer.setPixelRatio(window.devicePixelRatio);
+            window.renderer.toneMapping = THREE.ReinhardToneMapping;
+            document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+            
+            composer = new EffectComposer(window.renderer);
+            const renderPass = new RenderPass(window.scene, window.camera);
+            composer.addPass(renderPass);
+            
+            outlinePass = new OutlinePass(
+                new THREE.Vector2(window.innerWidth, window.innerHeight),
+                window.scene,
+                window.camera
+            );
+            outlinePass.edgeStrength = params.outlineThickness;
+            outlinePass.edgeGlow = 1.0;
+            outlinePass.edgeThickness = 1.0;
+            outlinePass.pulsePeriod = 2;
+            outlinePass.visibleEdgeColor.set(params.outlineColor);
+            outlinePass.hiddenEdgeColor.set(params.outlineColor);
+            composer.addPass(outlinePass);
+            
+            bloomPass = new UnrealBloomPass(
+                new THREE.Vector2(window.innerWidth, window.innerHeight),
+                params.bloomStrength,
+                params.bloomRadius,
+                params.bloomThreshold
+            );
+            composer.addPass(bloomPass);
+            
+            controls = new OrbitControls(window.camera, window.renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.autoRotate = true;
+            controls.autoRotateSpeed = params.rotationSpeed;
+            
+            createBlocks();
+            initGUI();
+            
+            window.addEventListener('resize', onWindowResize);
+            window.addEventListener('click', onMouseClick);
+        }
+        
+        function createBlocks() {
+            blocks.forEach(block => {
+                window.scene.remove(block);
+                block.geometry.dispose();
+                block.material.dispose();
+            });
+            blocks = [];
+            
+            const colors = [
+                new THREE.Color(params.color1),
+                new THREE.Color(params.color2),
+                new THREE.Color(params.color3)
+            ];
+            
+            const spacing = params.blockSize * 3;
+            
+            for (let i = 0; i < params.blockCount; i++) {
+                const size = params.blockSize * (0.6 + Math.random() * 0.4);
+                const geometry = new THREE.BoxGeometry(size, size, size);
+                
+                const color = colors[i % colors.length];
+                
+                const material = new THREE.MeshStandardMaterial({
+                    color: color,
+                    emissive: color,
+                    emissiveIntensity: 0.3,
+                    roughness: 0.3,
+                    metalness: 0.7
+                });
+                
+                const mesh = new THREE.Mesh(geometry, material);
+                
+                const gridX = (i % 4) - 1.5;
+                const gridY = Math.floor(i / 4) % 2;
+                const gridZ = Math.floor(i / 8);
+                
+                mesh.position.set(
+                    gridX * spacing,
+                    gridY * spacing + size,
+                    gridZ * spacing
+                );
+                
+                mesh.rotation.set(
+                    Math.random() * 0.3,
+                    Math.random() * Math.PI,
+                    Math.random() * 0.3
+                );
+                
+                mesh.userData = {
+                    rotationSpeed: {
+                        x: (Math.random() - 0.5) * 0.015,
+                        y: (Math.random() - 0.5) * 0.015,
+                        z: (Math.random() - 0.5) * 0.015
+                    },
+                    floatSpeed: 0.3 + Math.random() * 0.4,
+                    floatOffset: Math.random() * Math.PI * 2,
+                    originalY: mesh.position.y,
+                    originalColor: color.clone()
+                };
+                
+                blocks.push(mesh);
+                window.scene.add(mesh);
+            }
+            
+            outlinePass.selectedObjects = blocks;
+            
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+            window.scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
+            directionalLight.position.set(5, 10, 5);
+            window.scene.add(directionalLight);
+        }
+        
+        function onMouseClick(event) {
+            const raycaster = new THREE.Raycaster();
+            const mouse = new THREE.Vector2();
+            
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            
+            raycaster.setFromCamera(mouse, window.camera);
+            
+            const intersects = raycaster.intersectObjects(blocks);
+            
+            if (intersects.length > 0) {
+                const clickedBlock = intersects[0].object;
+                
+                if (selectedBlock === clickedBlock) {
+                    selectedBlock = null;
+                    outlinePass.selectedObjects = blocks;
+                } else {
+                    selectedBlock = clickedBlock;
+                    outlinePass.selectedObjects = [clickedBlock];
+                }
+            }
+        }
+        
+        function updateBlocks(time) {
+            blocks.forEach((block, i) => {
+                if (block !== selectedBlock) {
+                    block.rotation.x += block.userData.rotationSpeed.x;
+                    block.rotation.y += block.userData.rotationSpeed.y;
+                    block.rotation.z += block.userData.rotationSpeed.z;
+                }
+                
+                const floatY = Math.sin(time * block.userData.floatSpeed + block.userData.floatOffset) * 0.2;
+                block.position.y = block.userData.originalY + floatY;
+                
+                const pulse = 0.2 + 0.2 * Math.sin(time * 1.5 + i * 0.5);
+                block.material.emissiveIntensity = pulse;
+            });
+            
+            if (selectedBlock) {
+                selectedBlock.rotation.y += 0.01;
+            }
+        }
+        
+        function initGUI() {
+            const gui = new GUI({ title: '泛光轮廓参数控制', width: 300 });
+            
+            gui.domElement.style.position = 'absolute';
+            gui.domElement.style.top = '60px';
+            gui.domElement.style.right = '10px';
+            gui.domElement.style.zIndex = '1000';
+            gui.domElement.style.maxHeight = '80vh';
+            gui.domElement.style.overflowY = 'auto';
+            
+            setTimeout(() => {
+                gui.show();
+            }, 100);
+            
+            const bloomFolder = gui.addFolder('泛光设置');
+            bloomFolder.add(params, 'bloomStrength', 0.1, 3.0).name('泛光强度').onChange((value) => {
+                bloomPass.strength = value;
+            });
+            bloomFolder.add(params, 'bloomRadius', 0.1, 1.0).name('泛光半径').onChange((value) => {
+                bloomPass.radius = value;
+            });
+            bloomFolder.add(params, 'bloomThreshold', 0.0, 1.0).name('泛光阈值').onChange((value) => {
+                bloomPass.threshold = value;
+            });
+            bloomFolder.open();
+            
+            const outlineFolder = gui.addFolder('轮廓设置');
+            outlineFolder.addColor(params, 'outlineColor').name('轮廓颜色').onChange((value) => {
+                outlinePass.visibleEdgeColor.set(value);
+                outlinePass.hiddenEdgeColor.set(value);
+            });
+            outlineFolder.add(params, 'outlineThickness', 0.5, 5.0).name('轮廓厚度').onChange((value) => {
+                outlinePass.edgeStrength = value;
+            });
+            outlineFolder.open();
+            
+            const blockFolder = gui.addFolder('区块设置');
+            blockFolder.add(params, 'blockCount', 5, 25).step(1).name('区块数量').onChange(() => {
+                createBlocks();
+            });
+            blockFolder.add(params, 'blockSize', 0.5, 2.5).name('区块大小').onChange(() => {
+                createBlocks();
+            });
+            blockFolder.open();
+            
+            const colorFolder = gui.addFolder('颜色设置');
+            colorFolder.addColor(params, 'color1').name('颜色1').onChange(() => createBlocks());
+            colorFolder.addColor(params, 'color2').name('颜色2').onChange(() => createBlocks());
+            colorFolder.addColor(params, 'color3').name('颜色3').onChange(() => createBlocks());
+            colorFolder.addColor(params, 'backgroundColor').name('背景颜色').onChange((value) => {
+                window.scene.background.set(value);
+            });
+            colorFolder.open();
+            
+            const controlFolder = gui.addFolder('控制设置');
+            controlFolder.add(params, 'autoRotate').name('自动旋转').onChange((value) => {
+                controls.autoRotate = value;
+            });
+            controlFolder.add(params, 'rotationSpeed', 0.1, 2.0).name('旋转速度');
+        }
+        
+        function onWindowResize() {
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            controls.update();
+            
+            const time = Date.now() * 0.001;
+            updateBlocks(time);
+            
+            composer.render();
+        }
+    </script>
+    
+    <script>
+        let _screenshotRenderer;
+        
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (!_screenshotRenderer && window.renderer) {
+                        _screenshotRenderer = window.renderer;
+                    }
+                    
+                    if (!_screenshotRenderer) {
+                        throw new Error('渲染器未初始化');
+                    }
+                    
+                    if (window.scene && window.camera) {
+                        _screenshotRenderer.render(window.scene, window.camera);
+                    }
+                    
+                    const quality = event.data.quality || 0.8;
+                    const canvas = _screenshotRenderer.domElement;
+                    
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    
+                    window.parent.postMessage({
+                        type: 'screenshot-data',
+                        dataUrl: dataUrl
+                    }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

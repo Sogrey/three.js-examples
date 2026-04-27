@@ -733,6 +733,78 @@ const threejsData = {
                             thumbnail: "images/digital-twin-energy-flow.jpg",
                             version: "r179",
                             url: "examples/digital-twin-energy-flow"
+                        },
+                        {
+                            id: "visualization-radar-uv",
+                            title: "UV雷达扩散特效",
+                            description: "基于UV坐标的雷达扩散波纹动画效果",
+                            thumbnail: "images/visualization-radar-uv.jpg",
+                            version: "r179",
+                            url: "examples/visualization-radar-uv"
+                        },
+                        {
+                            id: "visualization-radar-scan",
+                            title: "雷达扫描特效",
+                            description: "经典军事雷达扫描动画，带有目标点显示",
+                            thumbnail: "images/visualization-radar-scan.jpg",
+                            version: "r179",
+                            url: "examples/visualization-radar-scan"
+                        },
+                        {
+                            id: "visualization-windfield-3d-plane",
+                            title: "3D风场图平面",
+                            description: "平面上的风场流动可视化，带粒子和箭头显示",
+                            thumbnail: "images/visualization-windfield-3d-plane.jpg",
+                            version: "r179",
+                            url: "examples/visualization-windfield-3d-plane"
+                        },
+                        {
+                            id: "visualization-windfield-3d-globe",
+                            title: "3D风场图地球",
+                            description: "地球上的风场流动可视化，带大气光晕效果",
+                            thumbnail: "images/visualization-windfield-3d-globe.jpg",
+                            version: "r179",
+                            url: "examples/visualization-windfield-3d-globe"
+                        },
+                        {
+                            id: "visualization-windfield-canvas2d",
+                            title: "canvas 2D风场图",
+                            description: "使用canvas绘制的2D风场流向图",
+                            thumbnail: "images/visualization-windfield-canvas2d.jpg",
+                            version: "r179",
+                            url: "examples/visualization-windfield-canvas2d"
+                        },
+                        {
+                            id: "visualization-heatmap-2d",
+                            title: "2D热力图",
+                            description: "平面热力图可视化，支持动态热点",
+                            thumbnail: "images/visualization-heatmap-2d.jpg",
+                            version: "r179",
+                            url: "examples/visualization-heatmap-2d"
+                        },
+                        {
+                            id: "visualization-heatmap-3d-hill",
+                            title: "3D热力山丘图",
+                            description: "3D热力图山丘可视化，带光照和颜色渐变",
+                            thumbnail: "images/visualization-heatmap-3d-hill.jpg",
+                            version: "r179",
+                            url: "examples/visualization-heatmap-3d-hill"
+                        },
+                        {
+                            id: "visualization-glow-blocks",
+                            title: "泛光3D区块",
+                            description: "带泛光效果的发光方块组合",
+                            thumbnail: "images/visualization-glow-blocks.jpg",
+                            version: "r179",
+                            url: "examples/visualization-glow-blocks"
+                        },
+                        {
+                            id: "visualization-glow-blocks-outline",
+                            title: "泛光轮廓3D区块",
+                            description: "带轮廓描边和泛光效果的3D方块组合",
+                            thumbnail: "images/visualization-glow-blocks-outline.jpg",
+                            version: "r179",
+                            url: "examples/visualization-glow-blocks-outline"
                         }
                     ]
                 }
