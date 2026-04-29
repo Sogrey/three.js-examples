@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Three.js 地球柱体 - 使用真实地震数据实现的地球柱状图">
+    <meta name="description" content="Three.js 地球柱体合并优化动画 - 带动画效果的地球柱状图">
     <meta name="three-version" content="r179">
-    <title>Three.js 示例 - 地球柱体</title>
+    <title>Three.js 示例 - 地球柱体合并优化动画</title>
     <link rel="stylesheet" href="../css/example-common.css">
     <style>
         body { margin: 0; overflow: hidden; }
@@ -43,15 +43,22 @@
             barScaleMin: 0.01,
             barScaleMax: 0.5,
             barWidth: 0.01,
-            showEarthTexture: true
+            showEarthTexture: true,
+            animationEnabled: true,
+            animationSpeed: 1.0,
+            animationIntensity: 0.3
         };
 
         let earthSphere;
-        let barGroup;
+        let columnMesh;
+        let columnMaterial;
         let controls;
         let earthquakeData = [];
         let minMag = Number.MAX_SAFE_INTEGER;
         let maxMag = Number.MIN_SAFE_INTEGER;
+        let earthGroup;
+        let time = 0;
+        let barData = [];
 
         init();
         animate();
@@ -78,12 +85,12 @@
             controls.enableDamping = true;
             controls.dampingFactor = 0.05;
 
-            barGroup = new THREE.Group();
-            window.scene.add(barGroup);
+            earthGroup = new THREE.Group();
+            window.scene.add(earthGroup);
 
             await loadEarthquakeData();
             await createEarthTexture();
-            createBars();
+            createColumns();
             initGUI();
 
             window.addEventListener('resize', onWindowResize);
@@ -105,7 +112,10 @@
         }
 
         async function createEarthTexture() {
-            if (!params.showEarthTexture) return;
+            if (!params.showEarthTexture) {
+                createBasicEarth();
+                return;
+            }
 
             try {
                 const response = await fetch('../models/geojson/world-geo-json-zh/world.zh.json');
@@ -159,7 +169,7 @@
                 const earthGeometry = new THREE.SphereGeometry(1, 32, 32);
                 const earthMaterial = new THREE.MeshBasicMaterial({ map: map, transparent: true });
                 earthSphere = new THREE.Mesh(earthGeometry, earthMaterial);
-                window.scene.add(earthSphere);
+                earthGroup.add(earthSphere);
 
             } catch (error) {
                 console.error('Failed to create earth texture:', error);
@@ -171,60 +181,94 @@
             const earthGeometry = new THREE.SphereGeometry(1, 32, 32);
             const earthMaterial = new THREE.MeshBasicMaterial({ color: 0x0a141e });
             earthSphere = new THREE.Mesh(earthGeometry, earthMaterial);
-            window.scene.add(earthSphere);
+            earthGroup.add(earthSphere);
         }
 
-        function createBars() {
-            while (barGroup.children.length > 0) {
-                const child = barGroup.children[0];
-                barGroup.remove(child);
-                if (child.geometry) child.geometry.dispose();
-                if (child.material) child.material.dispose();
-            }
-
+        function createColumns() {
             if (earthquakeData.length === 0) return;
 
             const range = maxMag - minMag;
             if (range === 0) return;
 
-            const lonHelper = new THREE.Object3D();
-            barGroup.add(lonHelper);
-
-            const latHelper = new THREE.Object3D();
-            lonHelper.add(latHelper);
-
-            const positionHelper = new THREE.Object3D();
-            positionHelper.position.z = 1;
-            latHelper.add(positionHelper);
-
+            barData = [];
             const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
-            boxGeometry.applyMatrix4(new THREE.Matrix4().makeTranslation(0, 0, 0.5));
 
-            earthquakeData.forEach((eq) => {
+            earthquakeData.forEach((eq, index) => {
                 const amount = (eq.mag - minMag) / range;
 
-                const material = new THREE.MeshBasicMaterial();
                 const hue = THREE.MathUtils.lerp(params.barHueStart, params.barHueEnd, amount);
                 const saturation = 1;
                 const lightness = THREE.MathUtils.lerp(params.barLightStart, params.barLightEnd, amount);
-                material.color.setHSL(hue, saturation, lightness);
+                const color = new THREE.Color().setHSL(hue, saturation, lightness);
+
+                const material = new THREE.MeshBasicMaterial({
+                    color: color
+                });
 
                 const mesh = new THREE.Mesh(boxGeometry, material);
-                barGroup.add(mesh);
+
+                const lonHelper = new THREE.Object3D();
+                const latHelper = new THREE.Object3D();
+                lonHelper.add(latHelper);
+                const positionHelper = new THREE.Object3D();
+                positionHelper.position.z = 1;
+                latHelper.add(positionHelper);
 
                 lonHelper.rotation.y = THREE.MathUtils.degToRad(eq.lon) + Math.PI * 0.5;
                 latHelper.rotation.x = THREE.MathUtils.degToRad(-eq.lat);
 
                 positionHelper.updateWorldMatrix(true, false);
-                mesh.applyMatrix4(positionHelper.matrixWorld);
 
                 const scaleZ = THREE.MathUtils.lerp(params.barScaleMin, params.barScaleMax, amount);
+
                 mesh.scale.set(params.barWidth, params.barWidth, scaleZ);
+                mesh.position.set(0, 0, 0.5 * scaleZ);
+
+                mesh.userData = {
+                    baseScaleZ: scaleZ,
+                    phase: (index / earthquakeData.length) * Math.PI * 2,
+                    amount: amount
+                };
+
+                const pivot = new THREE.Object3D();
+                pivot.position.copy(positionHelper.getWorldPosition(new THREE.Vector3()));
+                pivot.quaternion.copy(positionHelper.getWorldQuaternion(new THREE.Quaternion()));
+                pivot.add(mesh);
+                pivot.userData.barMesh = mesh;
+                pivot.userData.baseScaleZ = scaleZ;
+                pivot.userData.phase = mesh.userData.phase;
+
+                barData.push(pivot);
+                earthGroup.add(pivot);
+            });
+
+            boxGeometry.dispose();
+        }
+
+        function updateColumnAnimations() {
+            if (!params.animationEnabled) {
+                barData.forEach((pivot) => {
+                    const bar = pivot.userData.barMesh;
+                    bar.scale.z = pivot.userData.baseScaleZ;
+                });
+                return;
+            }
+
+            const speed = params.animationSpeed * 0.5;
+            const intensity = params.animationIntensity;
+
+            barData.forEach((pivot) => {
+                const bar = pivot.userData.barMesh;
+                const data = bar.userData;
+                const animFactor = Math.sin(time * speed + data.phase) * 0.5 + 0.5;
+                const newScale = pivot.userData.baseScaleZ * (1 + animFactor * intensity);
+                bar.scale.z = newScale;
+                bar.position.z = newScale * 0.5;
             });
         }
 
         function initGUI() {
-            const gui = new GUI({ title: '地球柱体参数控制', width: 300 });
+            const gui = new GUI({ title: '地球柱体合并优化动画', width: 300 });
 
             gui.domElement.style.position = 'absolute';
             gui.domElement.style.top = '60px';
@@ -238,7 +282,7 @@
             displayFolder.add(params, 'rotationSpeed', 0.1, 2.0).name('旋转速度');
             displayFolder.add(params, 'showEarthTexture').name('显示地球纹理').onChange(() => {
                 if (earthSphere) {
-                    window.scene.remove(earthSphere);
+                    earthGroup.remove(earthSphere);
                     earthSphere.geometry.dispose();
                     earthSphere.material.dispose();
                     earthSphere = null;
@@ -247,32 +291,48 @@
             });
             displayFolder.open();
 
+            const animationFolder = gui.addFolder('动画设置');
+            animationFolder.add(params, 'animationEnabled').name('启用动画');
+            animationFolder.add(params, 'animationSpeed', 0.1, 3.0).name('动画速度');
+            animationFolder.add(params, 'animationIntensity', 0.1, 1.0).name('动画强度');
+            animationFolder.open();
+
             const barFolder = gui.addFolder('柱体设置');
             barFolder.add(params, 'barWidth', 0.005, 0.03).name('柱体宽度').onChange(() => {
-                createBars();
+                rebuildColumns();
             });
             barFolder.add(params, 'barScaleMin', 0.001, 0.1).name('最小高度').onChange(() => {
-                createBars();
+                rebuildColumns();
             });
             barFolder.add(params, 'barScaleMax', 0.1, 1.0).name('最大高度').onChange(() => {
-                createBars();
+                rebuildColumns();
             });
             barFolder.open();
 
             const colorFolder = gui.addFolder('颜色设置');
             colorFolder.add(params, 'barHueStart', 0, 1).name('起始色调').onChange(() => {
-                createBars();
+                rebuildColumns();
             });
             colorFolder.add(params, 'barHueEnd', 0, 1).name('结束色调').onChange(() => {
-                createBars();
+                rebuildColumns();
             });
             colorFolder.add(params, 'barLightStart', 0, 1).name('起始亮度').onChange(() => {
-                createBars();
+                rebuildColumns();
             });
             colorFolder.add(params, 'barLightEnd', 0, 1).name('结束亮度').onChange(() => {
-                createBars();
+                rebuildColumns();
             });
             colorFolder.open();
+        }
+
+        function rebuildColumns() {
+            barData.forEach((bar) => {
+                earthGroup.remove(bar);
+                bar.geometry.dispose();
+                bar.material.dispose();
+            });
+            barData = [];
+            createColumns();
         }
 
         function onWindowResize() {
@@ -284,14 +344,15 @@
         function animate() {
             requestAnimationFrame(animate);
 
+            time += 0.016;
+
             controls.update();
 
             if (params.autoRotate) {
-                barGroup.rotation.y += 0.002 * params.rotationSpeed;
-                if (earthSphere) {
-                    earthSphere.rotation.y += 0.002 * params.rotationSpeed;
-                }
+                earthGroup.rotation.y += 0.002 * params.rotationSpeed;
             }
+
+            updateColumnAnimations();
 
             window.renderer.render(window.scene, window.camera);
         }

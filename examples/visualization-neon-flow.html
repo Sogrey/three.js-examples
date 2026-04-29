@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Three.js 流动霓虹效果 - 炫酷的视觉动画">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 流动霓虹效果</title>
+    <link rel="stylesheet" href="../css/example-common.css">
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #000; }
+        #threeContainer { width: 100vw; height: 100vh; }
+    </style>
+</head>
+<body>
+    <div id="threeContainer"></div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../libs/three/r179/build/three.module.js",
+                "three/addons/": "../libs/three/r179/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        const params = {
+            speed: 1.0,
+            complexity: 8.0,
+            density: 4.0,
+            intensity: 1.5,
+            color1: '#00ffff',
+            color2: '#ff00ff',
+            bgColor: '#000000',
+            hoverEffect: 1.0
+        };
+
+        let scene, camera, renderer;
+        let shaderMaterial;
+        let time = 0;
+        let mouse = new THREE.Vector2(0, 0);
+
+        init();
+        animate();
+
+        function init() {
+            scene = new THREE.Scene();
+
+            camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setClearColor(params.bgColor);
+            document.getElementById('threeContainer').appendChild(renderer.domElement);
+
+            const geometry = new THREE.PlaneGeometry(2, 2);
+
+            shaderMaterial = new THREE.ShaderMaterial({
+                uniforms: {
+                    uTime: { value: 0 },
+                    uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+                    uColor1: { value: new THREE.Color(params.color1) },
+                    uColor2: { value: new THREE.Color(params.color2) },
+                    uBgColor: { value: new THREE.Color(params.bgColor) },
+                    uSpeed: { value: params.speed },
+                    uComplexity: { value: params.complexity },
+                    uDensity: { value: params.density },
+                    uIntensity: { value: params.intensity },
+                    uMouse: { value: mouse },
+                    uHoverEffect: { value: params.hoverEffect }
+                },
+                vertexShader: `
+                    varying vec2 vUv;
+                    void main() {
+                        vUv = uv;
+                        gl_Position = vec4(position, 1.0);
+                    }
+                `,
+                fragmentShader: `
+                    uniform float uTime;
+                    uniform vec2 uResolution;
+                    uniform vec3 uColor1;
+                    uniform vec3 uColor2;
+                    uniform vec3 uBgColor;
+                    uniform float uSpeed;
+                    uniform float uComplexity;
+                    uniform float uDensity;
+                    uniform float uIntensity;
+                    uniform vec2 uMouse;
+                    uniform float uHoverEffect;
+                    varying vec2 vUv;
+
+                    mat2 rot(float a) {
+                        float s = sin(a), c = cos(a);
+                        return mat2(c, -s, s, c);
+                    }
+
+                    void main() {
+                        vec2 p = (gl_FragCoord.xy * 2.0 - uResolution.xy) / min(uResolution.x, uResolution.y);
+                        vec2 original_p = p;
+
+                        float time = uTime * uSpeed * 0.15;
+
+                        p *= rot(0.1);
+
+                        if (uHoverEffect > 0.0) {
+                            vec2 m = uMouse;
+                            m.x *= uResolution.x / min(uResolution.x, uResolution.y);
+                            m.y *= uResolution.y / min(uResolution.x, uResolution.y);
+                            m *= rot(0.1);
+
+                            float mouseDist = length(p - m);
+                            float force = smoothstep(2.5, 0.0, mouseDist) * uHoverEffect;
+                            p += (p - m) * force * 0.08;
+                            p *= rot(force * 0.05);
+                        }
+
+                        float iterations = floor(uComplexity);
+                        for (float i = 1.0; i <= 20.0; i++) {
+                            if (i > iterations) break;
+
+                            p *= rot(sin(time * 0.02) * 0.03 + 0.02);
+
+                            vec2 q = p;
+                            float dist = length(p);
+                            
+                            q *= rot(dist * uDensity * 0.08 - time * 0.1);
+
+                            float wave1 = sin(q.x * 0.5 + time * 0.8) * 0.5 + 0.5;
+                            float wave2 = sin(q.y * 0.8 - time * 0.6) * 0.5 + 0.5;
+                            float wave3 = sin(q.x * 0.4 + q.y * 0.4 + time * 0.4) * 0.5 + 0.5;
+
+                            float pattern = wave1 * wave2 * wave3;
+                            pattern = pow(pattern, 1.2);
+
+                            float edgeFalloff = smoothstep(4.0, 0.3, length(p));
+                            float brightness = smoothstep(0.15, 0.95, pattern) * uIntensity * edgeFalloff;
+                            vec3 color = mix(uColor1, uColor2, sin(time * 0.3 + i * 0.2) * 0.5 + 0.5);
+
+                            gl_FragColor.rgb += color * brightness * (0.7 + 0.3 * sin(time * 0.15));
+                        }
+
+                        float vignette = smoothstep(3.0, 0.1, length(original_p));
+                        gl_FragColor.rgb *= vignette;
+
+                        float centerGlow = smoothstep(2.5, 0.0, length(original_p));
+                        gl_FragColor.rgb += (uColor1 + uColor2) * 0.5 * centerGlow * 0.15;
+
+                        gl_FragColor.a = 1.0;
+                    }
+                `
+            });
+
+            const mesh = new THREE.Mesh(geometry, shaderMaterial);
+            scene.add(mesh);
+
+            initGUI();
+
+            window.addEventListener('resize', onWindowResize);
+            window.addEventListener('mousemove', onMouseMove);
+        }
+
+        function initGUI() {
+            const gui = new GUI({ title: '流动霓虹参数控制', width: 300 });
+
+            gui.domElement.style.position = 'absolute';
+            gui.domElement.style.top = '60px';
+            gui.domElement.style.right = '10px';
+            gui.domElement.style.zIndex = '1000';
+
+            setTimeout(() => { gui.show(); }, 100);
+
+            const animationFolder = gui.addFolder('动画设置');
+            animationFolder.add(params, 'speed', 0.1, 3.0).name('动画速度').onChange(() => {
+                shaderMaterial.uniforms.uSpeed.value = params.speed;
+            });
+            animationFolder.add(params, 'complexity', 1.0, 15.0).name('复杂度').onChange(() => {
+                shaderMaterial.uniforms.uComplexity.value = params.complexity;
+            });
+            animationFolder.add(params, 'density', 1.0, 10.0).name('密度').onChange(() => {
+                shaderMaterial.uniforms.uDensity.value = params.density;
+            });
+            animationFolder.add(params, 'intensity', 0.5, 3.0).name('强度').onChange(() => {
+                shaderMaterial.uniforms.uIntensity.value = params.intensity;
+            });
+            animationFolder.add(params, 'hoverEffect', 0.0, 1.0).name('鼠标影响').onChange(() => {
+                shaderMaterial.uniforms.uHoverEffect.value = params.hoverEffect;
+            });
+            animationFolder.open();
+
+            const colorFolder = gui.addFolder('颜色设置');
+            colorFolder.addColor(params, 'color1').name('颜色1').onChange(() => {
+                shaderMaterial.uniforms.uColor1.value.set(params.color1);
+            });
+            colorFolder.addColor(params, 'color2').name('颜色2').onChange(() => {
+                shaderMaterial.uniforms.uColor2.value.set(params.color2);
+            });
+            colorFolder.addColor(params, 'bgColor').name('背景色').onChange(() => {
+                shaderMaterial.uniforms.uBgColor.value.set(params.bgColor);
+                renderer.setClearColor(params.bgColor);
+            });
+            colorFolder.open();
+        }
+
+        function onWindowResize() {
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            shaderMaterial.uniforms.uResolution.value.set(window.innerWidth, window.innerHeight);
+        }
+
+        function onMouseMove(event) {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            shaderMaterial.uniforms.uMouse.value = mouse;
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            time += 0.016;
+            shaderMaterial.uniforms.uTime.value = time;
+
+            renderer.render(scene, camera);
+        }
+
+        function stopAnimation() {
+            cancelAnimationFrame(animate);
+        }
+
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                stopAnimation();
+                setTimeout(() => {
+                    window.parent.postMessage({
+                        type: 'screenshot-data',
+                        dataUrl: renderer.domElement.toDataURL('image/jpeg', 0.8)
+                    }, '*');
+                    animate();
+                }, 100);
+            }
+        });
+    </script>
+</body>
+</html>

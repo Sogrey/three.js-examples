@@ -1,0 +1,60 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch models from external repository
+        run: |
+          rm -rf models/*
+          git clone --depth 1 --branch main https://github.com/Sogrey/three.js-examples-models.git models-temp
+          mv models-temp/* models-temp/.[!.]* models/ 2>/dev/null || true
+          rm -rf models-temp
+
+      - name: Setup Git config
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit models if changed
+        run: |
+          git add -f models/
+          if git diff --staged --quiet; then
+            echo "No model changes detected"
+          else
+            git commit -m "chore: sync models from three.js-examples-models [skip ci]"
+          fi
+
+      - name: Push main branch with models
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: main
+          force: false
+
+      - name: Build and deploy to gh-pages
+        run: |
+          cd ${{ github.workspace }}
+          
+          git fetch origin gh-pages || true
+          git checkout -b gh-pages origin/gh-pages || git checkout --orphan gh-pages
+          
+          git checkout main -- .
+          
+          git add -A -f
+          
+          git commit -m "deploy: build and deploy $(date +'%Y-%m-%d %H:%M:%S')"
+          
+          git push -f origin gh-pages

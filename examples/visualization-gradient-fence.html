@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Three.js 渐变围栏 3D 区块 - 带渐变色的围栏效果">
+    <meta name="description" content="Three.js 渐变围栏 3D 区块 - 基于广州地理数据">
     <meta name="three-version" content="r179">
     <title>Three.js 示例 - 渐变围栏 3D 区块</title>
     <link rel="stylesheet" href="../css/example-common.css">
@@ -19,246 +19,143 @@
         {
             "imports": {
                 "three": "../libs/three/r179/build/three.module.js",
-                "three/addons/": "../libs/three/r179/jsm/"
+                "three/addons/": "../libs/three/r179/jsm/",
+                "ThreeBase": "../libs/three/r179/ThreeBase.js",
+                "geoUtil": "../libs/geoUtil.js"
             }
         }
     </script>
 
     <script type="module">
         import * as THREE from 'three';
-        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+        import ThreeBase from '../libs/three/r179/ThreeBase.js';
+        import { initGeoFun, latlng2px } from '../libs/geoUtil.js';
 
-        window.scene = null;
-        window.camera = null;
-        window.renderer = null;
-
-        const params = {
-            gridSize: 20,
-            blockHeight: 1.0,
-            gap: 0.2,
-            autoRotate: false,
-            rotationSpeed: 0.5,
-            colorStart: '#00ffff',
-            colorEnd: '#ff00ff',
-            animationSpeed: 1.0,
-            showWireframe: false
-        };
-
-        let blockMesh;
-        let controls;
-        let time = 0;
-
-        init();
-        animate();
-
-        function init() {
-            window.scene = new THREE.Scene();
-            window.scene.background = new THREE.Color(0x0a0a1a);
-
-            window.camera = new THREE.PerspectiveCamera(
-                60,
-                window.innerWidth / window.innerHeight,
-                0.1,
-                1000
-            );
-            window.camera.position.set(15, 15, 15);
-            window.camera.lookAt(0, 0, 0);
-
-            window.renderer = new THREE.WebGLRenderer({ antialias: true });
-            window.renderer.setSize(window.innerWidth, window.innerHeight);
-            window.renderer.setPixelRatio(window.devicePixelRatio);
-            document.getElementById('threeContainer').appendChild(window.renderer.domElement);
-
-            controls = new OrbitControls(window.camera, window.renderer.domElement);
-            controls.enableDamping = true;
-            controls.dampingFactor = 0.05;
-
-            createGradientFence();
-            createGridHelper();
-            initGUI();
-
-            window.addEventListener('resize', onWindowResize);
-        }
-
-        function createGradientFence() {
-            if (blockMesh) {
-                window.scene.remove(blockMesh);
-                blockMesh.geometry.dispose();
-                blockMesh.material.dispose();
+        class MyThree extends ThreeBase {
+            constructor() {
+                super();
+                this.isAxis = false;
             }
 
-            const count = params.gridSize;
-            const spacing = 1 + params.gap;
-            const geometries = [];
-            const colorArray = [];
+            getData() {
+                return new Promise((resolve) => {
+                    fetch('../models/json/guangzhou.json')
+                        .then((res) => res.json())
+                        .then((res) => {
+                            resolve(res.features[0].geometry.coordinates[0][0]);
+                        });
+                });
+            }
 
-            for (let x = 0; x < count; x++) {
-                for (let z = 0; z < count; z++) {
-                    const height = 0.2 + Math.random() * params.blockHeight;
+            createShape(points) {
+                const shape = new THREE.Shape();
+                shape.moveTo(points[0].x, points[0].z);
 
-                    const geo = new THREE.BoxGeometry(1, height, 1);
-                    const matrix = new THREE.Matrix4();
-                    matrix.setPosition(
-                        (x - count / 2) * spacing,
-                        height / 2,
-                        (z - count / 2) * spacing
-                    );
-                    geo.applyMatrix4(matrix);
-
-                    geometries.push(geo);
-
-                    const t = (x + z) / (count * 2);
-                    const color = new THREE.Color(params.colorStart).lerp(
-                        new THREE.Color(params.colorEnd),
-                        t
-                    );
-
-                    const vertexCount = geo.attributes.position.count;
-                    for (let i = 0; i < vertexCount; i++) {
-                        colorArray.push(color.r, color.g, color.b);
-                    }
+                for (let i = 1; i < points.length; i++) {
+                    shape.lineTo(points[i].x, points[i].z);
                 }
+                shape.lineTo(points[0].x, points[0].z);
+                return shape;
             }
 
-            const mergedGeometry = mergeGeometries(geometries);
-            mergedGeometry.setAttribute('color', new THREE.Float32BufferAttribute(colorArray, 3));
+            createRegion(shape) {
+                const extrudeSettings = {
+                    depth: 0.2,
+                    bevelEnabled: false
+                };
 
-            const material = new THREE.MeshPhongMaterial({
-                vertexColors: true,
-                emissive: 0x111111,
-                shininess: 50,
-                wireframe: params.showWireframe
-            });
-
-            blockMesh = new THREE.Mesh(mergedGeometry, material);
-            window.scene.add(blockMesh);
-
-            geometries.forEach(g => g.dispose());
-        }
-
-        function createGridHelper() {
-            const gridHelper = new THREE.GridHelper(
-                params.gridSize * 2,
-                params.gridSize,
-                0x333333,
-                0x222222
-            );
-            gridHelper.position.y = -0.01;
-            window.scene.add(gridHelper);
-        }
-
-        function mergeGeometries(geometries) {
-            const positions = [];
-            const normals = [];
-            const colors = [];
-
-            for (const geo of geometries) {
-                const pos = geo.attributes.position.array;
-                const norm = geo.attributes.normal ? geo.attributes.normal.array : null;
-                const col = geo.attributes.color ? geo.attributes.color.array : null;
-
-                for (let i = 0; i < pos.length; i++) {
-                    positions.push(pos[i]);
-                    if (norm) normals.push(norm[i]);
-                }
-
-                if (col) {
-                    for (let i = 0; i < col.length; i++) {
-                        colors.push(col[i]);
-                    }
-                }
+                const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+                const tex = new THREE.TextureLoader().load('../models/tex/tex.png');
+                tex.wrapS = THREE.RepeatWrapping;
+                tex.wrapT = THREE.RepeatWrapping;
+                const material = new THREE.MeshBasicMaterial({
+                    map: tex,
+                    color: new THREE.Color('#00FFFF')
+                });
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.rotateX(Math.PI * 0.5);
+                mesh.position.y = extrudeSettings.depth * 0.5;
+                return mesh;
             }
 
-            const merged = new THREE.BufferGeometry();
-            merged.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-            if (normals.length > 0) {
-                merged.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
-            }
-            if (colors.length > 0) {
-                merged.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-            }
+            createBoundary(shape) {
+                const material = new THREE.ShaderMaterial({
+                    side: THREE.DoubleSide,
+                    transparent: true,
+                    depthTest: false,
+                    uniforms: {
+                        color1: { value: new THREE.Color('#00FFFF') }
+                    },
+                    vertexShader: `
+                        varying vec2 vUv;
+                        varying vec3 vNormal;
+                        
+                        void main() {
+                            vUv = uv;
+                            vNormal = normal;
+                            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                        }
+                    `,
+                    fragmentShader: `
+                        uniform vec3 color1;
+                        varying vec2 vUv;
+                        varying vec3 vNormal;
+                        
+                        void main() {
+                            if (vNormal.z == 1.0 || vNormal.z == -1.0 || vUv.y == 0.0) {
+                                discard;
+                            } else {
+                                gl_FragColor = vec4(color1, mix(1.0, 0.0, vUv.y));
+                            }
+                        }
+                    `
+                });
 
-            return merged;
-        }
+                const extrudeSettings = {
+                    depth: 1,
+                    bevelEnabled: false
+                };
 
-        function initGUI() {
-            const gui = new GUI({ title: '渐变围栏参数控制', width: 300 });
-
-            gui.domElement.style.position = 'absolute';
-            gui.domElement.style.top = '60px';
-            gui.domElement.style.right = '10px';
-            gui.domElement.style.zIndex = '1000';
-
-            setTimeout(() => { gui.show(); }, 100);
-
-            const displayFolder = gui.addFolder('显示设置');
-            displayFolder.add(params, 'autoRotate').name('自动旋转');
-            displayFolder.add(params, 'rotationSpeed', 0.1, 2.0).name('旋转速度');
-            displayFolder.add(params, 'showWireframe').name('显示线框').onChange(() => {
-                if (blockMesh) {
-                    blockMesh.material.wireframe = params.showWireframe;
-                }
-            });
-            displayFolder.open();
-
-            const fenceFolder = gui.addFolder('围栏设置');
-            fenceFolder.add(params, 'gridSize', 10, 30).step(1).name('网格大小').onChange(() => {
-                createGradientFence();
-            });
-            fenceFolder.add(params, 'blockHeight', 0.5, 3.0).name('方块高度').onChange(() => {
-                createGradientFence();
-            });
-            fenceFolder.add(params, 'gap', 0.1, 0.5).name('方块间隔').onChange(() => {
-                createGradientFence();
-            });
-            fenceFolder.open();
-
-            const colorFolder = gui.addFolder('颜色设置');
-            colorFolder.addColor(params, 'colorStart').name('起始颜色').onChange(() => {
-                createGradientFence();
-            });
-            colorFolder.addColor(params, 'colorEnd').name('结束颜色').onChange(() => {
-                createGradientFence();
-            });
-            colorFolder.open();
-        }
-
-        function onWindowResize() {
-            window.camera.aspect = window.innerWidth / window.innerHeight;
-            window.camera.updateProjectionMatrix();
-            window.renderer.setSize(window.innerWidth, window.innerHeight);
-        }
-
-        function animate() {
-            requestAnimationFrame(animate);
-
-            time += 0.016 * params.animationSpeed;
-            controls.update();
-
-            if (params.autoRotate) {
-                if (blockMesh) {
-                    blockMesh.rotation.y += 0.002 * params.rotationSpeed;
-                }
+                const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.rotation.x = Math.PI * 0.5;
+                mesh.position.y = extrudeSettings.depth + 0.1;
+                return mesh;
             }
 
-            window.renderer.render(window.scene, window.camera);
+            async createChart(option) {
+                initGeoFun(180);
+
+                let points = await this.getData();
+                points = points.map((item) => {
+                    const p = latlng2px(item);
+                    return new THREE.Vector3(p[0], 0, p[1]);
+                });
+                const shape = this.createShape(points);
+
+                this.group = new THREE.Group();
+                this.group.add(this.createRegion(shape));
+                this.group.add(this.createBoundary(shape));
+
+                this.scene.add(this.group);
+                this.setModelCenter(this.group, option.cameraControl);
+            }
         }
 
-        function stopAnimation() {
-            cancelAnimationFrame(animate);
-        }
-
-        window.addEventListener('message', function(event) {
-            if (event.data && event.data.type === 'take-screenshot') {
-                stopAnimation();
-                setTimeout(() => {
-                    window.parent.postMessage({
-                        type: 'screenshot-data',
-                        dataUrl: window.renderer.domElement.toDataURL('image/jpeg', 0.8)
-                    }, '*');
-                    animate();
-                }, 100);
+        var myThree = new MyThree();
+        window.myThree = myThree;
+        myThree.initThree(document.getElementById('threeContainer'));
+        myThree.createChart({
+            cameraControl: {
+                autoCamera: true,
+                height: 10,
+                width: 0.5,
+                depth: 1,
+                cameraPosX: 10,
+                cameraPosY: 181,
+                cameraPosZ: 116,
+                autoRotate: false,
+                rotateSpeed: 2000
             }
         });
     </script>

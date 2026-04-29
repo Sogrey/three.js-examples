@@ -532,6 +532,14 @@ const threejsData = {
                             version: "r179",
                             url: "examples/visualization-custom-shader-lines"
                         },
+                        {
+                            id: "visualization-neon-flow",
+                            title: "流动霓虹效果",
+                            description: "炫酷的流动霓虹视觉动画，支持鼠标交互效果",
+                            thumbnail: "images/visualization-neon-flow.jpg",
+                            version: "r179",
+                            url: "examples/visualization-neon-flow"
+                        },
                     ]
                 },
                 {
@@ -797,6 +805,14 @@ const threejsData = {
                             thumbnail: "images/visualization-earth-columns-optimized.jpg",
                             version: "r179",
                             url: "examples/visualization-earth-columns-optimized"
+                        },
+                        {
+                            id: "visualization-earth-columns-animation",
+                            title: "地球柱体合并优化动画",
+                            description: "带动画效果的地球柱状图，柱体高度随时间波动",
+                            thumbnail: "images/visualization-earth-columns-animation.jpg",
+                            version: "r179",
+                            url: "examples/visualization-earth-columns-animation"
                         },
                         {
                             id: "visualization-gradient-fence",
