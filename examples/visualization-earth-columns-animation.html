@@ -326,10 +326,13 @@
         }
 
         function rebuildColumns() {
-            barData.forEach((bar) => {
-                earthGroup.remove(bar);
-                bar.geometry.dispose();
-                bar.material.dispose();
+            barData.forEach((pivot) => {
+                earthGroup.remove(pivot);
+                const barMesh = pivot.userData.barMesh;
+                if (barMesh) {
+                    barMesh.geometry.dispose();
+                    barMesh.material.dispose();
+                }
             });
             barData = [];
             createColumns();
