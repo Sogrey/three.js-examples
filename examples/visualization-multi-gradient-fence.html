@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Three.js 渐变围栏 - 动态渐变围栏效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 渐变围栏</title>
+    <link rel="stylesheet" href="../css/example-common.css">
+    <style>
+        body { margin: 0; overflow: hidden; }
+        #threeContainer { width: 100vw; height: 100vh; }
+    </style>
+</head>
+<body>
+    <div id="threeContainer"></div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../libs/three/r179/build/three.module.js",
+                "three/addons/": "../libs/three/r179/jsm/",
+                "ThreeBase": "../libs/three/r179/ThreeBase.js",
+                "geoUtil": "../libs/geoUtil.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import ThreeBase from '../libs/three/r179/ThreeBase.js';
+        import { initGeoFun, latlng2px } from '../libs/geoUtil.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        class MyThree extends ThreeBase {
+            constructor() {
+                super();
+                this.isAxis = false;
+                this.time = 1.0;
+                this.material = null;
+                this.params = {
+                    boundaryColor: '#00FFFF',
+                    animationSpeed: 1.0,
+                    gradientNum: 5.0,
+                    regionHeight: 0.2,
+                    boundaryHeight: 1.0,
+                    autoRotate: false,
+                    rotationSpeed: 0.5
+                };
+                this.regionMesh = null;
+                this.boundaryMesh = null;
+                this.shape = null;
+            }
+
+            getData() {
+                return new Promise((resolve) => {
+                    fetch('../models/json/guangzhou.json')
+                        .then((res) => res.json())
+                        .then((res) => {
+                            resolve(res.features[0].geometry.coordinates[0][0]);
+                        });
+                });
+            }
+
+            createShape(points) {
+                const shape = new THREE.Shape();
+                shape.moveTo(points[0].x, points[0].z);
+
+                for (let i = 1; i < points.length; i = i + 2) {
+                    shape.lineTo(points[i].x, points[i].z);
+                }
+                shape.lineTo(points[0].x, points[0].z);
+                return shape;
+            }
+
+            createRegion() {
+                const extrudeSettings = {
+                    depth: this.params.regionHeight,
+                    bevelEnabled: false
+                };
+
+                const geometry = new THREE.ExtrudeGeometry(this.shape, extrudeSettings);
+                const tex = new THREE.TextureLoader().load('../models/tex/tex.png');
+                tex.wrapS = THREE.RepeatWrapping;
+                tex.wrapT = THREE.RepeatWrapping;
+                const material = new THREE.MeshBasicMaterial({
+                    map: tex,
+                    color: new THREE.Color(this.params.boundaryColor)
+                });
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.rotateX(Math.PI * 0.5);
+                mesh.position.y = extrudeSettings.depth * 0.5;
+                return mesh;
+            }
+
+            createBoundary() {
+                this.material = new THREE.ShaderMaterial({
+                    side: THREE.DoubleSide,
+                    transparent: true,
+                    depthTest: false,
+                    uniforms: {
+                        time: { value: 0.0 },
+                        num: { value: this.params.gradientNum },
+                        color1: { value: new THREE.Color(this.params.boundaryColor) }
+                    },
+                    vertexShader: `
+                        varying vec2 vUv;
+                        varying vec3 vNormal;
+                        
+                        void main() {
+                            vUv = uv;
+                            vNormal = normal;
+                            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                        }
+                    `,
+                    fragmentShader: `
+                        uniform vec3 color1;
+                        uniform float time;
+                        uniform float num;
+                        varying vec2 vUv;
+                        varying vec3 vNormal;
+                        
+                        void main() {
+                            if (vNormal.z == 1.0 || vNormal.z == -1.0 || vUv.y == 0.0) {
+                                discard;
+                            } else {
+                                gl_FragColor = vec4(color1, 1.0 - fract((vUv.y - time) * num));
+                            }
+                        }
+                    `
+                });
+
+                const extrudeSettings = {
+                    depth: this.params.boundaryHeight,
+                    bevelEnabled: false
+                };
+
+                const geometry = new THREE.ExtrudeGeometry(this.shape, extrudeSettings);
+                const mesh = new THREE.Mesh(geometry, this.material);
+                mesh.rotation.x = Math.PI * 0.5;
+                mesh.position.y = extrudeSettings.depth + 0.1;
+                
+                return mesh;
+            }
+
+            rebuildScene() {
+                if (this.regionMesh) {
+                    this.scene.remove(this.regionMesh);
+                    this.regionMesh.geometry.dispose();
+                    this.regionMesh.material.dispose();
+                }
+                if (this.boundaryMesh) {
+                    this.scene.remove(this.boundaryMesh);
+                    this.boundaryMesh.geometry.dispose();
+                    this.boundaryMesh.material.dispose();
+                }
+
+                this.regionMesh = this.createRegion();
+                this.boundaryMesh = this.createBoundary();
+
+                this.group.add(this.regionMesh);
+                this.group.add(this.boundaryMesh);
+            }
+
+            initGUI() {
+                const gui = new GUI({ title: '渐变围栏参数控制', width: 300 });
+
+                gui.domElement.style.position = 'absolute';
+                gui.domElement.style.top = '60px';
+                gui.domElement.style.right = '10px';
+                gui.domElement.style.zIndex = '1000';
+
+                setTimeout(() => { gui.show(); }, 100);
+
+                const displayFolder = gui.addFolder('显示设置');
+                displayFolder.add(this.params, 'autoRotate').name('自动旋转');
+                displayFolder.add(this.params, 'rotationSpeed', 0.1, 2.0).name('旋转速度');
+                displayFolder.open();
+
+                const regionFolder = gui.addFolder('区域设置');
+                regionFolder.add(this.params, 'regionHeight', 0.1, 1.0).name('区域高度').onChange(() => {
+                    this.rebuildScene();
+                });
+                regionFolder.add(this.params, 'boundaryHeight', 0.5, 2.0).name('边界高度').onChange(() => {
+                    this.rebuildScene();
+                });
+                regionFolder.addColor(this.params, 'boundaryColor').name('边界颜色').onChange(() => {
+                    if (this.material) {
+                        this.material.uniforms.color1.value.set(this.params.boundaryColor);
+                    }
+                    if (this.regionMesh) {
+                        this.regionMesh.material.color.set(this.params.boundaryColor);
+                    }
+                });
+                regionFolder.open();
+
+                const animationFolder = gui.addFolder('动画设置');
+                animationFolder.add(this.params, 'animationSpeed', 0.1, 3.0).name('动画速度');
+                animationFolder.add(this.params, 'gradientNum', 2.0, 10.0).name('渐变数量').onChange(() => {
+                    if (this.material) {
+                        this.material.uniforms.num.value = this.params.gradientNum;
+                    }
+                });
+                animationFolder.open();
+            }
+
+            async createChart(option) {
+                initGeoFun(180);
+
+                let points = await this.getData();
+                points = points.map((item) => {
+                    const p = latlng2px(item);
+                    return new THREE.Vector3(p[0], 0, p[1]);
+                });
+                this.shape = this.createShape(points);
+
+                this.group = new THREE.Group();
+                this.regionMesh = this.createRegion();
+                this.boundaryMesh = this.createBoundary();
+                this.group.add(this.regionMesh);
+                this.group.add(this.boundaryMesh);
+
+                this.scene.add(this.group);
+                this.setModelCenter(this.group, option.cameraControl);
+
+                this.initGUI();
+            }
+
+            animateAction() {
+                if (this.time >= 1.0) {
+                    this.time = 0.0;
+                }
+                this.time = this.time + 0.005 * this.params.animationSpeed;
+
+                if (this.material) {
+                    this.material.uniforms.time.value = this.time;
+                }
+
+                if (this.params.autoRotate && this.group) {
+                    this.group.rotation.y += 0.002 * this.params.rotationSpeed;
+                }
+            }
+        }
+
+        var myThree = new MyThree();
+        window.myThree = myThree;
+        myThree.initThree(document.getElementById('threeContainer'));
+        myThree.createChart({
+            cameraControl: {
+                autoCamera: true,
+                height: 10,
+                width: 0.5,
+                depth: 1,
+                cameraPosX: 10,
+                cameraPosY: 181,
+                cameraPosZ: 116,
+                autoRotate: false,
+                rotateSpeed: 2000
+            }
+        });
+    </script>
+</body>
+</html>

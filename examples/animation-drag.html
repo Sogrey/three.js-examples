@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 页面描述，有助于SEO优化 -->
+    <meta name="description" content="实现3D对象的拖拽和放置功能">
+    <!-- Three.js版本信息 -->
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 拖拽控制</title>
+    <!-- 引入公共样式表 -->
+    <link rel="stylesheet" href="../css/example-common.css">
+</head>
+<body>
+    <!-- 3D场景容器 -->
+    <div class="three-container" id="threeContainer"></div>
+    
+    <!-- 信息显示面板 -->
+    <div id="infoPanel" style="position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.7); color: white; padding: 10px; border-radius: 5px; font-family: Arial, sans-serif; z-index: 100;">
+        <div>操作说明:</div>
+        <div>• 点击并拖拽对象进行移动</div>
+        <div>• 按住 Shift 键拖拽进行垂直移动</div>
+        <div>• 双击对象重置位置</div>
+        <div>当前拖拽: <span id="dragInfo">无</span></div>
+    </div>
+    
+    <!-- 
+    使用importmap定义模块导入映射
+    这是一种现代化的ES模块导入方式，可以简化导入路径
+    通过定义别名，可以使用简短的导入语句，如 import * as THREE from 'three'
+    -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../libs/three/r179/build/three.module.js",
+                "three/addons/": "../libs/three/r179/jsm/"
+            }
+        }
+    </script>
+    
+    <!-- 示例代码 - 拖拽控制 -->
+    <script type="module">
+        // 导入Three.js核心模块
+        import * as THREE from 'three';
+        // 导入轨道控制器，用于交互式旋转和缩放场景
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        // 导入GUI控制面板，用于调整参数
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+        
+        // Three.js 核心变量 - 暴露给全局作用域以便截图功能使用
+        window.scene = null;     // 场景对象，包含所有3D元素
+        window.camera = null;    // 相机对象，定义视角和视野
+        window.renderer = null;  // 渲染器对象，将场景渲染到canvas上
+        let controls;           // 轨道控制器对象
+        let raycaster;          // 射线投射器
+        let mouse;              // 鼠标位置
+        
+        // 拖拽相关变量
+        let isDragging = false;
+        let dragObject = null;
+        let dragPlane = null;
+        let dragOffset = new THREE.Vector3();
+        let previousMousePosition = new THREE.Vector2();
+        
+        // 交互对象数组
+        let draggableObjects = [];
+        
+        // 材质
+        let normalMaterial, hoverMaterial, dragMaterial;
+        
+        // 参数配置对象 - 用于GUI控制面板和创建3D对象
+        const params = {
+            // 对象参数
+            objectCount: 8,
+            objectSize: 1,
+            spreadRange: 8,
+            
+            // 拖拽参数
+            enableDrag: true,
+            dragSensitivity: 1,
+            snapToGrid: false,
+            gridSize: 1,
+            constrainToPlane: false,
+            planeHeight: 0,
+            
+            // 视觉效果参数
+            showDragPlane: false,
+            showGrid: true,
+            highlightOnHover: true,
+            
+            // 颜色参数
+            normalColor: 0x3498db,
+            hoverColor: 0xe74c3c,
+            dragColor: 0xf39c12,
+            
+            // 控制器参数
+            autoRotate: false       // 是否自动旋转相机
+        };
+        
+        /**
+         * 初始化Three.js场景、相机、渲染器和控制器
+         * 这是整个应用的入口点
+         */
+        function init() {
+            // 创建场景 - 所有3D对象的容器
+            window.scene = new THREE.Scene();
+            // 设置场景背景色为深蓝灰色
+            window.scene.background = new THREE.Color(0x2c3e50);
+            
+            // 创建透视相机 - 模拟人眼视角
+            // 参数：视场角(FOV)，宽高比，近裁剪面，远裁剪面
+            window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            // 设置相机位置，以便能看到场景中的对象
+            window.camera.position.set(0, 10, 15);
+            window.camera.lookAt(0, 0, 0);
+            
+            // 创建WebGL渲染器 - 将3D场景渲染到canvas上
+            window.renderer = new THREE.WebGLRenderer({ antialias: true }); // 启用抗锯齿
+            // 设置渲染器尺寸为窗口大小
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            // 设置设备像素比，提高在高DPI设备上的清晰度
+            window.renderer.setPixelRatio(window.devicePixelRatio);
+            // 启用阴影
+            window.renderer.shadowMap.enabled = true;
+            window.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            // 将渲染器的canvas添加到DOM中
+            document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+            
+            // 添加轨道控制器 - 允许用户交互式旋转和缩放场景
+            controls = new OrbitControls(window.camera, window.renderer.domElement);
+            controls.enableDamping = true;       // 启用阻尼效果，使控制更平滑
+            controls.dampingFactor = 0.05;       // 阻尼系数
+            controls.autoRotate = params.autoRotate; // 设置是否自动旋转
+            
+            // 创建射线投射器和鼠标位置向量
+            raycaster = new THREE.Raycaster();
+            mouse = new THREE.Vector2();
+            
+            // 创建拖拽平面（不可见的平面，用于计算拖拽位置）
+            const planeGeometry = new THREE.PlaneGeometry(100, 100);
+            const planeMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0xffffff, 
+                transparent: true, 
+                opacity: 0.1,
+                visible: false
+            });
+            dragPlane = new THREE.Mesh(planeGeometry, planeMaterial);
+            dragPlane.rotation.x = -Math.PI / 2; // 水平放置
+            window.scene.add(dragPlane);
+            
+            // 创建材质
+            createMaterials();
+            
+            // 添加光源
+            addLights();
+            
+            // 创建可拖拽对象
+            createDraggableObjects();
+            
+            // 初始化GUI控制面板
+            initGUI();
+            
+            // 添加事件监听器
+            addEventListeners();
+            
+            // 开始动画循环
+            animate();
+        }
+        
+        /**
+         * 创建材质
+         * 为不同状态的对象创建不同的材质
+         */
+        function createMaterials() {
+            // 普通状态材质
+            normalMaterial = new THREE.MeshStandardMaterial({
+                color: params.normalColor,
+                metalness: 0.3,
+                roughness: 0.4
+            });
+            
+            // 悬停状态材质
+            hoverMaterial = new THREE.MeshStandardMaterial({
+                color: params.hoverColor,
+                metalness: 0.5,
+                roughness: 0.2,
+                emissive: new THREE.Color(params.hoverColor).multiplyScalar(0.1)
+            });
+            
+            // 拖拽状态材质
+            dragMaterial = new THREE.MeshStandardMaterial({
+                color: params.dragColor,
+                metalness: 0.7,
+                roughness: 0.1,
+                emissive: new THREE.Color(params.dragColor).multiplyScalar(0.2)
+            });
+        }
+        
+        /**
+         * 添加光源
+         * 创建环境光和方向光，提供场景照明
+         */
+        function addLights() {
+            // 环境光 - 提供均匀的全局照明
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            window.scene.add(ambientLight);
+            
+            // 方向光 - 模拟太阳光
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 10, 5);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 2048;
+            directionalLight.shadow.mapSize.height = 2048;
+            directionalLight.shadow.camera.near = 0.5;
+            directionalLight.shadow.camera.far = 50;
+            window.scene.add(directionalLight);
+            
+            // 添加地面
+            const groundGeometry = new THREE.PlaneGeometry(30, 30);
+            const groundMaterial = new THREE.MeshStandardMaterial({
+                color: 0x404040,
+                roughness: 0.8,
+                metalness: 0.2
+            });
+            const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2;
+            ground.position.y = -2;
+            ground.receiveShadow = true;
+            window.scene.add(ground);
+            
+            // 添加网格辅助线
+            if (params.showGrid) {
+                const gridHelper = new THREE.GridHelper(20, 20, 0x888888, 0x444444);
+                gridHelper.position.y = -1.9;
+                window.scene.add(gridHelper);
+            }
+        }
+        
+        /**
+         * 创建可拖拽对象
+         * 在场景中创建可以拖拽的3D对象
+         */
+        function createDraggableObjects() {
+            // 清除现有对象
+            draggableObjects.forEach(obj => {
+                window.scene.remove(obj);
+                obj.geometry.dispose();
+                obj.material.dispose();
+            });
+            draggableObjects = [];
+            
+            // 几何体类型数组
+            const geometryTypes = [
+                () => new THREE.BoxGeometry(params.objectSize, params.objectSize, params.objectSize),
+                () => new THREE.SphereGeometry(params.objectSize * 0.7, 16, 12),
+                () => new THREE.CylinderGeometry(params.objectSize * 0.5, params.objectSize * 0.5, params.objectSize * 1.5, 16),
+                () => new THREE.ConeGeometry(params.objectSize * 0.7, params.objectSize * 1.5, 16),
+                () => new THREE.TorusGeometry(params.objectSize * 0.7, params.objectSize * 0.3, 8, 16)
+            ];
+            
+            // 创建指定数量的对象
+            for (let i = 0; i < params.objectCount; i++) {
+                // 随机选择几何体类型
+                const geometryCreator = geometryTypes[Math.floor(Math.random() * geometryTypes.length)];
+                const geometry = geometryCreator();
+                
+                // 创建网格对象
+                const mesh = new THREE.Mesh(geometry, normalMaterial.clone());
+                
+                // 随机位置
+                mesh.position.set(
+                    (Math.random() - 0.5) * params.spreadRange,
+                    params.objectSize,
+                    (Math.random() - 0.5) * params.spreadRange
+                );
+                
+                // 启用阴影
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                
+                // 添加自定义属性
+                mesh.userData = {
+                    id: i,
+                    originalPosition: mesh.position.clone(),
+                    isDraggable: true,
+                    isHovered: false,
+                    isDragging: false
+                };
+                
+                // 添加到场景和可拖拽对象数组
+                window.scene.add(mesh);
+                draggableObjects.push(mesh);
+            }
+        }
+        
+        /**
+         * 添加事件监听器
+         * 监听鼠标和键盘事件
+         */
+        function addEventListeners() {
+            // 监听窗口大小变化
+            window.addEventListener('resize', onWindowResize);
+            
+            // 监听鼠标事件
+            window.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('mousedown', onMouseDown);
+            window.addEventListener('mouseup', onMouseUp);
+            window.addEventListener('dblclick', onDoubleClick);
+            
+            // 监听键盘事件
+            window.addEventListener('keydown', onKeyDown);
+            window.addEventListener('keyup', onKeyUp);
+        }
+        
+        /**
+         * 处理窗口大小变化
+         */
+        function onWindowResize() {
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        /**
+         * 处理鼠标移动事件
+         */
+        function onMouseMove(event) {
+            // 更新鼠标位置
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            
+            if (isDragging && dragObject && params.enableDrag) {
+                // 执行拖拽操作
+                performDrag(event);
+            } else {
+                // 处理悬停效果
+                if (params.highlightOnHover) {
+                    handleHoverEffect();
+                }
+            }
+            
+            // 更新上一次鼠标位置
+            previousMousePosition.set(event.clientX, event.clientY);
+        }
+        
+        /**
+         * 处理鼠标按下事件
+         */
+        function onMouseDown(event) {
+            if (!params.enableDrag) return;
+            
+            // 更新射线投射器
+            raycaster.setFromCamera(mouse, window.camera);
+            
+            // 检测与可拖拽对象的相交
+            const intersects = raycaster.intersectObjects(draggableObjects);
+            
+            if (intersects.length > 0) {
+                // 开始拖拽
+                startDrag(intersects[0].object, intersects[0].point);
+                
+                // 禁用轨道控制器，避免冲突
+                controls.enabled = false;
+            }
+        }
+        
+        /**
+         * 处理鼠标释放事件
+         */
+        function onMouseUp(event) {
+            if (isDragging) {
+                // 结束拖拽
+                endDrag();
+                
+                // 重新启用轨道控制器
+                controls.enabled = true;
+            }
+        }
+        
+        /**
+         * 处理双击事件
+         */
+        function onDoubleClick(event) {
+            // 更新射线投射器
+            raycaster.setFromCamera(mouse, window.camera);
+            
+            // 检测与可拖拽对象的相交
+            const intersects = raycaster.intersectObjects(draggableObjects);
+            
+            if (intersects.length > 0) {
+                // 重置对象位置
+                const object = intersects[0].object;
+                object.position.copy(object.userData.originalPosition);
+            }
+        }
+        
+        /**
+         * 处理键盘按下事件
+         */
+        function onKeyDown(event) {
+            // 可以添加键盘快捷键功能
+        }
+        
+        /**
+         * 处理键盘释放事件
+         */
+        function onKeyUp(event) {
+            // 可以添加键盘快捷键功能
+        }
+        
+        /**
+         * 开始拖拽操作
+         */
+        function startDrag(object, intersectionPoint) {
+            isDragging = true;
+            dragObject = object;
+            
+            // 设置拖拽状态
+            dragObject.userData.isDragging = true;
+            dragObject.material = dragMaterial.clone();
+            
+            // 计算拖拽偏移量
+            dragOffset.copy(intersectionPoint).sub(dragObject.position);
+            
+            // 更新拖拽平面位置
+            if (params.constrainToPlane) {
+                dragPlane.position.y = params.planeHeight;
+            } else {
+                dragPlane.position.y = dragObject.position.y;
+            }
+            
+            // 显示拖拽平面（如果启用）
+            if (params.showDragPlane) {
+                dragPlane.material.visible = true;
+            }
+            
+            // 更新信息显示
+            document.getElementById('dragInfo').textContent = `对象 ${dragObject.userData.id}`;
+        }
+        
+        /**
+         * 执行拖拽操作
+         */
+        function performDrag(event) {
+            if (!dragObject) return;
+            
+            // 更新射线投射器
+            raycaster.setFromCamera(mouse, window.camera);
+            
+            // 计算与拖拽平面的交点
+            const intersects = raycaster.intersectObject(dragPlane);
+            
+            if (intersects.length > 0) {
+                const intersectionPoint = intersects[0].point;
+                
+                // 计算新位置
+                let newPosition = intersectionPoint.clone().sub(dragOffset);
+                
+                // 应用拖拽敏感度
+                newPosition.multiplyScalar(params.dragSensitivity);
+                
+                // 网格对齐
+                if (params.snapToGrid) {
+                    newPosition.x = Math.round(newPosition.x / params.gridSize) * params.gridSize;
+                    newPosition.z = Math.round(newPosition.z / params.gridSize) * params.gridSize;
+                }
+                
+                // 垂直移动（按住Shift键）
+                if (event.shiftKey) {
+                    const deltaY = (event.clientY - previousMousePosition.y) * 0.01;
+                    newPosition.y = dragObject.position.y - deltaY;
+                } else if (params.constrainToPlane) {
+                    newPosition.y = params.planeHeight + dragObject.geometry.boundingBox?.max.y || 0.5;
+                } else {
+                    newPosition.y = dragObject.position.y;
+                }
+                
+                // 更新对象位置
+                dragObject.position.copy(newPosition);
+            }
+        }
+        
+        /**
+         * 结束拖拽操作
+         */
+        function endDrag() {
+            if (dragObject) {
+                // 重置拖拽状态
+                dragObject.userData.isDragging = false;
+                dragObject.material = normalMaterial.clone();
+                
+                // 隐藏拖拽平面
+                dragPlane.material.visible = false;
+                
+                dragObject = null;
+            }
+            
+            isDragging = false;
+            
+            // 更新信息显示
+            document.getElementById('dragInfo').textContent = '无';
+        }
+        
+        /**
+         * 处理悬停效果
+         */
+        function handleHoverEffect() {
+            // 更新射线投射器
+            raycaster.setFromCamera(mouse, window.camera);
+            
+            // 检测与可拖拽对象的相交
+            const intersects = raycaster.intersectObjects(draggableObjects);
+            
+            // 重置所有对象的悬停状态
+            draggableObjects.forEach(obj => {
+                if (!obj.userData.isDragging && obj.userData.isHovered) {
+                    obj.userData.isHovered = false;
+                    obj.material = normalMaterial.clone();
+                }
+            });
+            
+            // 设置新的悬停对象
+            if (intersects.length > 0 && !isDragging) {
+                const hoveredObject = intersects[0].object;
+                if (!hoveredObject.userData.isDragging) {
+                    hoveredObject.userData.isHovered = true;
+                    hoveredObject.material = hoverMaterial.clone();
+                }
+            }
+        }
+        
+        /**
+         * 初始化GUI控制面板
+         */
+        function initGUI() {
+            const gui = new GUI({ title: '拖拽控制面板', width: 300 });
+            
+            gui.domElement.style.position = 'absolute';
+            gui.domElement.style.top = '60px';
+            gui.domElement.style.right = '10px';
+            gui.domElement.style.zIndex = '1000';
+            gui.domElement.style.maxHeight = '80vh';
+            gui.domElement.style.overflowY = 'auto';
+            
+            // 对象设置
+            const objectFolder = gui.addFolder('对象设置');
+            objectFolder.add(params, 'objectCount', 3, 15, 1)
+                .name('对象数量')
+                .onChange(createDraggableObjects);
+            
+            objectFolder.add(params, 'objectSize', 0.5, 3)
+                .name('对象大小')
+                .onChange(createDraggableObjects);
+            
+            objectFolder.add(params, 'spreadRange', 5, 15)
+                .name('分布范围')
+                .onChange(createDraggableObjects);
+            
+            // 拖拽设置
+            const dragFolder = gui.addFolder('拖拽设置');
+            dragFolder.add(params, 'enableDrag')
+                .name('启用拖拽');
+            
+            dragFolder.add(params, 'dragSensitivity', 0.1, 2)
+                .name('拖拽敏感度');
+            
+            dragFolder.add(params, 'snapToGrid')
+                .name('网格对齐');
+            
+            dragFolder.add(params, 'gridSize', 0.5, 2)
+                .name('网格大小');
+            
+            dragFolder.add(params, 'constrainToPlane')
+                .name('限制在平面');
+            
+            dragFolder.add(params, 'planeHeight', -2, 5)
+                .name('平面高度');
+            
+            // 视觉效果设置
+            const visualFolder = gui.addFolder('视觉效果');
+            visualFolder.add(params, 'showDragPlane')
+                .name('显示拖拽平面');
+            
+            visualFolder.add(params, 'showGrid')
+                .name('显示网格');
+            
+            visualFolder.add(params, 'highlightOnHover')
+                .name('悬停高亮');
+            
+            // 颜色设置
+            const colorFolder = gui.addFolder('颜色设置');
+            colorFolder.addColor(params, 'normalColor')
+                .name('普通颜色')
+                .onChange(createMaterials);
+            
+            colorFolder.addColor(params, 'hoverColor')
+                .name('悬停颜色')
+                .onChange(createMaterials);
+            
+            colorFolder.addColor(params, 'dragColor')
+                .name('拖拽颜色')
+                .onChange(createMaterials);
+            
+            // 控制功能
+            const controlFolder = gui.addFolder('控制功能');
+            controlFolder.add({
+                resetAllPositions: () => {
+                    draggableObjects.forEach(obj => {
+                        obj.position.copy(obj.userData.originalPosition);
+                    });
+                }
+            }, 'resetAllPositions').name('重置所有位置');
+            
+            controlFolder.add({
+                randomizePositions: () => {
+                    draggableObjects.forEach(obj => {
+                        obj.position.set(
+                            (Math.random() - 0.5) * params.spreadRange,
+                            params.objectSize,
+                            (Math.random() - 0.5) * params.spreadRange
+                        );
+                        obj.userData.originalPosition = obj.position.clone();
+                    });
+                }
+            }, 'randomizePositions').name('随机位置');
+            
+            // 相机控制
+            const cameraFolder = gui.addFolder('相机控制');
+            cameraFolder.add(params, 'autoRotate')
+                .name('自动旋转')
+                .onChange(value => {
+                    controls.autoRotate = value;
+                });
+            
+            objectFolder.open();
+            dragFolder.open();
+            controlFolder.open();
+        }
+        
+        /**
+         * 动画循环函数
+         */
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // 更新轨道控制器
+            controls.update();
+            
+            // 渲染场景
+            window.renderer.render(window.scene, window.camera);
+        }
+        
+        // 初始化应用
+        init();
+    </script>
+    
+    <!-- 
+    ===================================================
+    截图功能脚本 - 请勿修改此部分
+    此脚本处理从父窗口发来的截图请求，用于生成示例封面，与示例业务并无关联
+    ===================================================
+    -->
+    <script>
+        // 全局变量，用于存储渲染器引用
+        let _screenshotRenderer;
+        
+        // 添加消息监听器，处理截图请求
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    // 获取当前渲染器
+                    if (!_screenshotRenderer && window.renderer) {
+                        _screenshotRenderer = window.renderer;
+                    }
+                    
+                    // 确保渲染器已经初始化
+                    if (!_screenshotRenderer) {
+                        throw new Error('渲染器未初始化');
+                    }
+                    
+                    // 强制渲染一帧，确保内容是最新的
+                    if (window.scene && window.camera) {
+                        _screenshotRenderer.render(window.scene, window.camera);
+                    }
+                    
+                    // 获取canvas的图像数据（使用较低的质量和尺寸以减小文件大小）
+                    const quality = event.data.quality || 0.8;
+                    const canvas = _screenshotRenderer.domElement;
+                    
+                    // 创建一个较小尺寸的临时canvas
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600; // 最大尺寸为600像素
+                    
+                    // 计算缩放比例，保持宽高比
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    
+                    // 在临时canvas上绘制缩小的图像
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    
+                    // 获取缩小后的图像数据
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    
+                    // 将图像数据发送回父窗口
+                    window.parent.postMessage({
+                        type: 'screenshot-data',
+                        dataUrl: dataUrl
+                    }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    // 发送错误信息回父窗口
+                    window.parent.postMessage({
+                        type: 'screenshot-error',
+                        error: error.message
+                    }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

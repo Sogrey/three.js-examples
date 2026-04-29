@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three.js示例截图工具</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .preview {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+        .preview img {
+            max-width: 100%;
+            display: block;
+            margin: 0 auto;
+        }
+        .controls {
+            margin-top: 15px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #dff0d8;
+            color: #3c763d;
+        }
+        .error {
+            background-color: #f2dede;
+            color: #a94442;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Three.js示例截图工具</h1>
+        
+        <div class="form-group">
+            <label for="exampleUrl">示例URL:</label>
+            <input type="text" id="exampleUrl" value="../examples/basic-materials-mesh.html" placeholder="输入示例页面URL">
+        </div>
+        
+        <div class="form-group">
+            <label for="outputFilename">输出文件名:</label>
+            <input type="text" id="outputFilename" value="basic-materials-mesh.jpg" placeholder="输入输出文件名">
+        </div>
+        
+        <button id="takeScreenshot">捕获截图</button>
+        
+        <div class="preview" id="previewContainer" style="display: none;">
+            <h3>预览:</h3>
+            <img id="screenshotPreview" src="" alt="截图预览">
+            <div class="controls">
+                <button id="downloadButton">下载截图</button>
+                <button id="copyButton">复制到剪贴板</button>
+            </div>
+        </div>
+        
+        <div id="statusMessage" class="status" style="display: none;"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const takeScreenshotButton = document.getElementById('takeScreenshot');
+            const exampleUrlInput = document.getElementById('exampleUrl');
+            const outputFilenameInput = document.getElementById('outputFilename');
+            const previewContainer = document.getElementById('previewContainer');
+            const screenshotPreview = document.getElementById('screenshotPreview');
+            const downloadButton = document.getElementById('downloadButton');
+            const copyButton = document.getElementById('copyButton');
+            const statusMessage = document.getElementById('statusMessage');
+            
+            let iframe = null;
+            
+            // 显示状态消息
+            function showStatus(message, isError = false) {
+                statusMessage.textContent = message;
+                statusMessage.style.display = 'block';
+                
+                if (isError) {
+                    statusMessage.className = 'status error';
+                } else {
+                    statusMessage.className = 'status success';
+                }
+                
+                // 5秒后自动隐藏
+                setTimeout(() => {
+                    statusMessage.style.display = 'none';
+                }, 5000);
+            }
+            
+            // 捕获截图
+            takeScreenshotButton.addEventListener('click', function() {
+                const exampleUrl = exampleUrlInput.value.trim();
+                
+                if (!exampleUrl) {
+                    showStatus('请输入有效的示例URL', true);
+                    return;
+                }
+                
+                // 创建iframe来加载示例
+                if (iframe) {
+                    document.body.removeChild(iframe);
+                }
+                
+                iframe = document.createElement('iframe');
+                iframe.style.position = 'absolute';
+                iframe.style.left = '-9999px';
+                iframe.style.top = '-9999px';
+                iframe.style.width = '1200px';
+                iframe.style.height = '800px';
+                iframe.src = exampleUrl;
+                
+                document.body.appendChild(iframe);
+                
+                showStatus('正在加载示例页面...');
+                
+                // 监听iframe加载完成
+                iframe.onload = function() {
+                    showStatus('示例页面已加载，准备捕获截图...');
+                    
+                    // 给页面一些时间来渲染
+                    setTimeout(() => {
+                        try {
+                            // 发送截图请求到iframe
+                            iframe.contentWindow.postMessage({
+                                type: 'take-screenshot',
+                                quality: 0.9
+                            }, '*');
+                        } catch (error) {
+                            showStatus('无法发送截图请求: ' + error.message, true);
+                        }
+                    }, 2000);
+                };
+            });
+            
+            // 监听来自iframe的消息
+            window.addEventListener('message', function(event) {
+                if (event.data && event.data.type === 'screenshot-data') {
+                    // 显示截图预览
+                    screenshotPreview.src = event.data.dataUrl;
+                    previewContainer.style.display = 'block';
+                    showStatus('截图已成功捕获!');
+                    
+                    // 如果iframe存在，移除它
+                    if (iframe) {
+                        document.body.removeChild(iframe);
+                        iframe = null;
+                    }
+                } else if (event.data && event.data.type === 'screenshot-error') {
+                    showStatus('截图捕获失败: ' + event.data.error, true);
+                }
+            });
+            
+            // 下载截图
+            downloadButton.addEventListener('click', function() {
+                if (!screenshotPreview.src || screenshotPreview.src === 'about:blank') {
+                    showStatus('没有可下载的截图', true);
+                    return;
+                }
+                
+                const filename = outputFilenameInput.value.trim() || 'screenshot.jpg';
+                
+                const link = document.createElement('a');
+                link.href = screenshotPreview.src;
+                link.download = filename;
+                link.click();
+                
+                showStatus(`截图已下载为 ${filename}`);
+            });
+            
+            // 复制到剪贴板
+            copyButton.addEventListener('click', async function() {
+                if (!screenshotPreview.src || screenshotPreview.src === 'about:blank') {
+                    showStatus('没有可复制的截图', true);
+                    return;
+                }
+                
+                try {
+                    // 创建一个canvas元素
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // 等待图像加载
+                    await new Promise((resolve) => {
+                        const img = new Image();
+                        img.onload = function() {
+                            canvas.width = img.width;
+                            canvas.height = img.height;
+                            ctx.drawImage(img, 0, 0);
+                            resolve();
+                        };
+                        img.src = screenshotPreview.src;
+                    });
+                    
+                    // 将canvas转换为blob
+                    const blob = await new Promise(resolve => {
+                        canvas.toBlob(resolve, 'image/jpeg', 0.9);
+                    });
+                    
+                    // 复制到剪贴板
+                    await navigator.clipboard.write([
+                        new ClipboardItem({
+                            'image/jpeg': blob
+                        })
+                    ]);
+                    
+                    showStatus('截图已复制到剪贴板');
+                } catch (error) {
+                    showStatus('无法复制到剪贴板: ' + error.message, true);
+                    console.error('复制到剪贴板失败:', error);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

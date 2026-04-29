@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Three.js 地球贴图 - 带有纹理贴图的旋转地球">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 地球贴图</title>
+    <link rel="stylesheet" href="../css/example-common.css">
+    <style>
+        body { margin: 0; overflow: hidden; }
+        #threeContainer { width: 100vw; height: 100vh; }
+    </style>
+</head>
+<body>
+    <div id="threeContainer"></div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../libs/three/r179/build/three.module.js",
+                "three/addons/": "../libs/three/r179/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        window.scene = null;
+        window.camera = null;
+        window.renderer = null;
+
+        const params = {
+            earthColor: '#0a1628',
+            borderColor: '#4fc3f7',
+            atmosphereColor: '#4fc3f7',
+            autoRotate: true,
+            rotationSpeed: 0.5,
+            showGrid: true,
+            wireframe: false,
+            showCountries: true
+        };
+
+        let earth;
+        let earthGroup;
+        let countriesMesh;
+        let controls;
+
+        init();
+        animate();
+
+        async function init() {
+            window.scene = new THREE.Scene();
+            window.scene.background = new THREE.Color(0x000510);
+
+            window.camera = new THREE.PerspectiveCamera(
+                45,
+                window.innerWidth / window.innerHeight,
+                0.1,
+                1000
+            );
+            window.camera.position.set(0, 5, 10);
+            window.camera.lookAt(0, 0, 0);
+
+            window.renderer = new THREE.WebGLRenderer({ antialias: true });
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            window.renderer.setPixelRatio(window.devicePixelRatio);
+            document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+
+            controls = new OrbitControls(window.camera, window.renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+
+            earthGroup = new THREE.Group();
+            window.scene.add(earthGroup);
+
+            createEarth();
+            createAtmosphere();
+            createStars();
+            await loadGeoJsonAndCreateCountries();
+            initGUI();
+
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function createEarth() {
+            if (earth) {
+                earthGroup.remove(earth);
+                earth.geometry.dispose();
+                earth.material.dispose();
+            }
+
+            const earthGeometry = new THREE.SphereGeometry(5, 64, 64);
+            const earthMaterial = new THREE.MeshPhongMaterial({
+                color: new THREE.Color(params.earthColor),
+                emissive: 0x0a1628,
+                specular: 0x333333,
+                shininess: 25,
+                wireframe: params.wireframe
+            });
+
+            earth = new THREE.Mesh(earthGeometry, earthMaterial);
+            earthGroup.add(earth);
+
+            if (params.showGrid && !params.wireframe) {
+                const gridGeo = new THREE.SphereGeometry(5.005, 36, 18);
+                const gridMat = new THREE.MeshBasicMaterial({
+                    color: 0x4fc3f7,
+                    wireframe: true,
+                    transparent: true,
+                    opacity: 0.15
+                });
+                const gridSphere = new THREE.Mesh(gridGeo, gridMat);
+                earthGroup.add(gridSphere);
+            }
+        }
+
+        function updateEarthColor(color) {
+            if (earth && earth.material) {
+                earth.material.color.set(color);
+            }
+        }
+
+        function createAtmosphere() {
+            const atmosphereGeometry = new THREE.SphereGeometry(5.3, 64, 64);
+            const atmosphereMaterial = new THREE.ShaderMaterial({
+                vertexShader: `
+                    varying vec3 vNormal;
+                    void main() {
+                        vNormal = normalize(normalMatrix * normal);
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                    }
+                `,
+                fragmentShader: `
+                    varying vec3 vNormal;
+                    uniform vec3 glowColor;
+                    uniform float coefficient;
+                    uniform float power;
+
+                    void main() {
+                        float intensity = pow(coefficient - dot(vNormal, vec3(0.0, 0.0, 1.0)), power);
+                        gl_FragColor = vec4(glowColor, 1.0) * intensity;
+                    }
+                `,
+                uniforms: {
+                    glowColor: { value: new THREE.Color(params.atmosphereColor) },
+                    coefficient: { value: 0.6 },
+                    power: { value: 4.0 }
+                },
+                side: THREE.BackSide,
+                blending: THREE.AdditiveBlending,
+                transparent: true
+            });
+
+            const atmosphere = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial);
+            earthGroup.add(atmosphere);
+        }
+
+        function updateAtmosphereColor(color) {
+            earthGroup.children.forEach((child) => {
+                if (child.material && child.material.uniforms && child.material.uniforms.glowColor) {
+                    child.material.uniforms.glowColor.value.set(color);
+                }
+            });
+        }
+
+        function createStars() {
+            const starGeometry = new THREE.BufferGeometry();
+            const starCount = 2000;
+            const positions = new Float32Array(starCount * 3);
+
+            for (let i = 0; i < starCount * 3; i += 3) {
+                const radius = 50 + Math.random() * 100;
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos(2 * Math.random() - 1);
+
+                positions[i] = radius * Math.sin(phi) * Math.cos(theta);
+                positions[i + 1] = radius * Math.sin(phi) * Math.sin(theta);
+                positions[i + 2] = radius * Math.cos(phi);
+            }
+
+            starGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+            const starMaterial = new THREE.PointsMaterial({
+                color: 0xffffff,
+                size: 0.5,
+                transparent: true,
+                opacity: 0.8
+            });
+
+            const stars = new THREE.Points(starGeometry, starMaterial);
+            window.scene.add(stars);
+        }
+
+        async function loadGeoJsonAndCreateCountries() {
+            try {
+                const response = await fetch('../models/geojson/world-geo-json-zh/world.zh.json');
+                const geojson = await response.json();
+                
+                if (countriesMesh) {
+                    earthGroup.remove(countriesMesh);
+                    countriesMesh.geometry.dispose();
+                    countriesMesh.material.dispose();
+                    countriesMesh = null;
+                }
+                
+                if (params.showCountries) {
+                    createCountriesMesh(geojson);
+                }
+            } catch (error) {
+                console.error('Failed to load GeoJSON:', error);
+            }
+        }
+
+        function updateBorderColor(color) {
+            if (countriesMesh && countriesMesh.material) {
+                countriesMesh.material.color.set(color);
+            }
+        }
+
+        function createCountriesMesh(geojson) {
+            const positions = [];
+            const indices = [];
+
+            let index = 0;
+
+            geojson.features.forEach((feature) => {
+                const coordinates = feature.geometry.coordinates;
+                
+                coordinates.forEach((polygon) => {
+                    polygon.forEach((ring) => {
+                        for (let i = 0; i < ring.length - 1; i++) {
+                            const coord1 = ring[i];
+                            const coord2 = ring[i + 1];
+                            
+                            const point1 = latLngToVector3(coord1[1], coord1[0], 5.01);
+                            const point2 = latLngToVector3(coord2[1], coord2[0], 5.01);
+                            
+                            positions.push(point1.x, point1.y, point1.z);
+                            positions.push(point2.x, point2.y, point2.z);
+                            
+                            indices.push(index, index + 1);
+                            index += 2;
+                        }
+                    });
+                });
+            });
+
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            geometry.setIndex(new THREE.Uint32BufferAttribute(indices, 1));
+
+            const material = new THREE.LineBasicMaterial({
+                color: new THREE.Color(params.borderColor),
+                transparent: true,
+                opacity: 0.8
+            });
+
+            countriesMesh = new THREE.LineSegments(geometry, material);
+            earthGroup.add(countriesMesh);
+        }
+
+        function latLngToVector3(lat, lng, radius) {
+            const phi = (90 - lat) * (Math.PI / 180);
+            const theta = (lng + 180) * (Math.PI / 180);
+            
+            const x = -radius * Math.sin(phi) * Math.cos(theta);
+            const y = radius * Math.cos(phi);
+            const z = radius * Math.sin(phi) * Math.sin(theta);
+            
+            return new THREE.Vector3(x, y, z);
+        }
+
+        function initGUI() {
+            const gui = new GUI({ title: '地球参数控制', width: 300 });
+
+            gui.domElement.style.position = 'absolute';
+            gui.domElement.style.top = '60px';
+            gui.domElement.style.right = '10px';
+            gui.domElement.style.zIndex = '1000';
+
+            setTimeout(() => { gui.show(); }, 100);
+
+            const displayFolder = gui.addFolder('显示设置');
+            displayFolder.add(params, 'autoRotate').name('自动旋转');
+            displayFolder.add(params, 'rotationSpeed', 0.1, 2.0).name('旋转速度');
+            displayFolder.add(params, 'wireframe').name('线框模式').onChange(() => {
+                createEarth();
+            });
+            displayFolder.add(params, 'showGrid').name('显示网格').onChange(() => {
+                createEarth();
+            });
+            displayFolder.add(params, 'showCountries').name('显示国家').onChange(async () => {
+                await loadGeoJsonAndCreateCountries();
+            });
+            displayFolder.open();
+
+            const colorFolder = gui.addFolder('颜色设置');
+            colorFolder.addColor(params, 'earthColor').name('地球颜色').onChange((value) => {
+                updateEarthColor(value);
+            });
+            colorFolder.addColor(params, 'borderColor').name('边界颜色').onChange((value) => {
+                updateBorderColor(value);
+            });
+            colorFolder.addColor(params, 'atmosphereColor').name('大气层颜色').onChange((value) => {
+                updateAtmosphereColor(value);
+            });
+            colorFolder.open();
+        }
+
+        function onWindowResize() {
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            controls.update();
+
+            if (params.autoRotate) {
+                earthGroup.rotation.y += 0.002 * params.rotationSpeed;
+            }
+
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        function stopAnimation() {
+            cancelAnimationFrame(animate);
+        }
+
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                stopAnimation();
+                setTimeout(() => {
+                    window.parent.postMessage({
+                        type: 'screenshot-data',
+                        dataUrl: window.renderer.domElement.toDataURL('image/jpeg', 0.8)
+                    }, '*');
+                    animate();
+                }, 100);
+            }
+        });
+    </script>
+</body>
+</html>

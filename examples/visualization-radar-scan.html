@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Three.js雷达扫描特效 - 经典军事雷达扫描动画">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 雷达扫描特效</title>
+    <link rel="stylesheet" href="../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+    
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../libs/three/r179/build/three.module.js",
+                "three/addons/": "../libs/three/r179/jsm/"
+            }
+        }
+    </script>
+    
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+        
+        window.scene = null;
+        window.camera = null;
+        window.renderer = null;
+        
+        const params = {
+            radarColor: '#00ff00',
+            backgroundColor: '#000800',
+            scanSpeed: 1.0,
+            glowIntensity: 2.0,
+            ringCount: 4,
+            crossLineCount: 8,
+            blipCount: 5,
+            autoRotate: true
+        };
+        
+        let radarMesh;
+        let controls;
+        let material;
+        
+        init();
+        animate();
+        
+        function init() {
+            window.scene = new THREE.Scene();
+            window.scene.background = new THREE.Color(params.backgroundColor);
+            
+            window.camera = new THREE.PerspectiveCamera(
+                60,
+                window.innerWidth / window.innerHeight,
+                0.1,
+                1000
+            );
+            window.camera.position.set(0, 8, 0);
+            window.camera.lookAt(0, 0, 0);
+            
+            window.renderer = new THREE.WebGLRenderer({ antialias: true });
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            window.renderer.setPixelRatio(window.devicePixelRatio);
+            document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+            
+            controls = new OrbitControls(window.camera, window.renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            
+            createRadar();
+            initGUI();
+            
+            window.addEventListener('resize', onWindowResize);
+        }
+        
+        function createRadar() {
+            if (radarMesh) {
+                window.scene.remove(radarMesh);
+            }
+            
+            const geometry = new THREE.CircleGeometry(5, 64);
+            
+            const blipPositions = [];
+            for (let i = 0; i < params.blipCount; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const radius = Math.random() * 4.5;
+                blipPositions.push({
+                    x: Math.cos(angle) * radius,
+                    z: Math.sin(angle) * radius,
+                    life: Math.random()
+                });
+            }
+            
+            material = new THREE.ShaderMaterial({
+                uniforms: {
+                    uTime: { value: 0 },
+                    uRadarColor: { value: new THREE.Color(params.radarColor) },
+                    uBackgroundColor: { value: new THREE.Color(params.backgroundColor) },
+                    uScanSpeed: { value: params.scanSpeed },
+                    uGlowIntensity: { value: params.glowIntensity },
+                    uRingCount: { value: params.ringCount },
+                    uCrossLineCount: { value: params.crossLineCount },
+                    uBlipCount: { value: params.blipCount }
+                },
+                vertexShader: `
+                    varying vec2 vUv;
+                    void main() {
+                        vUv = uv;
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                    }
+                `,
+                fragmentShader: `
+                    uniform float uTime;
+                    uniform vec3 uRadarColor;
+                    uniform vec3 uBackgroundColor;
+                    uniform float uScanSpeed;
+                    uniform float uGlowIntensity;
+                    uniform float uRingCount;
+                    uniform float uCrossLineCount;
+                    uniform float uBlipCount;
+                    
+                    varying vec2 vUv;
+                    
+                    #define PI 3.14159265359
+                    
+                    float random(vec2 st) {
+                        return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
+                    }
+                    
+                    void main() {
+                        vec2 center = vec2(0.5, 0.5);
+                        vec2 pos = vUv - center;
+                        float dist = length(pos) * 2.0;
+                        float angle = atan(pos.y, pos.x);
+                        
+                        float scanAngle = mod(uTime * uScanSpeed, PI * 2.0);
+                        float angleDiff = abs(mod(angle - scanAngle + PI, PI * 2.0) - PI);
+                        
+                        float ring = 0.0;
+                        for (float i = 1.0; i <= 10.0; i++) {
+                            if (i > uRingCount) break;
+                            float ringRadius = i / uRingCount;
+                            ring += smoothstep(0.02, 0.01, abs(dist - ringRadius));
+                        }
+                        
+                        float crossLine = 0.0;
+                        for (float i = 0.0; i < 8.0; i++) {
+                            if (i >= uCrossLineCount) break;
+                            float lineAngle = i * PI / uCrossLineCount;
+                            float lineDist = abs(sin(angle - lineAngle));
+                            crossLine += smoothstep(0.02, 0.01, lineDist) * step(dist, 1.0);
+                        }
+                        
+                        float scanLine = smoothstep(0.1, 0.0, angleDiff);
+                        scanLine *= smoothstep(1.0, 0.8, dist);
+                        scanLine *= uGlowIntensity;
+                        
+                        float trail = smoothstep(0.5, 0.0, angleDiff) * smoothstep(1.0, 0.0, dist);
+                        
+                        vec3 radarBase = uBackgroundColor;
+                        radarBase = mix(radarBase, uRadarColor * 0.2, ring * 0.5);
+                        radarBase = mix(radarBase, uRadarColor * 0.3, crossLine * 0.3);
+                        
+                        vec3 scanColor = uRadarColor * scanLine;
+                        vec3 trailColor = uRadarColor * trail * 0.3;
+                        
+                        float edge = smoothstep(1.0, 0.98, dist);
+                        
+                        float blip = 0.0;
+                        for (float i = 0.0; i < 10.0; i++) {
+                            if (i >= uBlipCount) break;
+                            float seed = i * 123.456;
+                            float bx = random(vec2(seed, 0.0)) * 2.0 - 1.0;
+                            float bz = random(vec2(0.0, seed)) * 2.0 - 1.0;
+                            float br = random(vec2(seed, seed)) * 0.5 + 0.5;
+                            vec2 bpos = vec2(bx, bz) * br * 0.9;
+                            float bdist = length(pos - bpos);
+                            float bangle = atan(bpos.y, bpos.x);
+                            float bangleDiff = abs(mod(bangle - scanAngle + PI, PI * 2.0) - PI);
+                            float blink = step(0.0, sin(uTime * 3.0 + seed)) * 0.5 + 0.5;
+                            blip += smoothstep(0.03, 0.01, bdist) * step(bangleDiff, 0.3) * blink;
+                        }
+                        
+                        vec3 finalColor = radarBase + scanColor + trailColor + uRadarColor * blip * 2.0;
+                        float alpha = edge;
+                        
+                        gl_FragColor = vec4(finalColor, alpha);
+                    }
+                `,
+                transparent: true,
+                side: THREE.DoubleSide
+            });
+            
+            radarMesh = new THREE.Mesh(geometry, material);
+            radarMesh.rotation.x = -Math.PI / 2;
+            window.scene.add(radarMesh);
+            
+            const gridHelper = new THREE.GridHelper(20, 20, 0x003300, 0x001100);
+            gridHelper.position.y = -0.01;
+            window.scene.add(gridHelper);
+        }
+        
+        function initGUI() {
+            const gui = new GUI({ title: '雷达参数控制', width: 300 });
+            
+            gui.domElement.style.position = 'absolute';
+            gui.domElement.style.top = '60px';
+            gui.domElement.style.right = '10px';
+            gui.domElement.style.zIndex = '1000';
+            gui.domElement.style.maxHeight = '80vh';
+            gui.domElement.style.overflowY = 'auto';
+            
+            setTimeout(() => {
+                gui.show();
+            }, 100);
+            
+            const colorFolder = gui.addFolder('颜色设置');
+            colorFolder.addColor(params, 'radarColor').name('雷达颜色').onChange((value) => {
+                material.uniforms.uRadarColor.value.set(value);
+            });
+            colorFolder.addColor(params, 'backgroundColor').name('背景颜色').onChange((value) => {
+                material.uniforms.uBackgroundColor.value.set(value);
+                window.scene.background.set(value);
+            });
+            colorFolder.open();
+            
+            const effectFolder = gui.addFolder('效果设置');
+            effectFolder.add(params, 'scanSpeed', 0.1, 5.0).name('扫描速度').onChange((value) => {
+                material.uniforms.uScanSpeed.value = value;
+            });
+            effectFolder.add(params, 'glowIntensity', 0.5, 5.0).name('发光强度').onChange((value) => {
+                material.uniforms.uGlowIntensity.value = value;
+            });
+            effectFolder.add(params, 'ringCount', 1, 10).step(1).name('圆环数量').onChange((value) => {
+                material.uniforms.uRingCount.value = value;
+            });
+            effectFolder.add(params, 'crossLineCount', 4, 16).step(1).name('十字线数量').onChange((value) => {
+                material.uniforms.uCrossLineCount.value = value;
+            });
+            effectFolder.add(params, 'blipCount', 0, 20).step(1).name('目标数量').onChange((value) => {
+                material.uniforms.uBlipCount.value = value;
+            });
+            effectFolder.open();
+            
+            const controlFolder = gui.addFolder('控制设置');
+            controlFolder.add(params, 'autoRotate').name('自动旋转视角').onChange((value) => {
+                controls.autoRotate = value;
+            });
+        }
+        
+        function onWindowResize() {
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            controls.update();
+            
+            if (material) {
+                material.uniforms.uTime.value += 0.016;
+            }
+            
+            window.renderer.render(window.scene, window.camera);
+        }
+    </script>
+    
+    <script>
+        let _screenshotRenderer;
+        
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (!_screenshotRenderer && window.renderer) {
+                        _screenshotRenderer = window.renderer;
+                    }
+                    
+                    if (!_screenshotRenderer) {
+                        throw new Error('渲染器未初始化');
+                    }
+                    
+                    if (window.scene && window.camera) {
+                        _screenshotRenderer.render(window.scene, window.camera);
+                    }
+                    
+                    const quality = event.data.quality || 0.8;
+                    const canvas = _screenshotRenderer.domElement;
+                    
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    
+                    window.parent.postMessage({
+                        type: 'screenshot-data',
+                        dataUrl: dataUrl
+                    }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

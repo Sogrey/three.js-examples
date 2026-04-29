@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Three.js 渐变围栏 3D 区块 - 基于广州地理数据">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 渐变围栏 3D 区块</title>
+    <link rel="stylesheet" href="../css/example-common.css">
+    <style>
+        body { margin: 0; overflow: hidden; }
+        #threeContainer { width: 100vw; height: 100vh; }
+    </style>
+</head>
+<body>
+    <div id="threeContainer"></div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../libs/three/r179/build/three.module.js",
+                "three/addons/": "../libs/three/r179/jsm/",
+                "ThreeBase": "../libs/three/r179/ThreeBase.js",
+                "geoUtil": "../libs/geoUtil.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import ThreeBase from '../libs/three/r179/ThreeBase.js';
+        import { initGeoFun, latlng2px } from '../libs/geoUtil.js';
+
+        class MyThree extends ThreeBase {
+            constructor() {
+                super();
+                this.isAxis = false;
+            }
+
+            getData() {
+                return new Promise((resolve) => {
+                    fetch('../models/json/guangzhou.json')
+                        .then((res) => res.json())
+                        .then((res) => {
+                            resolve(res.features[0].geometry.coordinates[0][0]);
+                        });
+                });
+            }
+
+            createShape(points) {
+                const shape = new THREE.Shape();
+                shape.moveTo(points[0].x, points[0].z);
+
+                for (let i = 1; i < points.length; i++) {
+                    shape.lineTo(points[i].x, points[i].z);
+                }
+                shape.lineTo(points[0].x, points[0].z);
+                return shape;
+            }
+
+            createRegion(shape) {
+                const extrudeSettings = {
+                    depth: 0.2,
+                    bevelEnabled: false
+                };
+
+                const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+                const tex = new THREE.TextureLoader().load('../models/tex/tex.png');
+                tex.wrapS = THREE.RepeatWrapping;
+                tex.wrapT = THREE.RepeatWrapping;
+                const material = new THREE.MeshBasicMaterial({
+                    map: tex,
+                    color: new THREE.Color('#00FFFF')
+                });
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.rotateX(Math.PI * 0.5);
+                mesh.position.y = extrudeSettings.depth * 0.5;
+                return mesh;
+            }
+
+            createBoundary(shape) {
+                const material = new THREE.ShaderMaterial({
+                    side: THREE.DoubleSide,
+                    transparent: true,
+                    depthTest: false,
+                    uniforms: {
+                        color1: { value: new THREE.Color('#00FFFF') }
+                    },
+                    vertexShader: `
+                        varying vec2 vUv;
+                        varying vec3 vNormal;
+                        
+                        void main() {
+                            vUv = uv;
+                            vNormal = normal;
+                            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                        }
+                    `,
+                    fragmentShader: `
+                        uniform vec3 color1;
+                        varying vec2 vUv;
+                        varying vec3 vNormal;
+                        
+                        void main() {
+                            if (vNormal.z == 1.0 || vNormal.z == -1.0 || vUv.y == 0.0) {
+                                discard;
+                            } else {
+                                gl_FragColor = vec4(color1, mix(1.0, 0.0, vUv.y));
+                            }
+                        }
+                    `
+                });
+
+                const extrudeSettings = {
+                    depth: 1,
+                    bevelEnabled: false
+                };
+
+                const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.rotation.x = Math.PI * 0.5;
+                mesh.position.y = extrudeSettings.depth + 0.1;
+                return mesh;
+            }
+
+            async createChart(option) {
+                initGeoFun(180);
+
+                let points = await this.getData();
+                points = points.map((item) => {
+                    const p = latlng2px(item);
+                    return new THREE.Vector3(p[0], 0, p[1]);
+                });
+                const shape = this.createShape(points);
+
+                this.group = new THREE.Group();
+                this.group.add(this.createRegion(shape));
+                this.group.add(this.createBoundary(shape));
+
+                this.scene.add(this.group);
+                this.setModelCenter(this.group, option.cameraControl);
+            }
+        }
+
+        var myThree = new MyThree();
+        window.myThree = myThree;
+        myThree.initThree(document.getElementById('threeContainer'));
+        myThree.createChart({
+            cameraControl: {
+                autoCamera: true,
+                height: 10,
+                width: 0.5,
+                depth: 1,
+                cameraPosX: 10,
+                cameraPosY: 181,
+                cameraPosZ: 116,
+                autoRotate: false,
+                rotateSpeed: 2000
+            }
+        });
+    </script>
+</body>
+</html>

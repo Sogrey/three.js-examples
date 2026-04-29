@@ -1,0 +1,41 @@
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 编辑器文件
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# 依赖目录
+node_modules/
+
+# 日志文件
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 临时文件
+.tmp/
+.temp/
+.codebuddy/
+
+# 构建输出
+/dist
+/build
+
+# 环境变量
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# 排除 models 目录下的所有子目录及文件
+/models/*
+# 但保留 models 根目录下的文件
+!/models/*.*
+
+tmp

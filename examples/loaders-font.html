@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 页面描述，有助于SEO优化 -->
+    <meta name="description" content="加载和使用 3D 文本字体">
+    <!-- Three.js版本信息 -->
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 字体加载器</title>
+    <!-- 引入公共样式表 -->
+    <link rel="stylesheet" href="../css/example-common.css">
+</head>
+<body>
+    <!-- 3D场景容器 -->
+    <div class="three-container" id="threeContainer"></div>
+    
+    <!-- 
+    使用importmap定义模块导入映射
+    这是一种现代化的ES模块导入方式，可以简化导入路径
+    通过定义别名，可以使用简短的导入语句，如 import * as THREE from 'three'
+    -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../libs/three/r179/build/three.module.js",
+                "three/addons/": "../libs/three/r179/jsm/"
+            }
+        }
+    </script>
+    
+    <!-- 示例代码 - 字体加载器 -->
+    <script type="module">
+        // 导入Three.js核心模块
+        import * as THREE from 'three';
+        // 导入轨道控制器，用于交互式旋转和缩放场景
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        // 导入字体加载器
+        import { FontLoader } from 'three/addons/loaders/FontLoader.js';
+        // 导入文本几何体
+        import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
+        // 导入GUI控制面板，用于调整参数
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+        
+        // Three.js 核心变量 - 暴露给全局作用域以便截图功能使用
+        window.scene = null;     // 场景对象，包含所有3D元素
+        window.camera = null;    // 相机对象，定义视角和视野
+        window.renderer = null;  // 渲染器对象，将场景渲染到canvas上
+        let textMesh;           // 3D文本网格对象
+        let controls;           // 轨道控制器对象
+        let font;               // 字体对象
+        let loadingText;        // 加载提示文本
+        
+        // 参数配置对象 - 用于GUI控制面板和创建3D对象
+        // 参考 basic-geometry-text 示例的优化参数，解决中文拉伸问题
+        const params = {
+            // 文本参数
+            text: 'Three.js',
+            fontName: 'helvetiker_regular',
+            size: 70,              // 增大字体大小，解决中文拉伸问题
+            height: 20,            // 增加厚度，与 basic-geometry-text 一致
+            curveSegments: 4,      // 减少曲线分段，提高性能
+            bevelEnabled: true,
+            bevelThickness: 2,     // 增加斜角厚度
+            bevelSize: 1.5,        // 增加斜角大小
+            bevelOffset: 0,
+            bevelSegments: 3,      // 减少斜角分段，提高性能
+            materialType: 'standard',
+            color: 0xf39c12,       // 使用橙色，与 basic-geometry-text 一致
+            wireframe: false,
+            
+            // 控制器参数
+            autoRotate: true       // 是否自动旋转
+        };
+
+        // 可用字体
+        const availableFonts = {
+            'helvetiker_regular': '../libs/three/r179/fonts/helvetiker_regular.typeface.json',
+            'helvetiker_bold': '../libs/three/r179/fonts/helvetiker_bold.typeface.json',
+            'optimer_regular': '../libs/three/r179/fonts/optimer_regular.typeface.json',
+            'optimer_bold': '../libs/three/r179/fonts/optimer_bold.typeface.json',
+            'gentilis_regular': '../libs/three/r179/fonts/gentilis_regular.typeface.json',
+            'gentilis_bold': '../libs/three/r179/fonts/gentilis_bold.typeface.json'
+        };
+        
+        /**
+         * 初始化Three.js场景、相机、渲染器和控制器
+         * 这是整个应用的入口点
+         */
+        function init() {
+            // 创建场景 - 所有3D对象的容器
+            window.scene = new THREE.Scene();
+            // 设置场景背景色为深蓝灰色
+            window.scene.background = new THREE.Color(0x2c3e50);
+            
+            // 创建透视相机 - 模拟人眼视角
+            // 参数：视场角(FOV)，宽高比，近裁剪面，远裁剪面
+            // 调整视场角，与 basic-geometry-text 一致
+            window.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+            // 设置相机位置，以便能看到立起的文字
+            window.camera.position.set(0, 300, 300); // 从斜上方观察立起的文字
+            
+            // 创建WebGL渲染器 - 将3D场景渲染到canvas上
+            window.renderer = new THREE.WebGLRenderer({ antialias: true }); // 启用抗锯齿
+            // 设置渲染器尺寸为窗口大小
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            // 设置设备像素比，提高在高DPI设备上的清晰度
+            window.renderer.setPixelRatio(window.devicePixelRatio);
+            // 启用阴影
+            window.renderer.shadowMap.enabled = true;
+            window.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            // 将渲染器的canvas添加到DOM中
+            document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+            
+            // 添加轨道控制器 - 允许用户交互式旋转和缩放场景
+            controls = new OrbitControls(window.camera, window.renderer.domElement);
+            controls.enableDamping = true;       // 启用阻尼效果，使控制更平滑
+            controls.dampingFactor = 0.05;       // 阻尼系数
+            controls.autoRotate = params.autoRotate; // 设置是否自动旋转
+            
+            // 添加光源
+            addLights();
+            
+            // 创建加载提示文本
+            createLoadingText();
+            
+            // 加载字体
+            loadFont();
+            
+            // 监听窗口大小变化，调整场景
+            window.addEventListener('resize', onWindowResize);
+            
+            // 开始动画循环
+            animate();
+        }
+        
+        /**
+         * 创建加载提示文本
+         * 在字体加载完成前显示
+         */
+        function createLoadingText() {
+            // 创建一个简单的平面几何体
+            const geometry = new THREE.PlaneGeometry(200, 50);
+            
+            // 创建画布纹理
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 128;
+            const context = canvas.getContext('2d');
+            
+            // 设置文本样式
+            context.fillStyle = '#ffffff';
+            context.font = 'bold 48px Arial';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.fillText('加载字体中...', canvas.width / 2, canvas.height / 2);
+            
+            // 创建纹理
+            const texture = new THREE.CanvasTexture(canvas);
+            
+            // 创建材质
+            const material = new THREE.MeshBasicMaterial({
+                map: texture,
+                transparent: true,
+                opacity: 0.8
+            });
+            
+            // 创建网格
+            loadingText = new THREE.Mesh(geometry, material);
+            
+            // 将网格添加到场景中
+            window.scene.add(loadingText);
+        }
+        
+        /**
+         * 处理窗口大小变化
+         * 调整相机和渲染器以适应新的窗口尺寸
+         */
+        function onWindowResize() {
+            // 更新相机宽高比
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            // 更新相机投影矩阵
+            window.camera.updateProjectionMatrix();
+            // 更新渲染器尺寸
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // 加载字体
+        function loadFont() {
+            const fontLoader = new FontLoader();
+            const fontPath = availableFonts[params.fontName];
+
+            fontLoader.load(
+                fontPath,
+                (loadedFont) => {
+                    font = loadedFont;
+                    
+                    // 移除加载提示文本
+                    if (loadingText) {
+                        window.scene.remove(loadingText);
+                        loadingText.geometry.dispose();
+                        loadingText.material.dispose();
+                        loadingText = null;
+                    }
+                    
+                    createText();
+                    
+                    // 初始化GUI控制面板（在字体加载完成后）
+                    initGUI();
+                    
+                    console.log('字体加载成功:', params.fontName);
+                },
+                (progress) => {
+                    // 修复进度计算异常问题
+                    if (progress && progress.total && progress.total > 0) {
+                        const percentage = Math.round((progress.loaded / progress.total) * 100);
+                        console.log('字体加载进度:', percentage + '%');
+                    } else {
+                        console.log('字体加载中...');
+                    }
+                },
+                (error) => {
+                    console.error('字体加载失败:', error);
+                }
+            );
+        }
+        
+        /**
+         * 创建文本
+         */
+        function createText() {
+            if (!font) return;
+
+            // 移除旧的文本网格
+            if (textMesh) {
+                window.scene.remove(textMesh);
+                textMesh.geometry.dispose();
+                textMesh.material.dispose();
+            }
+
+            // 创建文本几何体
+            const textGeometry = new TextGeometry(params.text, {
+                font: font,
+                size: params.size,
+                height: params.height,
+                curveSegments: params.curveSegments,
+                bevelEnabled: params.bevelEnabled,
+                bevelThickness: params.bevelThickness,
+                bevelSize: params.bevelSize,
+                bevelOffset: params.bevelOffset,
+                bevelSegments: params.bevelSegments
+            });
+
+            // 计算边界框并居中
+            textGeometry.computeBoundingBox();
+            const textWidth = textGeometry.boundingBox.max.x - textGeometry.boundingBox.min.x;
+            const textHeight = textGeometry.boundingBox.max.y - textGeometry.boundingBox.min.y;
+            
+            // 水平居中，垂直方向保持在底部
+            textGeometry.translate(-textWidth / 2, 0, 0);
+
+            // 创建材质
+            let material;
+            switch (params.materialType) {
+                case 'basic':
+                    material = new THREE.MeshBasicMaterial({
+                        color: params.color,
+                        wireframe: params.wireframe
+                    });
+                    break;
+                case 'standard':
+                    material = new THREE.MeshStandardMaterial({
+                        color: params.color,
+                        metalness: 0.3,
+                        roughness: 0.4,
+                        wireframe: params.wireframe
+                    });
+                    break;
+                case 'physical':
+                    material = new THREE.MeshPhysicalMaterial({
+                        color: params.color,
+                        metalness: 0.5,
+                        roughness: 0.2,
+                        clearcoat: 0.3,
+                        clearcoatRoughness: 0.25,
+                        wireframe: params.wireframe
+                    });
+                    break;
+                case 'lambert':
+                    material = new THREE.MeshLambertMaterial({
+                        color: params.color,
+                        wireframe: params.wireframe
+                    });
+                    break;
+                case 'phong':
+                    material = new THREE.MeshPhongMaterial({
+                        color: params.color,
+                        shininess: 100,
+                        wireframe: params.wireframe
+                    });
+                    break;
+            }
+
+            // 创建文本网格
+            textMesh = new THREE.Mesh(textGeometry, material);
+            textMesh.castShadow = true;
+            textMesh.receiveShadow = true;
+            
+            // 让文字立起来 - 旋转90度，使其垂直向上
+            textMesh.rotation.x = -Math.PI / 2;
+            
+            window.scene.add(textMesh);
+            
+            // 调整相机位置以适应立起的文字
+            const distance = Math.max(textWidth, textHeight) * 2;
+            window.camera.position.set(0, distance, distance); // 从斜上方观察
+            window.camera.lookAt(0, 0, 0);
+        }
+
+        // 添加光源
+        function addLights() {
+            // 环境光 - 提供均匀的全局照明
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            window.scene.add(ambientLight);
+
+            // 主方向光 - 模拟太阳光
+            const directionalLight1 = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight1.position.set(500, 500, 500); // 调整光源位置以适应新的尺度
+            directionalLight1.castShadow = true;
+            directionalLight1.shadow.mapSize.width = 2048;
+            directionalLight1.shadow.mapSize.height = 2048;
+            directionalLight1.shadow.camera.near = 0.5;
+            directionalLight1.shadow.camera.far = 1500;
+            window.scene.add(directionalLight1);
+
+            // 辅助方向光 - 提供补充照明，增加视觉深度
+            const directionalLight2 = new THREE.DirectionalLight(0x84c3be, 0.5);
+            directionalLight2.position.set(-500, -200, -500); // 从相反方向照射
+            window.scene.add(directionalLight2);
+
+            // 添加网格辅助线 - 帮助理解3D空间
+            const gridHelper = new THREE.GridHelper(2000, 20, 0x888888, 0x444444);
+            window.scene.add(gridHelper);
+        }
+        
+        /**
+         * 初始化GUI控制面板
+         * 创建用户可交互的控制界面，用于调整参数
+         */
+        function initGUI() {
+            // 如果字体未加载完成，则返回
+            if (!font) return;
+            
+            // 创建GUI实例
+            const gui = new GUI({ title: '字体加载器控制面板', width: 300 });
+            
+            // 调整GUI位置，避免与其他UI元素重叠
+            gui.domElement.style.position = 'absolute';
+            gui.domElement.style.top = '60px';
+            gui.domElement.style.right = '10px';
+            
+            // 确保GUI在所有环境下都可见
+            gui.domElement.style.zIndex = '1000';
+            gui.domElement.style.maxHeight = '80vh';
+            gui.domElement.style.overflowY = 'auto';
+            
+            // 确保GUI在页面加载后立即可见
+            setTimeout(() => {
+                gui.show();
+                for (const controller of gui.controllers) {
+                    controller.updateDisplay();
+                }
+            }, 100);
+
+            // 文本设置
+            const textFolder = gui.addFolder('文本设置');
+            textFolder.add(params, 'text')
+                .name('文本内容')
+                .onChange(createText);
+
+            textFolder.add(params, 'fontName', Object.keys(availableFonts))
+                .name('字体')
+                .onChange(loadFont);
+
+            // 调整参数范围以适应新的尺度
+            textFolder.add(params, 'size', 10, 150)
+                .name('字体大小')
+                .onChange(createText);
+
+            textFolder.add(params, 'height', 1, 50)
+                .name('厚度')
+                .onChange(createText);
+
+            textFolder.add(params, 'curveSegments', 1, 10, 1)
+                .name('曲线分段')
+                .onChange(createText);
+
+            // 倒角设置
+            const bevelFolder = gui.addFolder('倒角设置');
+            bevelFolder.add(params, 'bevelEnabled')
+                .name('启用倒角')
+                .onChange(createText);
+
+            bevelFolder.add(params, 'bevelThickness', 0.1, 5)
+                .name('倒角厚度')
+                .onChange(createText);
+
+            bevelFolder.add(params, 'bevelSize', 0.1, 5)
+                .name('倒角大小')
+                .onChange(createText);
+
+            bevelFolder.add(params, 'bevelOffset', -2, 2, 0.1)
+                .name('倒角偏移')
+                .onChange(createText);
+
+            bevelFolder.add(params, 'bevelSegments', 1, 10, 1)
+                .name('倒角分段')
+                .onChange(createText);
+
+            // 材质设置
+            const materialFolder = gui.addFolder('材质设置');
+            materialFolder.add(params, 'materialType', ['basic', 'standard', 'physical', 'lambert', 'phong'])
+                .name('材质类型')
+                .onChange(createText);
+
+            materialFolder.addColor(params, 'color')
+                .name('颜色')
+                .onChange(createText);
+
+            materialFolder.add(params, 'wireframe')
+                .name('线框模式')
+                .onChange(createText);
+
+            // 动画参数控制组
+            const animationFolder = gui.addFolder('动画参数');
+            animationFolder.add(params, 'autoRotate')
+                .name('自动旋转')
+                .onChange(value => {
+                    controls.autoRotate = value;
+                });
+
+            textFolder.open();
+            materialFolder.open();
+            animationFolder.open();
+        }
+        
+        /**
+         * 动画循环函数
+         * 使用requestAnimationFrame实现平滑动画
+         * 每帧更新场景并渲染
+         */
+        function animate() {
+            // 请求下一帧动画
+            requestAnimationFrame(animate);
+            
+            // 更新轨道控制器
+            controls.update();
+            
+            // 此处可以添加自定义的每帧更新逻辑
+
+            // 渲染场景
+            window.renderer.render(window.scene, window.camera);
+        }
+        
+        // 初始化应用
+        init();
+    </script>
+    
+    <!-- 
+    ===================================================
+    截图功能脚本 - 请勿修改此部分
+    此脚本处理从父窗口发来的截图请求，用于生成示例封面，与示例业务并无关联
+    ===================================================
+    -->
+    <script>
+        // 全局变量，用于存储渲染器引用
+        let _screenshotRenderer;
+        
+        // 添加消息监听器，处理截图请求
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    // 获取当前渲染器
+                    if (!_screenshotRenderer && window.renderer) {
+                        _screenshotRenderer = window.renderer;
+                    }
+                    
+                    // 确保渲染器已经初始化
+                    if (!_screenshotRenderer) {
+                        throw new Error('渲染器未初始化');
+                    }
+                    
+                    // 强制渲染一帧，确保内容是最新的
+                    if (window.scene && window.camera) {
+                        _screenshotRenderer.render(window.scene, window.camera);
+                    }
+                    
+                    // 获取canvas的图像数据（使用较低的质量和尺寸以减小文件大小）
+                    const quality = event.data.quality || 0.8;
+                    const canvas = _screenshotRenderer.domElement;
+                    
+                    // 创建一个较小尺寸的临时canvas
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600; // 最大尺寸为600像素
+                    
+                    // 计算缩放比例，保持宽高比
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    
+                    // 在临时canvas上绘制缩小的图像
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    
+                    // 获取缩小后的图像数据
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    
+                    // 将图像数据发送回父窗口
+                    window.parent.postMessage({
+                        type: 'screenshot-data',
+                        dataUrl: dataUrl
+                    }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    // 发送错误信息回父窗口
+                    window.parent.postMessage({
+                        type: 'screenshot-error',
+                        error: error.message
+                    }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 页面描述，有助于SEO优化 -->
+    <meta name="description" content="Three.js阴影效果示例 - 展示不同类型的阴影映射技术">
+    <!-- Three.js版本信息 -->
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 阴影效果</title>
+    <!-- 引入公共样式表 -->
+    <link rel="stylesheet" href="../css/example-common.css">
+</head>
+<body>
+    <!-- 3D场景容器 -->
+    <div class="three-container" id="threeContainer"></div>
+    
+    <!-- 
+    使用importmap定义模块导入映射
+    这是一种现代化的ES模块导入方式，可以简化导入路径
+    通过定义别名，可以使用简短的导入语句，如 import * as THREE from 'three'
+    -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../libs/three/r179/build/three.module.js",
+                "three/addons/": "../libs/three/r179/jsm/"
+            }
+        }
+    </script>
+    
+    <!-- 示例代码 - 阴影效果 -->
+    <script type="module">
+        // 导入Three.js核心模块
+        import * as THREE from 'three';
+        // 导入轨道控制器，用于交互式旋转和缩放场景
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        // 导入GUI控制面板，用于调整参数
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+        
+        // Three.js 核心变量 - 暴露给全局作用域以便截图功能使用
+        window.scene = null;     // 场景对象，包含所有3D元素
+        window.camera = null;    // 相机对象，定义视角和视野
+        window.renderer = null;  // 渲染器对象，将场景渲染到canvas上
+        let controls;            // 轨道控制器对象
+        let clock;               // 时钟对象，用于动画
+        
+        // 光源对象
+        let directionalLight, spotLight, pointLight;
+        let directionalLightHelper, spotLightHelper, pointLightHelper;
+        let directionalLightCameraHelper, spotLightCameraHelper, pointLightCameraHelper;
+        
+        // 场景对象
+        let ground, sphere, box, torus, cylinder;
+        
+        // 参数配置对象 - 用于GUI控制面板
+        const params = {
+            // 通用阴影参数
+            shadowMapType: 'PCFSoftShadowMap',
+            shadowMapSize: 1024,
+            
+            // 光源参数
+            lightType: 'directional',
+            lightColor: 0xffffff,
+            intensity: 1.0,
+            
+            // 方向光参数
+            directionalPosition: { x: 5, y: 10, z: 5 },
+            
+            // 聚光灯参数
+            spotPosition: { x: 5, y: 10, z: 5 },
+            spotAngle: Math.PI / 6,
+            spotPenumbra: 0.2,
+            
+            // 点光源参数
+            pointPosition: { x: 5, y: 10, z: 5 },
+            pointDistance: 30,
+            
+            // 阴影参数
+            castShadow: true,
+            shadowBias: -0.0005,
+            shadowRadius: 4,
+            
+            // 辅助工具
+            showHelpers: true,
+            
+            // 动画参数
+            animate: true,
+            animationSpeed: 0.5,
+            animationRadius: 10,
+            animationHeight: 10
+        };
+        
+        /**
+         * 初始化Three.js场景、相机、渲染器和控制器
+         * 这是整个应用的入口点
+         */
+        function init() {
+            // 创建场景 - 所有3D对象的容器
+            window.scene = new THREE.Scene();
+            // 设置场景背景色为深蓝灰色
+            window.scene.background = new THREE.Color(0x2c3e50);
+            
+            // 创建透视相机 - 模拟人眼视角
+            // 参数：视场角(FOV)，宽高比，近裁剪面，远裁剪面
+            window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            // 设置相机位置，以便能看到场景中的对象
+            window.camera.position.set(15, 15, 15);
+            window.camera.lookAt(0, 0, 0);
+            
+            // 创建WebGL渲染器 - 将3D场景渲染到canvas上
+            window.renderer = new THREE.WebGLRenderer({ antialias: true }); // 启用抗锯齿
+            // 设置渲染器尺寸为窗口大小
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            // 设置设备像素比，提高在高DPI设备上的清晰度
+            window.renderer.setPixelRatio(window.devicePixelRatio);
+            
+            // 配置阴影
+            window.renderer.shadowMap.enabled = true;
+            window.renderer.shadowMap.type = THREE[params.shadowMapType];
+            
+            // 将渲染器的canvas添加到DOM中
+            document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+            
+            // 添加轨道控制器 - 允许用户交互式旋转和缩放场景
+            controls = new OrbitControls(window.camera, window.renderer.domElement);
+            controls.enableDamping = true;       // 启用阻尼效果，使控制更平滑
+            controls.dampingFactor = 0.05;       // 阻尼系数
+            
+            // 创建时钟对象
+            clock = new THREE.Clock();
+            
+            // 创建场景内容
+            createScene();
+            
+            // 创建光源
+            createLights();
+            
+            // 初始化GUI控制面板
+            initGUI();
+            
+            // 监听窗口大小变化，调整场景
+            window.addEventListener('resize', onWindowResize);
+            
+            // 开始动画循环
+            animate();
+        }
+        
+        /**
+         * 创建场景内容
+         */
+        function createScene() {
+            // 创建地面
+            const groundGeometry = new THREE.PlaneGeometry(30, 30);
+            const groundMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0xaaaaaa,
+                roughness: 0.8,
+                metalness: 0.2
+            });
+            ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2;
+            ground.position.y = -2;
+            ground.receiveShadow = true;
+            scene.add(ground);
+            
+            // 创建球体
+            const sphereGeometry = new THREE.SphereGeometry(1.5, 32, 32);
+            const sphereMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0x3498db,
+                roughness: 0.5,
+                metalness: 0.5
+            });
+            sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+            sphere.position.set(-4, 1.5, 0);
+            sphere.castShadow = true;
+            sphere.receiveShadow = true;
+            scene.add(sphere);
+            
+            // 创建立方体
+            const boxGeometry = new THREE.BoxGeometry(3, 3, 3);
+            const boxMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0xe74c3c,
+                roughness: 0.7,
+                metalness: 0.3
+            });
+            box = new THREE.Mesh(boxGeometry, boxMaterial);
+            box.position.set(4, 1.5, -4);
+            box.castShadow = true;
+            box.receiveShadow = true;
+            scene.add(box);
+            
+            // 创建圆环
+            const torusGeometry = new THREE.TorusGeometry(1, 0.5, 16, 32);
+            const torusMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0x2ecc71,
+                roughness: 0.2,
+                metalness: 0.8
+            });
+            torus = new THREE.Mesh(torusGeometry, torusMaterial);
+            torus.position.set(4, 1.5, 4);
+            torus.rotation.x = Math.PI / 2;
+            torus.castShadow = true;
+            torus.receiveShadow = true;
+            scene.add(torus);
+            
+            // 创建圆柱体
+            const cylinderGeometry = new THREE.CylinderGeometry(1, 1, 3, 32);
+            const cylinderMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0xf39c12,
+                roughness: 0.3,
+                metalness: 0.7
+            });
+            cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterial);
+            cylinder.position.set(-4, 1.5, -4);
+            cylinder.castShadow = true;
+            cylinder.receiveShadow = true;
+            scene.add(cylinder);
+        }
+        
+        /**
+         * 创建光源
+         */
+        function createLights() {
+            // 添加环境光 - 提供均匀的全局照明
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
+            scene.add(ambientLight);
+            
+            // 创建方向光
+            createDirectionalLight();
+            
+            // 创建聚光灯
+            createSpotLight();
+            
+            // 创建点光源
+            createPointLight();
+            
+            // 根据当前选择的光源类型显示/隐藏光源
+            updateLightVisibility();
+        }
+        
+        /**
+         * 创建方向光
+         */
+        function createDirectionalLight() {
+            // 创建方向光
+            directionalLight = new THREE.DirectionalLight(
+                params.lightColor,
+                params.intensity
+            );
+            directionalLight.position.set(
+                params.directionalPosition.x,
+                params.directionalPosition.y,
+                params.directionalPosition.z
+            );
+            directionalLight.castShadow = params.castShadow;
+            
+            // 设置阴影参数
+            directionalLight.shadow.mapSize.width = params.shadowMapSize;
+            directionalLight.shadow.mapSize.height = params.shadowMapSize;
+            
+            // 设置阴影相机参数
+            const size = 15;
+            directionalLight.shadow.camera.left = -size;
+            directionalLight.shadow.camera.right = size;
+            directionalLight.shadow.camera.top = size;
+            directionalLight.shadow.camera.bottom = -size;
+            directionalLight.shadow.camera.near = 0.5;
+            directionalLight.shadow.camera.far = 50;
+            directionalLight.shadow.bias = params.shadowBias;
+            directionalLight.shadow.radius = params.shadowRadius;
+            
+            scene.add(directionalLight);
+            
+            // 创建方向光辅助对象
+            directionalLightHelper = new THREE.DirectionalLightHelper(directionalLight, 2);
+            scene.add(directionalLightHelper);
+            
+            // 创建方向光阴影相机辅助对象
+            directionalLightCameraHelper = new THREE.CameraHelper(directionalLight.shadow.camera);
+            scene.add(directionalLightCameraHelper);
+        }
+        
+        /**
+         * 创建聚光灯
+         */
+        function createSpotLight() {
+            // 创建聚光灯
+            spotLight = new THREE.SpotLight(
+                params.lightColor,
+                params.intensity
+            );
+            spotLight.position.set(
+                params.spotPosition.x,
+                params.spotPosition.y,
+                params.spotPosition.z
+            );
+            spotLight.angle = params.spotAngle;
+            spotLight.penumbra = params.spotPenumbra;
+            spotLight.castShadow = params.castShadow;
+            
+            // 设置阴影参数
+            spotLight.shadow.mapSize.width = params.shadowMapSize;
+            spotLight.shadow.mapSize.height = params.shadowMapSize;
+            spotLight.shadow.camera.near = 0.5;
+            spotLight.shadow.camera.far = 50;
+            spotLight.shadow.bias = params.shadowBias;
+            spotLight.shadow.radius = params.shadowRadius;
+            
+            scene.add(spotLight);
+            
+            // 创建聚光灯辅助对象
+            spotLightHelper = new THREE.SpotLightHelper(spotLight);
+            scene.add(spotLightHelper);
+            
+            // 创建聚光灯阴影相机辅助对象
+            spotLightCameraHelper = new THREE.CameraHelper(spotLight.shadow.camera);
+            scene.add(spotLightCameraHelper);
+        }
+        
+        /**
+         * 创建点光源
+         */
+        function createPointLight() {
+            // 创建点光源
+            pointLight = new THREE.PointLight(
+                params.lightColor,
+                params.intensity
+            );
+            pointLight.position.set(
+                params.pointPosition.x,
+                params.pointPosition.y,
+                params.pointPosition.z
+            );
+            pointLight.distance = params.pointDistance;
+            pointLight.castShadow = params.castShadow;
+            
+            // 设置阴影参数
+            pointLight.shadow.mapSize.width = params.shadowMapSize;
+            pointLight.shadow.mapSize.height = params.shadowMapSize;
+            pointLight.shadow.camera.near = 0.5;
+            pointLight.shadow.camera.far = 50;
+            pointLight.shadow.bias = params.shadowBias;
+            pointLight.shadow.radius = params.shadowRadius;
+            
+            scene.add(pointLight);
+            
+            // 创建点光源辅助对象
+            pointLightHelper = new THREE.PointLightHelper(pointLight, 1);
+            scene.add(pointLightHelper);
+            
+            // 创建点光源阴影相机辅助对象
+            pointLightCameraHelper = new THREE.CameraHelper(pointLight.shadow.camera);
+            scene.add(pointLightCameraHelper);
+        }
+        
+        /**
+         * 根据当前选择的光源类型显示/隐藏光源
+         */
+        function updateLightVisibility() {
+            // 隐藏所有光源
+            directionalLight.visible = false;
+            spotLight.visible = false;
+            pointLight.visible = false;
+            
+            // 隐藏所有辅助对象
+            directionalLightHelper.visible = false;
+            spotLightHelper.visible = false;
+            pointLightHelper.visible = false;
+            directionalLightCameraHelper.visible = false;
+            spotLightCameraHelper.visible = false;
+            pointLightCameraHelper.visible = false;
+            
+            // 根据当前选择的光源类型显示对应的光源
+            switch (params.lightType) {
+                case 'directional':
+                    directionalLight.visible = true;
+                    if (params.showHelpers) {
+                        directionalLightHelper.visible = true;
+                        directionalLightCameraHelper.visible = true;
+                    }
+                    break;
+                case 'spot':
+                    spotLight.visible = true;
+                    if (params.showHelpers) {
+                        spotLightHelper.visible = true;
+                        spotLightCameraHelper.visible = true;
+                    }
+                    break;
+                case 'point':
+                    pointLight.visible = true;
+                    if (params.showHelpers) {
+                        pointLightHelper.visible = true;
+                        pointLightCameraHelper.visible = true;
+                    }
+                    break;
+            }
+        }
+        
+        /**
+         * 更新光源位置
+         */
+        function updateLightPosition() {
+            if (params.animate) {
+                const time = clock.getElapsedTime() * params.animationSpeed;
+                
+                // 计算新位置
+                const x = Math.sin(time) * params.animationRadius;
+                const z = Math.cos(time) * params.animationRadius;
+                const y = params.animationHeight;
+                
+                // 更新当前光源的位置
+                switch (params.lightType) {
+                    case 'directional':
+                        directionalLight.position.set(x, y, z);
+                        if (params.showHelpers) {
+                            directionalLightHelper.update();
+                            directionalLightCameraHelper.update();
+                        }
+                        break;
+                    case 'spot':
+                        spotLight.position.set(x, y, z);
+                        if (params.showHelpers) {
+                            spotLightHelper.update();
+                            spotLightCameraHelper.update();
+                        }
+                        break;
+                    case 'point':
+                        pointLight.position.set(x, y, z);
+                        if (params.showHelpers) {
+                            pointLightHelper.update();
+                            pointLightCameraHelper.update();
+                        }
+                        break;
+                }
+            }
+        }
+        
+        /**
+         * 处理窗口大小变化
+         * 调整相机和渲染器以适应新的窗口尺寸
+         */
+        function onWindowResize() {
+            // 更新相机宽高比
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            // 更新相机投影矩阵
+            window.camera.updateProjectionMatrix();
+            // 更新渲染器尺寸
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        /**
+         * 初始化GUI控制面板
+         */
+        function initGUI() {
+            // 创建GUI实例
+            const gui = new GUI({ title: '阴影效果控制面板', width: 300 });
+            
+            // 调整GUI位置，避免与其他UI元素重叠
+            gui.domElement.style.position = 'absolute';
+            gui.domElement.style.top = '60px';
+            gui.domElement.style.right = '10px';
+            
+            // 确保GUI在所有环境下都可见
+            gui.domElement.style.zIndex = '1000';
+            gui.domElement.style.maxHeight = '80vh'; // 限制最大高度
+            gui.domElement.style.overflowY = 'auto'; // 允许垂直滚动
+            
+            // 阴影类型控制
+            const shadowFolder = gui.addFolder('阴影设置');
+            shadowFolder.add(params, 'shadowMapType', {
+                '基础阴影': 'BasicShadowMap',
+                'PCF阴影': 'PCFShadowMap',
+                'PCF软阴影': 'PCFSoftShadowMap',
+                'VSM阴影': 'VSMShadowMap'
+            }).name('阴影类型').onChange(value => {
+                window.renderer.shadowMap.type = THREE[value];
+            });
+            
+            shadowFolder.add(params, 'shadowMapSize', [256, 512, 1024, 2048, 4096]).name('阴影贴图大小').onChange(value => {
+                // 更新所有光源的阴影贴图大小
+                directionalLight.shadow.mapSize.width = value;
+                directionalLight.shadow.mapSize.height = value;
+                spotLight.shadow.mapSize.width = value;
+                spotLight.shadow.mapSize.height = value;
+                pointLight.shadow.mapSize.width = value;
+                pointLight.shadow.mapSize.height = value;
+                
+                // 更新阴影相机
+                directionalLight.shadow.map = null;
+                spotLight.shadow.map = null;
+                pointLight.shadow.map = null;
+            });
+            
+            shadowFolder.add(params, 'castShadow').name('投射阴影').onChange(value => {
+                directionalLight.castShadow = value;
+                spotLight.castShadow = value;
+                pointLight.castShadow = value;
+            });
+            
+            shadowFolder.add(params, 'shadowBias', -0.01, 0.01).step(0.0001).name('阴影偏移').onChange(value => {
+                directionalLight.shadow.bias = value;
+                spotLight.shadow.bias = value;
+                pointLight.shadow.bias = value;
+            });
+            
+            shadowFolder.add(params, 'shadowRadius', 0, 10).step(0.1).name('阴影模糊半径').onChange(value => {
+                directionalLight.shadow.radius = value;
+                spotLight.shadow.radius = value;
+                pointLight.shadow.radius = value;
+            });
+            
+            shadowFolder.open();
+            
+            // 光源类型控制
+            const lightFolder = gui.addFolder('光源设置');
+            lightFolder.add(params, 'lightType', {
+                '方向光': 'directional',
+                '聚光灯': 'spot',
+                '点光源': 'point'
+            }).name('光源类型').onChange(updateLightVisibility);
+            
+            lightFolder.addColor(params, 'lightColor').name('光源颜色').onChange(value => {
+                directionalLight.color.set(value);
+                spotLight.color.set(value);
+                pointLight.color.set(value);
+            });
+            
+            lightFolder.add(params, 'intensity', 0, 3).step(0.1).name('光照强度').onChange(value => {
+                directionalLight.intensity = value;
+                spotLight.intensity = value;
+                pointLight.intensity = value;
+            });
+            
+            lightFolder.open();
+            
+            // 聚光灯特有参数
+            const spotFolder = gui.addFolder('聚光灯参数');
+            spotFolder.add(params, 'spotAngle', 0, Math.PI / 2).step(0.01).name('光锥角度').onChange(value => {
+                spotLight.angle = value;
+                spotLightHelper.update();
+            });
+            
+            spotFolder.add(params, 'spotPenumbra', 0, 1).step(0.01).name('边缘柔和度').onChange(value => {
+                spotLight.penumbra = value;
+            });
+            
+            // 点光源特有参数
+            const pointFolder = gui.addFolder('点光源参数');
+            pointFolder.add(params, 'pointDistance', 0, 100).step(1).name('衰减距离').onChange(value => {
+                pointLight.distance = value;
+                pointLightHelper.update();
+            });
+            
+            // 辅助工具控制
+            const helperFolder = gui.addFolder('辅助工具');
+            helperFolder.add(params, 'showHelpers').name('显示辅助工具').onChange(updateLightVisibility);
+            
+            // 动画控制
+            const animationFolder = gui.addFolder('动画设置');
+            animationFolder.add(params, 'animate').name('启用动画');
+            animationFolder.add(params, 'animationSpeed', 0.1, 2).step(0.1).name('动画速度');
+            animationFolder.add(params, 'animationRadius', 5, 20).step(1).name('运动半径');
+            animationFolder.add(params, 'animationHeight', 5, 20).step(1).name('高度');
+            
+            animationFolder.open();
+        }
+        
+        /**
+         * 动画循环函数
+         * 使用requestAnimationFrame实现平滑动画
+         * 每帧更新场景并渲染
+         */
+        function animate() {
+            // 请求下一帧动画
+            requestAnimationFrame(animate);
+            
+            // 更新轨道控制器
+            controls.update();
+            
+            // 更新光源位置
+            updateLightPosition();
+            
+            // 渲染场景
+            window.renderer.render(window.scene, window.camera);
+        }
+        
+        // 初始化应用
+        init();
+    </script>
+    
+    <!-- 
+    ===================================================
+    截图功能脚本 - 请勿修改此部分
+    此脚本处理从父窗口发来的截图请求，用于生成示例封面，与示例业务并无关联
+    ===================================================
+    -->
+    <script>
+        // 全局变量，用于存储渲染器引用
+        let _screenshotRenderer;
+        
+        // 添加消息监听器，处理截图请求
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    // 获取当前渲染器
+                    if (!_screenshotRenderer && window.renderer) {
+                        _screenshotRenderer = window.renderer;
+                    }
+                    
+                    // 确保渲染器已经初始化
+                    if (!_screenshotRenderer) {
+                        throw new Error('渲染器未初始化');
+                    }
+                    
+                    // 强制渲染一帧，确保内容是最新的
+                    if (window.scene && window.camera) {
+                        _screenshotRenderer.render(window.scene, window.camera);
+                    }
+                    
+                    // 获取canvas的图像数据（使用较低的质量和尺寸以减小文件大小）
+                    const quality = event.data.quality || 0.8;
+                    const canvas = _screenshotRenderer.domElement;
+                    
+                    // 创建一个较小尺寸的临时canvas
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600; // 最大尺寸为600像素
+                    
+                    // 计算缩放比例，保持宽高比
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    
+                    // 在临时canvas上绘制缩小的图像
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    
+                    // 获取缩小后的图像数据
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    
+                    // 将图像数据发送回父窗口
+                    window.parent.postMessage({
+                        type: 'screenshot-data',
+                        dataUrl: dataUrl
+                    }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    // 发送错误信息回父窗口
+                    window.parent.postMessage({
+                        type: 'screenshot-error',
+                        error: error.message
+                    }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

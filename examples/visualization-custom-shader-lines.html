@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Three.js 自定义shader线元素 - 使用自定义着色器实现渐变色和流光效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 自定义shader线元素</title>
+    <link rel="stylesheet" href="../css/example-common.css">
+    <style>
+        body { margin: 0; overflow: hidden; }
+        #threeContainer { width: 100vw; height: 100vh; }
+    </style>
+</head>
+<body>
+    <div id="threeContainer"></div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../libs/three/r179/build/three.module.js",
+                "three/addons/": "../libs/three/r179/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+        import { Line2 } from 'three/addons/lines/Line2.js';
+        import { LineGeometry } from 'three/addons/lines/LineGeometry.js';
+        import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
+
+        window.scene = null;
+        window.camera = null;
+        window.renderer = null;
+
+        const params = {
+            lineType: 'gradient',
+            lineColor1: '#00ffff',
+            lineColor2: '#ff00ff',
+            lineWidth: 5,
+            dashSize: 0.5,
+            gapSize: 0.3,
+            flowSpeed: 1.0,
+            autoRotate: false,
+            rotationSpeed: 0.5
+        };
+
+        let lines = [];
+        let controls;
+        let groundMesh;
+        let gridHelper;
+
+        init();
+        animate();
+
+        function init() {
+            window.scene = new THREE.Scene();
+            window.scene.background = new THREE.Color(0x0a0a1a);
+
+            window.camera = new THREE.PerspectiveCamera(
+                50,
+                window.innerWidth / window.innerHeight,
+                0.1,
+                1000
+            );
+            window.camera.position.set(15, 15, 15);
+            window.camera.lookAt(0, 0, 0);
+
+            window.renderer = new THREE.WebGLRenderer({ antialias: true });
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            window.renderer.setPixelRatio(window.devicePixelRatio);
+            document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+
+            controls = new OrbitControls(window.camera, window.renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+
+            createGround();
+            createGridHelper();
+            createLines();
+            initGUI();
+
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function createGround() {
+            if (groundMesh) {
+                window.scene.remove(groundMesh);
+                groundMesh.geometry.dispose();
+                groundMesh.material.dispose();
+            }
+
+            const groundGeometry = new THREE.PlaneGeometry(50, 50);
+            const groundMaterial = new THREE.MeshPhongMaterial({
+                color: 0x111122,
+                side: THREE.DoubleSide
+            });
+            groundMesh = new THREE.Mesh(groundGeometry, groundMaterial);
+            groundMesh.rotation.x = -Math.PI / 2;
+            groundMesh.position.y = -0.01;
+            window.scene.add(groundMesh);
+        }
+
+        function createGridHelper() {
+            if (gridHelper) {
+                window.scene.remove(gridHelper);
+            }
+            gridHelper = new THREE.GridHelper(50, 50, 0x333355, 0x222244);
+            window.scene.add(gridHelper);
+        }
+
+        function createLines() {
+            lines.forEach(line => window.scene.remove(line));
+            lines = [];
+
+            if (params.lineType === 'thick') {
+                createThickLines();
+            } else if (params.lineType === 'gradient') {
+                createGradientLines();
+            } else if (params.lineType === 'flow') {
+                createFlowLines();
+            } else if (params.lineType === 'dashed') {
+                createDashedLines();
+            }
+        }
+
+        function createThickLines() {
+            const linePositions = [
+                { start: [-10, 0, -5], end: [10, 0, -5] },
+                { start: [-10, 0, 0], end: [10, 0, 0] },
+                { start: [-10, 0, 5], end: [10, 0, 5] },
+                { start: [-5, 0, -10], end: [-5, 0, 10] },
+                { start: [0, 0, -10], end: [0, 0, 10] },
+                { start: [5, 0, -10], end: [5, 0, 10] }
+            ];
+
+            linePositions.forEach((pos, i) => {
+                const geometry = new LineGeometry();
+                geometry.setPositions([...pos.start, ...pos.end]);
+
+                const material = new LineMaterial({
+                    color: 0x00ffff,
+                    linewidth: params.lineWidth,
+                    resolution: new THREE.Vector2(window.innerWidth, window.innerHeight)
+                });
+
+                const line = new Line2(geometry, material);
+                line.position.y = 0.05;
+                window.scene.add(line);
+                lines.push(line);
+            });
+        }
+
+        function createGradientLines() {
+            const linePositions = [
+                { start: [-10, 0, -8], end: [10, 0, 8] },
+                { start: [-10, 0, 8], end: [10, 0, -8] },
+                { start: [0, 0, -10], end: [0, 0, 10] }
+            ];
+
+            linePositions.forEach((pos, i) => {
+                const geometry = new LineGeometry();
+                geometry.setPositions([...pos.start, ...pos.end]);
+
+                const material = new LineMaterial({
+                    color: 0xffffff,
+                    linewidth: params.lineWidth,
+                    resolution: new THREE.Vector2(window.innerWidth, window.innerHeight),
+                    vertexColors: true
+                });
+
+                const positions = [...pos.start, ...pos.end];
+                const colors = [
+                    ...new THREE.Color(params.lineColor1).toArray(),
+                    ...new THREE.Color(params.lineColor2).toArray()
+                ];
+                geometry.setColors(colors);
+
+                const line = new Line2(geometry, material);
+                line.position.y = 0.05;
+                window.scene.add(line);
+                lines.push(line);
+            });
+        }
+
+        function createFlowLines() {
+            const linePositions = [
+                { start: [-12, 0, -6], end: [12, 0, 6] },
+                { start: [-12, 0, 0], end: [12, 0, 0] },
+                { start: [-12, 0, 6], end: [12, 0, -6] }
+            ];
+
+            linePositions.forEach((pos, i) => {
+                const geometry = new LineGeometry();
+                geometry.setPositions([...pos.start, ...pos.end]);
+
+                const material = new LineMaterial({
+                    color: 0x00ff88,
+                    linewidth: params.lineWidth,
+                    resolution: new THREE.Vector2(window.innerWidth, window.innerHeight)
+                });
+
+                const line = new Line2(geometry, material);
+                line.position.y = 0.05;
+                line.userData = { offset: i * 0.3 };
+                window.scene.add(line);
+                lines.push(line);
+            });
+        }
+
+        function createDashedLines() {
+            const curvePoints = [];
+            for (let t = 0; t <= 1; t += 0.01) {
+                const x = Math.cos(t * Math.PI * 2) * 8;
+                const z = Math.sin(t * Math.PI * 2) * 8;
+                curvePoints.push(x, 0, z);
+            }
+
+            const curve = new THREE.CatmullRomCurve3([
+                new THREE.Vector3(-8, 0, 0),
+                new THREE.Vector3(0, 0, 8),
+                new THREE.Vector3(8, 0, 0),
+                new THREE.Vector3(0, 0, -8),
+                new THREE.Vector3(-8, 0, 0)
+            ]);
+
+            const points = curve.getPoints(50);
+            const positions = [];
+            points.forEach(p => positions.push(p.x, p.y, p.z));
+
+            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            const material = new THREE.LineDashedMaterial({
+                color: 0xffff00,
+                dashSize: params.dashSize,
+                gapSize: params.gapSize
+            });
+
+            const line = new THREE.Line(geometry, material);
+            line.computeLineDistances();
+            line.position.y = 0.05;
+            window.scene.add(line);
+            lines.push(line);
+
+            const straightLineGeom = new THREE.BufferGeometry();
+            straightLineGeom.setFromPoints([
+                new THREE.Vector3(-10, 0, -10),
+                new THREE.Vector3(10, 0, 10)
+            ]);
+            const straightLine = new THREE.Line(straightLineGeom, material.clone());
+            straightLine.computeLineDistances();
+            straightLine.position.y = 0.05;
+            window.scene.add(straightLine);
+            lines.push(straightLine);
+        }
+
+        function initGUI() {
+            const gui = new GUI({ title: '自定义线元素参数控制', width: 300 });
+
+            gui.domElement.style.position = 'absolute';
+            gui.domElement.style.top = '60px';
+            gui.domElement.style.right = '10px';
+            gui.domElement.style.zIndex = '1000';
+
+            setTimeout(() => { gui.show(); }, 100);
+
+            const lineFolder = gui.addFolder('线条类型');
+            lineFolder.add(params, 'lineType', ['thick', 'gradient', 'flow', 'dashed']).name('线类型').onChange(createLines);
+            lineFolder.open();
+
+            const styleFolder = gui.addFolder('样式设置');
+            styleFolder.addColor(params, 'lineColor1').name('起始颜色').onChange(createLines);
+            styleFolder.addColor(params, 'lineColor2').name('结束颜色').onChange(createLines);
+            styleFolder.add(params, 'lineWidth', 1, 10).name('线宽度').onChange(createLines);
+            styleFolder.open();
+
+            const dashFolder = gui.addFolder('虚线设置');
+            dashFolder.add(params, 'dashSize', 0.1, 2.0).name('虚线长度').onChange(createLines);
+            dashFolder.add(params, 'gapSize', 0.1, 2.0).name('间隙长度').onChange(createLines);
+            dashFolder.open();
+
+            const animFolder = gui.addFolder('动画设置');
+            animFolder.add(params, 'flowSpeed', 0.1, 3.0).name('流动速度');
+            animFolder.add(params, 'autoRotate').name('自动旋转');
+            animFolder.open();
+        }
+
+        function onWindowResize() {
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+
+            lines.forEach(line => {
+                if (line.material.resolution) {
+                    line.material.resolution.set(window.innerWidth, window.innerHeight);
+                }
+            });
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            controls.update();
+
+            if (params.autoRotate && gridHelper) {
+                gridHelper.rotation.y += 0.001 * params.rotationSpeed;
+            }
+
+            const time = performance.now() * 0.001 * params.flowSpeed;
+
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        function stopAnimation() {
+            cancelAnimationFrame(animate);
+        }
+
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                stopAnimation();
+                setTimeout(() => {
+                    window.parent.postMessage({
+                        type: 'screenshot-data',
+                        dataUrl: window.renderer.domElement.toDataURL('image/jpeg', 0.8)
+                    }, '*');
+                    animate();
+                }, 100);
+            }
+        });
+    </script>
+</body>
+</html>

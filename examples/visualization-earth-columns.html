@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Three.js 地球柱体 - 使用真实地震数据实现的地球柱状图">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 地球柱体</title>
+    <link rel="stylesheet" href="../css/example-common.css">
+    <style>
+        body { margin: 0; overflow: hidden; }
+        #threeContainer { width: 100vw; height: 100vh; }
+    </style>
+</head>
+<body>
+    <div id="threeContainer"></div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../libs/three/r179/build/three.module.js",
+                "three/addons/": "../libs/three/r179/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        window.scene = null;
+        window.camera = null;
+        window.renderer = null;
+
+        const params = {
+            autoRotate: true,
+            rotationSpeed: 0.5,
+            barHueStart: 0.6,
+            barHueEnd: 0.0,
+            barLightStart: 0.3,
+            barLightEnd: 0.8,
+            barScaleMin: 0.01,
+            barScaleMax: 0.5,
+            barWidth: 0.01,
+            showEarthTexture: true
+        };
+
+        let earthSphere;
+        let barGroup;
+        let controls;
+        let earthquakeData = [];
+        let minMag = Number.MAX_SAFE_INTEGER;
+        let maxMag = Number.MIN_SAFE_INTEGER;
+
+        init();
+        animate();
+
+        async function init() {
+            window.scene = new THREE.Scene();
+            window.scene.background = new THREE.Color(0x000000);
+
+            window.camera = new THREE.PerspectiveCamera(
+                45,
+                window.innerWidth / window.innerHeight,
+                0.01,
+                1000
+            );
+            window.camera.position.set(0, 2, 3);
+            window.camera.lookAt(0, 0, 0);
+
+            window.renderer = new THREE.WebGLRenderer({ antialias: true });
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            window.renderer.setPixelRatio(window.devicePixelRatio);
+            document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+
+            controls = new OrbitControls(window.camera, window.renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+
+            barGroup = new THREE.Group();
+            window.scene.add(barGroup);
+
+            await loadEarthquakeData();
+            await createEarthTexture();
+            createBars();
+            initGUI();
+
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        async function loadEarthquakeData() {
+            try {
+                const response = await fetch('../models/json/earthquake.json');
+                earthquakeData = await response.json();
+
+                earthquakeData.forEach((eq) => {
+                    if (minMag > eq.mag) minMag = eq.mag;
+                    if (maxMag < eq.mag) maxMag = eq.mag;
+                });
+            } catch (error) {
+                console.error('Failed to load earthquake data:', error);
+                earthquakeData = [];
+            }
+        }
+
+        async function createEarthTexture() {
+            if (!params.showEarthTexture) return;
+
+            try {
+                const response = await fetch('../models/geojson/world-geo-json-zh/world.zh.json');
+                const geojson = await response.json();
+
+                const canvas = document.createElement('canvas');
+                canvas.width = 3600;
+                canvas.height = 1800;
+                const ctx = canvas.getContext('2d');
+
+                ctx.fillStyle = 'rgb(10, 20, 28)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                ctx.strokeStyle = 'rgb(10, 20, 28)';
+                ctx.lineWidth = 2;
+                ctx.fillStyle = 'rgb(26, 35, 44)';
+
+                const drawRegion = (ctx, c) => {
+                    ctx.beginPath();
+                    c.forEach((item, i) => {
+                        let pos = [(item[0] + 180) * 10, (-item[1] + 90) * 10];
+                        if (i == 0) {
+                            ctx.moveTo(pos[0], pos[1]);
+                        } else {
+                            ctx.lineTo(pos[0], pos[1]);
+                        }
+                    });
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+                };
+
+                geojson.features.forEach((a) => {
+                    if (a.geometry.type == 'MultiPolygon') {
+                        a.geometry.coordinates.forEach((b) => {
+                            b.forEach((c) => {
+                                drawRegion(ctx, c);
+                            });
+                        });
+                    } else {
+                        a.geometry.coordinates.forEach((c) => {
+                            drawRegion(ctx, c);
+                        });
+                    }
+                });
+
+                const map = new THREE.CanvasTexture(canvas);
+                map.wrapS = THREE.RepeatWrapping;
+                map.wrapT = THREE.RepeatWrapping;
+
+                const earthGeometry = new THREE.SphereGeometry(1, 32, 32);
+                const earthMaterial = new THREE.MeshBasicMaterial({ map: map, transparent: true });
+                earthSphere = new THREE.Mesh(earthGeometry, earthMaterial);
+                window.scene.add(earthSphere);
+
+            } catch (error) {
+                console.error('Failed to create earth texture:', error);
+                createBasicEarth();
+            }
+        }
+
+        function createBasicEarth() {
+            const earthGeometry = new THREE.SphereGeometry(1, 32, 32);
+            const earthMaterial = new THREE.MeshBasicMaterial({ color: 0x0a141e });
+            earthSphere = new THREE.Mesh(earthGeometry, earthMaterial);
+            window.scene.add(earthSphere);
+        }
+
+        function createBars() {
+            while (barGroup.children.length > 0) {
+                const child = barGroup.children[0];
+                barGroup.remove(child);
+                if (child.geometry) child.geometry.dispose();
+                if (child.material) child.material.dispose();
+            }
+
+            if (earthquakeData.length === 0) return;
+
+            const range = maxMag - minMag;
+            if (range === 0) return;
+
+            const lonHelper = new THREE.Object3D();
+            barGroup.add(lonHelper);
+
+            const latHelper = new THREE.Object3D();
+            lonHelper.add(latHelper);
+
+            const positionHelper = new THREE.Object3D();
+            positionHelper.position.z = 1;
+            latHelper.add(positionHelper);
+
+            const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
+            boxGeometry.applyMatrix4(new THREE.Matrix4().makeTranslation(0, 0, 0.5));
+
+            earthquakeData.forEach((eq) => {
+                const amount = (eq.mag - minMag) / range;
+
+                const material = new THREE.MeshBasicMaterial();
+                const hue = THREE.MathUtils.lerp(params.barHueStart, params.barHueEnd, amount);
+                const saturation = 1;
+                const lightness = THREE.MathUtils.lerp(params.barLightStart, params.barLightEnd, amount);
+                material.color.setHSL(hue, saturation, lightness);
+
+                const mesh = new THREE.Mesh(boxGeometry, material);
+                barGroup.add(mesh);
+
+                lonHelper.rotation.y = THREE.MathUtils.degToRad(eq.lon) + Math.PI * 0.5;
+                latHelper.rotation.x = THREE.MathUtils.degToRad(-eq.lat);
+
+                positionHelper.updateWorldMatrix(true, false);
+                mesh.applyMatrix4(positionHelper.matrixWorld);
+
+                const scaleZ = THREE.MathUtils.lerp(params.barScaleMin, params.barScaleMax, amount);
+                mesh.scale.set(params.barWidth, params.barWidth, scaleZ);
+            });
+        }
+
+        function initGUI() {
+            const gui = new GUI({ title: '地球柱体参数控制', width: 300 });
+
+            gui.domElement.style.position = 'absolute';
+            gui.domElement.style.top = '60px';
+            gui.domElement.style.right = '10px';
+            gui.domElement.style.zIndex = '1000';
+
+            setTimeout(() => { gui.show(); }, 100);
+
+            const displayFolder = gui.addFolder('显示设置');
+            displayFolder.add(params, 'autoRotate').name('自动旋转');
+            displayFolder.add(params, 'rotationSpeed', 0.1, 2.0).name('旋转速度');
+            displayFolder.add(params, 'showEarthTexture').name('显示地球纹理').onChange(() => {
+                if (earthSphere) {
+                    window.scene.remove(earthSphere);
+                    earthSphere.geometry.dispose();
+                    earthSphere.material.dispose();
+                    earthSphere = null;
+                }
+                createEarthTexture();
+            });
+            displayFolder.open();
+
+            const barFolder = gui.addFolder('柱体设置');
+            barFolder.add(params, 'barWidth', 0.005, 0.03).name('柱体宽度').onChange(() => {
+                createBars();
+            });
+            barFolder.add(params, 'barScaleMin', 0.001, 0.1).name('最小高度').onChange(() => {
+                createBars();
+            });
+            barFolder.add(params, 'barScaleMax', 0.1, 1.0).name('最大高度').onChange(() => {
+                createBars();
+            });
+            barFolder.open();
+
+            const colorFolder = gui.addFolder('颜色设置');
+            colorFolder.add(params, 'barHueStart', 0, 1).name('起始色调').onChange(() => {
+                createBars();
+            });
+            colorFolder.add(params, 'barHueEnd', 0, 1).name('结束色调').onChange(() => {
+                createBars();
+            });
+            colorFolder.add(params, 'barLightStart', 0, 1).name('起始亮度').onChange(() => {
+                createBars();
+            });
+            colorFolder.add(params, 'barLightEnd', 0, 1).name('结束亮度').onChange(() => {
+                createBars();
+            });
+            colorFolder.open();
+        }
+
+        function onWindowResize() {
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            controls.update();
+
+            if (params.autoRotate) {
+                barGroup.rotation.y += 0.002 * params.rotationSpeed;
+                if (earthSphere) {
+                    earthSphere.rotation.y += 0.002 * params.rotationSpeed;
+                }
+            }
+
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        function stopAnimation() {
+            cancelAnimationFrame(animate);
+        }
+
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                stopAnimation();
+                setTimeout(() => {
+                    window.parent.postMessage({
+                        type: 'screenshot-data',
+                        dataUrl: window.renderer.domElement.toDataURL('image/jpeg', 0.8)
+                    }, '*');
+                    animate();
+                }, 100);
+            }
+        });
+    </script>
+</body>
+</html>

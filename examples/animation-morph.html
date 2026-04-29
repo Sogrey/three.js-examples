@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 页面描述，有助于SEO优化 -->
+    <meta name="description" content="在不同几何体之间平滑过渡的变形效果">
+    <!-- Three.js版本信息 -->
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 变形动画</title>
+    <!-- 引入公共样式表 -->
+    <link rel="stylesheet" href="../css/example-common.css">
+</head>
+<body>
+    <!-- 3D场景容器 -->
+    <div class="three-container" id="threeContainer"></div>
+    
+    <!-- 
+    使用importmap定义模块导入映射
+    这是一种现代化的ES模块导入方式，可以简化导入路径
+    通过定义别名，可以使用简短的导入语句，如 import * as THREE from 'three'
+    -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../libs/three/r179/build/three.module.js",
+                "three/addons/": "../libs/three/r179/jsm/"
+            }
+        }
+    </script>
+    
+    <!-- 示例代码 - 变形动画 -->
+    <script type="module">
+        // 导入Three.js核心模块
+        import * as THREE from 'three';
+        // 导入轨道控制器，用于交互式旋转和缩放场景
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        // 导入GUI控制面板，用于调整参数
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+        
+        // Three.js 核心变量 - 暴露给全局作用域以便截图功能使用
+        window.scene = null;     // 场景对象，包含所有3D元素
+        window.camera = null;    // 相机对象，定义视角和视野
+        window.renderer = null;  // 渲染器对象，将场景渲染到canvas上
+        let mesh;               // 3D网格对象
+        let controls;           // 轨道控制器对象
+        let clock;              // 时钟对象，用于动画计时
+        
+        // 变形目标几何体数组
+        let morphGeometries = [];
+        let currentMorphIndex = 0;
+        let targetMorphIndex = 1;
+        let morphProgress = 0;
+        
+        // 参数配置对象 - 用于GUI控制面板和创建3D对象
+        const params = {
+            // 几何体参数
+            size: 2,
+            segments: 32,
+            color: 0xe74c3c,
+            wireframe: false,
+            
+            // 变形动画参数
+            morphSpeed: 1,              // 变形速度
+            autoMorph: true,            // 自动变形
+            morphDuration: 3,           // 变形持续时间（秒）
+            smoothTransition: true,     // 平滑过渡
+            
+            // 几何体类型
+            geometryTypes: ['sphere', 'cube', 'cylinder', 'torus', 'cone'],
+            currentGeometry: 'sphere',
+            targetGeometry: 'cube',
+            
+            // 控制器参数
+            autoRotate: true            // 是否自动旋转相机
+        };
+        
+        /**
+         * 初始化Three.js场景、相机、渲染器和控制器
+         * 这是整个应用的入口点
+         */
+        function init() {
+            // 创建场景 - 所有3D对象的容器
+            window.scene = new THREE.Scene();
+            // 设置场景背景色为深蓝灰色
+            window.scene.background = new THREE.Color(0x2c3e50);
+            
+            // 创建透视相机 - 模拟人眼视角
+            // 参数：视场角(FOV)，宽高比，近裁剪面，远裁剪面
+            window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            // 设置相机位置，以便能看到场景中的对象
+            window.camera.position.set(0, 0, 8);
+            
+            // 创建WebGL渲染器 - 将3D场景渲染到canvas上
+            window.renderer = new THREE.WebGLRenderer({ antialias: true }); // 启用抗锯齿
+            // 设置渲染器尺寸为窗口大小
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            // 设置设备像素比，提高在高DPI设备上的清晰度
+            window.renderer.setPixelRatio(window.devicePixelRatio);
+            // 将渲染器的canvas添加到DOM中
+            document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+            
+            // 添加轨道控制器 - 允许用户交互式旋转和缩放场景
+            controls = new OrbitControls(window.camera, window.renderer.domElement);
+            controls.enableDamping = true;       // 启用阻尼效果，使控制更平滑
+            controls.dampingFactor = 0.05;       // 阻尼系数
+            controls.autoRotate = params.autoRotate; // 设置是否自动旋转
+            
+            // 创建时钟对象，用于动画计时
+            clock = new THREE.Clock();
+            
+            // 添加光源
+            addLights();
+            
+            // 创建变形几何体
+            createMorphGeometries();
+            
+            // 创建3D网格对象
+            createMesh();
+            
+            // 初始化GUI控制面板
+            initGUI();
+            
+            // 监听窗口大小变化，调整场景
+            window.addEventListener('resize', onWindowResize);
+            
+            // 开始动画循环
+            animate();
+        }
+        
+        /**
+         * 处理窗口大小变化
+         * 调整相机和渲染器以适应新的窗口尺寸
+         */
+        function onWindowResize() {
+            // 更新相机宽高比
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            // 更新相机投影矩阵
+            window.camera.updateProjectionMatrix();
+            // 更新渲染器尺寸
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        /**
+         * 添加光源
+         * 创建环境光和方向光，提供场景照明
+         */
+        function addLights() {
+            // 环境光 - 提供均匀的全局照明
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            window.scene.add(ambientLight);
+            
+            // 方向光 - 模拟太阳光
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(5, 5, 5);
+            directionalLight.castShadow = true;
+            window.scene.add(directionalLight);
+            
+            // 点光源 - 增加动态照明
+            const pointLight = new THREE.PointLight(0x3498db, 0.5, 100);
+            pointLight.position.set(-5, 5, 5);
+            window.scene.add(pointLight);
+            
+            // 添加网格辅助线
+            const gridHelper = new THREE.GridHelper(10, 10, 0x888888, 0x444444);
+            window.scene.add(gridHelper);
+        }
+        
+        /**
+         * 创建变形几何体
+         * 生成不同类型的几何体用于变形动画
+         */
+        function createMorphGeometries() {
+            morphGeometries = [];
+            
+            // 球体
+            const sphereGeometry = new THREE.SphereGeometry(params.size, params.segments, params.segments / 2);
+            morphGeometries.push({ type: 'sphere', geometry: sphereGeometry });
+            
+            // 立方体
+            const boxGeometry = new THREE.BoxGeometry(params.size * 1.5, params.size * 1.5, params.size * 1.5, 
+                                                     params.segments / 4, params.segments / 4, params.segments / 4);
+            morphGeometries.push({ type: 'cube', geometry: boxGeometry });
+            
+            // 圆柱体
+            const cylinderGeometry = new THREE.CylinderGeometry(params.size, params.size, params.size * 2, params.segments);
+            morphGeometries.push({ type: 'cylinder', geometry: cylinderGeometry });
+            
+            // 圆环
+            const torusGeometry = new THREE.TorusGeometry(params.size, params.size * 0.4, params.segments / 2, params.segments);
+            morphGeometries.push({ type: 'torus', geometry: torusGeometry });
+            
+            // 圆锥
+            const coneGeometry = new THREE.ConeGeometry(params.size, params.size * 2, params.segments);
+            morphGeometries.push({ type: 'cone', geometry: coneGeometry });
+        }
+        
+        /**
+         * 创建3D网格对象
+         * 使用第一个几何体作为初始形状
+         */
+        function createMesh() {
+            // 移除旧的网格对象
+            if (mesh) {
+                window.scene.remove(mesh);
+                mesh.geometry.dispose();
+                mesh.material.dispose();
+            }
+            
+            // 创建材质
+            const material = new THREE.MeshStandardMaterial({
+                color: params.color,
+                wireframe: params.wireframe,
+                metalness: 0.3,
+                roughness: 0.4
+            });
+            
+            // 使用第一个几何体创建网格
+            const initialGeometry = morphGeometries[0].geometry.clone();
+            mesh = new THREE.Mesh(initialGeometry, material);
+            window.scene.add(mesh);
+        }
+        
+        /**
+         * 执行变形动画
+         * 在两个几何体之间进行顶点插值
+         */
+        function performMorph() {
+            if (!mesh || morphGeometries.length < 2) return;
+            
+            const currentGeom = morphGeometries[currentMorphIndex].geometry;
+            const targetGeom = morphGeometries[targetMorphIndex].geometry;
+            
+            // 获取顶点位置属性
+            const currentPositions = currentGeom.attributes.position.array;
+            const targetPositions = targetGeom.attributes.position.array;
+            const meshPositions = mesh.geometry.attributes.position.array;
+            
+            // 确保顶点数量一致（取最小值）
+            const vertexCount = Math.min(currentPositions.length, targetPositions.length, meshPositions.length);
+            
+            // 在当前几何体和目标几何体之间进行线性插值
+            for (let i = 0; i < vertexCount; i++) {
+                if (params.smoothTransition) {
+                    // 使用平滑插值函数
+                    const smoothProgress = smoothstep(0, 1, morphProgress);
+                    meshPositions[i] = currentPositions[i] + (targetPositions[i] - currentPositions[i]) * smoothProgress;
+                } else {
+                    // 使用线性插值
+                    meshPositions[i] = currentPositions[i] + (targetPositions[i] - currentPositions[i]) * morphProgress;
+                }
+            }
+            
+            // 更新几何体
+            mesh.geometry.attributes.position.needsUpdate = true;
+            mesh.geometry.computeVertexNormals(); // 重新计算法线
+        }
+        
+        /**
+         * 平滑步进函数
+         * 提供更自然的动画过渡效果
+         */
+        function smoothstep(min, max, value) {
+            const x = Math.max(0, Math.min(1, (value - min) / (max - min)));
+            return x * x * (3 - 2 * x);
+        }
+        
+        /**
+         * 切换到下一个变形目标
+         */
+        function switchToNextMorph() {
+            currentMorphIndex = targetMorphIndex;
+            targetMorphIndex = (targetMorphIndex + 1) % morphGeometries.length;
+            morphProgress = 0;
+            
+            // 更新GUI显示
+            params.currentGeometry = morphGeometries[currentMorphIndex].type;
+            params.targetGeometry = morphGeometries[targetMorphIndex].type;
+        }
+        
+        /**
+         * 初始化GUI控制面板
+         * 创建用户可交互的控制界面，用于调整参数
+         */
+        function initGUI() {
+            // 创建GUI实例
+            const gui = new GUI({ title: '变形动画控制面板', width: 300 });
+            
+            // 调整GUI位置，避免与其他UI元素重叠
+            gui.domElement.style.position = 'absolute';
+            gui.domElement.style.top = '60px';
+            gui.domElement.style.right = '10px';
+            
+            // 确保GUI在所有环境下都可见
+            gui.domElement.style.zIndex = '1000';
+            gui.domElement.style.maxHeight = '80vh';
+            gui.domElement.style.overflowY = 'auto';
+            
+            // 几何体设置
+            const geometryFolder = gui.addFolder('几何体设置');
+            geometryFolder.add(params, 'size', 1, 4)
+                .name('大小')
+                .onChange(() => {
+                    createMorphGeometries();
+                    createMesh();
+                });
+            
+            geometryFolder.add(params, 'segments', 8, 64, 1)
+                .name('分段数')
+                .onChange(() => {
+                    createMorphGeometries();
+                    createMesh();
+                });
+            
+            geometryFolder.addColor(params, 'color')
+                .name('颜色')
+                .onChange(value => {
+                    if (mesh) mesh.material.color.set(value);
+                });
+            
+            geometryFolder.add(params, 'wireframe')
+                .name('线框模式')
+                .onChange(value => {
+                    if (mesh) mesh.material.wireframe = value;
+                });
+            
+            // 变形动画设置
+            const morphFolder = gui.addFolder('变形动画设置');
+            morphFolder.add(params, 'morphSpeed', 0.1, 3)
+                .name('变形速度');
+            
+            morphFolder.add(params, 'morphDuration', 1, 10)
+                .name('变形持续时间(秒)');
+            
+            morphFolder.add(params, 'autoMorph')
+                .name('自动变形');
+            
+            morphFolder.add(params, 'smoothTransition')
+                .name('平滑过渡');
+            
+            // 当前状态显示
+            const statusFolder = gui.addFolder('当前状态');
+            const currentGeomController = statusFolder.add(params, 'currentGeometry')
+                .name('当前几何体')
+                .listen();
+            currentGeomController.domElement.style.pointerEvents = 'none';
+            
+            const targetGeomController = statusFolder.add(params, 'targetGeometry')
+                .name('目标几何体')
+                .listen();
+            targetGeomController.domElement.style.pointerEvents = 'none';
+            
+            // 手动控制
+            const controlFolder = gui.addFolder('手动控制');
+            controlFolder.add({
+                nextMorph: () => {
+                    switchToNextMorph();
+                }
+            }, 'nextMorph').name('下一个变形');
+            
+            controlFolder.add({
+                resetMorph: () => {
+                    currentMorphIndex = 0;
+                    targetMorphIndex = 1;
+                    morphProgress = 0;
+                    params.currentGeometry = morphGeometries[currentMorphIndex].type;
+                    params.targetGeometry = morphGeometries[targetMorphIndex].type;
+                }
+            }, 'resetMorph').name('重置变形');
+            
+            // 相机控制
+            const cameraFolder = gui.addFolder('相机控制');
+            cameraFolder.add(params, 'autoRotate')
+                .name('自动旋转')
+                .onChange(value => {
+                    controls.autoRotate = value;
+                });
+            
+            geometryFolder.open();
+            morphFolder.open();
+            statusFolder.open();
+            controlFolder.open();
+        }
+        
+        /**
+         * 动画循环函数
+         * 使用requestAnimationFrame实现平滑动画
+         * 每帧更新场景并渲染
+         */
+        function animate() {
+            // 请求下一帧动画
+            requestAnimationFrame(animate);
+            
+            // 获取时间增量
+            const delta = clock.getDelta();
+            
+            // 更新变形动画
+            if (params.autoMorph && morphGeometries.length > 1) {
+                morphProgress += delta * params.morphSpeed / params.morphDuration;
+                
+                if (morphProgress >= 1) {
+                    switchToNextMorph();
+                }
+                
+                performMorph();
+            }
+            
+            // 更新轨道控制器
+            controls.update();
+            
+            // 渲染场景
+            window.renderer.render(window.scene, window.camera);
+        }
+        
+        // 初始化应用
+        init();
+    </script>
+    
+    <!-- 
+    ===================================================
+    截图功能脚本 - 请勿修改此部分
+    此脚本处理从父窗口发来的截图请求，用于生成示例封面，与示例业务并无关联
+    ===================================================
+    -->
+    <script>
+        // 全局变量，用于存储渲染器引用
+        let _screenshotRenderer;
+        
+        // 添加消息监听器，处理截图请求
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    // 获取当前渲染器
+                    if (!_screenshotRenderer && window.renderer) {
+                        _screenshotRenderer = window.renderer;
+                    }
+                    
+                    // 确保渲染器已经初始化
+                    if (!_screenshotRenderer) {
+                        throw new Error('渲染器未初始化');
+                    }
+                    
+                    // 强制渲染一帧，确保内容是最新的
+                    if (window.scene && window.camera) {
+                        _screenshotRenderer.render(window.scene, window.camera);
+                    }
+                    
+                    // 获取canvas的图像数据（使用较低的质量和尺寸以减小文件大小）
+                    const quality = event.data.quality || 0.8;
+                    const canvas = _screenshotRenderer.domElement;
+                    
+                    // 创建一个较小尺寸的临时canvas
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600; // 最大尺寸为600像素
+                    
+                    // 计算缩放比例，保持宽高比
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    
+                    // 在临时canvas上绘制缩小的图像
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    
+                    // 获取缩小后的图像数据
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    
+                    // 将图像数据发送回父窗口
+                    window.parent.postMessage({
+                        type: 'screenshot-data',
+                        dataUrl: dataUrl
+                    }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    // 发送错误信息回父窗口
+                    window.parent.postMessage({
+                        type: 'screenshot-error',
+                        error: error.message
+                    }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

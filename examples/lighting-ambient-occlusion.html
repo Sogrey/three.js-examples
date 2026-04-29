@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 页面描述，有助于SEO优化 -->
+    <meta name="description" content="Three.js环境光遮蔽示例 - 使用环境光遮蔽增强场景深度感">
+    <!-- Three.js版本信息 -->
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 环境光遮蔽</title>
+    <!-- 引入公共样式表 -->
+    <link rel="stylesheet" href="../css/example-common.css">
+</head>
+<body>
+    <!-- 3D场景容器 -->
+    <div class="three-container" id="threeContainer"></div>
+    
+    <!-- 
+    使用importmap定义模块导入映射
+    这是一种现代化的ES模块导入方式，可以简化导入路径
+    通过定义别名，可以使用简短的导入语句，如 import * as THREE from 'three'
+    -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../libs/three/r179/build/three.module.js",
+                "three/addons/": "../libs/three/r179/jsm/"
+            }
+        }
+    </script>
+    
+    <!-- 示例代码 - 环境光遮蔽 -->
+    <script type="module">
+        // 导入Three.js核心模块
+        import * as THREE from 'three';
+        // 导入轨道控制器，用于交互式旋转和缩放场景
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        // 导入GUI控制面板，用于调整参数
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+        // 导入后期处理相关模块 - 使用更简单的方法
+        import { AmbientLight } from 'three';
+        import { HemisphereLight } from 'three';
+        
+        // Three.js 核心变量 - 暴露给全局作用域以便截图功能使用
+        window.scene = null;     // 场景对象，包含所有3D元素
+        window.camera = null;    // 相机对象，定义视角和视野
+        window.renderer = null;  // 渲染器对象，将场景渲染到canvas上
+        let controls;            // 轨道控制器对象
+        
+        // 场景对象
+        let ground, objects = [];
+        let ambientLight, hemisphereLight, directionalLight;
+        
+        // 参数配置对象 - 用于GUI控制面板
+        const params = {
+            // 环境光遮蔽模拟参数
+            ambientOcclusionSimulation: 'hemisphere', // 'hemisphere', 'ambient', 'both'
+            
+            // 光照参数
+            ambientIntensity: 0.2,
+            ambientColor: 0x404040,
+            
+            hemisphereIntensity: 1.0,
+            hemisphereTopColor: 0xffffff,
+            hemisphereBottomColor: 0x404040,
+            
+            directionalIntensity: 0.8,
+            directionalColor: 0xffffff,
+            
+            // 场景参数
+            sceneComplexity: 'medium',
+            objectColor: 0x3498db,
+            groundColor: 0xaaaaaa,
+            objectMetalness: 0.2,
+            objectRoughness: 0.8,
+            
+            // 阴影参数
+            shadowEnabled: true,
+            shadowRadius: 4,
+            shadowMapSize: 2048,
+            
+            // 控制参数
+            autoRotate: true
+        };
+        
+        /**
+         * 初始化Three.js场景、相机、渲染器和控制器
+         * 这是整个应用的入口点
+         */
+        function init() {
+            // 创建场景 - 所有3D对象的容器
+            window.scene = new THREE.Scene();
+            // 设置场景背景色为深蓝灰色
+            window.scene.background = new THREE.Color(0x2c3e50);
+            
+            // 创建透视相机 - 模拟人眼视角
+            // 参数：视场角(FOV)，宽高比，近裁剪面，远裁剪面
+            window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            // 设置相机位置，以便能看到场景中的对象
+            window.camera.position.set(10, 10, 10);
+            window.camera.lookAt(0, 0, 0);
+            
+            // 创建WebGL渲染器 - 将3D场景渲染到canvas上
+            window.renderer = new THREE.WebGLRenderer({ antialias: true }); // 启用抗锯齿
+            // 设置渲染器尺寸为窗口大小
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            // 设置设备像素比，提高在高DPI设备上的清晰度
+            window.renderer.setPixelRatio(window.devicePixelRatio);
+            // 启用阴影
+            window.renderer.shadowMap.enabled = params.shadowEnabled;
+            window.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            window.renderer.outputColorSpace = THREE.SRGBColorSpace;
+            
+            // 将渲染器的canvas添加到DOM中
+            document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+            
+            // 添加轨道控制器 - 允许用户交互式旋转和缩放场景
+            controls = new OrbitControls(window.camera, window.renderer.domElement);
+            controls.enableDamping = true;       // 启用阻尼效果，使控制更平滑
+            controls.dampingFactor = 0.05;       // 阻尼系数
+            controls.autoRotate = params.autoRotate; // 设置是否自动旋转
+            
+            // 创建场景内容
+            createScene();
+            
+            // 创建光源
+            createLights();
+            
+            // 初始化GUI控制面板
+            initGUI();
+            
+            // 监听窗口大小变化，调整场景
+            window.addEventListener('resize', onWindowResize);
+            
+            // 开始动画循环
+            animate();
+        }
+        
+        /**
+         * 创建场景内容
+         */
+        function createScene() {
+            // 创建地面
+            const groundGeometry = new THREE.PlaneGeometry(30, 30, 32, 32);
+            const groundMaterial = new THREE.MeshStandardMaterial({ 
+                color: params.groundColor,
+                roughness: 0.8,
+                metalness: 0.2
+            });
+            ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2;
+            ground.position.y = -2;
+            ground.receiveShadow = true;
+            scene.add(ground);
+            
+            // 清除现有对象
+            objects.forEach(obj => scene.remove(obj));
+            objects = [];
+            
+            // 根据复杂度创建场景
+            createSceneObjects(params.sceneComplexity);
+        }
+        
+        /**
+         * 根据复杂度创建场景对象
+         */
+        function createSceneObjects(complexity) {
+            // 清除现有对象
+            objects.forEach(obj => scene.remove(obj));
+            objects = [];
+            
+            // 创建材质
+            const material = new THREE.MeshStandardMaterial({ 
+                color: params.objectColor,
+                roughness: params.objectRoughness,
+                metalness: params.objectMetalness
+            });
+            
+            // 根据复杂度设置对象数量和大小
+            let count, size, spread;
+            
+            switch (complexity) {
+                case 'low':
+                    count = 10;
+                    size = 1.5;
+                    spread = 8;
+                    break;
+                case 'medium':
+                    count = 30;
+                    size = 1.2;
+                    spread = 10;
+                    break;
+                case 'high':
+                    count = 60;
+                    size = 1.0;
+                    spread = 12;
+                    break;
+                default:
+                    count = 30;
+                    size = 1.2;
+                    spread = 10;
+            }
+            
+            // 创建不同形状的对象
+            for (let i = 0; i < count; i++) {
+                let geometry;
+                const type = Math.floor(Math.random() * 5);
+                
+                switch (type) {
+                    case 0:
+                        // 球体
+                        geometry = new THREE.SphereGeometry(size * 0.5 * (0.8 + Math.random() * 0.4), 16, 16);
+                        break;
+                    case 1:
+                        // 立方体
+                        const boxSize = size * (0.8 + Math.random() * 0.4);
+                        geometry = new THREE.BoxGeometry(boxSize, boxSize, boxSize);
+                        break;
+                    case 2:
+                        // 圆环
+                        geometry = new THREE.TorusGeometry(
+                            size * 0.5 * (0.8 + Math.random() * 0.4),
+                            size * 0.2 * (0.8 + Math.random() * 0.4),
+                            16, 32
+                        );
+                        break;
+                    case 3:
+                        // 圆柱体
+                        geometry = new THREE.CylinderGeometry(
+                            size * 0.4 * (0.8 + Math.random() * 0.4),
+                            size * 0.4 * (0.8 + Math.random() * 0.4),
+                            size * (0.8 + Math.random() * 0.4),
+                            16
+                        );
+                        break;
+                    case 4:
+                        // 圆锥体
+                        geometry = new THREE.ConeGeometry(
+                            size * 0.5 * (0.8 + Math.random() * 0.4),
+                            size * (0.8 + Math.random() * 0.4),
+                            16
+                        );
+                        break;
+                }
+                
+                const object = new THREE.Mesh(geometry, material.clone());
+                
+                // 随机位置
+                object.position.x = (Math.random() - 0.5) * spread * 2;
+                object.position.y = Math.random() * 5;
+                object.position.z = (Math.random() - 0.5) * spread * 2;
+                
+                // 随机旋转
+                object.rotation.x = Math.random() * Math.PI;
+                object.rotation.y = Math.random() * Math.PI;
+                object.rotation.z = Math.random() * Math.PI;
+                
+                // 启用阴影
+                object.castShadow = true;
+                object.receiveShadow = true;
+                
+                scene.add(object);
+                objects.push(object);
+            }
+            
+            // 添加一些更复杂的结构
+            if (complexity === 'medium' || complexity === 'high') {
+                // 创建一个小型建筑结构
+                createBuilding(0, 0, 0, size * 2);
+                
+                if (complexity === 'high') {
+                    // 创建更多建筑
+                    createBuilding(-6, 0, -6, size * 1.5);
+                    createBuilding(6, 0, 6, size * 1.8);
+                    createBuilding(-6, 0, 6, size * 1.2);
+                    createBuilding(6, 0, -6, size * 1.6);
+                }
+            }
+        }
+        
+        /**
+         * 创建简单的建筑结构
+         */
+        function createBuilding(x, y, z, size) {
+            const material = new THREE.MeshStandardMaterial({ 
+                color: params.objectColor,
+                roughness: params.objectRoughness,
+                metalness: params.objectMetalness
+            });
+            
+            // 主体
+            const baseGeometry = new THREE.BoxGeometry(size, size * 2, size);
+            const base = new THREE.Mesh(baseGeometry, material.clone());
+            base.position.set(x, y + size, z);
+            base.castShadow = true;
+            base.receiveShadow = true;
+            scene.add(base);
+            objects.push(base);
+            
+            // 屋顶
+            const roofGeometry = new THREE.ConeGeometry(size * 0.8, size, 4);
+            const roof = new THREE.Mesh(roofGeometry, material.clone());
+            roof.position.set(x, y + size * 2 + size * 0.5, z);
+            roof.rotation.y = Math.PI / 4;
+            roof.castShadow = true;
+            roof.receiveShadow = true;
+            scene.add(roof);
+            objects.push(roof);
+            
+            // 窗户
+            const windowMaterial = new THREE.MeshStandardMaterial({
+                color: 0xffffff,
+                roughness: 0.2,
+                metalness: 0.8,
+                emissive: 0x555555
+            });
+            
+            // 前窗
+            const frontWindowGeometry = new THREE.PlaneGeometry(size * 0.4, size * 0.4);
+            const frontWindow = new THREE.Mesh(frontWindowGeometry, windowMaterial);
+            frontWindow.position.set(x, y + size * 1.2, z + size * 0.501);
+            scene.add(frontWindow);
+            objects.push(frontWindow);
+            
+            // 后窗
+            const backWindow = new THREE.Mesh(frontWindowGeometry, windowMaterial);
+            backWindow.position.set(x, y + size * 1.2, z - size * 0.501);
+            backWindow.rotation.y = Math.PI;
+            scene.add(backWindow);
+            objects.push(backWindow);
+            
+            // 左窗
+            const leftWindow = new THREE.Mesh(frontWindowGeometry, windowMaterial);
+            leftWindow.position.set(x - size * 0.501, y + size * 1.2, z);
+            leftWindow.rotation.y = -Math.PI / 2;
+            scene.add(leftWindow);
+            objects.push(leftWindow);
+            
+            // 右窗
+            const rightWindow = new THREE.Mesh(frontWindowGeometry, windowMaterial);
+            rightWindow.position.set(x + size * 0.501, y + size * 1.2, z);
+            rightWindow.rotation.y = Math.PI / 2;
+            scene.add(rightWindow);
+            objects.push(rightWindow);
+        }
+        
+        /**
+         * 创建光源
+         */
+        function createLights() {
+            // 添加环境光 - 提供均匀的全局照明
+            ambientLight = new THREE.AmbientLight(params.ambientColor, params.ambientIntensity);
+            scene.add(ambientLight);
+            
+            // 添加半球光 - 模拟环境光遮蔽
+            hemisphereLight = new THREE.HemisphereLight(
+                params.hemisphereTopColor,    // 天空颜色
+                params.hemisphereBottomColor, // 地面颜色
+                params.hemisphereIntensity    // 强度
+            );
+            hemisphereLight.position.set(0, 10, 0);
+            scene.add(hemisphereLight);
+            
+            // 添加方向光 - 模拟太阳光
+            directionalLight = new THREE.DirectionalLight(params.directionalColor, params.directionalIntensity);
+            directionalLight.position.set(5, 10, 5);
+            directionalLight.castShadow = params.shadowEnabled;
+            
+            // 设置阴影参数
+            directionalLight.shadow.mapSize.width = params.shadowMapSize;
+            directionalLight.shadow.mapSize.height = params.shadowMapSize;
+            directionalLight.shadow.camera.near = 0.5;
+            directionalLight.shadow.camera.far = 50;
+            directionalLight.shadow.radius = params.shadowRadius;
+            
+            const size = 15;
+            directionalLight.shadow.camera.left = -size;
+            directionalLight.shadow.camera.right = size;
+            directionalLight.shadow.camera.top = size;
+            directionalLight.shadow.camera.bottom = -size;
+            
+            scene.add(directionalLight);
+            
+            // 根据当前选择的环境光遮蔽模拟方式更新光源可见性
+            updateLightVisibility();
+        }
+        
+        /**
+         * 根据当前选择的环境光遮蔽模拟方式更新光源可见性
+         */
+        function updateLightVisibility() {
+            switch (params.ambientOcclusionSimulation) {
+                case 'hemisphere':
+                    // 仅使用半球光
+                    ambientLight.intensity = 0;
+                    hemisphereLight.intensity = params.hemisphereIntensity;
+                    break;
+                case 'ambient':
+                    // 仅使用环境光
+                    ambientLight.intensity = params.ambientIntensity;
+                    hemisphereLight.intensity = 0;
+                    break;
+                case 'both':
+                    // 同时使用环境光和半球光
+                    ambientLight.intensity = params.ambientIntensity * 0.5;
+                    hemisphereLight.intensity = params.hemisphereIntensity * 0.5;
+                    break;
+            }
+        }
+        
+        
+        /**
+         * 处理窗口大小变化
+         * 调整相机和渲染器以适应新的窗口尺寸
+         */
+        function onWindowResize() {
+            // 更新相机宽高比
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            // 更新相机投影矩阵
+            window.camera.updateProjectionMatrix();
+            // 更新渲染器尺寸
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            // 更新效果合成器尺寸
+            composer.setSize(window.innerWidth, window.innerHeight);
+            // 更新SSAO通道尺寸
+            if (ssaoPass) {
+                ssaoPass.setSize(window.innerWidth, window.innerHeight);
+            }
+        }
+        
+        /**
+         * 初始化GUI控制面板
+         */
+        function initGUI() {
+            // 创建GUI实例
+            const gui = new GUI({ title: '环境光遮蔽控制面板', width: 300 });
+            
+            // 调整GUI位置，避免与其他UI元素重叠
+            gui.domElement.style.position = 'absolute';
+            gui.domElement.style.top = '60px';
+            gui.domElement.style.right = '10px';
+            
+            // 确保GUI在所有环境下都可见
+            gui.domElement.style.zIndex = '1000';
+            gui.domElement.style.maxHeight = '80vh'; // 限制最大高度
+            gui.domElement.style.overflowY = 'auto'; // 允许垂直滚动
+            
+            // 环境光遮蔽模拟参数控制
+            const aoFolder = gui.addFolder('环境光遮蔽模拟');
+            aoFolder.add(params, 'ambientOcclusionSimulation', {
+                '半球光模拟': 'hemisphere',
+                '环境光模拟': 'ambient',
+                '混合模式': 'both'
+            }).name('模拟方式').onChange(updateLightVisibility);
+            
+            // 光照参数控制
+            const lightFolder = gui.addFolder('光照设置');
+            
+            // 环境光参数
+            const ambientFolder = lightFolder.addFolder('环境光');
+            ambientFolder.add(params, 'ambientIntensity', 0, 2).step(0.1).name('强度').onChange(value => {
+                if (params.ambientOcclusionSimulation === 'ambient' || params.ambientOcclusionSimulation === 'both') {
+                    updateLightVisibility();
+                }
+            });
+            ambientFolder.addColor(params, 'ambientColor').name('颜色').onChange(value => {
+                ambientLight.color.set(value);
+            });
+            
+            // 半球光参数
+            const hemiFolder = lightFolder.addFolder('半球光');
+            hemiFolder.add(params, 'hemisphereIntensity', 0, 2).step(0.1).name('强度').onChange(value => {
+                if (params.ambientOcclusionSimulation === 'hemisphere' || params.ambientOcclusionSimulation === 'both') {
+                    updateLightVisibility();
+                }
+            });
+            hemiFolder.addColor(params, 'hemisphereTopColor').name('天空颜色').onChange(value => {
+                hemisphereLight.color.set(value);
+            });
+            hemiFolder.addColor(params, 'hemisphereBottomColor').name('地面颜色').onChange(value => {
+                hemisphereLight.groundColor.set(value);
+            });
+            
+            // 方向光参数
+            const dirFolder = lightFolder.addFolder('方向光');
+            dirFolder.add(params, 'directionalIntensity', 0, 2).step(0.1).name('强度').onChange(value => {
+                directionalLight.intensity = value;
+            });
+            dirFolder.addColor(params, 'directionalColor').name('颜色').onChange(value => {
+                directionalLight.color.set(value);
+            });
+            
+            // 阴影参数
+            const shadowFolder = gui.addFolder('阴影设置');
+            shadowFolder.add(params, 'shadowEnabled').name('启用阴影').onChange(value => {
+                window.renderer.shadowMap.enabled = value;
+                directionalLight.castShadow = value;
+                objects.forEach(obj => {
+                    obj.castShadow = value;
+                    obj.receiveShadow = value;
+                });
+                ground.receiveShadow = value;
+            });
+            shadowFolder.add(params, 'shadowRadius', 0, 10).step(0.5).name('阴影模糊半径').onChange(value => {
+                directionalLight.shadow.radius = value;
+            });
+            shadowFolder.add(params, 'shadowMapSize', [512, 1024, 2048, 4096]).name('阴影贴图大小').onChange(value => {
+                directionalLight.shadow.mapSize.width = value;
+                directionalLight.shadow.mapSize.height = value;
+                directionalLight.shadow.map = null; // 强制重新创建阴影贴图
+            });
+            
+            // 场景参数控制
+            const sceneFolder = gui.addFolder('场景设置');
+            sceneFolder.add(params, 'sceneComplexity', {
+                '低复杂度': 'low',
+                '中复杂度': 'medium',
+                '高复杂度': 'high'
+            }).name('场景复杂度').onChange(value => {
+                createSceneObjects(value);
+            });
+            
+            sceneFolder.addColor(params, 'objectColor').name('物体颜色').onChange(value => {
+                objects.forEach(obj => {
+                    if (obj.material && !obj.material.emissive) {
+                        obj.material.color.set(value);
+                    }
+                });
+            });
+            
+            sceneFolder.addColor(params, 'groundColor').name('地面颜色').onChange(value => {
+                if (ground && ground.material) {
+                    ground.material.color.set(value);
+                }
+            });
+            
+            sceneFolder.add(params, 'objectMetalness', 0, 1).step(0.05).name('金属度').onChange(value => {
+                objects.forEach(obj => {
+                    if (obj.material && obj.material.metalness !== undefined) {
+                        obj.material.metalness = value;
+                    }
+                });
+            });
+            
+            sceneFolder.add(params, 'objectRoughness', 0, 1).step(0.05).name('粗糙度').onChange(value => {
+                objects.forEach(obj => {
+                    if (obj.material && obj.material.roughness !== undefined) {
+                        obj.material.roughness = value;
+                    }
+                });
+            });
+            
+            // 控制参数
+            const controlsFolder = gui.addFolder('控制设置');
+            controlsFolder.add(params, 'autoRotate').name('自动旋转').onChange(value => {
+                controls.autoRotate = value;
+            });
+            
+            // 默认展开文件夹
+            aoFolder.open();
+            lightFolder.open();
+            shadowFolder.open();
+        }
+        
+        /**
+         * 动画循环函数
+         * 使用requestAnimationFrame实现平滑动画
+         * 每帧更新场景并渲染
+         */
+        function animate() {
+            // 请求下一帧动画
+            requestAnimationFrame(animate);
+            
+            // 更新轨道控制器
+            controls.update();
+            
+            // 渲染场景
+            window.renderer.render(window.scene, window.camera);
+        }
+        
+        // 初始化应用
+        init();
+    </script>
+    
+    <!-- 
+    ===================================================
+    截图功能脚本 - 请勿修改此部分
+    此脚本处理从父窗口发来的截图请求，用于生成示例封面，与示例业务并无关联
+    ===================================================
+    -->
+    <script>
+        // 全局变量，用于存储渲染器引用
+        let _screenshotRenderer;
+        
+        // 添加消息监听器，处理截图请求
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    // 获取当前渲染器
+                    if (!_screenshotRenderer && window.renderer) {
+                        _screenshotRenderer = window.renderer;
+                    }
+                    
+                    // 确保渲染器已经初始化
+                    if (!_screenshotRenderer) {
+                        throw new Error('渲染器未初始化');
+                    }
+                    
+                    // 强制渲染一帧，确保内容是最新的
+                    if (window.scene && window.camera) {
+                        _screenshotRenderer.render(window.scene, window.camera);
+                    }
+                    
+                    // 获取canvas的图像数据（使用较低的质量和尺寸以减小文件大小）
+                    const quality = event.data.quality || 0.8;
+                    const canvas = _screenshotRenderer.domElement;
+                    
+                    // 创建一个较小尺寸的临时canvas
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600; // 最大尺寸为600像素
+                    
+                    // 计算缩放比例，保持宽高比
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    
+                    // 在临时canvas上绘制缩小的图像
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    
+                    // 获取缩小后的图像数据
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    
+                    // 将图像数据发送回父窗口
+                    window.parent.postMessage({
+                        type: 'screenshot-data',
+                        dataUrl: dataUrl
+                    }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    // 发送错误信息回父窗口
+                    window.parent.postMessage({
+                        type: 'screenshot-error',
+                        error: error.message
+                    }, '*');
+                }
+            }
+        });
+    </script>

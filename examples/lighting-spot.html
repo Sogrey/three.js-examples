@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 页面描述，有助于SEO优化 -->
+    <meta name="description" content="Three.js聚光灯示例 - 展示聚光灯的效果和阴影">
+    <!-- Three.js版本信息 -->
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 聚光灯</title>
+    <!-- 引入公共样式表 -->
+    <link rel="stylesheet" href="../css/example-common.css">
+</head>
+<body>
+    <!-- 3D场景容器 -->
+    <div class="three-container" id="threeContainer"></div>
+    
+    <!-- 
+    使用importmap定义模块导入映射
+    这是一种现代化的ES模块导入方式，可以简化导入路径
+    通过定义别名，可以使用简短的导入语句，如 import * as THREE from 'three'
+    -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../libs/three/r179/build/three.module.js",
+                "three/addons/": "../libs/three/r179/jsm/"
+            }
+        }
+    </script>
+    
+    <!-- 示例代码 - 聚光灯 -->
+    <script type="module">
+        // 导入Three.js核心模块
+        import * as THREE from 'three';
+        // 导入轨道控制器，用于交互式旋转和缩放场景
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        // 导入GUI控制面板，用于调整参数
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+        
+        // Three.js 核心变量 - 暴露给全局作用域以便截图功能使用
+        window.scene = null;     // 场景对象，包含所有3D元素
+        window.camera = null;    // 相机对象，定义视角和视野
+        window.renderer = null;  // 渲染器对象，将场景渲染到canvas上
+        let controls;           // 轨道控制器对象
+        let spotLight;          // 聚光灯对象
+        let spotLightHelper;    // 聚光灯辅助对象
+        let spotLightCone;      // 表示聚光灯的圆锥体
+        let objects = [];       // 场景中的物体数组
+        let clock;              // 时钟对象，用于动画
+        let targetObject;       // 聚光灯目标对象
+        
+        // 参数配置对象 - 用于GUI控制面板和创建3D对象
+        const params = {
+            // 光源参数
+            lightColor: 0xffffff,    // 光源颜色
+            intensity: 1,            // 光源强度
+            distance: 30,            // 光源距离
+            angle: Math.PI / 6,      // 光源角度（默认30度）
+            penumbra: 0.2,           // 半影衰减
+            decay: 1,                // 光源衰减
+            
+            // 阴影参数
+            castShadow: true,        // 是否投射阴影
+            shadowMapSize: 512,      // 阴影贴图大小
+            shadowBias: -0.001,      // 阴影偏差
+            
+            // 动画参数
+            animate: true,           // 是否启用动画
+            animationSpeed: 1,       // 动画速度
+            animationRadius: 8,      // 动画半径
+            animationHeight: 8,      // 动画高度
+            targetFollow: true,      // 目标是否跟随
+            
+            // 场景参数
+            ambientIntensity: 0.1,   // 环境光强度
+            showHelper: true,        // 是否显示辅助对象
+            
+            // 控制器参数
+            autoRotate: false        // 是否自动旋转
+        };
+        
+        /**
+         * 初始化Three.js场景、相机、渲染器和控制器
+         * 这是整个应用的入口点
+         */
+        function init() {
+            // 创建场景 - 所有3D对象的容器
+            window.scene = new THREE.Scene();
+            // 设置场景背景色为深蓝灰色
+            window.scene.background = new THREE.Color(0x111122);
+            
+            // 创建透视相机 - 模拟人眼视角
+            // 参数：视场角(FOV)，宽高比，近裁剪面，远裁剪面
+            window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            // 设置相机位置，以便能看到场景中的对象
+            window.camera.position.set(15, 12, 15);
+            
+            // 创建WebGL渲染器 - 将3D场景渲染到canvas上
+            window.renderer = new THREE.WebGLRenderer({ antialias: true }); // 启用抗锯齿
+            // 设置渲染器尺寸为窗口大小
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            // 设置设备像素比，提高在高DPI设备上的清晰度
+            window.renderer.setPixelRatio(window.devicePixelRatio);
+            // 启用阴影
+            window.renderer.shadowMap.enabled = true;
+            window.renderer.shadowMap.type = THREE.PCFSoftShadowMap; // 使用PCF软阴影
+            // 将渲染器的canvas添加到DOM中
+            document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+            
+            // 添加轨道控制器 - 允许用户交互式旋转和缩放场景
+            controls = new OrbitControls(window.camera, window.renderer.domElement);
+            controls.enableDamping = true;       // 启用阻尼效果，使控制更平滑
+            controls.dampingFactor = 0.05;       // 阻尼系数
+            controls.autoRotate = params.autoRotate; // 设置是否自动旋转
+            
+            // 创建时钟对象
+            clock = new THREE.Clock();
+            
+            // 创建场景内容
+            createScene();
+            
+            // 初始化GUI控制面板
+            initGUI();
+            
+            // 监听窗口大小变化，调整场景
+            window.addEventListener('resize', onWindowResize);
+            
+            // 开始动画循环
+            animate();
+        }
+        
+        /**
+         * 创建场景内容
+         * 包括地面、各种几何体、聚光灯和辅助对象
+         */
+        function createScene() {
+            // 添加环境光 - 提供均匀的全局照明
+            const ambientLight = new THREE.AmbientLight(0xffffff, params.ambientIntensity);
+            scene.add(ambientLight);
+            
+            // 创建地面
+            const groundGeometry = new THREE.PlaneGeometry(40, 40);
+            const groundMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0x999999,
+                roughness: 0.8,
+                metalness: 0.2
+            });
+            const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2; // 旋转使其水平
+            ground.position.y = -2;
+            ground.receiveShadow = true; // 接收阴影
+            scene.add(ground);
+            
+            // 创建不同形状的几何体
+            createGeometries();
+            
+            // 创建聚光灯目标对象
+            targetObject = new THREE.Object3D();
+            targetObject.position.set(0, 0, 0);
+            scene.add(targetObject);
+            
+            // 创建聚光灯
+            createSpotLight();
+            
+            // 添加坐标轴辅助
+            const axesHelper = new THREE.AxesHelper(5);
+            scene.add(axesHelper);
+            
+            // 添加网格辅助
+            const gridHelper = new THREE.GridHelper(40, 40, 0x444444, 0x222222);
+            gridHelper.position.y = -1.99;
+            scene.add(gridHelper);
+        }
+        
+        /**
+         * 创建不同形状的几何体
+         * 在场景中添加多个不同形状、大小和材质的几何体
+         */
+        function createGeometries() {
+            // 清除现有的几何体
+            objects.forEach(obj => {
+                scene.remove(obj);
+                obj.geometry.dispose();
+                obj.material.dispose();
+            });
+            objects = [];
+            
+            // 创建立方体
+            const boxGeometry = new THREE.BoxGeometry(2, 2, 2);
+            const boxMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0x3498db,
+                roughness: 0.5,
+                metalness: 0.3
+            });
+            const box = new THREE.Mesh(boxGeometry, boxMaterial);
+            box.position.set(-6, 0, -4);
+            box.castShadow = true;
+            box.receiveShadow = true;
+            scene.add(box);
+            objects.push(box);
+            
+            // 创建球体
+            const sphereGeometry = new THREE.SphereGeometry(1.2, 32, 32);
+            const sphereMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0xe74c3c,
+                roughness: 0.2,
+                metalness: 0.8
+            });
+            const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+            sphere.position.set(6, 0, -4);
+            sphere.castShadow = true;
+            sphere.receiveShadow = true;
+            scene.add(sphere);
+            objects.push(sphere);
+            
+            // 创建圆环
+            const torusGeometry = new THREE.TorusGeometry(1, 0.4, 16, 32);
+            const torusMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0x2ecc71,
+                roughness: 0.3,
+                metalness: 0.5
+            });
+            const torus = new THREE.Mesh(torusGeometry, torusMaterial);
+            torus.position.set(0, 0, 5);
+            torus.rotation.x = Math.PI / 2;
+            torus.castShadow = true;
+            torus.receiveShadow = true;
+            scene.add(torus);
+            objects.push(torus);
+            
+            // 创建圆柱体
+            const cylinderGeometry = new THREE.CylinderGeometry(0.8, 0.8, 2.5, 32);
+            const cylinderMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0xf39c12,
+                roughness: 0.6,
+                metalness: 0.1
+            });
+            const cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterial);
+            cylinder.position.set(-4, 0, 6);
+            cylinder.castShadow = true;
+            cylinder.receiveShadow = true;
+            scene.add(cylinder);
+            objects.push(cylinder);
+            
+            // 创建圆锥体
+            const coneGeometry = new THREE.ConeGeometry(1, 2.5, 32);
+            const coneMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0x9b59b6,
+                roughness: 0.4,
+                metalness: 0.4
+            });
+            const cone = new THREE.Mesh(coneGeometry, coneMaterial);
+            cone.position.set(4, 0, 6);
+            cone.castShadow = true;
+            cone.receiveShadow = true;
+            scene.add(cone);
+            objects.push(cone);
+            
+            // 创建一个小台子
+            const pedestalGeometry = new THREE.BoxGeometry(3, 0.5, 3);
+            const pedestalMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0x34495e,
+                roughness: 0.7,
+                metalness: 0.2
+            });
+            const pedestal = new THREE.Mesh(pedestalGeometry, pedestalMaterial);
+            pedestal.position.set(0, -1.25, 0);
+            pedestal.castShadow = true;
+            pedestal.receiveShadow = true;
+            scene.add(pedestal);
+            objects.push(pedestal);
+            
+            // 创建一个复杂的几何体 - 八面体
+            const octahedronGeometry = new THREE.OctahedronGeometry(1, 0);
+            const octahedronMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0x1abc9c,
+                roughness: 0.3,
+                metalness: 0.7
+            });
+            const octahedron = new THREE.Mesh(octahedronGeometry, octahedronMaterial);
+            octahedron.position.set(0, 0, 0);
+            octahedron.castShadow = true;
+            octahedron.receiveShadow = true;
+            scene.add(octahedron);
+            objects.push(octahedron);
+        }
+        
+        /**
+         * 创建聚光灯
+         * 包括聚光灯本身、聚光灯辅助对象和表示聚光灯的圆锥体
+         */
+        function createSpotLight() {
+            // 如果已存在聚光灯，则移除
+            if (spotLight) {
+                scene.remove(spotLight);
+                if (spotLightHelper) scene.remove(spotLightHelper);
+                if (spotLightCone) {
+                    scene.remove(spotLightCone);
+                    spotLightCone.geometry.dispose();
+                    spotLightCone.material.dispose();
+                }
+            }
+            
+            // 创建聚光灯
+            spotLight = new THREE.SpotLight(
+                params.lightColor,
+                params.intensity,
+                params.distance,
+                params.angle,
+                params.penumbra,
+                params.decay
+            );
+            spotLight.position.set(0, 8, 0);
+            spotLight.target = targetObject;
+            spotLight.castShadow = params.castShadow;
+            
+            // 设置阴影参数
+            spotLight.shadow.mapSize.width = params.shadowMapSize;
+            spotLight.shadow.mapSize.height = params.shadowMapSize;
+            spotLight.shadow.bias = params.shadowBias;
+            
+            scene.add(spotLight);
+            
+            // 创建聚光灯辅助对象
+            spotLightHelper = new THREE.SpotLightHelper(spotLight);
+            if (params.showHelper) {
+                scene.add(spotLightHelper);
+            }
+            
+            // 创建表示聚光灯的圆锥体
+            const coneLength = 2;
+            const coneWidth = 1;
+            const coneGeometry = new THREE.ConeGeometry(coneWidth, coneLength, 32);
+            const coneMaterial = new THREE.MeshBasicMaterial({ 
+                color: params.lightColor,
+                transparent: true,
+                opacity: 0.3,
+                wireframe: true
+            });
+            spotLightCone = new THREE.Mesh(coneGeometry, coneMaterial);
+            spotLightCone.position.copy(spotLight.position);
+            spotLightCone.rotation.x = Math.PI; // 将圆锥体倒置
+            scene.add(spotLightCone);
+        }
+        
+        /**
+         * 处理窗口大小变化
+         * 调整相机和渲染器以适应新的窗口尺寸
+         */
+        function onWindowResize() {
+            // 更新相机宽高比
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            // 更新相机投影矩阵
+            window.camera.updateProjectionMatrix();
+            // 更新渲染器尺寸
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        /**
+         * 初始化GUI控制面板
+         * 创建用户可交互的控制界面，用于调整参数
+         */
+        function initGUI() {
+            // 创建GUI实例
+            const gui = new GUI({ title: '聚光灯参数控制', width: 300 });
+            
+            // 调整GUI位置，避免与其他UI元素重叠
+            gui.domElement.style.position = 'absolute';
+            gui.domElement.style.top = '60px';
+            gui.domElement.style.right = '10px';
+            
+            // 确保GUI在所有环境下都可见
+            gui.domElement.style.zIndex = '1000';
+            gui.domElement.style.maxHeight = '80vh'; // 限制最大高度
+            gui.domElement.style.overflowY = 'auto'; // 允许垂直滚动
+            
+            // 光源参数控制组
+            const lightFolder = gui.addFolder('光源参数');
+            
+            // 添加光源颜色选择器
+            lightFolder.addColor(params, 'lightColor')
+                .name('光源颜色')
+                .onChange(value => {
+                    spotLight.color.set(value);
+                    spotLightCone.material.color.set(value);
+                    updateSpotLightHelper();
+                });
+            
+            // 添加光源强度滑块
+            lightFolder.add(params, 'intensity', 0, 3)
+                .name('光源强度')
+                .onChange(value => {
+                    spotLight.intensity = value;
+                    updateSpotLightHelper();
+                });
+            
+            // 添加光源距离滑块
+            lightFolder.add(params, 'distance', 0, 50)
+                .name('光源距离')
+                .onChange(value => {
+                    spotLight.distance = value;
+                    updateSpotLightHelper();
+                });
+            
+            // 添加光源角度滑块
+            lightFolder.add(params, 'angle', 0, Math.PI / 2)
+                .name('光源角度')
+                .onChange(value => {
+                    spotLight.angle = value;
+                    updateSpotLightHelper();
+                });
+            
+            // 添加半影衰减滑块
+            lightFolder.add(params, 'penumbra', 0, 1)
+                .step(0.01)
+                .name('半影衰减')
+                .onChange(value => {
+                    spotLight.penumbra = value;
+                    updateSpotLightHelper();
+                });
+            
+            // 添加光源衰减滑块
+            lightFolder.add(params, 'decay', 0, 5)
+                .name('光源衰减')
+                .onChange(value => {
+                    spotLight.decay = value;
+                    updateSpotLightHelper();
+                });
+            
+            // 默认展开此文件夹
+            lightFolder.open();
+            
+            // 阴影参数控制组
+            const shadowFolder = gui.addFolder('阴影参数');
+            
+            // 添加是否投射阴影切换
+            shadowFolder.add(params, 'castShadow')
+                .name('投射阴影')
+                .onChange(value => {
+                    spotLight.castShadow = value;
+                });
+            
+            // 添加阴影贴图大小选择
+            shadowFolder.add(params, 'shadowMapSize', [256, 512, 1024, 2048])
+                .name('阴影贴图大小')
+                .onChange(value => {
+                    spotLight.shadow.mapSize.width = value;
+                    spotLight.shadow.mapSize.height = value;
+                    // 需要重新创建阴影贴图
+                    spotLight.shadow.map = null;
+                });
+            
+            // 添加阴影偏差滑块
+            shadowFolder.add(params, 'shadowBias', -0.01, 0.01)
+                .step(0.0001)
+                .name('阴影偏差')
+                .onChange(value => {
+                    spotLight.shadow.bias = value;
+                });
+            
+            // 默认展开此文件夹
+            shadowFolder.open();
+            
+            // 动画参数控制组
+            const animationFolder = gui.addFolder('动画参数');
+            
+            // 添加是否启用动画切换
+            animationFolder.add(params, 'animate')
+                .name('启用动画');
+            
+            // 添加动画速度滑块
+            animationFolder.add(params, 'animationSpeed', 0.1, 3)
+                .name('动画速度');
+            
+            // 添加动画半径滑块
+            animationFolder.add(params, 'animationRadius', 1, 15)
+                .name('动画半径');
+            
+            // 添加动画高度滑块
+            animationFolder.add(params, 'animationHeight', 1, 15)
+                .name('动画高度');
+            
+            // 添加目标跟随切换
+            animationFolder.add(params, 'targetFollow')
+                .name('目标跟随');
+            
+            // 默认展开此文件夹
+            animationFolder.open();
+            
+            // 场景参数控制组
+            const sceneFolder = gui.addFolder('场景参数');
+            
+            // 添加环境光强度滑块
+            sceneFolder.add(params, 'ambientIntensity', 0, 1)
+                .step(0.01)
+                .name('环境光强度')
+                .onChange(value => {
+                    scene.children.forEach(child => {
+                        if (child instanceof THREE.AmbientLight) {
+                            child.intensity = value;
+                        }
+                    });
+                });
+            
+            // 添加是否显示辅助对象切换
+            sceneFolder.add(params, 'showHelper')
+                .name('显示辅助对象')
+                .onChange(value => {
+                    if (value) {
+                        if (spotLightHelper) scene.add(spotLightHelper);
+                    } else {
+                        if (spotLightHelper) scene.remove(spotLightHelper);
+                    }
+                });
+            
+            // 添加自动旋转切换
+            sceneFolder.add(params, 'autoRotate')
+                .name('自动旋转')
+                .onChange(value => {
+                    controls.autoRotate = value;
+                });
+            
+            // 默认展开此文件夹
+            sceneFolder.open();
+        }
+        
+        /**
+         * 更新聚光灯辅助对象
+         * 当聚光灯参数变化时，需要更新辅助对象
+         */
+        function updateSpotLightHelper() {
+            if (spotLightHelper) {
+                spotLightHelper.update();
+            }
+        }
+        
+        /**
+         * 动画循环函数
+         * 使用requestAnimationFrame实现平滑动画
+         * 每帧更新场景并渲染
+         */
+        function animate() {
+            // 请求下一帧动画
+            requestAnimationFrame(animate);
+            
+            // 更新轨道控制器
+            controls.update();
+            
+            // 更新聚光灯位置
+            updateLightPosition();
+            
+            // 渲染场景
+            window.renderer.render(window.scene, window.camera);
+        }
+        
+        /**
+         * 更新聚光灯位置
+         * 根据动画参数移动聚光灯
+         */
+        function updateLightPosition() {
+            if (params.animate && spotLight) {
+                const time = clock.getElapsedTime() * params.animationSpeed;
+                
+                // 计算新的位置
+                const x = Math.sin(time) * params.animationRadius;
+                const z = Math.cos(time) * params.animationRadius;
+                const y = params.animationHeight;
+                
+                // 更新聚光灯位置
+                spotLight.position.set(x, y, z);
+                
+                // 更新表示聚光灯的圆锥体位置和旋转
+                if (spotLightCone) {
+                    spotLightCone.position.copy(spotLight.position);
+                    
+                    // 计算圆锥体朝向目标的旋转
+                    const targetPos = params.targetFollow ? 
+                        new THREE.Vector3(0, 0, 0) : 
+                        targetObject.position;
+                    
+                    const direction = new THREE.Vector3().subVectors(targetPos, spotLight.position).normalize();
+                    spotLightCone.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), direction);
+                }
+                
+                // 如果目标跟随开启，则更新目标位置
+                if (params.targetFollow) {
+                    // 目标位置在中心点
+                    targetObject.position.set(0, 0, 0);
+                } else {
+                    // 目标位置固定不变
+                }
+                
+                // 更新聚光灯辅助对象
+                if (spotLightHelper && params.showHelper) {
+                    spotLightHelper.update();
+                }
+            }
+        }
+        
+        // 初始化应用
+        init();
+    </script>
+    
+    <!-- 
+    ===================================================
+    截图功能脚本 - 请勿修改此部分
+    此脚本处理从父窗口发来的截图请求，用于生成示例封面，与示例业务并无关联
+    ===================================================
+    -->
+    <script>
+        // 全局变量，用于存储渲染器引用
+        let _screenshotRenderer;
+        
+        // 添加消息监听器，处理截图请求
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    // 获取当前渲染器
+                    if (!_screenshotRenderer && window.renderer) {
+                        _screenshotRenderer = window.renderer;
+                    }
+                    
+                    // 确保渲染器已经初始化
+                    if (!_screenshotRenderer) {
+                        throw new Error('渲染器未初始化');
+                    }
+                    
+                    // 强制渲染一帧，确保内容是最新的
+                    if (window.scene && window.camera) {
+                        _screenshotRenderer.render(window.scene, window.camera);
+                    }
+                    
+                    // 获取canvas的图像数据（使用较低的质量和尺寸以减小文件大小）
+                    const quality = event.data.quality || 0.8;
+                    const canvas = _screenshotRenderer.domElement;
+                    
+                    // 创建一个较小尺寸的临时canvas
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600; // 最大尺寸为600像素
+                    
+                    // 计算缩放比例，保持宽高比
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    
+                    // 在临时canvas上绘制缩小的图像
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    
+                    // 获取缩小后的图像数据
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    
+                    // 将图像数据发送回父窗口
+                    window.parent.postMessage({
+                        type: 'screenshot-data',
+                        dataUrl: dataUrl
+                    }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    // 发送错误信息回父窗口
+                    window.parent.postMessage({
+                        type: 'screenshot-error',
+                        error: error.message
+                    }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Three.js 3D风场图平面 - 平面上的风场流动可视化">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 3D风场图平面</title>
+    <link rel="stylesheet" href="../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+    
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../libs/three/r179/build/three.module.js",
+                "three/addons/": "../libs/three/r179/jsm/"
+            }
+        }
+    </script>
+    
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+        
+        window.scene = null;
+        window.camera = null;
+        window.renderer = null;
+        
+        const params = {
+            particleCount: 5000,
+            arrowDensity: 30,
+            windSpeed: 1.0,
+            arrowScale: 0.8,
+            colorLow: '#0000ff',
+            colorMid: '#00ff00',
+            colorHigh: '#ff0000',
+            showGrid: true,
+            autoRotate: true
+        };
+        
+        let particles;
+        let arrows;
+        let controls;
+        let particleMaterial;
+        let arrowMaterial;
+        
+        init();
+        animate();
+        
+        function init() {
+            window.scene = new THREE.Scene();
+            window.scene.background = new THREE.Color(0x0a0a1a);
+            
+            window.camera = new THREE.PerspectiveCamera(
+                60,
+                window.innerWidth / window.innerHeight,
+                0.1,
+                1000
+            );
+            window.camera.position.set(15, 15, 15);
+            window.camera.lookAt(0, 0, 0);
+            
+            window.renderer = new THREE.WebGLRenderer({ antialias: true });
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            window.renderer.setPixelRatio(window.devicePixelRatio);
+            document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+            
+            controls = new OrbitControls(window.camera, window.renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            
+            createParticles();
+            createArrows();
+            initGUI();
+            
+            window.addEventListener('resize', onWindowResize);
+        }
+        
+        function getWindField(x, z, time) {
+            const windX = Math.sin(x * 0.3 + time) * Math.cos(z * 0.2 + time * 0.7);
+            const windZ = Math.cos(x * 0.2 - time * 0.5) * Math.sin(z * 0.3 + time * 0.3);
+            const speed = Math.sqrt(windX * windX + windZ * windZ);
+            return { x: windX, z: windZ, speed: speed };
+        }
+        
+        function getWindSpeedColor(speed) {
+            const colorLow = new THREE.Color(params.colorLow);
+            const colorMid = new THREE.Color(params.colorMid);
+            const colorHigh = new THREE.Color(params.colorHigh);
+            
+            if (speed < 0.5) {
+                return colorLow.clone().lerp(colorMid, speed * 2);
+            } else {
+                return colorMid.clone().lerp(colorHigh, (speed - 0.5) * 2);
+            }
+        }
+        
+        function createParticles() {
+            if (particles) {
+                window.scene.remove(particles);
+                particles.geometry.dispose();
+                particles.material.dispose();
+            }
+            
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(params.particleCount * 3);
+            const colors = new Float32Array(params.particleCount * 3);
+            const sizes = new Float32Array(params.particleCount);
+            
+            for (let i = 0; i < params.particleCount; i++) {
+                positions[i * 3] = (Math.random() - 0.5) * 20;
+                positions[i * 3 + 1] = Math.random() * 5 + 0.1;
+                positions[i * 3 + 2] = (Math.random() - 0.5) * 20;
+                
+                const color = getWindSpeedColor(Math.random());
+                colors[i * 3] = color.r;
+                colors[i * 3 + 1] = color.g;
+                colors[i * 3 + 2] = color.b;
+                
+                sizes[i] = Math.random() * 0.3 + 0.1;
+            }
+            
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+            
+            particleMaterial = new THREE.ShaderMaterial({
+                uniforms: {
+                    uTime: { value: 0 }
+                },
+                vertexShader: `
+                    attribute float size;
+                    varying vec3 vColor;
+                    varying float vAlpha;
+                    uniform float uTime;
+
+                    void main() {
+                        vColor = color;
+                        
+                        vec3 pos = position;
+                        float time = uTime * 0.5;
+                        
+                        vec2 wind = vec2(
+                            sin(pos.x * 0.3 + time) * cos(pos.z * 0.2 + time * 0.7),
+                            cos(pos.x * 0.2 - time * 0.5) * sin(pos.z * 0.3 + time * 0.3)
+                        );
+                        
+                        float windStrength = length(wind);
+                        pos.x += wind.x * 0.3;
+                        pos.z += wind.y * 0.3;
+                        
+                        vAlpha = 0.6;
+                        
+                        vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+                        gl_PointSize = size * (300.0 / -mvPosition.z);
+                        gl_Position = projectionMatrix * mvPosition;
+                    }
+                `,
+                fragmentShader: `
+                    varying vec3 vColor;
+                    varying float vAlpha;
+                    
+                    void main() {
+                        float dist = length(gl_PointCoord - vec2(0.5));
+                        if (dist > 0.5) discard;
+                        
+                        float alpha = smoothstep(0.5, 0.2, dist) * vAlpha;
+                        gl_FragColor = vec4(vColor, alpha);
+                    }
+                `,
+                transparent: true,
+                vertexColors: true,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            });
+            
+            particles = new THREE.Points(geometry, particleMaterial);
+            window.scene.add(particles);
+        }
+        
+        function createArrows() {
+            if (arrows) {
+                window.scene.remove(arrows);
+                arrows.children.forEach(child => {
+                    child.geometry.dispose();
+                    child.material.dispose();
+                });
+            }
+
+            arrows = new THREE.Group();
+
+            const gridSize = params.arrowDensity;
+            const spacing = 20 / gridSize;
+
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    const x = -10 + i * spacing;
+                    const z = -10 + j * spacing;
+                    const wind = getWindField(x, z, 0);
+
+                    const color = getWindSpeedColor(wind.speed);
+
+                    const dir = new THREE.Vector3(wind.x, 0, wind.z);
+                    if (dir.lengthSq() < 0.0001) {
+                        dir.set(1, 0, 0);
+                    }
+                    dir.normalize();
+
+                    const arrowHelper = new THREE.ArrowHelper(
+                        dir,
+                        new THREE.Vector3(x, 0.5, z),
+                        params.arrowScale * Math.sqrt(wind.speed + 0.5),
+                        color.getHex(),
+                        params.arrowScale * 0.3,
+                        params.arrowScale * 0.15
+                    );
+
+                    arrows.add(arrowHelper);
+                }
+            }
+
+            window.scene.add(arrows);
+
+            if (params.showGrid) {
+                const gridHelper = new THREE.GridHelper(20, 20, 0x333333, 0x222222);
+                arrows.add(gridHelper);
+            }
+        }
+        
+        function updateArrows(time) {
+            const gridSize = params.arrowDensity;
+            const spacing = 20 / gridSize;
+            let index = params.showGrid ? 1 : 0;
+
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    if (index >= arrows.children.length) break;
+
+                    const x = -10 + i * spacing;
+                    const z = -10 + j * spacing;
+                    const wind = getWindField(x, z, time);
+
+                    const arrow = arrows.children[index];
+                    const dir = new THREE.Vector3(wind.x, 0, wind.z);
+                    if (dir.lengthSq() < 0.0001) {
+                        dir.set(1, 0, 0);
+                    }
+                    dir.normalize();
+
+                    arrow.position.set(x, 0.5, z);
+                    const len = params.arrowScale * Math.sqrt(wind.speed + 0.5);
+                    if (arrow.setLength) {
+                        arrow.setLength(len);
+                    }
+                    if (arrow.setColor) {
+                        arrow.setColor(getWindSpeedColor(wind.speed));
+                    }
+                    if (arrow.setDirection) {
+                        arrow.setDirection(dir);
+                    } else {
+                        arrow.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+                    }
+
+                    index++;
+                }
+            }
+        }
+        
+        function initGUI() {
+            const gui = new GUI({ title: '风场参数控制', width: 300 });
+            
+            gui.domElement.style.position = 'absolute';
+            gui.domElement.style.top = '60px';
+            gui.domElement.style.right = '10px';
+            gui.domElement.style.zIndex = '1000';
+            gui.domElement.style.maxHeight = '80vh';
+            gui.domElement.style.overflowY = 'auto';
+            
+            setTimeout(() => {
+                gui.show();
+            }, 100);
+            
+            const displayFolder = gui.addFolder('显示设置');
+            displayFolder.add(params, 'particleCount', 1000, 10000).step(100).name('粒子数量').onChange(() => {
+                createParticles();
+            });
+            displayFolder.add(params, 'arrowDensity', 10, 50).step(1).name('箭头密度').onChange(() => {
+                createArrows();
+            });
+            displayFolder.add(params, 'arrowScale', 0.2, 2.0).name('箭头大小');
+            displayFolder.add(params, 'showGrid').name('显示网格').onChange((value) => {
+                createArrows();
+            });
+            displayFolder.open();
+            
+            const windFolder = gui.addFolder('风场设置');
+            windFolder.add(params, 'windSpeed', 0.1, 3.0).name('风速');
+            
+            const colorFolder = gui.addFolder('颜色设置');
+            colorFolder.addColor(params, 'colorLow').name('低速颜色');
+            colorFolder.addColor(params, 'colorMid').name('中速颜色');
+            colorFolder.addColor(params, 'colorHigh').name('高速颜色');
+            colorFolder.open();
+            
+            const controlFolder = gui.addFolder('控制设置');
+            controlFolder.add(params, 'autoRotate').name('自动旋转视角').onChange((value) => {
+                controls.autoRotate = value;
+            });
+        }
+        
+        function onWindowResize() {
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            controls.update();
+            
+            const time = Date.now() * 0.001 * params.windSpeed;
+            
+            if (particleMaterial) {
+                particleMaterial.uniforms.uTime.value += 0.016 * params.windSpeed;
+            }
+            
+            updateArrows(time);
+            
+            window.renderer.render(window.scene, window.camera);
+        }
+    </script>
+    
+    <script>
+        let _screenshotRenderer;
+        
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (!_screenshotRenderer && window.renderer) {
+                        _screenshotRenderer = window.renderer;
+                    }
+                    
+                    if (!_screenshotRenderer) {
+                        throw new Error('渲染器未初始化');
+                    }
+                    
+                    if (window.scene && window.camera) {
+                        _screenshotRenderer.render(window.scene, window.camera);
+                    }
+                    
+                    const quality = event.data.quality || 0.8;
+                    const canvas = _screenshotRenderer.domElement;
+                    
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    
+                    window.parent.postMessage({
+                        type: 'screenshot-data',
+                        dataUrl: dataUrl
+                    }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

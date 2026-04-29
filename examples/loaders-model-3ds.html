@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="加载和显示 3DS 格式的 3D 模型">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 3DS 模型加载器</title>
+    <link rel="stylesheet" href="../css/example-common.css">
+</head>
+<body>
+    <!-- 3D场景容器 -->
+    <div class="three-container" id="threeContainer"></div>
+    
+    <!-- 使用importmap定义模块导入映射 -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../libs/three/r179/build/three.module.js",
+                "three/addons/": "../libs/three/r179/jsm/"
+            }
+        }
+    </script>
+    
+    <!-- 示例代码 -->
+    <script type="module">
+        // 导入Three.js、控制器、GUI和3DS加载器
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+        import { TDSLoader } from 'three/addons/loaders/TDSLoader.js';
+
+        // Three.js 核心变量 - 暴露给全局作用域以便截图功能使用
+        window.scene = null;
+        window.camera = null;
+        window.renderer = null;
+        
+        // 场景、控制器和其他变量
+        let controls;
+        let model;
+        let loadingManager;
+        let loadingElement;
+        let gui;
+
+        // GUI参数
+        const params = {
+            rotationSpeed: 0,
+            wireframe: false,
+            autoRotate: true,
+            showGrid: true,
+            backgroundColor: 0x222222,
+            resetCamera: function() {
+                resetCamera();
+            }
+        };
+
+        // 初始化场景
+        init();
+        
+        // 动画循环
+        animate();
+
+        /**
+         * 初始化Three.js场景、相机、渲染器和控制器
+         */
+        function init() {
+            // 创建加载管理器和加载提示
+            createLoadingManager();
+            
+            // 创建场景
+            window.scene = new THREE.Scene();
+            window.scene.background = new THREE.Color(params.backgroundColor);
+
+            // 创建相机
+            window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            window.camera.position.set(0, 5, 10);
+
+            // 创建渲染器
+            window.renderer = new THREE.WebGLRenderer({ antialias: true });
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            window.renderer.setPixelRatio(window.devicePixelRatio);
+            window.renderer.shadowMap.enabled = true;
+            document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+
+            // 创建控制器
+            controls = new OrbitControls(window.camera, window.renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.autoRotate = params.autoRotate;
+            controls.autoRotateSpeed = 1.0;
+
+            // 添加灯光
+            addLights();
+
+            // 添加地面网格
+            addGround();
+
+            // 加载3DS模型
+            load3DSModel();
+
+            // 创建GUI
+            createGUI();
+
+            // 添加事件监听器
+            window.addEventListener('resize', onWindowResize);
+        }
+        
+        /**
+         * 创建加载管理器和加载提示
+         */
+        function createLoadingManager() {
+            loadingManager = new THREE.LoadingManager();
+            
+            // 创建加载提示元素
+            loadingElement = document.createElement('div');
+            loadingElement.style.position = 'absolute';
+            loadingElement.style.top = '50%';
+            loadingElement.style.left = '50%';
+            loadingElement.style.transform = 'translate(-50%, -50%)';
+            loadingElement.style.color = 'white';
+            loadingElement.style.fontSize = '24px';
+            loadingElement.style.textShadow = '1px 1px 1px rgba(0,0,0,0.8)';
+            loadingElement.textContent = '加载中...';
+            document.body.appendChild(loadingElement);
+            
+            // 设置加载管理器回调
+            loadingManager.onProgress = function(url, itemsLoaded, itemsTotal) {
+                const progress = Math.round((itemsLoaded / itemsTotal) * 100);
+                loadingElement.textContent = `加载中... ${progress}%`;
+            };
+            
+            loadingManager.onLoad = function() {
+                loadingElement.style.display = 'none';
+            };
+            
+            loadingManager.onError = function(url) {
+                console.error('加载出错:', url);
+                loadingElement.textContent = '加载失败，请刷新重试';
+            };
+        }
+
+        /**
+         * 创建GUI控制面板
+         */
+        function createGUI() {
+            gui = new GUI({ title: '3DS模型控制面板', width: 300 });
+            
+            // 调整GUI位置
+            gui.domElement.style.position = 'absolute';
+            gui.domElement.style.top = '60px';
+            gui.domElement.style.right = '10px';
+            
+            // 确保GUI在所有环境下都可见
+            gui.domElement.style.zIndex = '1000';
+            
+            // 模型控制
+            gui.add(params, 'rotationSpeed', 0, 5, 0.1).name('旋转速度');
+            gui.add(params, 'wireframe').name('线框模式').onChange(value => {
+                if (model) {
+                    model.traverse(function(child) {
+                        if (child.isMesh) {
+                            child.material.wireframe = value;
+                        }
+                    });
+                }
+            });
+            
+            // 相机控制
+            gui.add(params, 'autoRotate').name('自动旋转').onChange(value => {
+                controls.autoRotate = value;
+            });
+            
+            // 场景控制
+            gui.add(params, 'showGrid').name('显示网格').onChange(value => {
+                window.scene.children.forEach(child => {
+                    if (child instanceof THREE.GridHelper) {
+                        child.visible = value;
+                    }
+                });
+            });
+            
+            // 背景颜色
+            const bgColors = {
+                '深灰色': 0x222222,
+                '黑色': 0x000000,
+                '白色': 0xffffff,
+                '深蓝色': 0x0a0a2a,
+                '深绿色': 0x1a472a
+            };
+            
+            gui.add(params, 'backgroundColor', bgColors).name('背景颜色').onChange(value => {
+                window.scene.background = new THREE.Color(value);
+            });
+            
+            // 重置相机
+            gui.add(params, 'resetCamera').name('重置相机');
+        }
+
+        /**
+         * 添加灯光
+         */
+        function addLights() {
+            // 环境光
+            const ambientLight = new THREE.AmbientLight(0x606060, 1.0);
+            window.scene.add(ambientLight);
+
+            // 方向光
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
+            directionalLight.position.set(1, 1, 1);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 2048;
+            directionalLight.shadow.mapSize.height = 2048;
+            window.scene.add(directionalLight);
+            
+            // 半球光
+            const hemisphereLight = new THREE.HemisphereLight(0xffffbb, 0x080820, 0.5);
+            window.scene.add(hemisphereLight);
+        }
+
+        /**
+         * 添加地面
+         */
+        function addGround() {
+            const groundGeometry = new THREE.PlaneGeometry(100, 100);
+            const groundMaterial = new THREE.MeshStandardMaterial({
+                color: 0x333333,
+                roughness: 0.8,
+                metalness: 0.2,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.5
+            });
+            const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2;
+            ground.position.y = -2;
+            ground.receiveShadow = true;
+            window.scene.add(ground);
+
+            // 添加网格辅助
+            const gridHelper = new THREE.GridHelper(100, 100, 0x444444, 0x222222);
+            gridHelper.position.y = -1.99;
+            window.scene.add(gridHelper);
+        }
+
+        /**
+         * 加载3DS模型
+         */
+        function load3DSModel() {
+            const loader = new TDSLoader(loadingManager);
+            
+            // 设置纹理路径
+            loader.setResourcePath('../models/3ds/portalgun/textures/');
+            
+            loader.load('../models/3ds/portalgun/portalgun.3ds', function(object) {
+                model = object;
+                
+                // 调整模型大小和位置
+                model.scale.set(0.05, 0.05, 0.05);
+                model.position.set(0, 0, 0);
+                
+                // 启用阴影
+                model.traverse(function(child) {
+                    if (child.isMesh) {
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                        
+                        // 确保材质正确
+                        if (child.material) {
+                            // 如果是数组，处理每个材质
+                            if (Array.isArray(child.material)) {
+                                child.material.forEach(material => {
+                                    material.side = THREE.DoubleSide;
+                                });
+                            } else {
+                                child.material.side = THREE.DoubleSide;
+                            }
+                        }
+                    }
+                });
+                
+                // 添加到场景
+                window.scene.add(model);
+                
+                // 居中模型
+                centerModel(model);
+                
+            }, function(xhr) {
+                // 加载进度
+                if (xhr.lengthComputable && xhr.total > 0) {
+                    const percent = Math.round((xhr.loaded / xhr.total) * 100);
+                    console.log(`${percent}% 已加载`);
+                } else {
+                    console.log(`已加载 ${(xhr.loaded / 1024).toFixed(2)} KB`);
+                }
+            }, function(error) {
+                console.error('加载3DS模型出错:', error);
+                loadingElement.textContent = '加载失败，请刷新重试';
+            });
+        }
+
+        /**
+         * 居中模型
+         */
+        function centerModel(model) {
+            // 计算包围盒
+            const box = new THREE.Box3().setFromObject(model);
+            const center = box.getCenter(new THREE.Vector3());
+            const size = box.getSize(new THREE.Vector3());
+
+            // 计算模型尺寸和中心点
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const fov = window.camera.fov * (Math.PI / 180);
+            
+            // 计算更合适的相机距离，确保整个模型都在视野内
+            let cameraZ = Math.abs(maxDim / Math.sin(fov / 2)) * 1.5;
+            
+            // 显示模型信息
+            console.log(`模型尺寸: ${size.x.toFixed(2)} x ${size.y.toFixed(2)} x ${size.z.toFixed(2)}`);
+            console.log(`最大尺寸: ${maxDim.toFixed(2)}, 相机距离: ${cameraZ.toFixed(2)}`);
+
+            // 调整相机位置
+            window.camera.position.set(
+                center.x, 
+                center.y + size.y * 0.5, 
+                center.z + cameraZ
+            );
+            window.camera.lookAt(center);
+            controls.target.copy(center);
+            controls.update();
+        }
+
+        /**
+         * 重置相机
+         */
+        function resetCamera() {
+            if (model) {
+                centerModel(model);
+            } else {
+                window.camera.position.set(0, 5, 10);
+                window.camera.lookAt(0, 0, 0);
+                controls.target.set(0, 0, 0);
+                controls.update();
+            }
+        }
+
+        /**
+         * 窗口大小变化处理
+         */
+        function onWindowResize() {
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        /**
+         * 动画循环
+         */
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // 更新控制器
+            controls.update();
+
+            // 旋转模型
+            if (model && params.rotationSpeed > 0) {
+                model.rotation.y += params.rotationSpeed * 0.01;
+            }
+
+            // 渲染场景
+            window.renderer.render(window.scene, window.camera);
+        }
+    </script>
+    
+    <!-- 截图功能脚本 - 请勿修改此部分 -->
+    <script>
+        // 全局变量，用于存储渲染器引用
+        let _screenshotRenderer;
+        
+        // 添加消息监听器，处理截图请求
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    // 获取当前渲染器
+                    if (!_screenshotRenderer && window.renderer) {
+                        _screenshotRenderer = window.renderer;
+                    }
+                    
+                    // 确保渲染器已经初始化
+                    if (!_screenshotRenderer) {
+                        throw new Error('渲染器未初始化');
+                    }
+                    
+                    // 强制渲染一帧，确保内容是最新的
+                    if (window.scene && window.camera) {
+                        _screenshotRenderer.render(window.scene, window.camera);
+                    }
+                    
+                    // 获取canvas的图像数据（使用较低的质量和尺寸以减小文件大小）
+                    const quality = event.data.quality || 0.8;
+                    const canvas = _screenshotRenderer.domElement;
+                    
+                    // 创建一个较小尺寸的临时canvas
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600; // 最大尺寸为600像素
+                    
+                    // 计算缩放比例，保持宽高比
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    
+                    // 在临时canvas上绘制缩小的图像
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    
+                    // 获取缩小后的图像数据
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    
+                    // 将图像数据发送回父窗口
+                    window.parent.postMessage({
+                        type: 'screenshot-data',
+                        dataUrl: dataUrl
+                    }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    // 发送错误信息回父窗口
+                    window.parent.postMessage({
+                        type: 'screenshot-error',
+                        error: error.message
+                    }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 页面描述，有助于SEO优化 -->
+    <meta name="description" content="Three.js线材质对比示例 - 展示LineBasicMaterial和LineDashedMaterial的使用方法和效果">
+    <!-- Three.js版本信息 -->
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 线材质对比</title>
+    <!-- 引入公共样式表 -->
+    <link rel="stylesheet" href="../css/example-common.css">
+</head>
+<body>
+    <!-- 3D场景容器 -->
+    <div class="three-container" id="threeContainer"></div>
+    
+    <!-- 
+    使用importmap定义模块导入映射
+    这是一种现代化的ES模块导入方式，可以简化导入路径
+    通过定义别名，可以使用简短的导入语句，如 import * as THREE from 'three'
+    -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../libs/three/r179/build/three.module.js",
+                "three/addons/": "../libs/three/r179/jsm/"
+            }
+        }
+    </script>
+    
+    <!-- 示例代码 - 线材质对比 -->
+    <script type="module">
+        // 导入Three.js核心模块
+        import * as THREE from 'three';
+        // 导入轨道控制器，用于交互式旋转和缩放场景
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        // 导入GUI控制面板，用于调整参数
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+        
+        // Three.js 核心变量 - 暴露给全局作用域以便截图功能使用
+        window.scene = null;     // 场景对象，包含所有3D元素
+        window.camera = null;    // 相机对象，定义视角和视野
+        window.renderer = null;  // 渲染器对象，将场景渲染到canvas上
+        let basicLine, dashedLine; // 线条对象
+        let controls;           // 轨道控制器对象
+        let clock = new THREE.Clock(); // 时钟对象，用于动画
+        let gui, guiFolders = {}; // GUI控制面板
+        
+        // 参数配置对象 - 用于GUI控制面板和创建3D对象
+        const params = {
+            // 线条类型
+            lineType: 'both',     // 'basic', 'dashed', 'both'
+            
+            // 线条形状
+            shape: 'spiral',      // 'spiral', 'helix', 'knot', 'wave', 'circle'
+            
+            // 线条参数
+            lineWidth: 2,         // 线宽
+            color: '#00ffff',     // 颜色（青色）
+            
+            // 虚线参数
+            dashSize: 3,          // 虚线段长度
+            gapSize: 1,           // 间隙长度
+            dashScale: 1,         // 比例
+            
+            // 动画参数
+            animate: true,        // 是否启用动画
+            animationSpeed: 1,    // 动画速度
+            
+            // 控制器参数
+            autoRotate: true      // 是否自动旋转
+        };
+        
+        /**
+         * 初始化Three.js场景、相机、渲染器和控制器
+         * 这是整个应用的入口点
+         */
+        function init() {
+            // 创建场景 - 所有3D对象的容器
+            window.scene = new THREE.Scene();
+            // 设置场景背景色为深灰色
+            window.scene.background = new THREE.Color(0x2c3e50);
+            
+            // 创建透视相机 - 模拟人眼视角
+            // 参数：视场角(FOV)，宽高比，近裁剪面，远裁剪面
+            window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            // 设置相机位置，以便能看到场景中的对象
+            window.camera.position.set(0, 0, 30);
+            
+            // 创建WebGL渲染器 - 将3D场景渲染到canvas上
+            window.renderer = new THREE.WebGLRenderer({ antialias: true }); // 启用抗锯齿
+            // 设置渲染器尺寸为窗口大小
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            // 设置设备像素比，提高在高DPI设备上的清晰度
+            window.renderer.setPixelRatio(window.devicePixelRatio);
+            // 将渲染器的canvas添加到DOM中
+            document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+            
+            // 添加轨道控制器 - 允许用户交互式旋转和缩放场景
+            controls = new OrbitControls(window.camera, window.renderer.domElement);
+            controls.enableDamping = true;       // 启用阻尼效果，使控制更平滑
+            controls.dampingFactor = 0.05;       // 阻尼系数
+            controls.autoRotate = params.autoRotate; // 设置是否自动旋转
+            controls.autoRotateSpeed = 2.0;      // 自动旋转速度
+            
+            // 添加环境光 - 提供均匀的全局照明
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            window.scene.add(ambientLight);
+            
+            // 添加方向光 - 模拟太阳光
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight.position.set(1, 1, 1); // 设置光源位置
+            window.scene.add(directionalLight);
+            
+            // 创建线条
+            createLines();
+            
+            // 初始化GUI控制面板
+            initGUI();
+            
+            // 监听窗口大小变化，调整场景
+            window.addEventListener('resize', onWindowResize);
+            
+            // 开始动画循环
+            animate();
+        }
+        
+        /**
+         * 创建线条对象
+         * 根据当前参数创建或更新线条
+         */
+        function createLines() {
+            // 清除现有的线条
+            if (basicLine) window.scene.remove(basicLine);
+            if (dashedLine) window.scene.remove(dashedLine);
+            
+            // 创建几何体
+            const geometry = createGeometry(params.shape);
+            
+            // 创建基础线材质
+            const basicMaterial = new THREE.LineBasicMaterial({
+                color: params.color,
+                linewidth: params.lineWidth
+            });
+            
+            // 创建虚线材质
+            const dashedMaterial = new THREE.LineDashedMaterial({
+                color: params.color,
+                linewidth: params.lineWidth,
+                dashSize: params.dashSize,
+                gapSize: params.gapSize,
+                scale: params.dashScale
+            });
+            
+            // 创建线条对象
+            basicLine = new THREE.Line(geometry.clone(), basicMaterial);
+            dashedLine = new THREE.Line(geometry.clone(), dashedMaterial);
+            
+            // 计算虚线段
+            dashedLine.computeLineDistances();
+            
+            // 设置位置
+            if (params.lineType === 'both') {
+                basicLine.position.x = -10;
+                dashedLine.position.x = 10;
+            }
+            
+            // 根据选择的线条类型添加到场景
+            if (params.lineType === 'basic' || params.lineType === 'both') {
+                window.scene.add(basicLine);
+            }
+            if (params.lineType === 'dashed' || params.lineType === 'both') {
+                window.scene.add(dashedLine);
+            }
+        }
+        
+        /**
+         * 根据形状类型创建几何体
+         * @param {string} shape - 形状类型
+         * @returns {THREE.BufferGeometry} - 创建的几何体
+         */
+        function createGeometry(shape) {
+            const points = [];
+            const segments = 200;
+            
+            switch (shape) {
+                case 'spiral':
+                    // 创建螺旋线
+                    for (let i = 0; i < segments; i++) {
+                        const t = i / segments * Math.PI * 10;
+                        const r = 10 * (1 - i / segments);
+                        const x = r * Math.cos(t);
+                        const y = r * Math.sin(t);
+                        const z = i / segments * 10 - 5;
+                        points.push(new THREE.Vector3(x, y, z));
+                    }
+                    break;
+                    
+                case 'helix':
+                    // 创建螺旋
+                    for (let i = 0; i < segments; i++) {
+                        const t = i / segments * Math.PI * 6;
+                        const x = 8 * Math.cos(t);
+                        const y = 8 * Math.sin(t);
+                        const z = i / segments * 20 - 10;
+                        points.push(new THREE.Vector3(x, y, z));
+                    }
+                    break;
+                    
+                case 'knot':
+                    // 创建结
+                    for (let i = 0; i < segments; i++) {
+                        const t = i / segments * Math.PI * 2;
+                        const r = 10;
+                        const x = r * (2 + Math.cos(3 * t)) * Math.cos(2 * t) / 3;
+                        const y = r * (2 + Math.cos(3 * t)) * Math.sin(2 * t) / 3;
+                        const z = r * Math.sin(3 * t) / 3;
+                        points.push(new THREE.Vector3(x, y, z));
+                    }
+                    break;
+                    
+                case 'wave':
+                    // 创建波浪
+                    for (let i = 0; i < segments; i++) {
+                        const x = i / segments * 20 - 10;
+                        const y = 5 * Math.sin(i / segments * Math.PI * 4);
+                        const z = 5 * Math.cos(i / segments * Math.PI * 2);
+                        points.push(new THREE.Vector3(x, y, z));
+                    }
+                    break;
+                    
+                case 'circle':
+                    // 创建圆
+                    for (let i = 0; i <= segments; i++) {
+                        const t = i / segments * Math.PI * 2;
+                        const x = 10 * Math.cos(t);
+                        const y = 10 * Math.sin(t);
+                        const z = 0;
+                        points.push(new THREE.Vector3(x, y, z));
+                    }
+                    break;
+            }
+            
+            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            return geometry;
+        }
+        
+        /**
+         * 初始化GUI控制面板
+         * 创建用户可交互的控制界面，用于调整参数
+         */
+        function initGUI() {
+            // 创建GUI实例
+            const gui = new GUI({ title: '线材质对比', width: 300 });
+            
+            // 调整GUI位置，避免与其他UI元素重叠
+            gui.domElement.style.position = 'absolute';
+            gui.domElement.style.top = '60px';
+            gui.domElement.style.right = '10px';
+            
+            // 确保GUI在所有环境下都可见
+            gui.domElement.style.zIndex = '1000';
+            gui.domElement.style.maxHeight = '80vh'; // 限制最大高度
+            gui.domElement.style.overflowY = 'auto'; // 允许垂直滚动
+            
+            // 确保GUI在页面加载后立即可见
+            setTimeout(() => {
+                gui.show();
+                // 强制更新GUI
+                for (const controller of gui.controllers) {
+                    controller.updateDisplay();
+                }
+            }, 100);
+            
+            // 线条类型
+            gui.add(params, 'lineType', {
+                '基础线条': 'basic',
+                '虚线': 'dashed',
+                '对比显示': 'both'
+            }).name('线条类型').onChange(createLines);
+            
+            // 线条形状
+            gui.add(params, 'shape', {
+                '螺旋线': 'spiral',
+                '螺旋': 'helix',
+                '结': 'knot',
+                '波浪': 'wave',
+                '圆': 'circle'
+            }).name('线条形状').onChange(createLines);
+            
+            // 线条参数
+            const lineFolder = gui.addFolder('线条参数');
+            guiFolders.line = lineFolder;
+            
+            lineFolder.add(params, 'lineWidth', 1, 10)
+                .name('线宽')
+                .onChange(function() {
+                    if (basicLine) basicLine.material.linewidth = params.lineWidth;
+                    if (dashedLine) dashedLine.material.linewidth = params.lineWidth;
+                });
+            
+            lineFolder.addColor(params, 'color')
+                .name('颜色')
+                .onChange(function() {
+                    if (basicLine) basicLine.material.color.set(params.color);
+                    if (dashedLine) dashedLine.material.color.set(params.color);
+                });
+            
+            // 默认展开此文件夹
+            lineFolder.open();
+            
+            // 虚线参数
+            const dashFolder = gui.addFolder('虚线参数');
+            guiFolders.dash = dashFolder;
+            
+            dashFolder.add(params, 'dashSize', 0.1, 10)
+                .step(0.1)
+                .name('虚线段长度')
+                .onChange(function() {
+                    if (dashedLine) {
+                        dashedLine.material.dashSize = params.dashSize;
+                        dashedLine.computeLineDistances();
+                    }
+                });
+            
+            dashFolder.add(params, 'gapSize', 0.1, 10)
+                .step(0.1)
+                .name('间隙长度')
+                .onChange(function() {
+                    if (dashedLine) {
+                        dashedLine.material.gapSize = params.gapSize;
+                        dashedLine.computeLineDistances();
+                    }
+                });
+            
+            dashFolder.add(params, 'dashScale', 0.1, 5)
+                .step(0.1)
+                .name('比例')
+                .onChange(function() {
+                    if (dashedLine) {
+                        dashedLine.material.scale = params.dashScale;
+                        dashedLine.computeLineDistances();
+                    }
+                });
+            
+            // 默认展开此文件夹
+            dashFolder.open();
+            
+            // 动画参数
+            const animationFolder = gui.addFolder('动画参数');
+            guiFolders.animation = animationFolder;
+            
+            animationFolder.add(params, 'animate')
+                .name('启用动画');
+                
+            animationFolder.add(params, 'animationSpeed', 0.1, 5)
+                .step(0.1)
+                .name('动画速度');
+                
+            animationFolder.add(params, 'autoRotate')
+                .name('自动旋转')
+                .onChange(function() {
+                    controls.autoRotate = params.autoRotate;
+                });
+            
+            // 默认展开此文件夹
+            animationFolder.open();
+        }
+        
+        /**
+         * 处理窗口大小变化
+         * 调整相机和渲染器以适应新的窗口尺寸
+         */
+        function onWindowResize() {
+            // 更新相机宽高比
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            // 更新相机投影矩阵
+            window.camera.updateProjectionMatrix();
+            // 更新渲染器尺寸
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        /**
+         * 动画循环函数
+         * 使用requestAnimationFrame实现平滑动画
+         * 每帧更新场景并渲染
+         */
+        function animate() {
+            // 请求下一帧动画
+            requestAnimationFrame(animate);
+            
+            // 更新轨道控制器
+            // 如果启用了阻尼效果，需要在每帧调用update
+            controls.update();
+            
+            // 动画效果
+            if (params.animate) {
+                const time = clock.getElapsedTime() * params.animationSpeed;
+                
+                if (basicLine) {
+                    basicLine.rotation.y = time * 0.2;
+                }
+                
+                if (dashedLine) {
+                    dashedLine.rotation.y = time * 0.2;
+                    
+                    // 更新虚线动画
+                    dashedLine.material.dashSize = params.dashSize + Math.sin(time) * 0.5;
+                    dashedLine.material.gapSize = params.gapSize + Math.cos(time) * 0.5;
+                    dashedLine.computeLineDistances();
+                }
+            }
+            
+            // 渲染场景
+            window.renderer.render(window.scene, window.camera);
+        }
+        
+        // 初始化应用
+        init();
+    </script>
+    
+    <!-- 
+    ===================================================
+    截图功能脚本 - 请勿修改此部分
+    此脚本处理从父窗口发来的截图请求，用于生成示例封面，与示例业务并无关联
+    ===================================================
+    -->
+    <script>
+        // 全局变量，用于存储渲染器引用
+        let _screenshotRenderer;
+        
+        // 添加消息监听器，处理截图请求
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    // 获取当前渲染器
+                    if (!_screenshotRenderer && window.renderer) {
+                        _screenshotRenderer = window.renderer;
+                    }
+                    
+                    // 确保渲染器已经初始化
+                    if (!_screenshotRenderer) {
+                        throw new Error('渲染器未初始化');
+                    }
+                    
+                    // 强制渲染一帧，确保内容是最新的
+                    if (window.scene && window.camera) {
+                        _screenshotRenderer.render(window.scene, window.camera);
+                    }
+                    
+                    // 获取canvas的图像数据（使用较低的质量和尺寸以减小文件大小）
+                    const quality = event.data.quality || 0.8;
+                    const canvas = _screenshotRenderer.domElement;
+                    
+                    // 创建一个较小尺寸的临时canvas
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600; // 最大尺寸为600像素
+                    
+                    // 计算缩放比例，保持宽高比
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    
+                    // 在临时canvas上绘制缩小的图像
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    
+                    // 获取缩小后的图像数据
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    
+                    // 将图像数据发送回父窗口
+                    window.parent.postMessage({
+                        type: 'screenshot-data',
+                        dataUrl: dataUrl
+                    }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    // 发送错误信息回父窗口
+                    window.parent.postMessage({
+                        type: 'screenshot-error',
+                        error: error.message
+                    }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
