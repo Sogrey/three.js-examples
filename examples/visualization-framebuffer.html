@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Three.js帧缓存基础 - 使用帧缓冲区复制实现后处理效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 帧缓存基础</title>
+    <link rel="stylesheet" href="../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+    
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../libs/three/r179/build/three.module.js",
+                "three/addons/": "../libs/three/r179/jsm/"
+            }
+        }
+    </script>
+    
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+        import * as BufferGeometryUtils from '../libs/three/r179/BufferGeometryUtils.js';
+        
+        window.scene = null;
+        window.camera = null;
+        window.renderer = null;
+        
+        const params = {
+            boxCount: 50,
+            backgroundColor: '#00008B'
+        };
+        
+        let controls;
+        let sceneOrtho, cameraOrtho, renderTarget, vector;
+        let geometries = [];
+        
+        init();
+        animate();
+        
+        function init() {
+            window.scene = new THREE.Scene();
+            window.scene.background = new THREE.Color(params.backgroundColor);
+            
+            window.camera = new THREE.PerspectiveCamera(
+                60,
+                window.innerWidth / window.innerHeight,
+                0.1,
+                1000
+            );
+            window.camera.position.set(-18, 12, 17);
+            window.camera.lookAt(0, 0, 0);
+            
+            window.renderer = new THREE.WebGLRenderer({ antialias: true });
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            window.renderer.setPixelRatio(window.devicePixelRatio);
+            window.renderer.autoClear = false;
+            document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+            
+            controls = new OrbitControls(window.camera, window.renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            
+            createScene();
+            setupFrameBuffer();
+            initGUI();
+            
+            window.addEventListener('resize', onWindowResize);
+        }
+        
+        function setupFrameBuffer() {
+            const dpr = window.devicePixelRatio;
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            
+            sceneOrtho = new THREE.Scene();
+            cameraOrtho = new THREE.OrthographicCamera(
+                -width / 2,
+                width / 2,
+                height / 2,
+                -height / 2,
+                1,
+                10
+            );
+            cameraOrtho.position.z = 10;
+            cameraOrtho.left = -width / 2;
+            cameraOrtho.right = width / 2;
+            cameraOrtho.top = height / 2;
+            cameraOrtho.bottom = height / 2;
+            
+            renderTarget = new THREE.WebGLRenderTarget(width * dpr, height * dpr);
+            vector = new THREE.Vector2();
+            
+            const g = new THREE.PlaneGeometry(width, height);
+            
+            const mesh = new THREE.Mesh(
+                g,
+                new THREE.MeshBasicMaterial({
+                    map: renderTarget.texture,
+                    transparent: true
+                })
+            );
+            mesh.scale.set(0.5, 0.5, 0.5);
+            mesh.position.set(-width * 0.25, height * 0.25, 0);
+            sceneOrtho.add(mesh);
+        }
+        
+        function createScene() {
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            window.scene.add(ambientLight);
+            
+            const dirLight = new THREE.DirectionalLight(0x0000ff, 3);
+            dirLight.position.set(20, 20, 20);
+            dirLight.castShadow = true;
+            dirLight.shadow.camera.top = 40;
+            dirLight.shadow.camera.bottom = -40;
+            dirLight.shadow.camera.left = -40;
+            dirLight.shadow.camera.right = 40;
+            dirLight.shadow.camera.near = 1;
+            dirLight.shadow.camera.far = 80;
+            dirLight.shadow.mapSize.set(1024, 1024);
+            window.scene.add(dirLight);
+            
+            const groundMesh = new THREE.Mesh(
+                new THREE.PlaneGeometry(20, 20),
+                new THREE.MeshStandardMaterial({ color: 0xffffff, depthWrite: false })
+            );
+            groundMesh.rotation.x = -Math.PI / 2;
+            groundMesh.receiveShadow = true;
+            window.scene.add(groundMesh);
+            
+            const textureLoader = new THREE.TextureLoader();
+            const tex = textureLoader.load('../images/textures/image.jpg', (loadedTex) => {
+                loadedTex.wrapS = THREE.RepeatWrapping;
+                loadedTex.wrapT = THREE.RepeatWrapping;
+            });
+            
+            const material = new THREE.MeshStandardMaterial({
+                map: tex
+            });
+            
+            geometries = [];
+            const helper = new THREE.Object3D();
+            
+            for (let i = 0; i < params.boxCount; i++) {
+                const h = Math.round(Math.random() * 3) + 1;
+                const x = Math.round(Math.random() * 8);
+                const y = Math.round(Math.random() * 8);
+                helper.position.set((x % 2 ? -1 : 1) * x, h * 0.5, (y % 2 ? -1 : 1) * y);
+                const geometry = new THREE.BoxGeometry(1, h, 1);
+                helper.updateWorldMatrix(true, false);
+                geometry.applyMatrix4(helper.matrixWorld);
+                geometries.push(geometry);
+            }
+            
+            const mergedGeometry = BufferGeometryUtils.mergeGeometries(geometries, false);
+            const cube = new THREE.Mesh(mergedGeometry, material);
+            cube.receiveShadow = true;
+            cube.castShadow = true;
+            window.scene.add(cube);
+        }
+        
+        function initGUI() {
+            const gui = new GUI({ title: '帧缓存控制面板', width: 300 });
+            
+            gui.domElement.style.position = 'absolute';
+            gui.domElement.style.top = '60px';
+            gui.domElement.style.right = '10px';
+            gui.domElement.style.zIndex = '1000';
+            gui.domElement.style.maxHeight = '80vh';
+            gui.domElement.style.overflowY = 'auto';
+            
+            setTimeout(() => {
+                gui.show();
+            }, 100);
+            
+            const sceneFolder = gui.addFolder('场景设置');
+            sceneFolder.addColor(params, 'backgroundColor').name('背景颜色').onChange(value => {
+                window.scene.background.set(value);
+            });
+            sceneFolder.add(params, 'boxCount', 10, 100).step(1).name('方块数量').onChange(() => {
+                rebuildBoxes();
+            });
+        }
+        
+        function rebuildBoxes() {
+            const oldCube = window.scene.children.find(child => 
+                child.isMesh && child.geometry && child.geometry.attributes.position && 
+                child.geometry.attributes.position.count > 200
+            );
+            if (oldCube) {
+                window.scene.remove(oldCube);
+                oldCube.geometry.dispose();
+            }
+            
+            geometries = [];
+            const helper = new THREE.Object3D();
+            
+            const textureLoader = new THREE.TextureLoader();
+            const tex = textureLoader.load('../images/textures/image.jpg', (loadedTex) => {
+                loadedTex.wrapS = THREE.RepeatWrapping;
+                loadedTex.wrapT = THREE.RepeatWrapping;
+            });
+            const material = new THREE.MeshStandardMaterial({ map: tex });
+            
+            for (let i = 0; i < params.boxCount; i++) {
+                const h = Math.round(Math.random() * 3) + 1;
+                const x = Math.round(Math.random() * 8);
+                const y = Math.round(Math.random() * 8);
+                helper.position.set((x % 2 ? -1 : 1) * x, h * 0.5, (y % 2 ? -1 : 1) * y);
+                const geometry = new THREE.BoxGeometry(1, h, 1);
+                helper.updateWorldMatrix(true, false);
+                geometry.applyMatrix4(helper.matrixWorld);
+                geometries.push(geometry);
+            }
+            
+            const mergedGeometry = BufferGeometryUtils.mergeGeometries(geometries, false);
+            const cube = new THREE.Mesh(mergedGeometry, material);
+            cube.receiveShadow = true;
+            cube.castShadow = true;
+            window.scene.add(cube);
+        }
+        
+        function onWindowResize() {
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            
+            const dpr = window.devicePixelRatio;
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            
+            cameraOrtho.left = -width / 2;
+            cameraOrtho.right = width / 2;
+            cameraOrtho.top = height / 2;
+            cameraOrtho.bottom = height / 2;
+            cameraOrtho.updateProjectionMatrix();
+            
+            renderTarget.setSize(width * dpr, height * dpr);
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            controls.update();
+            
+            window.renderer.clear();
+            window.renderer.render(window.scene, window.camera);
+            
+            if (renderTarget) {
+                window.renderer.setRenderTarget(renderTarget);
+                window.renderer.render(window.scene, window.camera);
+                window.renderer.setRenderTarget(null);
+                
+                window.renderer.clearDepth();
+                window.renderer.render(sceneOrtho, cameraOrtho);
+            }
+        }
+    </script>
+</body>
+</html>

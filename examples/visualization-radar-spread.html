@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="雷达扫描特效 - 旋转扫描线效果">
+    <meta name="description" content="雷达扩散特效 - 圆形波纹向外扩散效果">
     <meta name="three-version" content="r179">
-    <title>Three.js 示例 - 雷达扫描特效</title>
+    <title>Three.js 示例 - 雷达扩散特效</title>
     <link rel="stylesheet" href="../css/example-common.css">
 </head>
 <body>
@@ -113,32 +113,17 @@
             const vertexShader2 = `#include <fog_vertex>
                     vUv=position.xz/uSize;`;
             const vertexShader3 = `#include <fog_vertex>
-                      vUv=vec2(position.x,-position.y)/uSize;`;
-
+                      vUv=vec2(-position.x,-position.y)/uSize;`;
             const fragmentShader1 = `varying vec2 vUv;
                   uniform float uTime;
                   uniform vec3 uColor;
                   uniform float uSize;
-                  mat2 rotate2d(float angle)
-                  {
-                      return mat2(cos(angle), - sin(angle),
-                                  sin(angle), cos(angle));
-                  }
-                  float vertical_line(in vec2 uv)
-                  {
-                      if (uv.y > 0.0 && length(uv) < 1.0)
-                      {
-                          float theta = mod(180.0 * atan(uv.y, uv.x)/3.14, 360.0);
-                          float gradient = clamp(1.0-theta/90.0,0.0,1.0);
-                          return 0.5 * gradient;
-                      }
-                      return 0.0;
-                  }
                   void main() {`;
-
             const fragmentShader2 = `#include <dithering_fragment> 
-              mat2 rotation_matrix = rotate2d(- uTime*PI*2.0);             
-              gl_FragColor.rgb= mix( gl_FragColor.rgb, uColor, vertical_line(rotation_matrix * vUv) );`;
+              float d=length(vUv);
+                    if(d >= uTime&&d<=uTime+ 0.1) {
+                      gl_FragColor.rgb = gl_FragColor.rgb+mix(uColor,gl_FragColor.rgb,1.0-(d-uTime)*10.0 )*0.5  ;                    
+                    }`;
 
             material.onBeforeCompile = (shader) => {
                 shaders.push(shader);
@@ -181,7 +166,7 @@
             }, 100);
 
             gui.add(params, 'uSize', 20, 100).name('作用范围');
-            gui.add(params, 'speed', 0.001, 0.02).name('扫描速度');
+            gui.add(params, 'speed', 0.001, 0.02).name('扩散速度');
             gui.addColor(params, 'uColor').name('雷达颜色');
         }
 

@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Three.js 纯色 3D 等高线图 - 基于热力图数据的3D等高线可视化">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 纯色 3D 等高线图</title>
+    <link rel="stylesheet" href="../css/example-common.css">
+    <style>
+        body { margin: 0; overflow: hidden; }
+        #threeContainer { width: 100vw; height: 100vh; }
+    </style>
+</head>
+<body>
+    <div id="threeContainer"></div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../libs/three/r179/build/three.module.js",
+                "three/addons/": "../libs/three/r179/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+        import { initGeoFun, latlng2px } from '../libs/geoUtil.js';
+        import { drawCircle } from '../libs/heatmap.js';
+
+        initGeoFun(1000);
+
+        window.scene = null;
+        window.camera = null;
+        window.renderer = null;
+
+        const params = {
+            autoRotate: true,
+            rotationSpeed: 0.5,
+            uHeight: 50,
+            uMinLne: 0.3,
+            uLineColor: '#ffffff',
+            heatmapRadius: 40,
+            showWireframe: false
+        };
+
+        let controls;
+        let contourMesh;
+        let heatmapInfo = null;
+
+        init();
+        animate();
+
+        async function init() {
+            window.scene = new THREE.Scene();
+            window.scene.background = new THREE.Color(0x000000);
+
+            window.camera = new THREE.PerspectiveCamera(
+                45,
+                window.innerWidth / window.innerHeight,
+                0.1,
+                1000
+            );
+            window.camera.position.set(-25, 100, 150);
+            window.camera.lookAt(0, 0, 0);
+
+            window.renderer = new THREE.WebGLRenderer({ antialias: true });
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            window.renderer.setPixelRatio(window.devicePixelRatio);
+            document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+
+            controls = new OrbitControls(window.camera, window.renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+
+            await loadHeatmapData();
+            createContour();
+            initGUI();
+
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        async function loadHeatmapData() {
+            try {
+                const response = await fetch('../models/json/traffic.json');
+                const data = await response.json();
+
+                const info = {
+                    max: Number.MIN_SAFE_INTEGER,
+                    min: Number.MAX_SAFE_INTEGER,
+                    maxlng: Number.MIN_SAFE_INTEGER,
+                    minlng: Number.MAX_SAFE_INTEGER,
+                    maxlat: Number.MIN_SAFE_INTEGER,
+                    minlat: Number.MAX_SAFE_INTEGER,
+                    data: []
+                };
+
+                data.features.forEach((item) => {
+                    const pos = latlng2px(item.geometry.coordinates);
+                    const newItem = {
+                        lng: pos[0],
+                        lat: pos[1],
+                        value: item.properties.avg
+                    };
+                    info.max = Math.max(newItem.value, info.max);
+                    info.maxlng = Math.max(newItem.lng, info.maxlng);
+                    info.maxlat = Math.max(newItem.lat, info.maxlat);
+                    info.min = Math.min(newItem.value, info.min);
+                    info.minlng = Math.min(newItem.lng, info.minlng);
+                    info.minlat = Math.min(newItem.lat, info.minlat);
+                    info.data.push(newItem);
+                });
+
+                info.size = info.max - info.min;
+                info.sizelng = info.maxlng - info.minlng;
+                info.sizelat = info.maxlat - info.minlat;
+
+                const option = {
+                    width: info.sizelng + params.heatmapRadius * 2,
+                    height: info.sizelat + params.heatmapRadius * 2,
+                    radius: params.heatmapRadius,
+                    ...info
+                };
+
+                const canvas = document.createElement('canvas');
+                canvas.width = option.width;
+                canvas.height = option.height;
+                const ctx = canvas.getContext('2d');
+
+                option.data.forEach((item) => {
+                    drawCircle(ctx, option, item);
+                });
+
+                heatmapInfo = { option, canvas };
+            } catch (error) {
+                console.error('Failed to load heatmap data:', error);
+            }
+        }
+
+        function createContour() {
+            if (!heatmapInfo) return;
+
+            const { option, canvas } = heatmapInfo;
+            const map = new THREE.CanvasTexture(canvas);
+            map.wrapS = THREE.RepeatWrapping;
+            map.wrapT = THREE.RepeatWrapping;
+
+            const geometry = new THREE.PlaneGeometry(
+                option.width * 0.5,
+                option.height * 0.5,
+                500,
+                500
+            );
+
+            const material = new THREE.ShaderMaterial({
+                transparent: true,
+                side: THREE.DoubleSide,
+                uniforms: {
+                    map: { value: map },
+                    uHeight: { value: params.uHeight },
+                    uInfo: { value: new THREE.Vector4(option.min, option.max, option.size, 10) },
+                    uMinLne: { value: params.uMinLne },
+                    uLineColor: { value: new THREE.Color(params.uLineColor) }
+                },
+                vertexShader: `
+                    uniform sampler2D map;
+                    uniform float uHeight;
+                    varying vec4 vColor;
+
+                    void main(void) {
+                        vColor = texture2D(map, uv);
+                        float h = vColor.a * uHeight;
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position.x, position.y, h, 1.0);
+                    }
+                `,
+                fragmentShader: `
+                    uniform float uMinLne;
+                    uniform vec4 uInfo;
+                    uniform vec3 uLineColor;
+                    varying vec4 vColor;
+
+                    void main(void) {
+                        float v = vColor.a * uInfo.z + uInfo.x;
+                        if (mod(v, uInfo.w) <= uMinLne) {
+                            gl_FragColor.rgb = uLineColor;
+                            gl_FragColor.a = 1.0;
+                        } else {
+                            discard;
+                        }
+                    }
+                `
+            });
+
+            contourMesh = new THREE.Mesh(geometry, material);
+            contourMesh.rotateX(-Math.PI * 0.5);
+            window.scene.add(contourMesh);
+
+            if (params.showWireframe) {
+                const wireframeGeometry = new THREE.WireframeGeometry(geometry);
+                const wireframeMaterial = new THREE.LineBasicMaterial({
+                    color: 0x00ff00,
+                    transparent: true,
+                    opacity: 0.3
+                });
+                const wireframe = new THREE.LineSegments(wireframeGeometry, wireframeMaterial);
+                wireframe.rotateX(-Math.PI * 0.5);
+                wireframe.name = 'wireframe';
+                window.scene.add(wireframe);
+            }
+        }
+
+        function initGUI() {
+            const gui = new GUI({ title: '纯色 3D 等高线图设置', width: 300 });
+
+            gui.domElement.style.position = 'absolute';
+            gui.domElement.style.top = '60px';
+            gui.domElement.style.right = '10px';
+            gui.domElement.style.zIndex = '1000';
+
+            setTimeout(() => { gui.show(); }, 100);
+
+            const displayFolder = gui.addFolder('显示设置');
+            displayFolder.add(params, 'autoRotate').name('自动旋转');
+            displayFolder.add(params, 'rotationSpeed', 0.1, 2.0).name('旋转速度');
+            displayFolder.add(params, 'showWireframe').name('显示线框').onChange(() => {
+                updateWireframe();
+            });
+            displayFolder.open();
+
+            const contourFolder = gui.addFolder('等高线设置');
+            contourFolder.add(params, 'uHeight', 10, 100).name('山峰高度').onChange(() => {
+                if (contourMesh) {
+                    contourMesh.material.uniforms.uHeight.value = params.uHeight;
+                }
+            });
+            contourFolder.add(params, 'uMinLne', 0.1, 1.0).name('等高线宽度').onChange(() => {
+                if (contourMesh) {
+                    contourMesh.material.uniforms.uMinLne.value = params.uMinLne;
+                }
+            });
+            contourFolder.addColor(params, 'uLineColor').name('等高线颜色').onChange(() => {
+                if (contourMesh) {
+                    contourMesh.material.uniforms.uLineColor.value.set(params.uLineColor);
+                }
+            });
+            contourFolder.open();
+        }
+
+        function updateWireframe() {
+            const existing = window.scene.getObjectByName('wireframe');
+            if (existing) {
+                window.scene.remove(existing);
+            }
+
+            if (params.showWireframe && contourMesh) {
+                const geometry = contourMesh.geometry;
+                const wireframeGeometry = new THREE.WireframeGeometry(geometry);
+                const wireframeMaterial = new THREE.LineBasicMaterial({
+                    color: 0x00ff00,
+                    transparent: true,
+                    opacity: 0.3
+                });
+                const wireframe = new THREE.LineSegments(wireframeGeometry, wireframeMaterial);
+                wireframe.rotateX(-Math.PI * 0.5);
+                wireframe.name = 'wireframe';
+                window.scene.add(wireframe);
+            }
+        }
+
+        function onWindowResize() {
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            controls.update();
+
+            if (params.autoRotate && contourMesh) {
+                contourMesh.rotation.y += 0.002 * params.rotationSpeed;
+            }
+
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        function stopAnimation() {
+            cancelAnimationFrame(animate);
+        }
+
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                stopAnimation();
+                setTimeout(() => {
+                    window.parent.postMessage({
+                        type: 'screenshot-data',
+                        dataUrl: window.renderer.domElement.toDataURL('image/jpeg', 0.8)
+                    }, '*');
+                    animate();
+                }, 100);
+            }
+        });
+    </script>
+</body>
+</html>

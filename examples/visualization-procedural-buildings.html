@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="雷达扫描特效 - 旋转扫描线效果">
+    <meta name="description" content="程序化生成随机建筑模型 - 俯视视角城市建筑群">
     <meta name="three-version" content="r179">
-    <title>Three.js 示例 - 雷达扫描特效</title>
+    <title>Three.js 示例 - 程序化生成随机建筑</title>
     <link rel="stylesheet" href="../css/example-common.css">
 </head>
 <body>
@@ -24,24 +24,48 @@
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
-        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 
         let scene, camera, renderer, controls;
-        let shaders = [];
+        let geometries = [];
 
         const params = {
-            uSize: 50,
-            uTime: 0.2,
-            uColor: '#00FFFF',
-            speed: 0.005
+            buildingCount: 100,
+            minHeight: 5,
+            maxHeight: 20,
+            buildingSize: 5,
+            areaSize: 100
         };
+
+        function generateBuildings() {
+            geometries = [];
+            const helper = new THREE.Object3D();
+
+            for (let i = 0; i < params.buildingCount; i++) {
+                const h = Math.round(Math.random() * (params.maxHeight - params.minHeight)) + params.minHeight;
+                const x = Math.round(Math.random() * (params.areaSize / 2));
+                const y = Math.round(Math.random() * (params.areaSize / 2));
+                
+                helper.position.set(
+                    (x % 2 ? -1 : 1) * x,
+                    h * 0.5,
+                    (y % 2 ? -1 : 1) * y
+                );
+                
+                const geometry = new THREE.BoxGeometry(params.buildingSize, h, params.buildingSize);
+                helper.updateWorldMatrix(true, false);
+                geometry.applyMatrix4(helper.matrixWorld);
+                geometries.push(geometry);
+            }
+
+            return BufferGeometryUtils.mergeGeometries(geometries, false);
+        }
 
         async function init() {
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x0a0a1a);
+            scene.background = new THREE.Color(0x1a1a2e);
 
             camera = new THREE.PerspectiveCamera(
-                45,
+                60,
                 window.innerWidth / window.innerHeight,
                 0.1,
                 200
@@ -74,34 +98,20 @@
             dirLight.shadow.mapSize.set(1024, 1024);
             scene.add(dirLight);
 
-            const pg = new THREE.PlaneGeometry(100, 100);
+            const pg = new THREE.PlaneGeometry(params.areaSize, params.areaSize);
             const pm = new THREE.MeshStandardMaterial({
                 color: new THREE.Color('gray'),
-                side: THREE.FrontSide,
-                transparent: true
+                side: THREE.FrontSide
             });
             const plane = new THREE.Mesh(pg, pm);
             plane.rotateX(-Math.PI * 0.5);
             plane.receiveShadow = true;
             scene.add(plane);
 
-            const geometries = [];
-            const helper = new THREE.Object3D();
-            for (let i = 0; i < 100; i++) {
-                const h = Math.round(Math.random() * 15) + 5;
-                const x = Math.round(Math.random() * 50);
-                const y = Math.round(Math.random() * 50);
-                helper.position.set((x % 2 ? -1 : 1) * x, h * 0.5, (y % 2 ? -1 : 1) * y);
-                const geometry = new THREE.BoxGeometry(5, h, 5);
-                helper.updateWorldMatrix(true, false);
-                geometry.applyMatrix4(helper.matrixWorld);
-                geometries.push(geometry);
-            }
-
-            const mergedGeometry = BufferGeometryUtils.mergeGeometries(geometries, false);
+            const mergedGeometry = generateBuildings();
             const texture = new THREE.TextureLoader().load('../images/textures/image.jpg');
             texture.wrapS = texture.wrapT = THREE.MirroredRepeatWrapping;
-            const material = new THREE.MeshStandardMaterial({ map: texture, transparent: true });
+            const material = new THREE.MeshStandardMaterial({ map: texture });
             const cube = new THREE.Mesh(mergedGeometry, material);
             cube.castShadow = true;
             cube.receiveShadow = true;
@@ -114,37 +124,14 @@
                     vUv=position.xz/uSize;`;
             const vertexShader3 = `#include <fog_vertex>
                       vUv=vec2(position.x,-position.y)/uSize;`;
-
             const fragmentShader1 = `varying vec2 vUv;
                   uniform float uTime;
-                  uniform vec3 uColor;
-                  uniform float uSize;
-                  mat2 rotate2d(float angle)
-                  {
-                      return mat2(cos(angle), - sin(angle),
-                                  sin(angle), cos(angle));
-                  }
-                  float vertical_line(in vec2 uv)
-                  {
-                      if (uv.y > 0.0 && length(uv) < 1.0)
-                      {
-                          float theta = mod(180.0 * atan(uv.y, uv.x)/3.14, 360.0);
-                          float gradient = clamp(1.0-theta/90.0,0.0,1.0);
-                          return 0.5 * gradient;
-                      }
-                      return 0.0;
-                  }
                   void main() {`;
-
             const fragmentShader2 = `#include <dithering_fragment> 
-              mat2 rotation_matrix = rotate2d(- uTime*PI*2.0);             
-              gl_FragColor.rgb= mix( gl_FragColor.rgb, uColor, vertical_line(rotation_matrix * vUv) );`;
+                 gl_FragColor.rgb=gl_FragColor.rgb+mix(vec3(0,0.5,0.5),vec3(1,1,0),vUv.y);`;
 
             material.onBeforeCompile = (shader) => {
-                shaders.push(shader);
-                shader.uniforms.uSize = { value: params.uSize };
-                shader.uniforms.uTime = { value: params.uTime };
-                shader.uniforms.uColor = { value: new THREE.Color(params.uColor) };
+                shader.uniforms.uSize = { value: params.areaSize / 2 };
                 shader.vertexShader = shader.vertexShader.replace('void main() {', vertexShader1);
                 shader.vertexShader = shader.vertexShader.replace('#include <fog_vertex>', vertexShader2);
                 shader.fragmentShader = shader.fragmentShader.replace('void main() {', fragmentShader1);
@@ -152,37 +139,16 @@
             };
 
             pm.onBeforeCompile = (shader) => {
-                shaders.push(shader);
-                shader.uniforms.uSize = { value: params.uSize };
-                shader.uniforms.uTime = { value: params.uTime };
-                shader.uniforms.uColor = { value: new THREE.Color(params.uColor) };
+                shader.uniforms.uSize = { value: params.areaSize / 2 };
                 shader.vertexShader = shader.vertexShader.replace('void main() {', vertexShader1);
                 shader.vertexShader = shader.vertexShader.replace('#include <fog_vertex>', vertexShader3);
                 shader.fragmentShader = shader.fragmentShader.replace('void main() {', fragmentShader1);
                 shader.fragmentShader = shader.fragmentShader.replace('#include <dithering_fragment>', fragmentShader2);
             };
 
-            initGUI();
             window.addEventListener('resize', onWindowResize);
 
             animate();
-        }
-
-        function initGUI() {
-            const gui = new GUI({ title: '雷达参数控制', width: 300 });
-
-            gui.domElement.style.position = 'absolute';
-            gui.domElement.style.top = '60px';
-            gui.domElement.style.right = '10px';
-            gui.domElement.style.zIndex = '1000';
-
-            setTimeout(() => {
-                gui.show();
-            }, 100);
-
-            gui.add(params, 'uSize', 20, 100).name('作用范围');
-            gui.add(params, 'speed', 0.001, 0.02).name('扫描速度');
-            gui.addColor(params, 'uColor').name('雷达颜色');
         }
 
         function onWindowResize() {
@@ -195,17 +161,6 @@
             requestAnimationFrame(animate);
 
             controls.update();
-
-            if (shaders.length) {
-                shaders.forEach((shader) => {
-                    shader.uniforms.uTime.value += params.speed;
-                    shader.uniforms.uColor.value.set(params.uColor);
-                    if (shader.uniforms.uTime.value >= 1) {
-                        shader.uniforms.uTime.value = 0;
-                    }
-                });
-            }
-
             renderer.render(scene, camera);
         }
 

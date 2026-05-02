@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="合并形状监测单个形状动作 - 使用射线检测合并几何体中的单个形状">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 合并形状监测单个形状动作</title>
+    <link rel="stylesheet" href="../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../libs/three/r179/build/three.module.js",
+                "three/addons/": "../libs/three/r179/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
+
+        let scene, camera, renderer, controls, raycaster, mouse;
+        let boxmesh = null;
+        let geometries = [];
+        let actionGroup = [];
+        let helper = null;
+
+        const params = {
+            max: 10,
+            min: 0
+        };
+
+        function addBar(index) {
+            const amount = (index - params.min) / params.max;
+
+            const hue = THREE.MathUtils.lerp(0.2, 0.5, amount);
+            const saturation = 1;
+            const lightness = THREE.MathUtils.lerp(0.5, 0.78, amount);
+            const color = new THREE.Color();
+            color.setHSL(hue, saturation, lightness);
+
+            const geometry = new THREE.BoxGeometry(1, 1, 1);
+
+            const rgb = color.toArray().map((v) => v * 255);
+            const count = geometry.getAttribute('position').count;
+            const colors = new Uint8Array(count * 3);
+
+            colors.forEach((v, ndx) => {
+                colors[ndx] = rgb[ndx % 3];
+            });
+
+            const modelIndex = new Uint8Array(count).fill(index);
+            const selectIndex = new Uint8Array(count).fill(-1);
+
+            geometry.setAttribute('selectIndex', new THREE.BufferAttribute(selectIndex, 1, true));
+            geometry.setAttribute('modelIndex', new THREE.BufferAttribute(modelIndex, 1, true));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3, true));
+            
+            helper.position.set(index * 1.5, 0, 0);
+            helper.updateWorldMatrix(true, false);
+            geometry.applyMatrix4(helper.matrixWorld);
+            geometries.push(geometry);
+        }
+
+        async function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1a1a2e);
+
+            camera = new THREE.PerspectiveCamera(
+                60,
+                window.innerWidth / window.innerHeight,
+                0.1,
+                100
+            );
+            camera.position.set(0, 0, 10);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            document.getElementById('threeContainer').appendChild(renderer.domElement);
+
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+
+            raycaster = new THREE.Raycaster();
+            mouse = new THREE.Vector2();
+
+            const light = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(light);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight.position.set(5, 5, 5);
+            scene.add(directionalLight);
+
+            geometries = [];
+            actionGroup = [];
+            helper = new THREE.Object3D();
+
+            for (let i = 0; i < params.max; i++) {
+                addBar(i);
+            }
+
+            const mergedGeometry = BufferGeometryUtils.mergeGeometries(geometries, false);
+            const material = new THREE.MeshBasicMaterial({
+                vertexColors: true
+            });
+
+            material.onBeforeCompile = (shader) => {
+                shader.vertexShader = shader.vertexShader.replace(
+                    `void main() {`,
+                    `attribute float selectIndex;
+                    attribute float modelIndex;
+                    varying float vselectIndex;
+                    varying float vmodelIndex;
+                    void main() {
+                        vmodelIndex = modelIndex;
+                        vselectIndex = selectIndex;`
+                );
+                shader.fragmentShader = shader.fragmentShader.replace(
+                    `void main() {`,
+                    `varying float vselectIndex;
+                    varying float vmodelIndex;
+                    void main() {`
+                );
+                shader.fragmentShader = shader.fragmentShader.replace(
+                    `vec3 outgoingLight = reflectedLight.indirectDiffuse;`,
+                    `vec3 outgoingLight = vmodelIndex == vselectIndex ? vec3(1.0, 0.0, 0.0) : reflectedLight.indirectDiffuse;`
+                );
+            };
+
+            boxmesh = new THREE.Mesh(mergedGeometry, material);
+            actionGroup.push(boxmesh);
+            scene.add(boxmesh);
+
+            document.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('resize', onWindowResize);
+
+            animate();
+        }
+
+        function onMouseMove(event) {
+            event.preventDefault();
+
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+
+            const intersects = raycaster.intersectObjects(actionGroup, true);
+
+            if (intersects.length > 0 && boxmesh) {
+                const activeObj = intersects[0];
+                const index = Math.floor(activeObj.faceIndex / 12);
+                const len = boxmesh.geometry.getAttribute('position').count;
+                const selectIndex = new Uint8Array(len).fill(index);
+
+                boxmesh.geometry.setAttribute(
+                    'selectIndex',
+                    new THREE.BufferAttribute(selectIndex, 1, true)
+                );
+                boxmesh.geometry.getAttribute('selectIndex').needsUpdate = true;
+            }
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    renderer.render(scene, camera);
+
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+
+                    const scale = Math.min(maxSize / renderer.domElement.width, maxSize / renderer.domElement.height);
+                    tempCanvas.width = Math.floor(renderer.domElement.width * scale);
+                    tempCanvas.height = Math.floor(renderer.domElement.height * scale);
+
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(renderer.domElement, 0, 0, tempCanvas.width, tempCanvas.height);
+
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', 0.8);
+
+                    window.parent.postMessage({
+                        type: 'screenshot-data',
+                        dataUrl: dataUrl
+                    }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                }
+            }
+        });
+
+        init();
+    </script>
+</body>
+</html>
