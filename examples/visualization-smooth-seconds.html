@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Three.js 平滑运动的秒针 - 使用弹性缓动函数实现">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 平滑运动秒针</title>
+    <link rel="stylesheet" href="../css/example-common.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { overflow: hidden; }
+        #app { width: 100%; height: 100vh; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../libs/three/r179/build/three.module.js",
+                "three/addons/": "../libs/three/r179/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        console.clear();
+
+        class Dial extends THREE.LineSegments {
+            constructor() {
+                const radii = [6.0, 5.5];
+                const axis = new THREE.Vector3(0, 0, 1);
+                const positions = [...Array(60)]
+                    .map((_, idx, arr) => {
+                        const step = (Math.PI * 2) / arr.length;
+                        return [...radii].map((radius, rIdx) => {
+                            return new THREE.Vector3(0, 1, 0)
+                                .setLength(radius - (idx % 5 == 0 && rIdx == 1 ? 0.25 : 0))
+                                .applyAxisAngle(axis, idx * step);
+                        });
+                    })
+                    .flat();
+                super(
+                    new THREE.BufferGeometry().setFromPoints(positions),
+                    new THREE.LineBasicMaterial({ 
+                        color: 0x00aaff
+                    })
+                );
+            }
+        }
+
+        class SecondsHand extends THREE.Mesh {
+            constructor() {
+                const shape = new THREE.Shape()
+                    .moveTo(5, 0)
+                    .lineTo(4.9, 0.05)
+                    .absarc(0, 0, 0.25, Math.PI * 0.1, Math.PI * 1.9, false)
+                    .lineTo(4.9, -0.05);
+                shape.holes.push(new THREE.Path().absarc(0, 0, 0.1, 0, Math.PI * 2, true));
+                super(
+                    new THREE.ShapeGeometry(shape).rotateZ(Math.PI * 0.5),
+                    new THREE.MeshBasicMaterial({ color: 'lightblue' })
+                );
+                this.angleStep = Math.PI * 2 / 60;
+                this.Easings = {
+                    Back: {
+                        Out: function(amount) {
+                            const s = 1.70158;
+                            return amount === 0 ? 0 : --amount * amount * ((s + 1) * amount + s) + 1;
+                        }
+                    },
+                    Bounce: { 
+                        Out: function(amount) {
+                            if (amount < 1 / 2.75) {
+                                return 7.5625 * amount * amount
+                            } else if (amount < 2 / 2.75) {
+                                return 7.5625 * (amount -= 1.5 / 2.75) * amount + 0.75
+                            } else if (amount < 2.5 / 2.75) {
+                                return 7.5625 * (amount -= 2.25 / 2.75) * amount + 0.9375
+                            } else {
+                                return 7.5625 * (amount -= 2.625 / 2.75) * amount + 0.984375
+                            }
+                        }
+                    },
+                    Elastic: {
+                        Out: function(amount) {
+                            if (amount === 0) { return 0; }
+                            if (amount === 1) { return 1; }
+                            return ( Math.pow(2, -10 * amount) * Math.sin((amount - 0.1) * 5 * Math.PI) + 1 );
+                        }
+                    }
+                };
+            }
+
+            update() {
+                const time = new Date();
+                const seconds = time.getSeconds();
+                const milliseconds = (time.getMilliseconds() / 1000) ** 16;
+                this.rotation.z = -(seconds + this.Easings.Elastic.Out(milliseconds)) * this.angleStep;
+            }
+        }
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 1, 100);
+        camera.position.set(0, 0, 1).setLength(15);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(innerWidth, innerHeight);
+        document.getElementById('app').appendChild(renderer.domElement);
+
+        window.addEventListener('resize', (event) => {
+            camera.aspect = innerWidth / innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(innerWidth, innerHeight);
+        });
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+
+        const dial = new Dial();
+        scene.add(dial);
+
+        const secondsHand = new SecondsHand();
+        scene.add(secondsHand);
+
+        renderer.setAnimationLoop(() => {
+            controls.update();
+            secondsHand.update();
+            renderer.render(scene, camera);
+        });
+    </script>
+</body>
+</html>

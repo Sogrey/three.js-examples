@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Three.js 水着色器效果 - 带有水面反射和动态光照的场景">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 水着色器效果</title>
+    <link rel="stylesheet" href="../css/example-common.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { overflow: hidden; background-color: #ffffff; font-family: 'Arial', sans-serif; }
+        #app { width: 100%; height: 100vh; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <div id="app">
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../libs/three/r179/build/three.module.js",
+                "three/addons/": "../libs/three/r179/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { Water } from 'three/addons/objects/Water.js';
+        import { Sky } from 'three/addons/objects/Sky.js';
+
+        let container, camera, scene, renderer, water, sky, sunSphere;
+        let waterNormals, rusty;
+        let time = 0;
+        let azimuth = 0.45843;
+        let inclination = 0.3011;
+
+        const loader = new THREE.TextureLoader();
+        const clock = new THREE.Clock();
+
+        loader.load('../images/textures/waternormals.jpg', function(t) {
+            t.mapping = THREE.UVMapping;
+            waterNormals = t;
+            waterNormals.wrapS = waterNormals.wrapT = THREE.RepeatWrapping;
+            
+            loader.load('../images/textures/tex02.jpg', function(t2) {
+                rusty = t2;
+                rusty.wrapS = rusty.wrapT = THREE.RepeatWrapping;
+                
+                init();
+                animate();
+            });
+        });
+
+        function initSky() {
+            sky = new Sky();
+            sky.scale.setScalar(10000);
+            scene.add(sky);
+
+            sunSphere = new THREE.Mesh(
+                new THREE.SphereGeometry(20, 16, 8),
+                new THREE.MeshBasicMaterial({ color: 0xffffff })
+            );
+            sunSphere.visible = false;
+            scene.add(sunSphere);
+
+            sky.material.uniforms.turbidity.value = 0.01;
+            sky.material.uniforms.rayleigh.value = 0.0066;
+            sky.material.uniforms.mieCoefficient.value = 10.1;
+            sky.material.uniforms.mieDirectionalG.value = 0.824;
+
+            moveSun();
+        }
+
+        function moveSun() {
+            const distance = 4500;
+            const theta = Math.PI * (inclination - 0.5);
+            const phi = 2 * Math.PI * (azimuth - 0.5);
+
+            sunSphere.position.x = distance * Math.cos(phi);
+            sunSphere.position.y = distance * Math.sin(phi) * Math.sin(theta);
+            sunSphere.position.z = distance * Math.sin(phi) * Math.cos(theta);
+
+            sky.material.uniforms.sunPosition.value.copy(sunSphere.position);
+        }
+
+        function init() {
+            container = document.createElement('div');
+            document.getElementById('app').appendChild(container);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(renderer.domElement);
+
+            scene = new THREE.Scene();
+
+            camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.5, 3000000);
+            camera.position.set(0, 15, 0);
+
+            initSky();
+
+            const waterGeometry = new THREE.PlaneGeometry(4400, 4400);
+            
+            water = new Water(waterGeometry, {
+                textureWidth: 512,
+                textureHeight: 512,
+                waterNormals: waterNormals,
+                alpha: 1.0,
+                sunDirection: sky.material.uniforms.sunPosition.value.clone().normalize(),
+                sunColor: 0xf5ebce,
+                waterColor: 0x5b899b,
+                distortionScale: 15.0,
+                fog: scene.fog !== undefined
+            });
+
+            water.rotation.x = -Math.PI / 2;
+            scene.add(water);
+
+            const ambient = new THREE.AmbientLight(0xf5ebce, 0.25);
+            scene.add(ambient);
+
+            const light = new THREE.DirectionalLight(0xf5ebce, 0.8);
+            light.position.set(0, 0, 0);
+            light.castShadow = true;
+            light.shadow.camera = new THREE.PerspectiveCamera(40, 0.7, 4000, 4800);
+            light.shadow.bias = 0.0000001;
+            light.shadow.mapSize.width = 2048;
+            light.shadow.mapSize.height = 2048;
+            scene.add(light);
+
+            const n = 110;
+            const elementMaterial = new THREE.MeshPhongMaterial({
+                specular: 0xf5ebce,
+                shininess: 23,
+                specularMap: rusty,
+                flatShading: true,
+                map: rusty
+            });
+
+            for (let i = n - 1; i >= 0; i--) {
+                const height = (random(i) + 1) * 50;
+                const elementGeometry = new THREE.CylinderGeometry(5, 5, height, 4);
+                const addU = Math.random();
+                const addV = Math.random();
+
+                const uvAttribute = elementGeometry.attributes.uv;
+                for (let z = 0; z < uvAttribute.count; z++) {
+                    uvAttribute.setXY(z, uvAttribute.getX(z) + addU, uvAttribute.getY(z) + addV);
+                }
+                uvAttribute.needsUpdate = true;
+
+                const element = new THREE.Mesh(elementGeometry, elementMaterial);
+                scene.add(element);
+
+                element.position.y = height / 2 - 5;
+                element.position.x = (random(i + 214) - 0.5) * 1500;
+                element.position.z = -random(i * 35) * 1500 - 100;
+                element.rotation.set(random(i) * Math.PI / 20, 0, 0);
+
+                element.receiveShadow = true;
+                element.castShadow = true;
+            }
+
+            window.addEventListener('resize', onWindowResize, false);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const delta = clock.getDelta();
+            time += delta * 0.5;
+
+            moveSun();
+            water.material.uniforms.time.value -= 1.0 / 60.0;
+            water.material.uniforms.sunDirection.value.copy(sky.material.uniforms.sunPosition.value.clone().normalize());
+            
+            const light = scene.getObjectByProperty('type', 'DirectionalLight');
+            if (light) {
+                light.position.copy(sunSphere.position);
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        function random(seed) {
+            const x = Math.sin(seed) * 10000;
+            return x - Math.floor(x);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+    </script>
+</body>
+</html>

@@ -258,6 +258,7 @@ function performSearch() {
         category.subcategories.forEach(subcategory => {
             subcategory.examples.forEach(example => {
                 if (
+                    example.id.toLowerCase().includes(query) ||
                     example.title.toLowerCase().includes(query) ||
                     example.description.toLowerCase().includes(query)
                 ) {

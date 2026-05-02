@@ -517,6 +517,14 @@ const threejsData = {
                             url: "examples/advanced-shader-patterns"
                         },
                         {
+                            id: "visualization-water-shader",
+                            title: "水着色器效果",
+                            description: "带有水面反射和动态光照的场景，使用Water和Sky对象",
+                            thumbnail: "images/visualization-water-shader.jpg",
+                            version: "r179",
+                            url: "examples/visualization-water-shader"
+                        },
+                        {
                             id: "advanced-cyberpunk-tunnel",
                             title: "赛博朋克闪电隧道",
                             description: "使用自定义着色器和后处理实现高速飞行的赛博朋克数据隧道效果",
@@ -541,6 +549,14 @@ const threejsData = {
                             url: "examples/visualization-neon-flow"
                         },
                         {
+                            id: "visualization-wind-terrain",
+                            title: "流过地形的风线",
+                            description: "使用SimplexNoise生成地形，并让风线流过起伏的地形表面",
+                            thumbnail: "images/visualization-wind-terrain.jpg",
+                            version: "r179",
+                            url: "examples/visualization-wind-terrain"
+                        },
+                        {
                             id: "shader-abstract-art",
                             title: "抽象艺术动画",
                             description: "动态抽象艺术作品，旋转流动的光影图案，支持鼠标交互",
@@ -556,6 +572,62 @@ const threejsData = {
                             version: "r179",
                             url: "examples/visualization-aurora"
                         },
+                        {
+                            id: "visualization-shader-transform",
+                            title: "着色器变形",
+                            description: "圆环与方块之间的动态变形效果，支持鼠标交互和按钮切换",
+                            thumbnail: "images/visualization-shader-transform.jpg",
+                            version: "r179",
+                            url: "examples/visualization-shader-transform"
+                        },
+                        {
+                            id: "visualization-particle-transform",
+                            title: "变形粒子艺术",
+                            description: "多种粒子形态动态切换变形效果，支持超新星螺旋、量子晶格、恒星环面、天体螺旋",
+                            thumbnail: "images/visualization-particle-transform.jpg",
+                            version: "r179",
+                            url: "examples/visualization-particle-transform"
+                        },
+                        {
+                            id: "visualization-energy-bubble",
+                            title: "漂流的3D能量球",
+                            description: "交互式能量气泡效果，点击产生能量波纹和闪电分支，带折射和色散效果",
+                            thumbnail: "images/visualization-energy-bubble.jpg",
+                            version: "r179",
+                            url: "examples/visualization-energy-bubble"
+                        },
+                        {
+                            id: "visualization-hologram",
+                            title: "全息影像效果",
+                            description: "动态切换的几何体全息投影，带故障效果和扫描线",
+                            thumbnail: "images/visualization-hologram.jpg",
+                            version: "r179",
+                            url: "examples/visualization-hologram"
+                        },
+                        {
+                            id: "advanced-rain-roof",
+                            title: "雨和屋顶效果",
+                            description: "使用深度纹理和自定义着色器实现雨滴与物体的真实交互效果，包括动态屋顶",
+                            thumbnail: "images/advanced-rain-roof.jpg",
+                            version: "r179",
+                            url: "examples/advanced-rain-roof"
+                        },
+                        {
+                            id: "postprocessing-bloom",
+                            title: "物体发光效果",
+                            description: "使用EffectComposer和UnrealBloomPass实现物体的辉光发光效果，支持参数调节",
+                            thumbnail: "images/postprocessing-bloom.jpg",
+                            version: "r179",
+                            url: "examples/postprocessing-bloom"
+                        },
+                        {
+                            id: "shader-raymarching-fire",
+                            title: "光线追踪火花特效",
+                            description: "使用光线追踪(Ray Marching)技术结合Perlin噪声实现逼真的动态火花/火焰效果",
+                            thumbnail: "images/shader-raymarching-fire.jpg",
+                            version: "r179",
+                            url: "examples/shader-raymarching-fire"
+                        }
                     ]
                 },
                 {
@@ -926,6 +998,31 @@ const threejsData = {
                             version: "r179",
                             url: "examples/visualization-heatmap-2d"
                         },
+                        {
+                            id: "visualization-neural-network",
+                            title: "交互式神经网络可视化",
+                            description: "四种不同结构的神经网络可视化，支持主题切换和密度调整",
+                            thumbnail: "images/visualization-neural-network.jpg",
+                            version: "r179",
+                            url: "examples/visualization-neural-network"
+                        },
+                        {
+                            id: "visualization-smooth-seconds",
+                            title: "平滑运动秒针",
+                            description: "使用弹性缓动函数实现的平滑运动秒针",
+                            thumbnail: "images/visualization-smooth-seconds.jpg",
+                            version: "r179",
+                            url: "examples/visualization-smooth-seconds"
+                        },
+                        {
+                            id: "visualization-interactive-globe",
+                            title: "交互式地球",
+                            description: "可旋转缩放的3D地球仪，带有大气光晕效果和GUI控制面板",
+                            thumbnail: "images/visualization-interactive-globe.jpg",
+                            version: "r179",
+                            url: "examples/visualization-interactive-globe"
+                        },
+
                         {
                             id: "visualization-heatmap-3d-hill",
                             title: "3D热力山丘图",
