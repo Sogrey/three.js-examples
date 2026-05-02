@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="星空极光动效 - 绚丽的极光与星空背景Shader效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 星空极光动效</title>
+    <link rel="stylesheet" href="../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../libs/three/r179/build/three.module.js",
+                "three/addons/": "../libs/three/r179/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+        const renderer = new THREE.WebGLRenderer({ antialias: false });
+
+        const settings = {
+            pixelRatio: 1.0,
+            dithering: 0.0228,
+            auroraSpeed: 0.65,
+            noiseSeed: 19.6,
+            colorBase: '#59ff03',
+            colorHigh: '#00aaff',
+            skyDark: '#030c1c',
+            skyDeep: '#070f1d',
+            starDensity: 0.073,
+            starSize: 0.9193,
+            starBlinkRate: 6.26,
+            starIntensity: 0.516,
+            starColor: '#61fcff'
+        };
+
+        renderer.setPixelRatio(settings.pixelRatio);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('threeContainer').appendChild(renderer.domElement);
+
+        const uniforms = {
+            iResolution: { value: new THREE.Vector2(window.innerWidth * settings.pixelRatio, window.innerHeight * settings.pixelRatio) },
+            iTime: { value: 0.0 },
+            uDithering: { value: settings.dithering },
+            uSpeed: { value: settings.auroraSpeed },
+            uSeed: { value: settings.noiseSeed },
+            uColorBase: { value: new THREE.Color(settings.colorBase) },
+            uColorHigh: { value: new THREE.Color(settings.colorHigh) },
+            uSkyDark: { value: new THREE.Color(settings.skyDark) },
+            uSkyDeep: { value: new THREE.Color(settings.skyDeep) },
+            uStarDensity: { value: settings.starDensity },
+            uStarSize: { value: settings.starSize },
+            uStarBlinkRate: { value: settings.starBlinkRate },
+            uStarIntensity: { value: settings.starIntensity },
+            uStarColor: { value: new THREE.Color(settings.starColor) }
+        };
+
+        const fragmentShader = `
+            uniform vec2 iResolution;
+            uniform float iTime;
+            uniform float uDithering;
+            uniform float uSpeed;
+            uniform float uSeed;
+            uniform vec3 uColorBase;
+            uniform vec3 uColorHigh;
+            uniform vec3 uSkyDark;
+            uniform vec3 uSkyDeep;
+            uniform float uStarDensity;
+            uniform float uStarSize;
+            uniform float uStarBlinkRate;
+            uniform float uStarIntensity;
+            uniform vec3 uStarColor;
+
+            const float RAY_ITERATIONS = 75.0;
+            const float LUMINANCE_FACTOR = 0.05;
+            const float Y_OFFSET_BOTTOM = 50.0;
+            const float VOLUME_DEPTH = 75.0;
+            const vec3 BOUND_LOW = vec3(-250.0, Y_OFFSET_BOTTOM, -500.0);
+            const vec3 BOUND_HIGH = vec3(250.0, Y_OFFSET_BOTTOM + VOLUME_DEPTH, 500.0);
+
+            float generateRandomFloat(vec2 seedVal) {
+                vec3 p3  = fract(vec3(seedVal.xyx) * 0.1031);
+                p3 += dot(p3, p3.yzx + 33.33);
+                return fract((p3.x + p3.y) * p3.z);
+            }
+
+            float computeHash1(float v) {
+                vec3 hVec  = fract(vec3(v) * 0.1031);
+                hVec += dot(hVec, hVec.yzx + 19.19);
+                return fract((hVec.x + hVec.y) * hVec.z);
+            }
+
+            float computeHash3(vec3 v3) {
+                v3 = fract(v3 * vec3(0.1031, 0.1030, 0.0973));
+                v3 += dot(v3, v3.yxz + 33.33);
+                return fract((v3.xxy + v3.yxx) * v3.zyx).x;
+            }
+
+            float evaluateVolumeNoise(vec3 coord) {
+                vec3 gridP = floor(coord);
+                vec3 fractP = fract(coord);
+                fractP = fractP * fractP * (3.0 - 2.0 * fractP);
+                return mix(mix(mix(computeHash3(gridP + vec3(0.0, 0.0, 0.0)), computeHash3(gridP + vec3(1.0, 0.0, 0.0)), fractP.x),
+                               mix(computeHash3(gridP + vec3(0.0, 1.0, 0.0)), computeHash3(gridP + vec3(1.0, 1.0, 0.0)), fractP.x), fractP.y),
+                           mix(mix(computeHash3(gridP + vec3(0.0, 0.0, 1.0)), computeHash3(gridP + vec3(1.0, 0.0, 1.0)), fractP.x),
+                               mix(computeHash3(gridP + vec3(0.0, 1.0, 1.0)), computeHash3(gridP + vec3(1.0, 1.0, 1.0)), fractP.x), fractP.y), fractP.z);
+            }
+
+            float smoothCurve(float valT) {
+                return valT * valT * valT * (valT * (6.0 * valT - 15.0) + 10.0);
+            }
+
+            float pickGradient(float hVal, float posVal) {
+                int idx = int(1e4 * hVal);
+                return (idx & 1) == 0 ? posVal : -posVal;
+            }
+
+            float calculateLineNoise(float pt) {
+                float ptInt = floor(pt), ptFract = pt - ptInt, wght = smoothCurve(ptFract);
+                return mix(pickGradient(computeHash1(ptInt), ptFract), pickGradient(computeHash1(ptInt + 1.0), ptFract - 1.0), wght) * 2.0;
+            }
+
+            float fractalVolumePattern(vec3 spacePt, int loopLimit) {
+                float accum = 0.0;
+                float wghtSum = 0.0;
+                float curWght = 1.0;
+                float curFreq = 1.0;
+                for(int stepId = 0; stepId < loopLimit; stepId++) {
+                    float nVal = evaluateVolumeNoise(spacePt * curFreq);
+                    accum += (1.0 - nVal) * curWght;
+                    wghtSum += curWght;
+                    curWght *= 0.5;
+                    curFreq *= 2.0;
+                }
+                return clamp(accum / wghtSum, 0.0, 1.0);
+            }
+
+            float calculateRadiance(float curDist, float glowRadius, float pwr) {
+                curDist = max(curDist, 1e-7);
+                return pow(glowRadius / curDist, pwr);
+            }
+
+            vec2 computeBoxIntersection(vec3 rOrigin, vec3 rVector, vec3 bLow, vec3 bHigh) {
+                vec3 tLower = (bLow - rOrigin) / rVector;
+                vec3 tUpper = (bHigh - rOrigin) / rVector;
+                vec3 tm1 = min(tLower, tUpper);
+                vec3 tm2 = max(tLower, tUpper);
+                float tNearBound = max(max(tm1.x, tm1.y), tm1.z);
+                float tFarBound = min(min(tm2.x, tm2.y), tm2.z);
+                return vec2(tNearBound, tFarBound);
+            }
+
+            bool isWithinBounds(vec3 curPos) {
+                float epsilon = 1e-4;
+                return (curPos.x > BOUND_LOW.x - epsilon) && (curPos.y > BOUND_LOW.y - epsilon) && (curPos.z > BOUND_LOW.z - epsilon) &&
+                       (curPos.x < BOUND_HIGH.x + epsilon) && (curPos.y < BOUND_HIGH.y + epsilon) && (curPos.z < BOUND_HIGH.z + epsilon);
+            }
+
+            bool checkVolumeHit(vec3 rOrg, vec3 rDir, out float enterDist, out float travelDist) {
+                vec2 hitPoints = computeBoxIntersection(rOrg, rDir, BOUND_LOW, BOUND_HIGH);
+                if(isWithinBounds(rOrg)) {
+                    hitPoints.x = 1e-4;
+                }
+                enterDist = hitPoints.x;
+                travelDist = hitPoints.y - hitPoints.x;
+                return hitPoints.x > 0.0 && (hitPoints.x < hitPoints.y);
+            }
+
+            vec3 blendAtmosphereTints(float heightRatio) {
+                return mix(uColorBase, uColorHigh, heightRatio);
+            }
+
+            vec3 warpSpatialCoords(vec3 rawPos, float timeFlow) {
+                float normHeight = (rawPos.y - Y_OFFSET_BOTTOM) / VOLUME_DEPTH;
+                vec3 warpedP = 0.04 * vec3(rawPos.x, 2.0 * timeFlow, 0.225 * rawPos.z + timeFlow * 0.5);
+                warpedP.xz += vec2(uSeed * 17.3, uSeed * 29.1);
+                warpedP.x += 0.3 * normHeight + 5.5 * cos(0.005 * rawPos.z);
+                warpedP.x += 0.02 * calculateLineNoise(0.1 * rawPos.z + timeFlow * 2.0);
+                return warpedP;
+            }
+
+            float sampleCloudThickness(vec3 localPt) {
+                float timeFlow = iTime * uSpeed;
+                vec3 shiftedPt = warpSpatialCoords(localPt, timeFlow);
+                float basePattern = fractalVolumePattern(shiftedPt, 3);
+                vec3 shapePt = vec3(basePattern, localPt.y - BOUND_LOW.y, basePattern);
+                vec3 squishedPt = shapePt * vec3(1.0, 0.006, 1.0);
+                squishedPt.y += 0.48;
+                squishedPt.y += 0.015 * calculateLineNoise(1.0 * timeFlow + shiftedPt.z);
+                squishedPt.y += 0.015 * calculateLineNoise(-2.0 * timeFlow + shiftedPt.z);
+                float thickness = calculateRadiance(length(squishedPt), 0.55, 12.0);
+                thickness *= cos(0.13 * shiftedPt.x);
+                return max(0.0, thickness);
+            }
+
+            vec3 renderAtmosphericLights(vec3 camOrg, vec3 camDir, float noiseShift) {
+                vec3 accumColor = vec3(0.0);
+                float startTrace = 0.0;
+                float traceLen = 0.0;
+                bool hitVolume = checkVolumeHit(camOrg, camDir, startTrace, traceLen);
+                if(!hitVolume) {
+                    return accumColor;
+                }
+                float marchStep = traceLen / RAY_ITERATIONS;
+                startTrace += marchStep * (noiseShift * 0.25);
+                vec3 currentPos = camOrg + startTrace * camDir;
+                float currentDist = startTrace;
+                vec3 lightAccum = vec3(0.0);
+                for(float stepIdx = 0.0; stepIdx < RAY_ITERATIONS; stepIdx++) {
+                    float localDens = sampleCloudThickness(currentPos);
+                    lightAccum += localDens * blendAtmosphereTints((currentPos.y - BOUND_LOW.y) / (BOUND_HIGH.y - BOUND_LOW.y));
+                    currentDist += marchStep;
+                    currentPos = camOrg + camDir * currentDist;
+                }
+                return LUMINANCE_FACTOR * lightAccum * marchStep;
+            }
+
+            vec3 renderStarfield(vec3 viewDir, float timeFlow) {
+                float gridScale = 400.0;
+                vec3 spaceGrid = floor(viewDir * gridScale);
+                vec3 spaceLocal = fract(viewDir * gridScale) - 0.5;
+                float cellHash = computeHash3(spaceGrid);
+                float threshold = 1.0 - (uStarDensity * 0.15);
+                float starExistence = step(threshold, cellHash);
+                float pixelSize = (gridScale * 1.5) / iResolution.y;
+                float radius = max(0.08, pixelSize) * uStarSize;
+                radius = min(radius, 0.5);
+                float starGlow = smoothstep(radius, 0.0, length(spaceLocal));
+                starGlow *= (0.08 / radius);
+                float blinkChance = fract(cellHash * 31.415);
+                float isTwinkling = step(0.85, blinkChance);
+                float blinkAnim = 0.3 + 0.7 * sin(timeFlow * uStarBlinkRate * (1.5 + blinkChance * 2.0) + cellHash * 100.0);
+                float twinkleFlow = mix(1.0, blinkAnim, isTwinkling);
+                vec3 starTint = mix(vec3(0.7, 0.85, 1.0), uStarColor, fract(cellHash * 13.0));
+                return starTint * starExistence * starGlow * twinkleFlow;
+            }
+
+            vec3 paintBackdrop(vec3 viewVec) {
+                return mix(uSkyDark, uSkyDeep, clamp(viewVec.y * 1.5, 0.0, 1.0));
+            }
+
+            vec3 applyToneMapping(vec3 rawCol) {
+                return clamp((rawCol * (2.51 * rawCol + 0.03)) / (rawCol * (2.43 * rawCol + 0.59) + 0.14), 0.0, 1.0);
+            }
+
+            mat3 buildCameraFrame(vec3 camPos, vec3 focusPt, vec3 upVec) {
+                vec3 zAxis = normalize(focusPt);
+                vec3 xAxis = normalize(cross(zAxis, upVec));
+                vec3 yAxis = cross(xAxis, zAxis);
+                return mat3(xAxis, yAxis, -zAxis);
+            }
+
+            void main() {
+                vec2 fragCoord = gl_FragCoord.xy;
+                vec2 screenPos = fragCoord - iResolution.xy / 2.0;
+                float focalLen = (0.5 * iResolution.y) / tan(radians(60.0) / 2.0);
+                vec3 sightVec = normalize(vec3(screenPos, -focalLen));
+                vec3 viewerLoc = vec3(0.0, 10.0, 0.0);
+                vec3 gazePoint = vec3(-0.4, 0.45, -1.0);
+                gazePoint.x += sin(iTime * 0.1) * 0.1;
+                gazePoint.y += cos(iTime * 0.05) * 0.05;
+                vec3 worldUp = vec3(0.0, 1.0, 0.0);
+                mat3 viewTransform = buildCameraFrame(viewerLoc, gazePoint, worldUp);
+                sightVec = normalize(viewTransform * sightVec);
+                float ditherShift = generateRandomFloat(fragCoord + vec2(iTime * 13.0, iTime * 27.0));
+                vec3 finalOutput = paintBackdrop(sightVec);
+                float screenY = fragCoord.y / iResolution.y;
+                float fadeMask = smoothstep(0.05, 0.4, screenY);
+                vec3 stars = renderStarfield(sightVec, iTime) * uStarIntensity;
+                finalOutput += stars * fadeMask;
+                vec3 auroraLights = renderAtmosphericLights(viewerLoc + sightVec * 10.0, sightVec, ditherShift);
+                finalOutput += auroraLights * fadeMask;
+                finalOutput = applyToneMapping(finalOutput);
+                finalOutput = pow(finalOutput, vec3(0.4545));
+                float cleanNoise = generateRandomFloat(fragCoord + vec2(iTime * 17.0, -iTime * 11.0));
+                finalOutput += (cleanNoise - 0.5) * uDithering;
+                gl_FragColor = vec4(finalOutput, 1.0);
+            }
+        `;
+
+        const material = new THREE.ShaderMaterial({
+            fragmentShader,
+            uniforms
+        });
+
+        const plane = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material);
+        scene.add(plane);
+
+        const gui = new GUI({ title: '极光参数控制', width: 300 });
+        gui.domElement.style.position = 'absolute';
+        gui.domElement.style.top = '60px';
+        gui.domElement.style.right = '10px';
+        gui.domElement.style.zIndex = '1000';
+
+        const folderDisplay = gui.addFolder('显示设置');
+        folderDisplay.add(settings, 'pixelRatio', 0.1, 2.0).name('分辨率').onChange(v => {
+            renderer.setPixelRatio(v);
+            uniforms.iResolution.value.set(window.innerWidth * v, window.innerHeight * v);
+        });
+        folderDisplay.add(settings, 'dithering', 0.0, 0.15).name('噪点颗粒');
+
+        const folderMotion = gui.addFolder('运动与形状');
+        folderMotion.add(settings, 'auroraSpeed', 0.0, 2.0).name('极光速度');
+        folderMotion.add(settings, 'noiseSeed', 0.0, 100.0).name('噪声种子');
+
+        const folderColors = gui.addFolder('极光颜色');
+        folderColors.addColor(settings, 'colorBase').name('主色');
+        folderColors.addColor(settings, 'colorHigh').name('副色');
+
+        const folderSky = gui.addFolder('背景天空');
+        folderSky.addColor(settings, 'skyDark').name('地平线颜色');
+        folderSky.addColor(settings, 'skyDeep').name('天顶颜色');
+
+        const folderStars = gui.addFolder('星空设置');
+        folderStars.add(settings, 'starDensity', 0.0, 1.0).name('星星密度');
+        folderStars.add(settings, 'starSize', 0.1, 3.0).name('星星大小');
+        folderStars.add(settings, 'starBlinkRate', 0.0, 10.0).name('闪烁频率');
+        folderStars.add(settings, 'starIntensity', 0.0, 2.0).name('星星亮度');
+        folderStars.addColor(settings, 'starColor').name('星星颜色');
+
+        folderDisplay.close();
+        folderMotion.close();
+        folderColors.close();
+        folderSky.close();
+        folderStars.close();
+        gui.close();
+
+        window.addEventListener('resize', () => {
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            uniforms.iResolution.value.set(window.innerWidth * settings.pixelRatio, window.innerHeight * settings.pixelRatio);
+        });
+
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            uniforms.iTime.value = clock.getElapsedTime();
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    renderer.render(scene, camera);
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / renderer.domElement.width, maxSize / renderer.domElement.height);
+                    tempCanvas.width = Math.floor(renderer.domElement.width * scale);
+                    tempCanvas.height = Math.floor(renderer.domElement.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(renderer.domElement, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', 0.8);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                }
+            }
+        });
+
+        animate();
+    </script>
+</body>
+</html>
