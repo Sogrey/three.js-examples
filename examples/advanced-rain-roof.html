@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Three.js示例 - 雨和屋顶效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 雨和屋顶</title>
+    <link rel="stylesheet" href="../css/example-common.css">
+    <style>
+        body {
+            overflow: hidden;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+    
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../libs/three/r179/build/three.module.js",
+                "three/addons/": "../libs/three/r179/jsm/"
+            }
+        }
+    </script>
+    
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        class DepthData extends THREE.WebGLRenderTarget {
+            constructor(size, camParams) {
+                super(size, size);
+                this.texture.minFilter = THREE.NearestFilter;
+                this.texture.magFilter = THREE.NearestFilter;
+                this.stencilBuffer = false;
+                this.depthTexture = new THREE.DepthTexture();
+                this.depthTexture.format = THREE.DepthFormat;
+                this.depthTexture.type = THREE.UnsignedIntType;
+                
+                let hw = camParams.width * 0.5;
+                let hh = camParams.height * 0.5;
+                let d = camParams.depth;
+                this.depthCam = new THREE.OrthographicCamera(-hw, hw, hh, -hh, 0, d);
+                this.depthCam.layers.set(1);
+                this.depthCam.position.set(0, d, 0);
+                this.depthCam.lookAt(0, 0, 0);
+            }
+            
+            update() {
+                window.renderer.setRenderTarget(this);
+                window.renderer.render(window.scene, this.depthCam);
+                window.renderer.setRenderTarget(null);
+            }
+        }
+
+        class Rain extends THREE.Line {
+            constructor(size, amount) {
+                let v = new THREE.Vector3();
+                let gBase = new THREE.BufferGeometry().setFromPoints([new THREE.Vector2(0, 0), new THREE.Vector2(0, 1)]);
+                let g = new THREE.InstancedBufferGeometry().copy(gBase);
+                g.setAttribute("instPos", new THREE.InstancedBufferAttribute(
+                    new Float32Array(
+                        Array.from({length: amount}, () => {
+                            v.random().subScalar(0.5);
+                            v.y += 0.5;
+                            v.multiply(size);
+                            return [...v];
+                        }).flat()
+                    ), 3
+                ));
+                g.instanceCount = amount;
+                
+                let m = new THREE.LineBasicMaterial({
+                    color: 0x4488ff,
+                    transparent: true,
+                    onBeforeCompile: shader => {
+                        shader.uniforms.depthData = gu.depthData;
+                        shader.uniforms.time = gu.time;
+                        shader.vertexShader = `
+                            uniform float time;
+                            
+                            attribute vec3 instPos;
+                            
+                            varying float colorTransition;
+                            varying vec3 vPos;
+                            ${shader.vertexShader}
+                        `.replace(
+                            `#include <begin_vertex>`,
+                            `#include <begin_vertex>
+                            
+                            float t = time;
+                            vec3 iPos = instPos;
+                            iPos.y = mod(20. - instPos.y - t * 5., 20.);
+                            
+                            transformed.y *= 0.5;
+                            transformed += iPos;
+                            
+                            vPos = transformed;
+                            
+                            colorTransition = position.y;
+                            `
+                        );
+                        
+                        shader.fragmentShader = `
+                            uniform sampler2D depthData;
+                            varying float colorTransition;
+                            varying vec3 vPos;
+                            ${shader.fragmentShader}
+                        `.replace(
+                            `vec4 diffuseColor = vec4( diffuse, opacity );`,
+                            `
+                            vec2 depthUV = (vPos.xz + 10.) / 20.;
+                            depthUV.y = 1. - depthUV.y;
+                            
+                            float depthVal = 1. - texture(depthData, depthUV).r;
+                            float actualDepth = depthVal * 20.;
+                            
+                            if(vPos.y < actualDepth) discard;
+                            
+                            float trns = 1. - colorTransition;
+                            
+                            float distVal = smoothstep(3., 0., vPos.y - actualDepth);
+                            vec3 col = mix(diffuse, vec3(0.9), distVal);
+                            vec4 diffuseColor = vec4( mix(col, col + 0.1, pow(trns, 16.)), (opacity * (0.25 + 0.75 * distVal)) * trns );
+                            `
+                        );
+                    }
+                });
+                super(g, m);
+                this.frustumCulled = false;
+            }
+        }
+
+        let controls;
+        let tent;
+        let rain;
+        let depthData;
+        let gu = {
+            time: {value: 0},
+            depthData: {value: null}
+        };
+        let clock = new THREE.Clock();
+        let t = 0;
+
+        function init() {
+            window.scene = new THREE.Scene();
+            window.scene.background = new THREE.Color(0x1a1a2e);
+            
+            window.camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 1, 1000);
+            window.camera.position.set(3, 5, 13).setLength(50);
+            
+            window.renderer = new THREE.WebGLRenderer({antialias: true});
+            window.renderer.setSize(innerWidth, innerHeight);
+            window.renderer.setPixelRatio(window.devicePixelRatio);
+            document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+
+            let camShift = new THREE.Vector3(0, 7, 0);
+            window.camera.position.add(camShift);
+            controls = new OrbitControls(window.camera, window.renderer.domElement);
+            controls.enableDamping = true;
+            controls.target.copy(camShift);
+
+            let light = new THREE.DirectionalLight(0xffffff, Math.PI);
+            light.position.setScalar(1);
+            window.scene.add(light, new THREE.AmbientLight(0xffffff, Math.PI * 0.5));
+
+            let maxHeight = 20;
+            depthData = new DepthData(1024, {width: 20, height: 20, depth: maxHeight});
+            gu.depthData.value = depthData.depthTexture;
+
+            let lawn = new THREE.Mesh(
+                new THREE.PlaneGeometry(20, 20).rotateX(-Math.PI * 0.5),
+                new THREE.MeshLambertMaterial({
+                    color: "darkgreen"
+                })
+            );
+            lawn.layers.enable(1);
+            window.scene.add(lawn);
+
+            tent = new THREE.Mesh(
+                new THREE.PlaneGeometry(10, 10).rotateX(-Math.PI * 0.65).translate(0, 10, 0),
+                new THREE.MeshLambertMaterial({
+                    color: "maroon",
+                    side: THREE.DoubleSide
+                })
+            );
+            tent.layers.enable(1);
+            tent.position.set(-2, 2, 0);
+            tent.rotation.y = Math.PI * 0.25;
+            window.scene.add(tent);
+
+            rain = new Rain(new THREE.Vector3(20, 20, 20), 50000);
+            window.scene.add(rain);
+
+            window.addEventListener('resize', onWindowResize);
+            animate();
+        }
+
+        function onWindowResize() {
+            window.camera.aspect = innerWidth / innerHeight;
+            window.camera.updateProjectionMatrix();
+            window.renderer.setSize(innerWidth, innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            let dt = clock.getDelta();
+            t += dt;
+            gu.time.value = t;
+            
+            controls.update();
+            tent.position.x = Math.sin(t * 0.2) * 7;
+            
+            depthData.update();
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        init();
+    </script>
+    
+    <script>
+        let _screenshotRenderer;
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (!_screenshotRenderer && window.renderer) {
+                        _screenshotRenderer = window.renderer;
+                    }
+                    if (!_screenshotRenderer) {
+                        throw new Error('渲染器未初始化');
+                    }
+                    if (window.scene && window.camera) {
+                        _screenshotRenderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = _screenshotRenderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({
+                        type: 'screenshot-data',
+                        dataUrl: dataUrl
+                    }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({
+                        type: 'screenshot-error',
+                        error: error.message
+                    }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

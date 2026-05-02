@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Three.js 着色器变形 - 圆环与方块之间的动态变形效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 着色器变形</title>
+    <link rel="stylesheet" href="../css/example-common.css">
+    <style>
+        .transform-button {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50px;
+            color: rgba(255, 255, 255, 0.9);
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 100;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+        .transform-button:hover {
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transform: translateX(-50%) translateY(-2px);
+        }
+        .transform-button:active {
+            transform: translateX(-50%) translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+    <button id="transformButton" class="transform-button">Transform Shapes</button>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../libs/three/r179/build/three.module.js",
+                "three/addons/": "../libs/three/r179/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('threeContainer').appendChild(renderer.domElement);
+
+        let cubeTransformValue = 0.0;
+        let targetCubeTransformValue = 0.0;
+        let isTransforming = false;
+
+        const material = new THREE.ShaderMaterial({
+            uniforms: {
+                time: { value: 0.0 },
+                resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+                mouse: { value: new THREE.Vector2(0.5, 0.5) },
+                cubeTransform: { value: 0.0 }
+            },
+            vertexShader: `
+                varying vec2 vUv;
+                void main() {
+                    vUv = uv;
+                    gl_Position = vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform float time;
+                uniform vec2 resolution;
+                uniform vec2 mouse;
+                uniform float cubeTransform;
+
+                varying vec2 vUv;
+
+                #define MAX_STEPS 100
+                #define MAX_DIST 80.0
+                #define SURF_DIST 0.001
+                #define PI 3.14159265359
+                #define TAU (2.0*PI)
+                #define NUM_ORBITING_SPHERES 12.0
+
+                mat2 rot2D(float angle) {
+                    float s = sin(angle);
+                    float c = cos(angle);
+                    return mat2(c, -s, s, c);
+                }
+
+                float smin(float a, float b, float k) {
+                    float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
+                    return mix(b, a, h) - k * h * (1.0 - h);
+                }
+
+                float random(vec3 p) {
+                    p = fract(p * vec3(123.45, 234.56, 345.67));
+                    p += dot(p, p + 45.67);
+                    return fract(p.x * p.y * p.z);
+                }
+
+                float random2D(vec2 st) {
+                    return fract(sin(dot(st.xy, vec2(12.9898,78.233)))* 43758.5453123);
+                }
+
+                float sdSphere(vec3 p, float s) {
+                    return length(p) - s;
+                }
+
+                float sdBox(vec3 p, vec3 b) {
+                    vec3 q = abs(p) - b;
+                    return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0);
+                }
+
+                float sdRoundBox(vec3 p, vec3 b, float r) {
+                    vec3 q = abs(p) - b;
+                    return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0) - r;
+                }
+
+                float sdTorus(vec3 p, vec2 t) {
+                    vec2 q = vec2(length(p.xz)-t.x, p.y);
+                    return length(q)-t.y;
+                }
+
+                vec2 map(vec3 p) {
+                    float finalDist = MAX_DIST;
+                    float materialId = 0.0;
+
+                    float weaveDist = MAX_DIST;
+                    vec3 pWeave = p;
+                    pWeave.xy *= rot2D(time * 0.15);
+                    pWeave.yz *= rot2D(time * 0.1);
+
+                    vec2 torusParams = vec2(0.5, 0.08);
+                    float k_smin_weave = 0.15;
+
+                    if (cubeTransform < 0.001) {
+                        weaveDist = smin(weaveDist, sdTorus(pWeave, torusParams), k_smin_weave);
+                        vec3 pTorus2 = pWeave;
+                        pTorus2.xy *= rot2D(PI * 0.5);
+                        weaveDist = smin(weaveDist, sdTorus(pTorus2, torusParams), k_smin_weave);
+                        vec3 pTorus3 = pWeave;
+                        pTorus3.yz *= rot2D(PI * 0.5);
+                        weaveDist = smin(weaveDist, sdTorus(pTorus3, torusParams), k_smin_weave);
+                    } else if (cubeTransform > 0.999) {
+                        float boxSize = 0.3;
+                        float roundness = 0.08;
+                        weaveDist = sdRoundBox(pWeave, vec3(boxSize), roundness);
+                        vec3 boxOffset1 = vec3(boxSize*1.8, 0.0, 0.0);
+                        vec3 boxOffset2 = vec3(0.0, boxSize*1.8, 0.0);
+                        vec3 boxOffset3 = vec3(0.0, 0.0, boxSize*1.8);
+                        weaveDist = smin(weaveDist, sdRoundBox(pWeave - boxOffset1, vec3(boxSize, boxSize*0.5, boxSize*0.5), roundness), k_smin_weave);
+                        weaveDist = smin(weaveDist, sdRoundBox(pWeave + boxOffset1, vec3(boxSize, boxSize*0.5, boxSize*0.5), roundness), k_smin_weave);
+                        weaveDist = smin(weaveDist, sdRoundBox(pWeave - boxOffset2, vec3(boxSize*0.5, boxSize, boxSize*0.5), roundness), k_smin_weave);
+                        weaveDist = smin(weaveDist, sdRoundBox(pWeave + boxOffset2, vec3(boxSize*0.5, boxSize, boxSize*0.5), roundness), k_smin_weave);
+                        weaveDist = smin(weaveDist, sdRoundBox(pWeave - boxOffset3, vec3(boxSize*0.5, boxSize*0.5, boxSize), roundness), k_smin_weave);
+                        weaveDist = smin(weaveDist, sdRoundBox(pWeave + boxOffset3, vec3(boxSize*0.5, boxSize*0.5, boxSize), roundness), k_smin_weave);
+                    } else {
+                        float toriDist = MAX_DIST;
+                        toriDist = smin(toriDist, sdTorus(pWeave, torusParams), k_smin_weave);
+                        vec3 pTorus2 = pWeave;
+                        pTorus2.xy *= rot2D(PI * 0.5);
+                        toriDist = smin(toriDist, sdTorus(pTorus2, torusParams), k_smin_weave);
+                        vec3 pTorus3 = pWeave;
+                        pTorus3.yz *= rot2D(PI * 0.5);
+                        toriDist = smin(toriDist, sdTorus(pTorus3, torusParams), k_smin_weave);
+                        float cubeDist = MAX_DIST;
+                        float boxSize = 0.3;
+                        float roundness = 0.08;
+                        cubeDist = sdRoundBox(pWeave, vec3(boxSize), roundness);
+                        vec3 boxOffset1 = vec3(boxSize*1.8, 0.0, 0.0);
+                        vec3 boxOffset2 = vec3(0.0, boxSize*1.8, 0.0);
+                        vec3 boxOffset3 = vec3(0.0, 0.0, boxSize*1.8);
+                        cubeDist = smin(cubeDist, sdRoundBox(pWeave - boxOffset1, vec3(boxSize, boxSize*0.5, boxSize*0.5), roundness), k_smin_weave);
+                        cubeDist = smin(cubeDist, sdRoundBox(pWeave + boxOffset1, vec3(boxSize, boxSize*0.5, boxSize*0.5), roundness), k_smin_weave);
+                        cubeDist = smin(cubeDist, sdRoundBox(pWeave - boxOffset2, vec3(boxSize*0.5, boxSize, boxSize*0.5), roundness), k_smin_weave);
+                        cubeDist = smin(cubeDist, sdRoundBox(pWeave + boxOffset2, vec3(boxSize*0.5, boxSize, boxSize*0.5), roundness), k_smin_weave);
+                        cubeDist = smin(cubeDist, sdRoundBox(pWeave - boxOffset3, vec3(boxSize*0.5, boxSize*0.5, boxSize), roundness), k_smin_weave);
+                        cubeDist = smin(cubeDist, sdRoundBox(pWeave + boxOffset3, vec3(boxSize*0.5, boxSize*0.5, boxSize), roundness), k_smin_weave);
+                        weaveDist = mix(toriDist, cubeDist, cubeTransform);
+                    }
+
+                    float sphereDist = MAX_DIST;
+                    float globalMergeCycle = (sin(time * 0.7) + 1.0) * 0.5;
+
+                    for(float i = 0.0; i < NUM_ORBITING_SPHERES; i += 1.0) {
+                        float angle1 = time * 0.4 + i * TAU / NUM_ORBITING_SPHERES * 2.0;
+                        float angle2 = time * 0.3 + i * TAU / NUM_ORBITING_SPHERES * 3.0;
+                        float baseOrbitRadius = 1.0;
+                        float minRadiusFactor = 0.25;
+                        float maxRadiusFactor = 1.0;
+                        float currentRadiusFactor = minRadiusFactor + globalMergeCycle * (maxRadiusFactor - minRadiusFactor);
+                        vec3 offset = vec3(cos(angle1) * baseOrbitRadius * currentRadiusFactor,
+                                          sin(angle2) * baseOrbitRadius * 0.8 * currentRadiusFactor,
+                                          sin(angle1) * baseOrbitRadius * currentRadiusFactor);
+                        vec3 pSphere = p - offset;
+                        float elementSize = 0.05 + abs(sin(time * 1.8 + i * 1.1 + i*0.3)) * 0.02;
+                        float currentElement;
+                        if (cubeTransform < 0.001) {
+                            currentElement = sdSphere(pSphere, elementSize);
+                        } else if (cubeTransform > 0.999) {
+                            vec3 rotatedP = pSphere;
+                            rotatedP.xy *= rot2D(i * 0.5 + time * 0.2);
+                            rotatedP.yz *= rot2D(i * 0.3 + time * 0.15);
+                            currentElement = sdBox(rotatedP, vec3(elementSize * 0.8));
+                        } else {
+                            float sphereComp = sdSphere(pSphere, elementSize);
+                            vec3 rotatedP = pSphere;
+                            rotatedP.xy *= rot2D(i * 0.5 + time * 0.2);
+                            rotatedP.yz *= rot2D(i * 0.3 + time * 0.15);
+                            float cubeComp = sdBox(rotatedP, vec3(elementSize * 0.8));
+                            currentElement = mix(sphereComp, cubeComp, cubeTransform);
+                        }
+                        sphereDist = smin(sphereDist, currentElement, 0.1);
+                    }
+
+                    if (weaveDist < sphereDist) {
+                        materialId = 1.0;
+                    } else {
+                        materialId = 2.0;
+                    }
+
+                    float smin_k_for_merge = 0.08 + (1.0 - globalMergeCycle) * 0.3;
+                    finalDist = smin(weaveDist, sphereDist, smin_k_for_merge);
+
+                    return vec2(finalDist, materialId);
+                }
+
+                vec3 getNormal(vec3 p) {
+                    vec2 e = vec2(0.001, 0.0);
+                    float d = map(p).x;
+                    vec3 n = d - vec3(
+                        map(p - e.xyy).x,
+                        map(p - e.yxy).x,
+                        map(p - e.yyx).x
+                    );
+                    if (length(n) < 0.0001) return vec3(0,1,0);
+                    return normalize(n);
+                }
+
+                vec2 rayMarch(vec3 ro, vec3 rd) {
+                    float dO = 0.0;
+                    float matId = 0.0;
+                    for(int i = 0; i < MAX_STEPS; i++) {
+                        vec3 p = ro + rd * dO;
+                        vec2 dS = map(p);
+                        dO += max(SURF_DIST * 1.5, dS.x);
+                        matId = dS.y;
+                        if(dS.x < SURF_DIST || dO > MAX_DIST) break;
+                    }
+                    return vec2(dO, matId);
+                }
+
+                vec3 palette(float id, vec3 p, vec3 n, vec3 v, float time) {
+                    vec3 gold = vec3(0.9, 0.7, 0.2);
+                    vec3 silver = vec3(0.8, 0.85, 0.9);
+                    vec3 deepBlue = vec3(0.1, 0.2, 0.5);
+                    vec3 highlight = vec3(1.0, 1.0, 1.0);
+
+                    float fresnel = pow(1.0 - clamp(dot(n, v), 0.0, 1.0), 4.0);
+
+                    vec3 cubeGold = vec3(0.95, 0.6, 0.1);
+                    vec3 cubeSilver = vec3(0.9, 0.9, 1.0);
+                    vec3 cubeBlue = vec3(0.05, 0.3, 0.7);
+
+                    gold = mix(gold, cubeGold, cubeTransform);
+                    silver = mix(silver, cubeSilver, cubeTransform);
+                    deepBlue = mix(deepBlue, cubeBlue, cubeTransform);
+
+                    if (id == 1.0) {
+                        float noiseVal = random(p * 1.5 + n * 0.5 + time * 0.05);
+                        float pattern = sin(p.x * 3.0 + p.y * 2.0 - time * 0.2) * 0.5 + 0.5;
+                        vec3 base = mix(gold, silver, smoothstep(0.3, 0.7, noiseVal * pattern));
+                        base = mix(base, deepBlue, smoothstep(0.7, 0.9, length(p)*0.2));
+                        return mix(base, highlight, fresnel * 0.9);
+                    } else if (id == 2.0) {
+                        vec3 base = deepBlue * 0.5 + highlight * 0.5 * abs(sin(time*2.0 + p.x*5.0 + p.y*5.0));
+                        return mix(base, highlight, fresnel * 1.2);
+                    }
+                    return vec3(0.0);
+                }
+
+                float calculateAO(vec3 p, vec3 n) {
+                    float ao = 0.0;
+                    float stepSize = 0.04;
+                    float totalWeight = 0.0;
+                    for(int i = 1; i <= 4; i++) {
+                        float dist = float(i) * stepSize;
+                        float weight = 1.0 / (1.0 + dist * dist);
+                        ao += max(0.0, dist - map(p + n * dist).x) * weight;
+                        totalWeight += weight;
+                    }
+                    if (totalWeight < 0.001) return 1.0;
+                    return 1.0 - clamp(ao / totalWeight * 2.0, 0.0, 1.0);
+                }
+
+                vec3 render(vec2 uv) {
+                    vec3 ro = vec3((mouse.x - 0.5)*0.6, (mouse.y - 0.5)*0.6, -3.0);
+                    vec3 rd = normalize(vec3(uv, 1.0));
+
+                    mat2 camRot = rot2D(time * 0.1);
+                    ro.xz *= camRot;
+                    rd.xz *= camRot;
+
+                    vec2 marchResult = rayMarch(ro, rd);
+                    float t = marchResult.x;
+                    float matId = marchResult.y;
+
+                    vec3 col = vec3(0.005, 0.005, 0.015);
+
+                    if(t < MAX_DIST && matId > 0.0) {
+                        vec3 p = ro + rd * t;
+                        vec3 n = getNormal(p);
+                        vec3 v = normalize(ro - p);
+
+                        float lightOscillation = (sin(time * 0.2) + 1.0) * 0.5;
+                        vec3 lightCol1 = mix(vec3(1.0, 0.95, 0.9), vec3(0.9, 0.95, 1.0), lightOscillation);
+
+                        vec3 lightPos1 = vec3(4.0, 3.0, -5.0);
+                        vec3 lightDir1 = normalize(lightPos1 - p);
+
+                        vec3 lightPos2 = vec3(-3.0, -2.0, -4.0);
+                        vec3 lightDir2 = normalize(lightPos2 - p);
+                        vec3 lightCol2 = vec3(0.4, 0.5, 0.8);
+
+                        float ambient = 0.05;
+                        float diffuse1 = max(dot(n, lightDir1), 0.0);
+                        float diffuse2 = max(dot(n, lightDir2), 0.0);
+
+                        vec3 h1 = normalize(lightDir1 + v);
+                        vec3 h2 = normalize(lightDir2 + v);
+                        float specPower = (matId == 1.0) ? 128.0 : 48.0;
+                        float specular1 = pow(max(dot(n, h1), 0.0), specPower);
+                        float specular2 = pow(max(dot(n, h2), 0.0), specPower * 0.5);
+
+                        vec3 baseColor = palette(matId, p, n, v, time);
+                        float ao = calculateAO(p, n);
+
+                        col = baseColor * (ambient * ao);
+                        col += baseColor * diffuse1 * lightCol1 * ao * 0.8;
+                        col += baseColor * diffuse2 * lightCol2 * ao * 0.5;
+                        col += specular1 * lightCol1 * ao * 1.0;
+                        col += specular2 * lightCol2 * ao * 0.4;
+
+                        if (matId == 2.0) {
+                            col += baseColor * 0.12;
+                        }
+
+                        float fogFactor = smoothstep(MAX_DIST * 0.1, MAX_DIST * 0.9, t);
+                        col = mix(col, vec3(0.005, 0.005, 0.015), fogFactor);
+
+                    } else {
+                        float starDensity = 800.0;
+                        float starBrightness = 150.0;
+                        float star = random2D(floor(uv * starDensity));
+                        star = pow(star, starBrightness);
+                        col += vec3(star * 0.5, star * 0.6, star * 0.8) * 0.3;
+                    }
+
+                    col = pow(col, vec3(0.4545));
+                    col = clamp(col, 0.0, 1.0);
+                    return col;
+                }
+
+                void main() {
+                    vec2 uv = (gl_FragCoord.xy - 0.5 * resolution.xy) / resolution.y;
+                    vec3 finalColor = render(uv);
+                    gl_FragColor = vec4(finalColor, 1.0);
+                }
+            `
+        });
+
+        const geometry = new THREE.PlaneGeometry(2, 2);
+        const mesh = new THREE.Mesh(geometry, material);
+        scene.add(mesh);
+
+        document.addEventListener('mousemove', (event) => {
+            material.uniforms.mouse.value.set(
+                event.clientX / window.innerWidth,
+                1.0 - event.clientY / window.innerHeight
+            );
+        });
+
+        window.addEventListener('resize', () => {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            renderer.setSize(width, height);
+            material.uniforms.resolution.value.set(width, height);
+        });
+
+        const transformButton = document.getElementById('transformButton');
+        transformButton.addEventListener('click', () => {
+            targetCubeTransformValue = targetCubeTransformValue < 0.5 ? 1.0 : 0.0;
+            isTransforming = true;
+            transformButton.textContent = targetCubeTransformValue > 0.5 ?
+                "Return to Original" : "Transform Shapes";
+        });
+
+        function animate(timestamp) {
+            requestAnimationFrame(animate);
+            material.uniforms.time.value = timestamp * 0.001;
+
+            if (isTransforming) {
+                const transitionSpeed = 0.025;
+                if (targetCubeTransformValue > 0.5) {
+                    cubeTransformValue += transitionSpeed;
+                    if (cubeTransformValue >= 1.0) {
+                        cubeTransformValue = 1.0;
+                        isTransforming = false;
+                    }
+                } else {
+                    cubeTransformValue -= transitionSpeed;
+                    if (cubeTransformValue <= 0.0) {
+                        cubeTransformValue = 0.0;
+                        isTransforming = false;
+                    }
+                }
+                material.uniforms.cubeTransform.value = cubeTransformValue;
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    renderer.render(scene, camera);
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / renderer.domElement.width, maxSize / renderer.domElement.height);
+                    tempCanvas.width = Math.floor(renderer.domElement.width * scale);
+                    tempCanvas.height = Math.floor(renderer.domElement.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(renderer.domElement, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', 0.8);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                }
+            }
+        });
+
+        animate(0);
+    </script>
+</body>
+</html>
