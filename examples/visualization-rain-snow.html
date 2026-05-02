@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Three.js雨雪雾天气 - 使用Shader实现雨雪雾天气覆盖效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 雨雪雾天气</title>
+    <link rel="stylesheet" href="../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+    
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../libs/three/r179/build/three.module.js",
+                "three/addons/": "../libs/three/r179/jsm/"
+            }
+        }
+    </script>
+    
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+        import * as BufferGeometryUtils from '../libs/three/r179/BufferGeometryUtils.js';
+        
+        window.scene = null;
+        window.camera = null;
+        window.renderer = null;
+        
+        const params = {
+            weather: 'rain',
+            rainSpeed: 3.0,
+            fogSpeed: 1.0,
+            fogOpacity: 1.0,
+            boxCount: 50,
+            backgroundColor: '#00008B'
+        };
+        
+        let controls;
+        let sceneOrtho, cameraOrtho, renderTarget, vector;
+        let weatherMesh, material;
+        let rainMaterial, snowMaterial, fogMaterial;
+        let geometries = [];
+        let iTime = 0;
+        
+        init();
+        animate();
+        
+        function init() {
+            window.scene = new THREE.Scene();
+            window.scene.background = new THREE.Color(params.backgroundColor);
+            
+            window.camera = new THREE.PerspectiveCamera(
+                60,
+                window.innerWidth / window.innerHeight,
+                0.1,
+                1000
+            );
+            window.camera.position.set(-18, 12, 17);
+            window.camera.lookAt(0, 0, 0);
+            
+            window.renderer = new THREE.WebGLRenderer({ antialias: true });
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            window.renderer.setPixelRatio(window.devicePixelRatio);
+            window.renderer.autoClear = false;
+            document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+            
+            controls = new OrbitControls(window.camera, window.renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            
+            createScene();
+            setupFrameBuffer();
+            initGUI();
+            
+            window.addEventListener('resize', onWindowResize);
+        }
+        
+        function setupFrameBuffer() {
+            const dpr = window.devicePixelRatio;
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            
+            sceneOrtho = new THREE.Scene();
+            cameraOrtho = new THREE.OrthographicCamera(
+                -width / 2,
+                width / 2,
+                height / 2,
+                -height / 2,
+                1,
+                10
+            );
+            cameraOrtho.position.z = 10;
+            cameraOrtho.left = -width / 2;
+            cameraOrtho.right = width / 2;
+            cameraOrtho.top = height / 2;
+            cameraOrtho.bottom = -height / 2;
+            cameraOrtho.updateProjectionMatrix();
+            
+            renderTarget = new THREE.WebGLRenderTarget(width * dpr, height * dpr);
+            vector = new THREE.Vector2();
+            
+            const g = new THREE.PlaneGeometry(width, height);
+            
+            rainMaterial = new THREE.ShaderMaterial({
+                transparent: true,
+                uniforms: {
+                    rainSpeed: { value: params.rainSpeed },
+                    iTime: { value: 0 },
+                    rainAngle: { value: -0.1 }
+                },
+                vertexShader: `
+                    varying vec2 vUv;
+                    void main(){
+                        vUv=uv;
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+                    }`,
+                fragmentShader: `
+                    varying vec2 vUv;
+                    uniform float iTime;
+                    uniform float rainSpeed;
+                    uniform float rainAngle;
+                    float PI = 3.1415926;
+                    
+                    float random(in vec2 uv) {
+                        return fract(sin(dot(uv.xy, vec2(12.9898, 78.233))) * 43758.5453123);
+                    }
+                    
+                    float noise(in vec2 uv) {
+                        vec2 i = floor(uv);
+                        vec2 f = fract(uv);
+                        f = f * f * (3.0 - 2.0 * f);
+                        
+                        float lb = random(i + vec2(0.0, 0.0));
+                        float rb = random(i + vec2(1.0, 0.0));
+                        float lt = random(i + vec2(0.0, 1.0));
+                        float rt = random(i + vec2(1.0, 1.0));
+                        
+                        return mix(mix(lb, rb, f.x), mix(lt, rt, f.x), f.y);
+                    }
+                    
+                    float rain(vec2 uv) {
+                        float travelTime = (iTime * 0.2) + 0.1;
+                        
+                        vec2 tiling = vec2(1.0, 0.01);
+                        vec2 offset = vec2(travelTime * 0.5 + uv.x * 0.2, travelTime * 0.2);
+                        
+                        vec2 st = uv * tiling + offset;
+                        
+                        float rain = 0.1;
+                        float f = fract(noise(st * 200.5) * noise(st * 125.5) * rainSpeed);
+                        f = clamp(pow(abs(f), 15.0) * 1.5 * (rain * rain * 125.0), 0.0, 0.25);
+                        return f;
+                    }
+                    
+                    mat2 rotate2d(float angle) {
+                        return mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
+                    }
+                    
+                    void main() {
+                        mat2 a = rotate2d(rainAngle * PI);
+                        float rain = rain(vUv * a);
+                        if(rain <= 0.0) {
+                            discard;
+                            return;
+                        }
+                        vec3 col = vec3(1.0);
+                        gl_FragColor = vec4(col, rain);
+                    }
+                `
+            });
+            
+            snowMaterial = new THREE.ShaderMaterial({
+                transparent: true,
+                uniforms: {
+                    iTime: { value: 0 }
+                },
+                vertexShader: `
+                    varying vec2 vUv;
+                    void main(){
+                        vUv=uv;
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+                    }`,
+                fragmentShader: `
+                    varying vec2 vUv;
+                    uniform float iTime;
+                    
+                    void main() {
+                        float snow = 0.0;
+                        for(int k = 0; k < 6; k++) {
+                            for(int i = 1; i < 13; i++) {
+                                float cellSize = 2.0 + (float(i) * 3.0);
+                                float downSpeed = 0.3 + (sin(iTime * 0.4 + float(k + i * 20)) + 1.0) * 0.00008;
+                                float fi = float(i);
+                                vec2 uv = vUv + vec2(0.01 * sin((iTime + float(k * 6185)) * 0.6 + fi) * (5.0 / fi), downSpeed * (iTime + float(k * 1352)) * (1.0 / fi));
+                                vec2 uvStep = (ceil((uv) * cellSize - vec2(0.5, 0.5)) / cellSize);
+                                float x = fract(sin(dot(uvStep.xy, vec2(12.9898 + float(k) * 12.0, 78.233 + float(k) * 315.156))) * 43758.5453 + float(k) * 12.0) - 0.5;
+                                float y = fract(sin(dot(uvStep.xy, vec2(62.2364 + float(k) * 23.0, 94.674 + float(k) * 95.0))) * 62159.8432 + float(k) * 12.0) - 0.5;
+                                
+                                float randomMagnitude1 = sin(iTime * 2.5) * 0.7 / cellSize;
+                                float randomMagnitude2 = cos(iTime * 2.5) * 0.7 / cellSize;
+                                
+                                float d = 5.0 * distance((uvStep.xy + vec2(x * sin(y), y) * randomMagnitude1 + vec2(y, x) * randomMagnitude2), uv.xy);
+                                
+                                float omiVal = fract(sin(dot(uvStep.xy, vec2(32.4691, 94.615))) * 31572.1684);
+                                if(omiVal < 0.08 ? true : false) {
+                                    float newd = (x + 1.0) * 0.4 * clamp(1.9 - d * (15.0 + (x * 6.3)) * (cellSize / 1.4), 0.0, 1.0);
+                                    snow += newd;
+                                }
+                            }
+                        }
+                        gl_FragColor = vec4(1.0, 1.0, 1.0, snow);
+                    }
+                `
+            });
+            
+            fogMaterial = new THREE.ShaderMaterial({
+                transparent: true,
+                uniforms: {
+                    iTime: { value: 0 },
+                    fogOpacity: { value: params.fogOpacity },
+                    fogSpeed: { value: params.fogSpeed }
+                },
+                vertexShader: `
+                    varying vec2 vUv;
+                    void main(){
+                        vUv=uv;
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+                    }`,
+                fragmentShader: `
+                    float cloudDensity = 1.0;
+                    float noisiness = 0.35;
+                    float speed = 0.1;
+                    float cloudHeight = 0.5;
+                    
+                    uniform float iTime;
+                    uniform float fogSpeed;
+                    uniform float fogOpacity;
+                    
+                    varying vec2 vUv;
+                    
+                    vec3 mod289(vec3 x) {
+                        return x - floor(x * (1.0 / 289.0)) * 289.0;
+                    }
+                    
+                    vec4 mod289(vec4 x) {
+                        return x - floor(x * (1.0 / 289.0)) * 289.0;
+                    }
+                    
+                    vec4 permute(vec4 x) {
+                        return mod289(((x*34.0)+1.0)*x);
+                    }
+                    
+                    vec4 taylorInvSqrt(vec4 r) {
+                        return 1.79284291400159 - 0.85373472095314 * r;
+                    }
+                    
+                    float snoise(vec3 v) {
+                        const vec2 C = vec2(1.0/6.0, 1.0/3.0);
+                        const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
+                        
+                        vec3 i = floor(v + dot(v, C.yyy));
+                        vec3 x0 = v - i + dot(i, C.xxx);
+                        
+                        vec3 g = step(x0.yzx, x0.xyz);
+                        vec3 l = 1.0 - g;
+                        vec3 i1 = min(g.xyz, l.zxy);
+                        vec3 i2 = max(g.xyz, l.zxy);
+                        
+                        vec3 x1 = x0 - i1 + C.xxx;
+                        vec3 x2 = x0 - i2 + C.yyy;
+                        vec3 x3 = x0 - D.yyy;
+                        
+                        i = mod289(i);
+                        vec4 p = permute(permute(permute(
+                            i.z + vec4(0.0, i1.z, i2.z, 1.0))
+                            + i.y + vec4(0.0, i1.y, i2.y, 1.0))
+                            + i.x + vec4(0.0, i1.x, i2.x, 1.0));
+                        
+                        float n_ = 0.142857142857;
+                        vec3 ns = n_ * D.wyz - D.xzx;
+                        
+                        vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+                        
+                        vec4 x_ = floor(j * ns.z);
+                        vec4 y_ = floor(j - 7.0 * x_);
+                        
+                        vec4 x = x_ * ns.x + ns.yyyy;
+                        vec4 y = y_ * ns.x + ns.yyyy;
+                        vec4 h = 1.0 - abs(x) - abs(y);
+                        
+                        vec4 b0 = vec4(x.xy, y.xy);
+                        vec4 b1 = vec4(x.zw, y.zw);
+                        
+                        vec4 s0 = floor(b0)*2.0 + 1.0;
+                        vec4 s1 = floor(b1)*2.0 + 1.0;
+                        vec4 sh = -step(h, vec4(0.0));
+                        
+                        vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy;
+                        vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww;
+                        
+                        vec3 p0 = vec3(a0.xy, h.x);
+                        vec3 p1 = vec3(a0.zw, h.y);
+                        vec3 p2 = vec3(a1.xy, h.z);
+                        vec3 p3 = vec3(a1.zw, h.w);
+                        
+                        vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2,p2), dot(p3,p3)));
+                        p0 *= norm.x;
+                        p1 *= norm.y;
+                        p2 *= norm.z;
+                        p3 *= norm.w;
+                        
+                        vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+                        m = m * m;
+                        return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
+                    }
+                    
+                    float fBm(vec3 uv) {
+                        float sum = 0.0;
+                        for(int i = 0; i < 8; i++) {
+                            float f = float(i+1);
+                            sum += snoise(uv*f) / f;
+                        }
+                        return sum / 1.0;
+                    }
+                    
+                    float gradient(vec2 uv) {
+                        return (1.0 - uv.y * uv.y * cloudHeight);
+                    }
+                    
+                    void main() {
+                        vec2 uv = vUv;
+                        vec3 p = vec3(uv, iTime * speed);
+                        vec3 offset = vec3(sin(iTime * fogSpeed*3.0), sin(iTime * fogSpeed), sin(iTime * fogSpeed*2.0));
+                        vec2 duv = vec2(fBm(p), fBm(p + offset)) * noisiness;
+                        float q = gradient(uv + duv) * cloudDensity;
+                        if(q <= 0.0) {
+                            discard;
+                            return;
+                        }
+                        gl_FragColor = vec4(vec3(1.0), q * fogOpacity);
+                    }
+                `
+            });
+            
+            material = rainMaterial;
+            
+            weatherMesh = new THREE.Mesh(g, material);
+            weatherMesh.position.set(0, 0, 1);
+            sceneOrtho.add(weatherMesh);
+            
+            const textureMesh = new THREE.Mesh(
+                g,
+                new THREE.MeshBasicMaterial({
+                    map: renderTarget.texture,
+                    transparent: true
+                })
+            );
+            textureMesh.position.set(0, 0, 0);
+            sceneOrtho.add(textureMesh);
+        }
+        
+        function createScene() {
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            window.scene.add(ambientLight);
+            
+            const dirLight = new THREE.DirectionalLight(0x0000ff, 3);
+            dirLight.position.set(20, 20, 20);
+            dirLight.castShadow = true;
+            dirLight.shadow.camera.top = 40;
+            dirLight.shadow.camera.bottom = -40;
+            dirLight.shadow.camera.left = -40;
+            dirLight.shadow.camera.right = 40;
+            dirLight.shadow.camera.near = 1;
+            dirLight.shadow.camera.far = 80;
+            dirLight.shadow.mapSize.set(1024, 1024);
+            window.scene.add(dirLight);
+            
+            const groundMesh = new THREE.Mesh(
+                new THREE.PlaneGeometry(20, 20),
+                new THREE.MeshStandardMaterial({ color: 0xffffff, depthWrite: false })
+            );
+            groundMesh.rotation.x = -Math.PI / 2;
+            groundMesh.receiveShadow = true;
+            window.scene.add(groundMesh);
+            
+            const textureLoader = new THREE.TextureLoader();
+            const tex = textureLoader.load('../images/textures/image.jpg', (loadedTex) => {
+                loadedTex.wrapS = THREE.RepeatWrapping;
+                loadedTex.wrapT = THREE.RepeatWrapping;
+            });
+            
+            const material = new THREE.MeshStandardMaterial({
+                map: tex
+            });
+            
+            geometries = [];
+            const helper = new THREE.Object3D();
+            
+            for (let i = 0; i < params.boxCount; i++) {
+                const h = Math.round(Math.random() * 3) + 1;
+                const x = Math.round(Math.random() * 8);
+                const y = Math.round(Math.random() * 8);
+                helper.position.set((x % 2 ? -1 : 1) * x, h * 0.5, (y % 2 ? -1 : 1) * y);
+                const geometry = new THREE.BoxGeometry(1, h, 1);
+                helper.updateWorldMatrix(true, false);
+                geometry.applyMatrix4(helper.matrixWorld);
+                geometries.push(geometry);
+            }
+            
+            const mergedGeometry = BufferGeometryUtils.mergeGeometries(geometries, false);
+            const cube = new THREE.Mesh(mergedGeometry, material);
+            cube.receiveShadow = true;
+            cube.castShadow = true;
+            window.scene.add(cube);
+        }
+        
+        function updateWeather() {
+            if (params.weather === 'snow') {
+                material = snowMaterial;
+                weatherMesh.material = snowMaterial;
+            } else if (params.weather === 'rain') {
+                material = rainMaterial;
+                weatherMesh.material = rainMaterial;
+                rainMaterial.uniforms.rainSpeed.value = params.rainSpeed;
+            } else if (params.weather === 'fog') {
+                material = fogMaterial;
+                weatherMesh.material = fogMaterial;
+                fogMaterial.uniforms.fogOpacity.value = params.fogOpacity;
+                fogMaterial.uniforms.fogSpeed.value = params.fogSpeed;
+            }
+        }
+        
+        function initGUI() {
+            const gui = new GUI({ title: '天气控制面板', width: 300 });
+            
+            gui.domElement.style.position = 'absolute';
+            gui.domElement.style.top = '60px';
+            gui.domElement.style.right = '10px';
+            gui.domElement.style.zIndex = '1000';
+            gui.domElement.style.maxHeight = '80vh';
+            gui.domElement.style.overflowY = 'auto';
+            
+            setTimeout(() => {
+                gui.show();
+            }, 100);
+            
+            const weatherFolder = gui.addFolder('天气设置');
+            weatherFolder.add(params, 'weather', ['rain', 'snow', 'fog']).name('天气类型').onChange(() => {
+                updateWeather();
+            });
+            
+            const speedFolder = gui.addFolder('速度控制');
+            speedFolder.add(params, 'rainSpeed', 1.0, 10.0).name('雨速度').onChange(value => {
+                if (rainMaterial) {
+                    rainMaterial.uniforms.rainSpeed.value = value;
+                }
+            });
+            speedFolder.add(params, 'fogSpeed', 0.1, 10.0).name('雾速度').onChange(value => {
+                if (fogMaterial) {
+                    fogMaterial.uniforms.fogSpeed.value = value;
+                }
+            });
+            
+            const visualFolder = gui.addFolder('视觉效果');
+            visualFolder.add(params, 'fogOpacity', 0.0, 3.0).name('雾气透明度').onChange(value => {
+                if (fogMaterial) {
+                    fogMaterial.uniforms.fogOpacity.value = value;
+                }
+            });
+            
+            const sceneFolder = gui.addFolder('场景设置');
+            sceneFolder.addColor(params, 'backgroundColor').name('背景颜色').onChange(value => {
+                window.scene.background.set(value);
+            });
+        }
+        
+        function onWindowResize() {
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            
+            const dpr = window.devicePixelRatio;
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            
+            cameraOrtho.left = -width / 2;
+            cameraOrtho.right = width / 2;
+            cameraOrtho.top = height / 2;
+            cameraOrtho.bottom = -height / 2;
+            cameraOrtho.updateProjectionMatrix();
+            
+            renderTarget.setSize(width * dpr, height * dpr);
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            controls.update();
+            
+            iTime += 0.016;
+            
+            if (rainMaterial) rainMaterial.uniforms.iTime.value = iTime;
+            if (snowMaterial) snowMaterial.uniforms.iTime.value = iTime;
+            if (fogMaterial) fogMaterial.uniforms.iTime.value = iTime;
+            
+            window.renderer.clear();
+            window.renderer.render(window.scene, window.camera);
+            
+            if (renderTarget) {
+                window.renderer.setRenderTarget(renderTarget);
+                window.renderer.render(window.scene, window.camera);
+                window.renderer.setRenderTarget(null);
+                
+                window.renderer.clearDepth();
+                window.renderer.render(sceneOrtho, cameraOrtho);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -540,6 +540,14 @@ const threejsData = {
                             version: "r179",
                             url: "examples/visualization-neon-flow"
                         },
+                        {
+                            id: "shader-abstract-art",
+                            title: "抽象艺术动画",
+                            description: "动态抽象艺术作品，旋转流动的光影图案，支持鼠标交互",
+                            thumbnail: "images/shader-abstract-art.jpg",
+                            version: "r179",
+                            url: "examples/shader-abstract-art"
+                        },
                     ]
                 },
                 {
@@ -759,25 +767,73 @@ const threejsData = {
                             url: "examples/visualization-radar-uv"
                         },
                         {
+                            id: "visualization-radar-spread",
+                            title: "雷达扩散特效",
+                            description: "圆形波纹向外扩散效果，模拟雷达探测波",
+                            thumbnail: "images/visualization-radar-spread.jpg",
+                            version: "r179",
+                            url: "examples/visualization-radar-spread"
+                        },
+                        {
                             id: "visualization-radar-scan",
                             title: "雷达扫描特效",
-                            description: "经典军事雷达扫描动画，带有目标点显示",
+                            description: "旋转扫描线效果，带有渐变衰减",
                             thumbnail: "images/visualization-radar-scan.jpg",
                             version: "r179",
                             url: "examples/visualization-radar-scan"
                         },
                         {
+                            id: "visualization-earth-sweep",
+                            title: "地球渐变扫光",
+                            description: "地球表面的渐变扫描光效果",
+                            thumbnail: "images/visualization-earth-sweep.jpg",
+                            version: "r179",
+                            url: "examples/visualization-earth-sweep"
+                        },
+                        {
+                            id: "visualization-earth-spot-sweep",
+                            title: "地球斑点扫光",
+                            description: "地球表面的斑点状扫描光效果",
+                            thumbnail: "images/visualization-earth-spot-sweep.jpg",
+                            version: "r179",
+                            url: "examples/visualization-earth-spot-sweep"
+                        },
+                        {
+                            id: "visualization-merged-shape-monitor",
+                            title: "合并形状监测",
+                            description: "使用射线检测合并几何体中的单个形状动作",
+                            thumbnail: "images/visualization-merged-shape-monitor.jpg",
+                            version: "r179",
+                            url: "examples/visualization-merged-shape-monitor"
+                        },
+                        {
+                            id: "visualization-procedural-buildings",
+                            title: "程序化生成随机建筑",
+                            description: "程序化生成随机建筑模型，俯视视角城市建筑群",
+                            thumbnail: "images/visualization-procedural-buildings.jpg",
+                            version: "r179",
+                            url: "examples/visualization-procedural-buildings"
+                        },
+                        {
+                            id: "visualization-windfield-canvas-texture",
+                            title: "Canvas贴图3D风场图",
+                            description: "风场流渲染到Canvas并贴图在球体上，支持展开收起动画",
+                            thumbnail: "images/visualization-windfield-canvas-texture.jpg",
+                            version: "r179",
+                            url: "examples/visualization-windfield-canvas-texture"
+                        },
+                        {
                             id: "visualization-windfield-3d-plane",
-                            title: "3D风场图平面",
-                            description: "平面上的风场流动可视化，带粒子和箭头显示",
+                            title: "平面3D风场图",
+                            description: "平面上的风场粒子流动效果，带参数控制面板",
                             thumbnail: "images/visualization-windfield-3d-plane.jpg",
                             version: "r179",
                             url: "examples/visualization-windfield-3d-plane"
                         },
                         {
                             id: "visualization-windfield-3d-globe",
-                            title: "3D风场图地球",
-                            description: "地球上的风场流动可视化，带大气光晕效果",
+                            title: "地球3D风场图",
+                            description: "地球上的风场粒子流动效果，带参数控制面板",
                             thumbnail: "images/visualization-windfield-3d-globe.jpg",
                             version: "r179",
                             url: "examples/visualization-windfield-3d-globe"
@@ -871,6 +927,38 @@ const threejsData = {
                             url: "examples/visualization-heatmap-3d-hill"
                         },
                         {
+                            id: "visualization-contour-line-3d",
+                            title: "纯色3D等高线图",
+                            description: "基于热力图数据的3D等高线可视化，纯色线条",
+                            thumbnail: "images/visualization-contour-line-3d.jpg",
+                            version: "r179",
+                            url: "examples/visualization-contour-line-3d"
+                        },
+                        {
+                            id: "visualization-contour-line-3d-colored",
+                            title: "彩色3D等高线图",
+                            description: "基于热力图数据的3D彩色等高线可视化",
+                            thumbnail: "images/visualization-contour-line-3d-colored.jpg",
+                            version: "r179",
+                            url: "examples/visualization-contour-line-3d-colored"
+                        },
+                        {
+                            id: "visualization-contour-heatmap-3d",
+                            title: "3D等高线图+热力图",
+                            description: "同时显示等高线和热力渐变效果的3D可视化",
+                            thumbnail: "images/visualization-contour-heatmap-3d.jpg",
+                            version: "r179",
+                            url: "examples/visualization-contour-heatmap-3d"
+                        },
+                        {
+                            id: "visualization-stepped-contour-heatmap-3d",
+                            title: "3D断层阶梯热力图",
+                            description: "阶梯状热力图可视化，形成断层效果",
+                            thumbnail: "images/visualization-stepped-contour-heatmap-3d.jpg",
+                            version: "r179",
+                            url: "examples/visualization-stepped-contour-heatmap-3d"
+                        },
+                        {
                             id: "visualization-glow-blocks",
                             title: "泛光3D区块",
                             description: "带泛光效果的发光方块组合",
@@ -885,6 +973,46 @@ const threejsData = {
                             thumbnail: "images/visualization-glow-blocks-outline.jpg",
                             version: "r179",
                             url: "examples/visualization-glow-blocks-outline"
+                        },
+                        {
+                            id: "visualization-framebuffer",
+                            title: "帧缓存基础",
+                            description: "演示帧缓冲区和后处理技术，包括雾气、暗角、色差、扫描线效果",
+                            thumbnail: "images/visualization-framebuffer.jpg",
+                            version: "r179",
+                            url: "examples/visualization-framebuffer"
+                        },
+                        {
+                            id: "visualization-rain-snow",
+                            title: "雨雪雾天气",
+                            description: "使用粒子系统实现雨雪天气效果，支持雨、雪、雾三种天气切换",
+                            thumbnail: "images/visualization-rain-snow.jpg",
+                            version: "r179",
+                            url: "examples/visualization-rain-snow"
+                        },
+                        {
+                            id: "visualization-light-beam",
+                            title: "基础光束流动",
+                            description: "沿直线流动的光束效果，使用TubeGeometry和着色器实现光效动画",
+                            thumbnail: "images/visualization-light-beam.jpg",
+                            version: "r179",
+                            url: "examples/visualization-light-beam"
+                        },
+                        {
+                            id: "visualization-path-beam",
+                            title: "波浪路径光束",
+                            description: "沿波浪路径流动的光束效果，带有地面波动效果",
+                            thumbnail: "images/visualization-path-beam.jpg",
+                            version: "r179",
+                            url: "examples/visualization-path-beam"
+                        },
+                        {
+                            id: "visualization-heart-beam",
+                            title: "心形流动光束",
+                            description: "心形路径的流动光效果，带有双色调光效",
+                            thumbnail: "images/visualization-heart-beam.jpg",
+                            version: "r179",
+                            url: "examples/visualization-heart-beam"
                         }
                     ]
                 }

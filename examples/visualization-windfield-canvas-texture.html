@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="平面3D风场图 - 平面上的风场粒子流动效果">
+    <meta name="description" content="Canvas贴图3D风场图 - 风场流渲染到Canvas并贴图在球体上">
     <meta name="three-version" content="r179">
-    <title>Three.js 示例 - 平面3D风场图</title>
+    <title>Three.js 示例 - Canvas贴图3D风场图</title>
     <link rel="stylesheet" href="../css/example-common.css">
     <style>
         .controls-panel {
@@ -35,6 +35,11 @@
 <body>
     <div class="three-container" id="threeContainer"></div>
 
+    <div class="controls-panel">
+        <button id="btnOpen">展开地图</button>
+        <button id="btnClose">收起地图</button>
+    </div>
+
     <script type="importmap">
         {
             "imports": {
@@ -47,48 +52,59 @@
     <script src="../libs/windy.js"></script>
 
     <script type="x-shader/x-vertex" id="vertexShader">
-        uniform vec2 uResolution;
-        uniform vec2 uSize;
+        uniform float time;
+        uniform float radius;
         varying vec2 vUv;
+        float PI = acos(-1.0);
 
         void main() {
-            vUv = vec2(position.z);
-
-            vec2 p = vec2(position.x, -position.y) - vec2(180., 90.);
-
-            gl_Position = projectionMatrix * modelViewMatrix * vec4((p / uResolution) * uSize + vec2(0., uSize.y), 0.0, 1.);
+            vUv = uv;
+            float w = radius * PI;
+            vec3 newPosition = mix(
+                position,
+                vec3(0.0, (uv.y - 0.5) * w, -(uv.x - 0.5) * 2.0 * w),
+                sin(time * PI * 0.5)
+            );
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition, 1.0);
         }
     </script>
 
     <script type="x-shader/x-fragment" id="fragmentShader">
         varying vec2 vUv;
-        uniform vec3 startColor;
-        uniform vec3 endColor;
+        uniform sampler2D windTex;
+        uniform sampler2D worldTex;
 
         void main() {
-            gl_FragColor = vec4(mix(startColor, endColor, vUv.y), 1.0);
+            vec4 color = texture2D(windTex, vUv);
+            float a = color.a;
+            if (a < 0.01) {
+                a = 0.0;
+            }
+
+            vec4 w = texture2D(worldTex, vUv);
+            gl_FragColor = vec4(mix(w.rgb, color.rgb, a), 1.0);
         }
     </script>
 
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+        import TWEEN from 'three/addons/libs/tween.module.js';
 
         let scene, camera, renderer, controls;
-        let geometry = null;
+        let windTex = null;
+        let worldTex = null;
+        let material = null;
+        let mesh = null;
         let windy = null;
 
         const params = {
             speed: 0.05,
-            particlesCount: 2000,
+            particlesCount: 1000,
             maxAge: 120,
             frame: 10,
             lineWidth: 3,
-            startColor: '#ffff00',
-            endColor: '#ff0000',
-            displaySizeX: 20,
-            displaySizeY: 10
+            color: '#ffff00'
         };
 
         async function fetchData(url) {
@@ -96,45 +112,28 @@
             return await response.json();
         }
 
-        function sleep(time) {
-            return new Promise((resolve) => {
-                setTimeout(() => {
-                    resolve();
-                }, time);
-            });
-        }
-
-        async function createWindy() {
+        async function createWindCanvas() {
             const header = await fetchData('../models/json/wind.json');
 
-            const num = params.particlesCount;
-            const points = new Float32Array(num * 6);
-            let i = 0;
+            const canvas = document.createElement('canvas');
+            canvas.width = 4000;
+            canvas.height = 2000;
 
             windy = new Windy({
                 header: header,
+                canvas: canvas,
                 speed: params.speed,
-                particlesCount: num,
+                particlesCount: params.particlesCount,
                 maxAge: params.maxAge,
                 frame: params.frame,
-                color: params.startColor,
+                color: params.color,
                 lineWidth: params.lineWidth,
-                imageUrl: '../images/textures/wind.png',
-                pointCallback: (p) => {
-                    points[i] = p.x;
-                    points[i + 1] = p.y;
-                    points[i + 2] = 0;
-                    points[i + 3] = p.tx;
-                    points[i + 4] = p.ty;
-                    points[i + 5] = 1;
-                    i += 6;
-                }
+                imageUrl: '../images/textures/wind.png'
             });
 
-            geometry = new THREE.BufferGeometry();
-            geometry.setAttribute('position', new THREE.BufferAttribute(points, 3));
+            windTex = new THREE.CanvasTexture(canvas);
 
-            return { geometry, header };
+            return windTex;
         }
 
         async function init() {
@@ -142,13 +141,12 @@
             scene.background = new THREE.Color(0x0a0a1a);
 
             camera = new THREE.PerspectiveCamera(
-                45,
+                60,
                 window.innerWidth / window.innerHeight,
                 0.1,
                 1000
             );
-            camera.position.set(3, 3, 23);
-            camera.lookAt(0, 0, 0);
+            camera.position.set(0, 0, 6);
 
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
@@ -158,16 +156,18 @@
             controls = new OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
             controls.dampingFactor = 0.05;
+            controls.autoRotate = true;
+            controls.autoRotateSpeed = 0.5;
 
-            const { geometry: geo, header } = await createWindy();
-            await sleep(100);
+            worldTex = new THREE.TextureLoader().load('../images/textures/world.jpg');
+            windTex = await createWindCanvas();
 
-            const material = new THREE.ShaderMaterial({
+            material = new THREE.ShaderMaterial({
                 uniforms: {
-                    uResolution: { value: new THREE.Vector2(header.nx, header.ny) },
-                    uSize: { value: new THREE.Vector2(params.displaySizeX, params.displaySizeY) },
-                    startColor: { value: new THREE.Color(params.startColor) },
-                    endColor: { value: new THREE.Color(params.endColor) }
+                    worldTex: { value: worldTex },
+                    time: { value: 0 },
+                    radius: { value: 2 },
+                    windTex: { value: windTex }
                 },
                 vertexShader: document.getElementById('vertexShader').textContent,
                 fragmentShader: document.getElementById('fragmentShader').textContent,
@@ -175,42 +175,48 @@
                 transparent: true
             });
 
-            const lines = new THREE.LineSegments(geo, material);
-            scene.add(lines);
+            const geometry = new THREE.SphereGeometry(2, 32, 16);
+            mesh = new THREE.Mesh(geometry, material);
+            mesh.rotation.y = -Math.PI * 0.5;
+            scene.add(mesh);
 
-            initGUI();
+            initButtons();
             window.addEventListener('resize', onWindowResize);
 
             animate();
         }
 
-        function initGUI() {
-            const gui = new GUI({ title: '风场参数控制', width: 300 });
-
-            gui.domElement.style.position = 'absolute';
-            gui.domElement.style.top = '60px';
-            gui.domElement.style.right = '10px';
-            gui.domElement.style.zIndex = '1000';
-
-            setTimeout(() => {
-                gui.show();
-            }, 100);
-
-            const windFolder = gui.addFolder('风场参数');
-            windFolder.add(params, 'speed', 0.01, 0.2).name('速度');
-            windFolder.add(params, 'particlesCount', 500, 3000).step(100).name('粒子数量');
-            windFolder.add(params, 'maxAge', 50, 200).name('生命周期');
-            windFolder.open();
-
-            const displayFolder = gui.addFolder('显示设置');
-            displayFolder.add(params, 'displaySizeX', 5, 50).name('宽度').onChange(updateUniforms);
-            displayFolder.add(params, 'displaySizeY', 5, 50).name('高度').onChange(updateUniforms);
-            displayFolder.addColor(params, 'startColor').name('起始颜色').onChange(updateUniforms);
-            displayFolder.addColor(params, 'endColor').name('结束颜色').onChange(updateUniforms);
+        function initButtons() {
+            document.getElementById('btnOpen').addEventListener('click', () => {
+                openMap();
+            });
+            document.getElementById('btnClose').addEventListener('click', () => {
+                closeMap();
+            });
         }
 
-        function updateUniforms() {
-            // 需要重新创建才能更新
+        function openMap() {
+            const tw = new TWEEN.Tween({ time: 0.0 })
+                .to({ time: 1.0 }, 2000)
+                .onUpdate((obj) => {
+                    if (material) {
+                        material.uniforms.time.value = obj.time;
+                    }
+                })
+                .start();
+            TWEEN.add(tw);
+        }
+
+        function closeMap() {
+            const tw = new TWEEN.Tween({ time: 1.0 })
+                .to({ time: 0.0 }, 2000)
+                .onUpdate((obj) => {
+                    if (material) {
+                        material.uniforms.time.value = obj.time;
+                    }
+                })
+                .start();
+            TWEEN.add(tw);
         }
 
         function onWindowResize() {
@@ -219,28 +225,17 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
 
-        let frameCount = 0;
-        const frameRate = Math.floor(60 / 16);
-
         function animate() {
             requestAnimationFrame(animate);
 
             controls.update();
 
-            if (frameCount % frameRate === 0 && windy && geometry) {
-                let i = 0;
-                const g = geometry;
-                windy.movePoints((p) => {
-                    g.attributes.position.array[i] = p.x;
-                    g.attributes.position.array[i + 1] = p.y;
-                    g.attributes.position.array[i + 3] = p.tx;
-                    g.attributes.position.array[i + 4] = p.ty;
-                    i += 6;
-                });
-                g.attributes.position.needsUpdate = true;
+            if (windTex && windy) {
+                windy.render();
+                windTex.needsUpdate = true;
             }
 
-            frameCount++;
+            TWEEN.update();
             renderer.render(scene, camera);
         }
 
