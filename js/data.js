@@ -548,6 +548,14 @@ const threejsData = {
                             version: "r179",
                             url: "examples/shader-abstract-art"
                         },
+                        {
+                            id: "visualization-aurora",
+                            title: "星空极光动效",
+                            description: "绚丽的极光与星空背景Shader效果，支持多种参数调节",
+                            thumbnail: "images/visualization-aurora.jpg",
+                            version: "r179",
+                            url: "examples/visualization-aurora"
+                        },
                     ]
                 },
                 {
