@@ -166,6 +166,31 @@ const texture = textureLoader.load('../images/textures/your-texture.jpg');
 
 6. 查看浏览器控制台（按F12打开开发者工具），可以看到截图保存成功的提示信息
 
+### ⚠️ 重要：后处理效果与截图功能
+
+如果您的示例使用了后处理效果（如 `UnrealBloomPass`、`EffectComposer` 等），**必须**将 `composer` 对象暴露到 `window` 对象，否则截图功能将无法正常工作。
+
+在初始化 `EffectComposer` 后，添加以下代码：
+
+```javascript
+// 创建 EffectComposer
+const composer = new EffectComposer(renderer);
+composer.addPass(renderPass);
+composer.addPass(bloomPass);
+
+// ⚠️ 重要：必须添加此行，否则截图功能无法获取后处理效果
+window.composer = composer;
+```
+
+**不添加 `window.composer = composer` 的后果：**
+- 使用后处理效果的示例将无法正常截图
+- 系统会提示"截图超时，请重试"
+- 截图请求永远收不到响应
+
+**典型使用后处理的文件特征：**
+- 导入了 `EffectComposer`、`RenderPass`、`UnrealBloomPass` 等
+- 在动画循环中使用 `composer.render()` 而非 `renderer.render()`
+
 ### 步骤2：手动创建缩略图（可选）
 
 如果您希望自定义缩略图，也可以使用其他工具：
@@ -249,6 +274,16 @@ http://localhost:your-port/examples/viewer.html#your-example-file-name
 - 添加浏览器功能检测和回退方案
 - 测试并调整CSS以适应不同浏览器
 
+### 截图显示"截图超时，请重试"
+
+可能的原因：
+- 示例使用了后处理效果（`EffectComposer`）但没有添加 `window.composer = composer`
+- 示例使用 ES 模块但没有将 `scene`、`camera`、`renderer` 暴露到 `window`
+
+解决方法：
+- 如果使用了 `EffectComposer`，确保在初始化后添加 `window.composer = composer`
+- 确保 `window.scene`、`window.camera`、`window.renderer` 已正确赋值
+
 ## 总结
 
 创建新的Three.js示例是一个简单的过程，只需要几个步骤：
@@ -303,7 +338,29 @@ http://localhost:your-port/examples/viewer.html#your-example-file-name
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         // 导入GUI控制面板，用于调整参数
         import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
-        
+
+        /**
+         * ============================================================
+         * 重要提示：如果示例使用后处理效果（如 UnrealBloomPass、EffectComposer 等）
+         * 必须添加 window.composer = composer; 以便截图功能正常工作
+         * 示例：
+         *   import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+         *   import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+         *   import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+         *
+         *   let composer;
+         *
+         *   function initPostProcessing() {
+         *       const renderScene = new RenderPass(scene, camera);
+         *       const bloomPass = new UnrealBloomPass(...);
+         *       composer = new EffectComposer(renderer);
+         *       composer.addPass(renderScene);
+         *       composer.addPass(bloomPass);
+         *       window.composer = composer; // <-- 必须添加这行！
+         *   }
+         * ============================================================
+         */
+
         // Three.js 核心变量 - 暴露给全局作用域以便截图功能使用
         window.scene = null;     // 场景对象，包含所有3D元素
         window.camera = null;    // 相机对象，定义视角和视野
