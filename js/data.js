@@ -501,22 +501,6 @@ const threejsData = {
                     name: "着色器",
                     examples: [
                         {
-                            id: "advanced-custom-shader",
-                            title: "自定义着色器",
-                            description: "创建自定义着色器实现特殊视觉效果",
-                            thumbnail: "images/advanced-custom-shader.jpg",
-                            version: "r150",
-                            url: "examples/advanced-custom-shader"
-                        },
-                        {
-                            id: "advanced-shader-patterns",
-                            title: "着色器图案",
-                            description: "使用着色器创建复杂的几何图案和纹理",
-                            thumbnail: "images/advanced-shader-patterns.jpg",
-                            version: "r150",
-                            url: "examples/advanced-shader-patterns"
-                        },
-                        {
                             id: "visualization-water-shader",
                             title: "水着色器效果",
                             description: "带有水面反射和动态光照的场景，使用Water和Sky对象",
@@ -525,10 +509,10 @@ const threejsData = {
                             url: "examples/visualization-water-shader"
                         },
                         {
-                            id: "advanced-cyberpunk-tunnel",
+                            id: "cyberpunk-lightning-tunnel",
                             title: "赛博朋克闪电隧道",
                             description: "使用自定义着色器和后处理实现高速飞行的赛博朋克数据隧道效果",
-                            thumbnail: "images/advanced-cyberpunk-tunnel.jpg",
+                            thumbnail: "images/cyberpunk-lightning-tunnel.jpg",
                             version: "r179",
                             url: "examples/cyberpunk-lightning-tunnel"
                         },

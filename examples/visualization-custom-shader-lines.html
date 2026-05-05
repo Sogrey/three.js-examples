@@ -319,14 +319,32 @@
 
         window.addEventListener('message', function(event) {
             if (event.data && event.data.type === 'take-screenshot') {
-                stopAnimation();
-                setTimeout(() => {
+                try {
+                    // 强制渲染一帧，确保内容是最新的
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
                     window.parent.postMessage({
                         type: 'screenshot-data',
-                        dataUrl: window.renderer.domElement.toDataURL('image/jpeg', 0.8)
+                        dataUrl: dataUrl
                     }, '*');
-                    animate();
-                }, 100);
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({
+                        type: 'screenshot-error',
+                        error: error.message
+                    }, '*');
+                }
             }
         });
     </script>

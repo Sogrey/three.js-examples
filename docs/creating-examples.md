@@ -191,6 +191,34 @@ window.composer = composer;
 - 导入了 `EffectComposer`、`RenderPass`、`UnrealBloomPass` 等
 - 在动画循环中使用 `composer.render()` 而非 `renderer.render()`
 
+### ✅ 推荐实践：确保截图功能正常工作
+
+为了确保您的示例能够正常截图，请遵循以下最佳实践：
+
+1. **始终暴露核心对象**：
+   ```javascript
+   window.scene = scene;
+   window.camera = camera;
+   window.renderer = renderer;
+   ```
+
+2. **使用自定义着色器时注意**：
+   - 确保着色器的 uniform 变量在截图时已有正确的初始值
+   - 避免在着色器中使用可能导致全部像素被丢弃的 `discard` 逻辑
+
+3. **异步初始化的场景**：
+   - 如果场景包含异步加载的资源（如纹理、模型），确保在初始化完成后再暴露对象
+   - 可以使用 `requestAnimationFrame` 延迟暴露
+
+### 截图机制说明
+
+截图功能采用了以下机制来确保稳定性：
+
+- **强制渲染**：截图前会调用 `renderer.render(scene, camera)` 强制渲染一帧
+- **自动重试**：如果截图失败，会自动重试最多 3 次，每次重试间隔递增
+- **时机控制**：使用 `requestAnimationFrame` 确保在正确的时机执行截图
+- **错误反馈**：如果最终失败，会发送错误信息回父窗口
+
 ### 步骤2：手动创建缩略图（可选）
 
 如果您希望自定义缩略图，也可以使用其他工具：

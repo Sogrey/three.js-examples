@@ -296,6 +296,11 @@
             gui.addColor(params, 'ambientLight').name('ambient light').onChange((val) => (ambientLight.color = new THREE.Color(val)));
             gui.addColor(params, 'directionalLight').name('directional light').onChange((val) => (dLight.color = new THREE.Color(val)));
 
+            // 将 Three.js 对象暴露到 window 以便截图功能使用
+            window.scene = scene;
+            window.camera = camera;
+            window.renderer = renderer;
+
             return { renderer, scene, camera };
         };
 
@@ -309,20 +314,37 @@
         window.addEventListener('message', function(event) {
             if (event.data && event.data.type === 'take-screenshot') {
                 try {
-                    const canvas = document.querySelector('#app canvas');
-                    if (canvas) {
-                        const tempCanvas = document.createElement('canvas');
-                        const maxSize = 600;
-                        const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
-                        tempCanvas.width = Math.floor(canvas.width * scale);
-                        tempCanvas.height = Math.floor(canvas.height * scale);
-                        const ctx = tempCanvas.getContext('2d');
-                        ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
-                        const dataUrl = tempCanvas.toDataURL('image/jpeg', 0.8);
-                        window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                    let _screenshotRenderer;
+                    if (!_screenshotRenderer) {
+                        _screenshotRenderer = window.renderer;
                     }
+                    if (!_screenshotRenderer) {
+                        throw new Error('渲染器未初始化');
+                    }
+                    // 强制渲染一帧，确保内容是最新的
+                    if (window.scene && window.camera) {
+                        _screenshotRenderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = _screenshotRenderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({
+                        type: 'screenshot-data',
+                        dataUrl: dataUrl
+                    }, '*');
                 } catch (error) {
                     console.error('截图失败:', error);
+                    window.parent.postMessage({
+                        type: 'screenshot-error',
+                        error: error.message
+                    }, '*');
                 }
             }
         });
