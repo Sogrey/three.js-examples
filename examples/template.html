@@ -320,61 +320,94 @@
     ===================================================
     -->
     <script>
-        // 全局变量，用于存储渲染器引用
+        // 全局变量，用于存储渲染器引用和重试次数
         let _screenshotRenderer;
+        const MAX_RETRY = 3;
+        const RETRY_DELAY = 200; // 重试延迟（毫秒）
         
-        // 添加消息监听器，处理截图请求
-        window.addEventListener('message', function(event) {
-            if (event.data && event.data.type === 'take-screenshot') {
-                try {
-                    // 获取当前渲染器
-                    if (!_screenshotRenderer && window.renderer) {
-                        _screenshotRenderer = window.renderer;
-                    }
-                    
-                    // 确保渲染器已经初始化
-                    if (!_screenshotRenderer) {
-                        throw new Error('渲染器未初始化');
-                    }
-                    
-                    // 强制渲染一帧，确保内容是最新的
-                    if (window.scene && window.camera) {
-                        _screenshotRenderer.render(window.scene, window.camera);
-                    }
-                    
-                    // 获取canvas的图像数据（使用较低的质量和尺寸以减小文件大小）
-                    const quality = event.data.quality || 0.8;
-                    const canvas = _screenshotRenderer.domElement;
-                    
-                    // 创建一个较小尺寸的临时canvas
-                    const tempCanvas = document.createElement('canvas');
-                    const maxSize = 600; // 最大尺寸为600像素
-                    
-                    // 计算缩放比例，保持宽高比
-                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
-                    tempCanvas.width = Math.floor(canvas.width * scale);
-                    tempCanvas.height = Math.floor(canvas.height * scale);
-                    
-                    // 在临时canvas上绘制缩小的图像
-                    const ctx = tempCanvas.getContext('2d');
-                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
-                    
-                    // 获取缩小后的图像数据
-                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
-                    
-                    // 将图像数据发送回父窗口
-                    window.parent.postMessage({
-                        type: 'screenshot-data',
-                        dataUrl: dataUrl
-                    }, '*');
-                } catch (error) {
-                    console.error('截图失败:', error);
-                    // 发送错误信息回父窗口
+        /**
+         * 执行截图操作
+         * @param {number} retryCount 当前重试次数
+         */
+        function doScreenshot(retryCount = 0) {
+            try {
+                // 获取当前渲染器
+                if (!_screenshotRenderer && window.renderer) {
+                    _screenshotRenderer = window.renderer;
+                }
+                
+                // 确保渲染器已经初始化
+                if (!_screenshotRenderer) {
+                    throw new Error('渲染器未初始化');
+                }
+                
+                // 确保 scene 和 camera 已准备好
+                if (!window.scene || !window.camera) {
+                    throw new Error('场景或相机未初始化');
+                }
+                
+                // ⚠️ 关键步骤：强制渲染一帧，确保内容是最新的
+                // 这对于使用着色器、动画或复杂场景的示例尤为重要
+                _screenshotRenderer.render(window.scene, window.camera);
+                
+                // 获取canvas的图像数据（使用较低的质量和尺寸以减小文件大小）
+                const quality = 0.8;
+                const canvas = _screenshotRenderer.domElement;
+                
+                // 检查canvas是否有内容
+                if (canvas.width === 0 || canvas.height === 0) {
+                    throw new Error('Canvas尺寸无效');
+                }
+                
+                // 创建一个较小尺寸的临时canvas
+                const tempCanvas = document.createElement('canvas');
+                const maxSize = 600; // 最大尺寸为600像素
+                
+                // 计算缩放比例，保持宽高比
+                const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                tempCanvas.width = Math.floor(canvas.width * scale);
+                tempCanvas.height = Math.floor(canvas.height * scale);
+                
+                // 在临时canvas上绘制缩小的图像
+                const ctx = tempCanvas.getContext('2d');
+                ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                
+                // 获取缩小后的图像数据
+                const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                
+                // 将图像数据发送回父窗口
+                window.parent.postMessage({
+                    type: 'screenshot-data',
+                    dataUrl: dataUrl
+                }, '*');
+                
+                console.log('截图成功');
+                
+            } catch (error) {
+                console.error('截图失败 (尝试 ' + (retryCount + 1) + '):', error);
+                
+                // 如果还有重试机会，延迟后重试
+                if (retryCount < MAX_RETRY) {
+                    setTimeout(() => {
+                        doScreenshot(retryCount + 1);
+                    }, RETRY_DELAY * (retryCount + 1));
+                } else {
+                    // 重试次数用尽，发送错误信息回父窗口
                     window.parent.postMessage({
                         type: 'screenshot-error',
                         error: error.message
                     }, '*');
                 }
+            }
+        }
+        
+        // 添加消息监听器，处理截图请求
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                // 使用 requestAnimationFrame 确保在正确的时机执行截图
+                requestAnimationFrame(() => {
+                    doScreenshot();
+                });
             }
         });
     </script>
