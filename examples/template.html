@@ -38,6 +38,28 @@
         // 导入GUI控制面板，用于调整参数
         import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
         
+        /**
+         * ============================================================
+         * 重要提示：如果示例使用后处理效果（如 UnrealBloomPass、EffectComposer 等）
+         * 必须添加 window.composer = composer; 以便截图功能正常工作
+         * 示例：
+         *   import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+         *   import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+         *   import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+         *
+         *   let composer;
+         *
+         *   function initPostProcessing() {
+         *       const renderScene = new RenderPass(scene, camera);
+         *       const bloomPass = new UnrealBloomPass(...);
+         *       composer = new EffectComposer(renderer);
+         *       composer.addPass(renderScene);
+         *       composer.addPass(bloomPass);
+         *       window.composer = composer; // <-- 必须添加这行！
+         *   }
+         * ============================================================
+         */
+
         // Three.js 核心变量 - 暴露给全局作用域以便截图功能使用
         window.scene = null;     // 场景对象，包含所有3D元素
         window.camera = null;    // 相机对象，定义视角和视野

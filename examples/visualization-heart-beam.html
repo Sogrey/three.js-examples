@@ -12,7 +12,7 @@
 </head>
 <body>
   <canvas id="canvas"></canvas>
-  
+
   <script type="importmap">
     {
         "imports": {
@@ -21,7 +21,7 @@
         }
     }
   </script>
-  
+
   <script type="module">
     import * as THREE from 'three';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -70,6 +70,11 @@
       initLight();
       createHeartBeam();
       initPostProcessing();
+
+      window.scene = scene;
+      window.camera = camera;
+      window.renderer = renderer;
+
       animate();
     }
 
@@ -178,6 +183,8 @@
       composer = new EffectComposer(renderer);
       composer.addPass(renderScene);
       composer.addPass(bloomPass);
+
+      window.composer = composer;
     }
 
     function animate() {
@@ -211,6 +218,52 @@
 
     window.addEventListener('resize', onWindowResize);
     init();
+  </script>
+
+  <script>
+    let _screenshotRenderer;
+    window.addEventListener('message', function(event) {
+        if (event.data && event.data.type === 'take-screenshot') {
+            try {
+                if (!_screenshotRenderer) {
+                    _screenshotRenderer = window.renderer;
+                }
+                if (!_screenshotRenderer) {
+                    throw new Error('渲染器未初始化');
+                }
+                const composer = window.composer;
+                if (composer && window.scene && window.camera) {
+                    _screenshotRenderer.autoClear = false;
+                    _screenshotRenderer.clear();
+                    composer.render();
+                    _screenshotRenderer.clearDepth();
+                    _screenshotRenderer.render(window.scene, window.camera);
+                } else if (window.scene && window.camera) {
+                    _screenshotRenderer.render(window.scene, window.camera);
+                }
+                const quality = event.data.quality || 0.8;
+                const canvas = _screenshotRenderer.domElement;
+                const tempCanvas = document.createElement('canvas');
+                const maxSize = 600;
+                const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                tempCanvas.width = Math.floor(canvas.width * scale);
+                tempCanvas.height = Math.floor(canvas.height * scale);
+                const ctx = tempCanvas.getContext('2d');
+                ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                window.parent.postMessage({
+                    type: 'screenshot-data',
+                    dataUrl: dataUrl
+                }, '*');
+            } catch (error) {
+                console.error('截图失败:', error);
+                window.parent.postMessage({
+                    type: 'screenshot-error',
+                    error: error.message
+                }, '*');
+            }
+        }
+    });
   </script>
 </body>
 </html>

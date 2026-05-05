@@ -118,6 +118,10 @@ header {
     height: 100%; /* 确保填满整个高度 */
 }
 
+.category-tree {
+    margin-bottom: 100px;
+}
+
 .category-tree ul {
     list-style-type: none;
 }
