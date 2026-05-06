@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="3D波浪效果 - 使用顶点着色器创建动态波浪效果">
+    <meta name="three-version" content="r179">
+    <title>3D波浪效果</title>
+    <link rel="stylesheet" href="../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../libs/three/r179/build/three.module.js",
+                "three/addons/": "../libs/three/r179/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        window.scene = null;
+        window.camera = null;
+        window.renderer = null;
+
+        window.scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 100);
+        camera.position.set(-1.5, 0, 1.6);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        window.renderer.setClearColor(0xdedede);
+        document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+
+        const controls = new OrbitControls(camera, window.renderer.domElement);
+
+        const circleGeometry = new THREE.CircleGeometry(1, 8);
+        const circleMesh = new THREE.Mesh(circleGeometry, new THREE.MeshBasicMaterial({ color: 0xdd44dd, side: THREE.DoubleSide }));
+        circleMesh.position.z = -0.5;
+        window.scene.add(circleMesh);
+
+        const shaderMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                time: { value: 0.0 }
+            },
+            vertexShader: vertexShader(),
+            fragmentShader: fragmentShader(),
+            wireframe: true,
+            side: THREE.DoubleSide
+        });
+
+        const geometry = new THREE.PlaneGeometry(2, 2, 80, 80);
+        const mesh = new THREE.Mesh(geometry, shaderMaterial);
+        window.scene.add(mesh);
+
+        window.camera = camera;
+
+        function vertexShader() {
+            return `
+                uniform float time;
+
+                float f(float d) {
+                    return abs(-6.9047619048 * d * d * d + 10.3571428571 * d * d - 2.4523809524 * d);
+                }
+
+                void main() {
+                    vec3 p = position;
+                    vec3 pos = position;
+
+                    p.xy = (1.0 + p.xy) * 0.5;
+                    p.xy = fract(3.0 * p.xy);
+
+                    float d = distance(p.xy, vec2(0.5, 0.5));
+                    d = 0.5 - clamp(d, 0.0, 0.5);
+
+                    pos.z = f(d) * clamp(0.3 * (1.0 + sin(time * 6.0)), 0.0, 0.2);
+
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+                }
+            `;
+        }
+
+        function fragmentShader() {
+            return `
+                void main() {
+                    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+                }
+            `;
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            shaderMaterial.uniforms.time.value += 0.01;
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        animate();
+    </script>
+
+    <script>
+        let _screenshotRenderer;
+        const MAX_RETRY = 3;
+        const RETRY_DELAY = 200;
+
+        function doScreenshot(retryCount = 0) {
+            try {
+                if (!_screenshotRenderer && window.renderer) {
+                    _screenshotRenderer = window.renderer;
+                }
+
+                if (!_screenshotRenderer) {
+                    throw new Error('渲染器未初始化');
+                }
+
+                if (!window.scene || !window.camera) {
+                    throw new Error('场景或相机未初始化');
+                }
+
+                _screenshotRenderer.render(window.scene, window.camera);
+
+                const quality = 0.8;
+                const canvas = _screenshotRenderer.domElement;
+
+                if (canvas.width === 0 || canvas.height === 0) {
+                    throw new Error('Canvas尺寸无效');
+                }
+
+                const tempCanvas = document.createElement('canvas');
+                const maxSize = 600;
+                const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                tempCanvas.width = Math.floor(canvas.width * scale);
+                tempCanvas.height = Math.floor(canvas.height * scale);
+
+                const ctx = tempCanvas.getContext('2d');
+                ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+
+                const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+
+                window.parent.postMessage({
+                    type: 'screenshot-data',
+                    dataUrl: dataUrl
+                }, '*');
+
+            } catch (error) {
+                console.error('截图失败 (尝试 ' + (retryCount + 1) + '):', error);
+
+                if (retryCount < MAX_RETRY) {
+                    setTimeout(() => {
+                        doScreenshot(retryCount + 1);
+                    }, RETRY_DELAY * (retryCount + 1));
+                } else {
+                    window.parent.postMessage({
+                        type: 'screenshot-error',
+                        error: error.message
+                    }, '*');
+                }
+            }
+        }
+
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                requestAnimationFrame(() => {
+                    doScreenshot();
+                });
+            }
+        });
+    </script>
+</body>
+</html>

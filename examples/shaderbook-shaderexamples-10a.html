@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="交互式圆形绘制 - 点击创建圆形遮罩，最多支持100个圆形">
+    <meta name="three-version" content="r179">
+    <title>交互式圆形绘制</title>
+    <link rel="stylesheet" href="../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../libs/three/r179/build/three.module.js",
+                "three/addons/": "../libs/three/r179/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        window.scene = null;
+        window.camera = null;
+        window.renderer = null;
+
+        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.001, 1000);
+        camera.position.set(0, 0, 0.9);
+
+        window.scene = new THREE.Scene();
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        window.renderer.setClearColor(0x488348);
+        document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+
+        const controls = new OrbitControls(camera, window.renderer.domElement);
+
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        
+        const gradient = ctx.createRadialGradient(256, 256, 0, 256, 256, 256);
+        gradient.addColorStop(0, '#ff6b9d');
+        gradient.addColorStop(0.5, '#c44569');
+        gradient.addColorStop(1, '#6a2c70');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 512, 512);
+        
+        ctx.fillStyle = '#fff';
+        ctx.font = '24px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('点击创建圆形', 256, 250);
+        ctx.fillText('+/- 调整大小 | Backspace 删除', 256, 280);
+
+        const tex = new THREE.CanvasTexture(canvas);
+
+        const planeWidth = 2.0;
+        const planeHeight = 1.5;
+        const centerArr = [];
+        const radiusArr = [];
+
+        for (let i = 0; i < 100; i++) {
+            centerArr[i] = new THREE.Vector2();
+            radiusArr[i] = 0;
+        }
+
+        const shaderMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                v_Uv: { value: new THREE.Vector2() },
+                u_Texture: { value: tex },
+                u_planeAspect: { value: new THREE.Vector2(planeWidth, planeHeight) },
+                u_centerArr: { value: centerArr },
+                u_radiusArr: { value: radiusArr },
+                u_circleNo: { value: 0 }
+            },
+            vertexShader: vertexShader(),
+            fragmentShader: fragmentShader(),
+            side: THREE.DoubleSide,
+            transparent: true
+        });
+
+        let circleNo = 0;
+        let circleRadius = 0.02;
+
+        const planeGeometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
+        const planeMesh = new THREE.Mesh(planeGeometry, shaderMaterial);
+        window.scene.add(planeMesh);
+
+        const mouse = new THREE.Vector2();
+        const raycaster = new THREE.Raycaster();
+
+        window.addEventListener('pointerup', onPointerUp);
+        window.addEventListener('keyup', onKeyUp);
+        window.addEventListener('resize', onWindowResize);
+
+        window.camera = camera;
+
+        function onPointerUp() {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObject(planeMesh);
+
+            if (intersects.length > 0) {
+                if (circleNo < 100) {
+                    shaderMaterial.uniforms.u_centerArr.value[circleNo] = intersects[0].uv.clone();
+                    shaderMaterial.uniforms.u_radiusArr.value[circleNo] = circleRadius;
+                    circleNo++;
+                    shaderMaterial.uniforms.u_circleNo.value = circleNo;
+                }
+            }
+        }
+
+        function onKeyUp(event) {
+            if (event.keyCode === 107 || event.keyCode === 171) {
+                circleRadius += 0.01;
+            }
+            if ((event.keyCode === 109 || event.keyCode === 173) && circleRadius > 0.01) {
+                circleRadius -= 0.01;
+            }
+            if (event.keyCode === 8 && circleNo > 0) {
+                shaderMaterial.uniforms.u_radiusArr.value[circleNo - 1] = 0.0;
+                circleNo--;
+                shaderMaterial.uniforms.u_circleNo.value = circleNo;
+            }
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function vertexShader() {
+            return `
+                varying vec2 v_Uv;
+                void main() {
+                    v_Uv = uv;
+                    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                    gl_Position = projectionMatrix * mvPosition;
+                }
+            `;
+        }
+
+        function fragmentShader() {
+            return `
+                varying vec2 v_Uv;
+                uniform sampler2D u_Texture;
+                uniform vec2 u_planeAspect;
+                uniform vec2 u_centerArr[100];
+                uniform float u_radiusArr[100];
+                uniform int u_circleNo;
+
+                void main() {
+                    vec2 aspect = vec2(u_planeAspect.x / u_planeAspect.y, 1.0);
+                    vec2 pUv = v_Uv * aspect;
+
+                    float aCircles = 0.0;
+                    float aCircle[100];
+
+                    for(int i = 0; i < 100; i++) {
+                        aCircle[i] = 0.0;
+                    }
+
+                    for(int i = 0; i < u_circleNo; i++) {
+                        if(u_radiusArr[i] != 0.0) {
+                            aCircle[i] = step(length(vec2(distance(pUv, u_centerArr[i] * aspect) * u_planeAspect.x)), 0.5 * sqrt(2.0 * u_radiusArr[i]) * u_planeAspect.x);
+                        }
+                    }
+
+                    for(int i = 0; i < u_circleNo; i++) {
+                        if(u_radiusArr[i] != 0.0) {
+                            aCircles = aCircles + aCircle[i];
+                        }
+                    }
+
+                    vec3 colorTex = texture(u_Texture, v_Uv).rgb;
+                    float aTex = texture(u_Texture, v_Uv).a;
+
+                    vec4 color = vec4(colorTex, aTex) * vec4(vec3(1.0), aCircles);
+                    gl_FragColor = color;
+                }
+            `;
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        animate();
+    </script>
+
+    <script>
+        let _screenshotRenderer;
+        const MAX_RETRY = 3;
+        const RETRY_DELAY = 200;
+
+        function doScreenshot(retryCount = 0) {
+            try {
+                if (!_screenshotRenderer && window.renderer) {
+                    _screenshotRenderer = window.renderer;
+                }
+
+                if (!_screenshotRenderer) {
+                    throw new Error('渲染器未初始化');
+                }
+
+                if (!window.scene || !window.camera) {
+                    throw new Error('场景或相机未初始化');
+                }
+
+                _screenshotRenderer.render(window.scene, window.camera);
+
+                const quality = 0.8;
+                const canvas = _screenshotRenderer.domElement;
+
+                if (canvas.width === 0 || canvas.height === 0) {
+                    throw new Error('Canvas尺寸无效');
+                }
+
+                const tempCanvas = document.createElement('canvas');
+                const maxSize = 600;
+                const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                tempCanvas.width = Math.floor(canvas.width * scale);
+                tempCanvas.height = Math.floor(canvas.height * scale);
+
+                const ctx = tempCanvas.getContext('2d');
+                ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+
+                const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+
+                window.parent.postMessage({
+                    type: 'screenshot-data',
+                    dataUrl: dataUrl
+                }, '*');
+
+            } catch (error) {
+                console.error('截图失败 (尝试 ' + (retryCount + 1) + '):', error);
+
+                if (retryCount < MAX_RETRY) {
+                    setTimeout(() => {
+                        doScreenshot(retryCount + 1);
+                    }, RETRY_DELAY * (retryCount + 1));
+                } else {
+                    window.parent.postMessage({
+                        type: 'screenshot-error',
+                        error: error.message
+                    }, '*');
+                }
+            }
+        }
+
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                requestAnimationFrame(() => {
+                    doScreenshot();
+                });
+            }
+        });
+    </script>
+</body>
+</html>

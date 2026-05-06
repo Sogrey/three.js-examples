@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="鼠标跟随圆形 - 使用raycaster检测鼠标位置，绘制跟随的绿色圆形">
+    <meta name="three-version" content="r179">
+    <title>鼠标跟随圆形</title>
+    <link rel="stylesheet" href="../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../libs/three/r179/build/three.module.js",
+                "three/addons/": "../libs/three/r179/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        window.scene = null;
+        window.camera = null;
+        window.renderer = null;
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.01, 1000);
+        camera.position.set(-5, 1, 5);
+
+        window.scene = scene;
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        window.renderer.setClearColor(0xfefefe);
+        document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+
+        const controls = new OrbitControls(camera, window.renderer.domElement);
+
+        const circleGeometry = new THREE.CircleGeometry(4, 64);
+        const circleMesh = new THREE.Mesh(circleGeometry, new THREE.MeshBasicMaterial({ color: 0xff0000 }));
+        circleMesh.position.z = -4.0;
+        scene.add(circleMesh);
+
+        const planeWidth = 5;
+        const planeHeight = 4;
+
+        const shaderMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                v_Uv: { value: new THREE.Vector2() },
+                planeMouseUv: { value: new THREE.Vector2() },
+                planeAspect: { value: new THREE.Vector2(planeWidth, planeHeight) }
+            },
+            vertexShader: vertexShader(),
+            fragmentShader: fragmentShader(),
+            side: THREE.DoubleSide,
+            transparent: true
+        });
+
+        const planeGeometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
+        const planeMesh = new THREE.Mesh(planeGeometry, shaderMaterial);
+        scene.add(planeMesh);
+
+        let mouse = new THREE.Vector2();
+        let raycaster = new THREE.Raycaster();
+
+        window.addEventListener('pointermove', onPointerMove);
+        window.addEventListener('resize', onWindowResize);
+
+        window.camera = camera;
+
+        function onPointerMove() {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObject(planeMesh);
+
+            if (intersects.length > 0) {
+                shaderMaterial.uniforms.planeMouseUv.value.copy(intersects[0].uv);
+            }
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function vertexShader() {
+            return `
+                varying vec2 v_Uv;
+                void main() {
+                    v_Uv = uv;
+                    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                    gl_Position = projectionMatrix * mvPosition;
+                }
+            `;
+        }
+
+        function fragmentShader() {
+            return `
+                varying vec2 v_Uv;
+                uniform vec2 planeMouseUv;
+                uniform vec2 planeAspect;
+
+                void main() {
+                    float left = smoothstep(0.00, 0.05, v_Uv.x);
+                    float right = 1.0 - step(0.98, v_Uv.x);
+                    float top = 1.0 - step(0.66, v_Uv.y);
+                    float bottom = smoothstep(0.00, 0.05, v_Uv.y);
+
+                    vec3 color = vec3(left * right * top * bottom);
+
+                    vec2 aspect = vec2(planeAspect.x / planeAspect.y, 1.0);
+                    vec2 pUv = v_Uv * aspect;
+                    vec2 mUv = planeMouseUv * aspect;
+
+                    float dist = distance(pUv, mUv) * planeAspect.y;
+                    float radius = 0.07;
+                    float thickness = 0.02;
+
+                    float circ = step(radius, dist) - step(radius + thickness, dist);
+
+                    color = color * vec3(v_Uv.x, v_Uv.x, v_Uv.y);
+
+                    gl_FragColor = vec4(color, sqrt(v_Uv.y));
+                    gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.2, 1.0, 0.4), circ);
+                }
+            `;
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        animate();
+    </script>
+
+    <script>
+        let _screenshotRenderer;
+        const MAX_RETRY = 3;
+        const RETRY_DELAY = 200;
+
+        function doScreenshot(retryCount = 0) {
+            try {
+                if (!_screenshotRenderer && window.renderer) {
+                    _screenshotRenderer = window.renderer;
+                }
+
+                if (!_screenshotRenderer) {
+                    throw new Error('渲染器未初始化');
+                }
+
+                if (!window.scene || !window.camera) {
+                    throw new Error('场景或相机未初始化');
+                }
+
+                _screenshotRenderer.render(window.scene, window.camera);
+
+                const quality = 0.8;
+                const canvas = _screenshotRenderer.domElement;
+
+                if (canvas.width === 0 || canvas.height === 0) {
+                    throw new Error('Canvas尺寸无效');
+                }
+
+                const tempCanvas = document.createElement('canvas');
+                const maxSize = 600;
+                const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                tempCanvas.width = Math.floor(canvas.width * scale);
+                tempCanvas.height = Math.floor(canvas.height * scale);
+
+                const ctx = tempCanvas.getContext('2d');
+                ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+
+                const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+
+                window.parent.postMessage({
+                    type: 'screenshot-data',
+                    dataUrl: dataUrl
+                }, '*');
+
+            } catch (error) {
+                console.error('截图失败 (尝试 ' + (retryCount + 1) + '):', error);
+
+                if (retryCount < MAX_RETRY) {
+                    setTimeout(() => {
+                        doScreenshot(retryCount + 1);
+                    }, RETRY_DELAY * (retryCount + 1));
+                } else {
+                    window.parent.postMessage({
+                        type: 'screenshot-error',
+                        error: error.message
+                    }, '*');
+                }
+            }
+        }
+
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                requestAnimationFrame(() => {
+                    doScreenshot();
+                });
+            }
+        });
+    </script>
+</body>
+</html>

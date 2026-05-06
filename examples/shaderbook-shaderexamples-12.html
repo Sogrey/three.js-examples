@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="圆形交集遮罩 - 使用circle函数创建多个圆形边框并求交集">
+    <meta name="three-version" content="r179">
+    <title>圆形交集遮罩</title>
+    <link rel="stylesheet" href="../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../libs/three/r179/build/three.module.js",
+                "three/addons/": "../libs/three/r179/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        window.scene = null;
+        window.camera = null;
+        window.renderer = null;
+
+        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 1000);
+        camera.position.set(-1, 1, 4);
+
+        window.scene = new THREE.Scene();
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        window.renderer.setClearColor(0xdedede);
+        document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+
+        const controls = new OrbitControls(camera, window.renderer.domElement);
+
+        const circleGeometry = new THREE.CircleGeometry(2, 36);
+        const circleMesh = new THREE.Mesh(circleGeometry, new THREE.MeshBasicMaterial({ color: 0xbbee11 }));
+        circleMesh.position.z = -2.0;
+        window.scene.add(circleMesh);
+
+        const planeWidth = 6;
+        const planeHeight = 3;
+
+        const shaderMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                v_Uv: { value: new THREE.Vector2() },
+                planeAspect: { value: new THREE.Vector2(planeWidth, planeHeight) }
+            },
+            vertexShader: vertexShader(),
+            fragmentShader: fragmentShader(),
+            side: THREE.DoubleSide,
+            transparent: true
+        });
+
+        const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
+        const mesh = new THREE.Mesh(geometry, shaderMaterial);
+        window.scene.add(mesh);
+
+        window.camera = camera;
+
+        function vertexShader() {
+            return `
+                varying vec2 v_Uv;
+
+                void main() {
+                    v_Uv = uv;
+                    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                    gl_Position = projectionMatrix * mvPosition;
+                }
+            `;
+        }
+
+        function fragmentShader() {
+            return `
+                varying vec2 v_Uv;
+                uniform vec2 planeAspect;
+
+                float circle(vec2 v_Uv, vec2 planeAspect, vec2 center, float radius, float thickness) {
+                    vec2 aspect = vec2(planeAspect.x / planeAspect.y, 1.0);
+                    vec2 pUv = v_Uv * aspect;
+                    vec2 cUv = center * aspect;
+                    float d = distance(pUv, cUv) * planeAspect.y;
+                    return 1.0 - step(radius, d) * step(d, radius + thickness);
+                }
+
+                void main() {
+                    vec2 center1 = vec2(0.35, 0.7);
+                    float radius1 = 0.7;
+                    float thickness1 = 0.15;
+
+                    vec2 center2 = vec2(0.65, 0.7);
+                    float radius2 = 0.7;
+                    float thickness2 = 0.15;
+
+                    vec2 center3 = vec2(0.50, 0.4);
+                    float radius3 = 0.9;
+                    float thickness3 = 0.25;
+
+                    float circ1a = circle(v_Uv, planeAspect, center1, radius1, thickness1);
+                    float circ2a = circle(v_Uv, planeAspect, center2, radius2, thickness2);
+                    float circ3a = circle(v_Uv, planeAspect, center3, radius3, thickness3);
+                    float circa = circ1a * circ2a * circ3a;
+
+                    vec3 color = vec3(0.2, 0.6, 1.0);
+
+                    gl_FragColor = vec4(color, circa);
+                }
+            `;
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        animate();
+    </script>
+
+    <script>
+        let _screenshotRenderer;
+        const MAX_RETRY = 3;
+        const RETRY_DELAY = 200;
+
+        function doScreenshot(retryCount = 0) {
+            try {
+                if (!_screenshotRenderer && window.renderer) {
+                    _screenshotRenderer = window.renderer;
+                }
+
+                if (!_screenshotRenderer) {
+                    throw new Error('渲染器未初始化');
+                }
+
+                if (!window.scene || !window.camera) {
+                    throw new Error('场景或相机未初始化');
+                }
+
+                _screenshotRenderer.render(window.scene, window.camera);
+
+                const quality = 0.8;
+                const canvas = _screenshotRenderer.domElement;
+
+                if (canvas.width === 0 || canvas.height === 0) {
+                    throw new Error('Canvas尺寸无效');
+                }
+
+                const tempCanvas = document.createElement('canvas');
+                const maxSize = 600;
+                const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                tempCanvas.width = Math.floor(canvas.width * scale);
+                tempCanvas.height = Math.floor(canvas.height * scale);
+
+                const ctx = tempCanvas.getContext('2d');
+                ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+
+                const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+
+                window.parent.postMessage({
+                    type: 'screenshot-data',
+                    dataUrl: dataUrl
+                }, '*');
+
+            } catch (error) {
+                console.error('截图失败 (尝试 ' + (retryCount + 1) + '):', error);
+
+                if (retryCount < MAX_RETRY) {
+                    setTimeout(() => {
+                        doScreenshot(retryCount + 1);
+                    }, RETRY_DELAY * (retryCount + 1));
+                } else {
+                    window.parent.postMessage({
+                        type: 'screenshot-error',
+                        error: error.message
+                    }, '*');
+                }
+            }
+        }
+
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                requestAnimationFrame(() => {
+                    doScreenshot();
+                });
+            }
+        });
+    </script>
+</body>
+</html>

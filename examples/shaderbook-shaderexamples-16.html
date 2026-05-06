@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="可变形圆形着色器 - 使用onBeforeCompile和自定义法线计算创建动态变形效果">
+    <meta name="three-version" content="r179">
+    <title>可变形圆形着色器</title>
+    <link rel="stylesheet" href="../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../libs/three/r179/build/three.module.js",
+                "three/addons/": "../libs/three/r179/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        window.scene = null;
+        window.camera = null;
+        window.renderer = null;
+
+        window.scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.01, 10000);
+        camera.position.set(-0.4, 0.3, 2);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        window.renderer.setClearColor(0xdedede);
+        document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        const controls = new OrbitControls(camera, window.renderer.domElement);
+
+        const light = new THREE.DirectionalLight();
+        light.position.set(1, 2, 3).setLength(1);
+        window.scene.add(light);
+        window.scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+        window.scene.add(new THREE.GridHelper(1, 10, 0xffffff, 0x7f7f64));
+
+        const uniforms = { u_time: { value: 0.0 } };
+
+        const getPoint = `
+            vec3 getPoint(vec3 p){
+                float lenx = length(p.x);
+                float leny = length(p.y);
+                float phi = atan(p.x, p.y);
+                p.xy += (p.xx * lenx * sin(6.0 * phi) - p.yy * leny * sin(6.0 * phi)) * cos(u_time * 0.3);
+                p.z = 0.04 * (1.0 + sin(PI * 24.0 * lenx * leny)) * cos(u_time * 0.3);
+                return p;
+            }
+        `;
+
+        const sPart = shader => {
+            shader.uniforms.u_time = uniforms.u_time;
+            shader.vertexShader = `
+                #define PI 3.141592653589793
+                uniform float u_time;
+            ` + getPoint + `
+            ${shader.vertexShader}
+            `.replace(
+                `#include <defaultnormal_vertex>`,
+                `
+                vec2 e = vec2(0.001, 0.);
+                vec3 p0 = getPoint(position + e.yyy);
+                vec3 p1 = getPoint(position + e.xyy);
+                vec3 p2 = getPoint(position + e.yxy);
+                vec3 t1 = p1 - p0;
+                vec3 t2 = p2 - p0;
+                objectNormal = cross(t1, t2);
+                #include <defaultnormal_vertex>`
+            ).replace(
+                `#include <begin_vertex>`,
+                `#include <begin_vertex>
+                transformed = p0;`
+            );
+        };
+
+        const canvas = document.createElement('canvas');
+        canvas.width = 256;
+        canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+        const gradient = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
+        gradient.addColorStop(0, '#ff6b9d');
+        gradient.addColorStop(0.5, '#c44569');
+        gradient.addColorStop(1, '#6a2c70');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 256, 256);
+
+        const tex_1 = new THREE.CanvasTexture(canvas);
+
+        const material_1 = new THREE.MeshPhongMaterial({
+            onBeforeCompile: sPart,
+            map: tex_1,
+            color: 0x44ff44,
+            shininess: 100,
+            wireframe: false,
+            transparent: true,
+            opacity: 0.8,
+            side: THREE.DoubleSide
+        });
+
+        const geometry = BasisGeometry(100, 100);
+        const mesh = new THREE.Mesh(geometry, material_1);
+        window.scene.add(mesh);
+
+        window.camera = camera;
+
+        function BasisGeometry(ws, hs) {
+            const wss = ws + 1;
+            const hss = hs + 1;
+            const faceCount = ws * hs * 2;
+            const vertexCount = wss * hss;
+
+            const g = new THREE.BufferGeometry();
+            const faceIndices = new Uint32Array(faceCount * 3);
+            const vertices = new Float32Array(vertexCount * 3);
+            const uvs = new Float32Array(vertexCount * 2);
+
+            g.setIndex(new THREE.BufferAttribute(faceIndices, 1));
+            g.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+            g.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+
+            let idxCount = 0;
+            let a, b1, c1, c2;
+
+            for (let j = 0; j < ws; j++) {
+                for (let i = 0; i < hs; i++) {
+                    a = hss * j + i;
+                    b1 = hss * (j + 1) + i;
+                    c1 = hss * (j + 1) + 1 + i;
+                    c2 = hss * j + 1 + i;
+
+                    faceIndices[idxCount] = a;
+                    faceIndices[idxCount + 1] = b1;
+                    faceIndices[idxCount + 2] = c1;
+
+                    faceIndices[idxCount + 3] = a;
+                    faceIndices[idxCount + 4] = c1;
+                    faceIndices[idxCount + 5] = c2;
+
+                    idxCount += 6;
+                }
+            }
+
+            let idxCountUV = 0;
+            for (let j = 0; j < wss; j++) {
+                const u = j / ws;
+                for (let i = 0; i < hss; i++) {
+                    const v = i / hs;
+                    uvs[idxCountUV] = u;
+                    uvs[idxCountUV + 1] = v;
+                    idxCountUV += 2;
+                }
+            }
+
+            let vIdx = 0;
+            for (let j = 0; j < wss; j++) {
+                const x = -0.5 + j / ws;
+                for (let i = 0; i < hss; i++) {
+                    const y = -0.5 + i / hs;
+                    const z = 0;
+                    vertices[vIdx * 3] = x;
+                    vertices[vIdx * 3 + 1] = y;
+                    vertices[vIdx * 3 + 2] = z;
+                    vIdx++;
+                }
+            }
+
+            return g;
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            uniforms.u_time.value += 0.05;
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        animate();
+    </script>
+
+    <script>
+        let _screenshotRenderer;
+        const MAX_RETRY = 3;
+        const RETRY_DELAY = 200;
+
+        function doScreenshot(retryCount = 0) {
+            try {
+                if (!_screenshotRenderer && window.renderer) {
+                    _screenshotRenderer = window.renderer;
+                }
+
+                if (!_screenshotRenderer) {
+                    throw new Error('渲染器未初始化');
+                }
+
+                if (!window.scene || !window.camera) {
+                    throw new Error('场景或相机未初始化');
+                }
+
+                _screenshotRenderer.render(window.scene, window.camera);
+
+                const quality = 0.8;
+                const canvas = _screenshotRenderer.domElement;
+
+                if (canvas.width === 0 || canvas.height === 0) {
+                    throw new Error('Canvas尺寸无效');
+                }
+
+                const tempCanvas = document.createElement('canvas');
+                const maxSize = 600;
+                const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                tempCanvas.width = Math.floor(canvas.width * scale);
+                tempCanvas.height = Math.floor(canvas.height * scale);
+
+                const ctx = tempCanvas.getContext('2d');
+                ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+
+                const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+
+                window.parent.postMessage({
+                    type: 'screenshot-data',
+                    dataUrl: dataUrl
+                }, '*');
+
+            } catch (error) {
+                console.error('截图失败 (尝试 ' + (retryCount + 1) + '):', error);
+
+                if (retryCount < MAX_RETRY) {
+                    setTimeout(() => {
+                        doScreenshot(retryCount + 1);
+                    }, RETRY_DELAY * (retryCount + 1));
+                } else {
+                    window.parent.postMessage({
+                        type: 'screenshot-error',
+                        error: error.message
+                    }, '*');
+                }
+            }
+        }
+
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                requestAnimationFrame(() => {
+                    doScreenshot();
+                });
+            }
+        });
+    </script>
+</body>
+</html>
