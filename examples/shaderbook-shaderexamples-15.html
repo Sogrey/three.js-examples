@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="材质着色器修改 - 使用onBeforeCompile修改标准材质创建动态效果">
+    <meta name="three-version" content="r179">
+    <title>材质着色器修改</title>
+    <link rel="stylesheet" href="../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../libs/three/r179/build/three.module.js",
+                "three/addons/": "../libs/three/r179/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        window.scene = null;
+        window.camera = null;
+        window.renderer = null;
+
+        window.scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 100);
+        camera.position.set(0.3, 0.4, 1);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        window.renderer.setClearColor(0xdedede);
+        document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+
+        const controls = new OrbitControls(camera, window.renderer.domElement);
+
+        const geometry = new THREE.BufferGeometry();
+        const radius = 1.0;
+        const rings = 36;
+        const parts = 6;
+
+        const uniforms = { u_time: { value: 0.0 }, u_radius: { value: radius } };
+
+        const basicMaterial = new THREE.MeshBasicMaterial({
+            color: 0xaa44ff,
+            wireframe: true,
+            side: THREE.FrontSide
+        });
+
+        basicMaterial.onBeforeCompile = shader => {
+            shader.uniforms.u_time = uniforms.u_time;
+            shader.vertexShader = `
+                #define PI 3.141592653589793
+                uniform float u_time;
+                ${shader.vertexShader}
+            `.replace(
+                `#include <begin_vertex>`,
+                `#include <begin_vertex>
+                vec3 p = transformed;
+                float len = length(p.xy);
+                float phi = atan(p.x, p.y);
+                p.xy += p.xy * 0.03 * len * sin(18.0 * phi) * (1.0 + cos(u_time));
+                p.z = 0.04 * (1.0 + sin(PI * 12.0 * len)) * cos(u_time * 0.3);
+                transformed = p;
+                `
+            );
+        };
+
+        CircleCustomShader(geometry, radius, rings, parts);
+
+        const mesh = new THREE.Mesh(geometry, basicMaterial);
+        window.scene.add(mesh);
+
+        window.camera = camera;
+
+        function CircleCustomShader(g, r, rings, parts) {
+            const vertexCount = 1 + parts / 2 * rings * (rings + 1);
+            let idxCount = 0;
+            const faceCount = parts * rings * rings;
+            const faceIndices = new Uint32Array(faceCount * 3);
+            const vertices = new Float32Array(vertexCount * 3);
+            const uvs = new Float32Array(vertexCount * 2);
+
+            g.setIndex(new THREE.BufferAttribute(faceIndices, 1));
+            g.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+            g.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+
+            const setFace = () => {
+                faceIndices[idxCount] = a;
+                faceIndices[idxCount + 1] = c;
+                faceIndices[idxCount + 2] = b;
+                idxCount += 3;
+            };
+
+            let a = 0;
+            let b = 1;
+            let c = 2;
+
+            for (let j = 0; j < parts; j++) {
+                setFace();
+                b++;
+                if (b < parts) {
+                    c++;
+                } else {
+                    c = 1;
+                }
+            }
+
+            let rvSum = 1;
+
+            for (let i = 1; i < rings; i++) {
+                for (let q = 0; q < parts; q++) {
+                    for (let j = 0; j < i + 1; j++) {
+                        if (j === 0) {
+                            a = rvSum;
+                            b = a + parts * i + q;
+                            c = b + 1;
+                            setFace();
+                        } else {
+                            a = j + rvSum;
+                            b = a - 1;
+                            c = a + parts * i + q;
+                            if (q === (parts - 1) && j === i) a = a - parts * i;
+                            setFace();
+                            b = c;
+                            c = b + 1;
+                            if (q === (parts - 1) && j === i) c = c - parts * (i + 1);
+                            setFace();
+                        }
+                    }
+                    rvSum += i;
+                }
+            }
+
+            uvs[0] = 0.5;
+            uvs[1] = 0.5;
+
+            rvSum = 1;
+
+            for (let i = 0; i <= rings; i++) {
+                const ni = i / rings;
+                for (let j = 0; j < i * parts; j++) {
+                    const phi = Math.PI * 2 * j / (i * parts);
+                    const u = 0.5 * (1 + ni * Math.cos(phi));
+                    const v = 1 - 0.5 * (1 + ni * Math.sin(phi));
+                    const uvIdx = (rvSum + j) * 2;
+                    uvs[uvIdx] = u;
+                    uvs[uvIdx + 1] = v;
+                }
+                rvSum += i * parts;
+            }
+
+            vertices[0] = 0;
+            vertices[1] = 0;
+            vertices[2] = 0;
+
+            rvSum = 1;
+
+            for (let i = 0; i <= rings; i++) {
+                const ni = i / rings;
+                for (let j = 0; j < i * parts; j++) {
+                    const phi = Math.PI * 2 * j / (i * parts);
+                    const x = r * Math.cos(phi) * ni;
+                    const y = -r * Math.sin(phi) * ni;
+                    const z = 0;
+                    const posIdx = (rvSum + j) * 3;
+                    vertices[posIdx] = x;
+                    vertices[posIdx + 1] = y;
+                    vertices[posIdx + 2] = z;
+                }
+                rvSum += i * parts;
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            uniforms.u_time.value += 0.03;
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        animate();
+    </script>
+
+    <script>
+        let _screenshotRenderer;
+        const MAX_RETRY = 3;
+        const RETRY_DELAY = 200;
+
+        function doScreenshot(retryCount = 0) {
+            try {
+                if (!_screenshotRenderer && window.renderer) {
+                    _screenshotRenderer = window.renderer;
+                }
+
+                if (!_screenshotRenderer) {
+                    throw new Error('渲染器未初始化');
+                }
+
+                if (!window.scene || !window.camera) {
+                    throw new Error('场景或相机未初始化');
+                }
+
+                _screenshotRenderer.render(window.scene, window.camera);
+
+                const quality = 0.8;
+                const canvas = _screenshotRenderer.domElement;
+
+                if (canvas.width === 0 || canvas.height === 0) {
+                    throw new Error('Canvas尺寸无效');
+                }
+
+                const tempCanvas = document.createElement('canvas');
+                const maxSize = 600;
+                const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                tempCanvas.width = Math.floor(canvas.width * scale);
+                tempCanvas.height = Math.floor(canvas.height * scale);
+
+                const ctx = tempCanvas.getContext('2d');
+                ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+
+                const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+
+                window.parent.postMessage({
+                    type: 'screenshot-data',
+                    dataUrl: dataUrl
+                }, '*');
+
+            } catch (error) {
+                console.error('截图失败 (尝试 ' + (retryCount + 1) + '):', error);
+
+                if (retryCount < MAX_RETRY) {
+                    setTimeout(() => {
+                        doScreenshot(retryCount + 1);
+                    }, RETRY_DELAY * (retryCount + 1));
+                } else {
+                    window.parent.postMessage({
+                        type: 'screenshot-error',
+                        error: error.message
+                    }, '*');
+                }
+            }
+        }
+
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                requestAnimationFrame(() => {
+                    doScreenshot();
+                });
+            }
+        });
+    </script>
+</body>
+</html>

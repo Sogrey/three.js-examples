@@ -611,6 +611,222 @@ const threejsData = {
                             thumbnail: "images/shader-raymarching-fire.jpg",
                             version: "r179",
                             url: "examples/shader-raymarching-fire"
+                        },
+                        {
+                            id: "shaderbook-shaderexamples-01",
+                            title: "UV位置渐变",
+                            description: "使用UV坐标生成渐变色彩和透明度效果",
+                            thumbnail: "images/shaderbook-shaderexamples-01.jpg",
+                            version: "r179",
+                            url: "examples/shaderbook-shaderexamples-01"
+                        },
+                        {
+                            id: "shaderbook-shaderexamples-02",
+                            title: "正弦彩色图案",
+                            description: "使用sin函数生成动态彩色图案",
+                            thumbnail: "images/shaderbook-shaderexamples-02.jpg",
+                            version: "r179",
+                            url: "examples/shaderbook-shaderexamples-02"
+                        },
+                        {
+                            id: "shaderbook-shaderexamples-03",
+                            title: "数学曲线绘制",
+                            description: "使用plot函数绘制y=x³数学曲线",
+                            thumbnail: "images/shaderbook-shaderexamples-03.jpg",
+                            version: "r179",
+                            url: "examples/shaderbook-shaderexamples-03"
+                        },
+                        {
+                            id: "shaderbook-shaderexamples-04a",
+                            title: "圆形波纹效果",
+                            description: "使用circ函数生成正弦波纹图案",
+                            thumbnail: "images/shaderbook-shaderexamples-04a.jpg",
+                            version: "r179",
+                            url: "examples/shaderbook-shaderexamples-04a"
+                        },
+                        {
+                            id: "shaderbook-shaderexamples-04b",
+                            title: "彩色圆形渐变",
+                            description: "使用circ函数和clamp限制颜色范围",
+                            thumbnail: "images/shaderbook-shaderexamples-04b.jpg",
+                            version: "r179",
+                            url: "examples/shaderbook-shaderexamples-04b"
+                        },
+                        {
+                            id: "shaderbook-shaderexamples-04c",
+                            title: "双色渐变",
+                            description: "使用mix函数实现红色到紫色的渐变效果",
+                            thumbnail: "images/shaderbook-shaderexamples-04c.jpg",
+                            version: "r179",
+                            url: "examples/shaderbook-shaderexamples-04c"
+                        },
+                        {
+                            id: "shaderbook-shaderexamples-05",
+                            title: "抛物线绘制",
+                            description: "使用plot函数绘制y=x²抛物线并添加边界裁剪效果",
+                            thumbnail: "images/shaderbook-shaderexamples-05.jpg",
+                            version: "r179",
+                            url: "examples/shaderbook-shaderexamples-05"
+                        },
+                        {
+                            id: "shaderbook-shaderexamples-06",
+                            title: "圆形混合效果",
+                            description: "使用circle函数绘制圆形并混合两种颜色",
+                            thumbnail: "images/shaderbook-shaderexamples-06.jpg",
+                            version: "r179",
+                            url: "examples/shaderbook-shaderexamples-06"
+                        },
+                        {
+                            id: "shaderbook-shaderexamples-07",
+                            title: "鼠标跟随圆形",
+                            description: "使用raycaster检测鼠标位置，绘制跟随的绿色圆形",
+                            thumbnail: "images/shaderbook-shaderexamples-07.jpg",
+                            version: "r179",
+                            url: "examples/shaderbook-shaderexamples-07"
+                        },
+                        {
+                            id: "shaderbook-shaderexamples-08",
+                            title: "纹理叠加动画",
+                            description: "在纹理上叠加随时间移动的圆形效果",
+                            thumbnail: "images/shaderbook-shaderexamples-08.jpg",
+                            version: "r179",
+                            url: "examples/shaderbook-shaderexamples-08"
+                        },
+                        {
+                            id: "shaderbook-shaderexamples-09",
+                            title: "周期性开合盒子",
+                            description: "立方体表面创建多个动态开合的圆形孔洞",
+                            thumbnail: "images/shaderbook-shaderexamples-09.jpg",
+                            version: "r179",
+                            url: "examples/shaderbook-shaderexamples-09"
+                        },
+                        {
+                            id: "shaderbook-shaderexamples-09a",
+                            title: "动态孔洞效果",
+                            description: "在立方体表面创建随时间变化的圆形孔洞",
+                            thumbnail: "images/shaderbook-shaderexamples-09a.jpg",
+                            version: "r179",
+                            url: "examples/shaderbook-shaderexamples-09a"
+                        },
+                        {
+                            id: "shaderbook-shaderexamples-10a",
+                            title: "交互式圆形绘制",
+                            description: "点击创建圆形遮罩，最多支持100个圆形",
+                            thumbnail: "images/shaderbook-shaderexamples-10a.jpg",
+                            version: "r179",
+                            url: "examples/shaderbook-shaderexamples-10a"
+                        },
+                        {
+                            id: "shaderbook-shaderexamples-10b",
+                            title: "纹理切换遮罩",
+                            description: "点击切换纹理，圆形遮罩显示不同纹理",
+                            thumbnail: "images/shaderbook-shaderexamples-10b.jpg",
+                            version: "r179",
+                            url: "examples/shaderbook-shaderexamples-10b"
+                        },
+                        {
+                            id: "shaderbook-shaderexamples-11",
+                            title: "网格筛子效果",
+                            description: "使用step函数创建网格图案",
+                            thumbnail: "images/shaderbook-shaderexamples-11.jpg",
+                            version: "r179",
+                            url: "examples/shaderbook-shaderexamples-11"
+                        },
+                        {
+                            id: "shaderbook-shaderexamples-12",
+                            title: "圆形交集遮罩",
+                            description: "使用circle函数创建多个圆形边框并求交集",
+                            thumbnail: "images/shaderbook-shaderexamples-12.jpg",
+                            version: "r179",
+                            url: "examples/shaderbook-shaderexamples-12"
+                        },
+                        {
+                            id: "shaderbook-shaderexamples-13",
+                            title: "正多边形绘制",
+                            description: "使用极坐标公式绘制正多边形",
+                            thumbnail: "images/shaderbook-shaderexamples-13.jpg",
+                            version: "r179",
+                            url: "examples/shaderbook-shaderexamples-13"
+                        },
+                        {
+                            id: "shaderbook-shaderexamples-14",
+                            title: "3D波浪效果",
+                            description: "使用顶点着色器创建动态波浪效果",
+                            thumbnail: "images/shaderbook-shaderexamples-14.jpg",
+                            version: "r179",
+                            url: "examples/shaderbook-shaderexamples-14"
+                        },
+                        {
+                            id: "shaderbook-shaderexamples-15",
+                            title: "材质着色器修改",
+                            description: "使用onBeforeCompile修改标准材质创建动态效果",
+                            thumbnail: "images/shaderbook-shaderexamples-15.jpg",
+                            version: "r179",
+                            url: "examples/shaderbook-shaderexamples-15"
+                        },
+                        {
+                            id: "shaderbook-shaderexamples-16",
+                            title: "可变形圆形着色器",
+                            description: "使用onBeforeCompile和自定义法线计算创建动态变形效果",
+                            thumbnail: "images/shaderbook-shaderexamples-16.jpg",
+                            version: "r179",
+                            url: "examples/shaderbook-shaderexamples-16"
+                        },
+                        {
+                            id: "shaderbook-shaderexamples-A",
+                            title: "旋转盒子",
+                            description: "使用顶点着色器旋转矩阵实现立方体旋转动画",
+                            thumbnail: "images/shaderbook-shaderexamples-A.jpg",
+                            version: "r179",
+                            url: "examples/shaderbook-shaderexamples-A"
+                        },
+                        {
+                            id: "shaderbook-shaderexamples-B",
+                            title: "阶梯图案着色器",
+                            description: "使用step函数创建阶梯效果",
+                            thumbnail: "images/shaderbook-shaderexamples-B.jpg",
+                            version: "r179",
+                            url: "examples/shaderbook-shaderexamples-B"
+                        },
+                        {
+                            id: "shaderbook-shaderexamples-C",
+                            title: "2D云彩着色器",
+                            description: "使用噪声函数和fbm创建云彩效果",
+                            thumbnail: "images/shaderbook-shaderexamples-C.jpg",
+                            version: "r179",
+                            url: "examples/shaderbook-shaderexamples-C"
+                        },
+                        {
+                            id: "shaderbook-shaderexamples-D",
+                            title: "平面水效果着色器",
+                            description: "使用波浪函数和反射效果模拟水面",
+                            thumbnail: "images/shaderbook-shaderexamples-D.jpg",
+                            version: "r179",
+                            url: "examples/shaderbook-shaderexamples-D"
+                        },
+                        {
+                            id: "shaderbook-shaderexamples-E",
+                            title: "云彩着色器",
+                            description: "使用多层噪声混合创建云朵效果",
+                            thumbnail: "images/shaderbook-shaderexamples-E.jpg",
+                            version: "r179",
+                            url: "examples/shaderbook-shaderexamples-E"
+                        },
+                        {
+                            id: "shaderbook-shaderexamples-F",
+                            title: "大气散射着色器",
+                            description: "模拟逼真的天空和太阳效果",
+                            thumbnail: "images/shaderbook-shaderexamples-F.jpg",
+                            version: "r179",
+                            url: "examples/shaderbook-shaderexamples-F"
+                        },
+                        {
+                            id: "shaderbook-shaderexamples-G",
+                            title: "快速鱼群着色器",
+                            description: "模拟水下场景中有鱼、水草和气泡",
+                            thumbnail: "images/shaderbook-shaderexamples-G.jpg",
+                            version: "r179",
+                            url: "examples/shaderbook-shaderexamples-G"
                         }
                     ]
                 },
