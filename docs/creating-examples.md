@@ -312,6 +312,27 @@ http://localhost:your-port/examples/viewer.html#your-example-file-name
 - 如果使用了 `EffectComposer`，确保在初始化后添加 `window.composer = composer`
 - 确保 `window.scene`、`window.camera`、`window.renderer` 已正确赋值
 
+## 设计规范
+
+### UI 布局规则
+
+#### 参数控制面板位置
+当示例使用 GUI 控制面板（如 dat.GUI、lil-gui）时，应设置右上角控制面板距顶 50px，以保持界面美观和一致性：
+
+```javascript
+const gui = new dat.GUI();
+gui.domElement.style.top = '50px';
+gui.domElement.style.position = 'relative';
+```
+
+或使用 lil-gui：
+
+```javascript
+const gui = new GUI();
+gui.domElement.style.top = '50px';
+gui.domElement.style.position = 'relative';
+```
+
 ## 总结
 
 创建新的Three.js示例是一个简单的过程，只需要几个步骤：

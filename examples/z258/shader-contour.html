@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="展示魔幻山体效果，使用着色器实现等高线示意" />
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 魔幻山体</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        const container = document.getElementById('threeContainer');
+
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0.5, 1, 0.875);
+        window.scene.fog = new THREE.Fog(window.scene.background, 20, 45);
+
+        window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        window.camera.position.set(0, 10, 10);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        window.renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(window.renderer.domElement);
+
+        new OrbitControls(window.camera, window.renderer.domElement);
+
+        window.addEventListener('resize', () => {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            window.renderer.setSize(w, h);
+            window.camera.aspect = w / h;
+            window.camera.updateProjectionMatrix();
+        });
+
+        const add_plane = () => {
+            const clock = new THREE.Clock();
+            const planeGeometry = new THREE.PlaneGeometry(50, 50, 200, 200);
+            planeGeometry.rotateX(-Math.PI / 2);
+            
+            const uniforms = {
+                u_time: { value: clock.getDelta() }
+            };
+
+            const vertexShader = `
+                vec3 hash(vec3 p) {
+                    p = vec3(dot(p, vec3(127.1, 311.7, 74.7)),
+                             dot(p, vec3(269.5, 183.3, 246.1)),
+                             dot(p, vec3(113.5, 271.9, 124.6)));
+                    return fract(sin(p) * 43758.5453123);
+                }
+
+                float noise(in vec3 x) {
+                    vec3 p = floor(x);
+                    vec3 w = fract(x);
+                    vec3 u = w * w * w * (w * (w * 6.0 - 15.0) + 10.0);
+                    
+                    vec3 ga = hash(p + vec3(0.0, 0.0, 0.0));
+                    vec3 gb = hash(p + vec3(1.0, 0.0, 0.0));
+                    vec3 gc = hash(p + vec3(0.0, 1.0, 0.0));
+                    vec3 gd = hash(p + vec3(1.0, 1.0, 0.0));
+                    vec3 ge = hash(p + vec3(0.0, 0.0, 1.0));
+                    vec3 gf = hash(p + vec3(1.0, 0.0, 1.0));
+                    vec3 gg = hash(p + vec3(0.0, 1.0, 1.0));
+                    vec3 gh = hash(p + vec3(1.0, 1.0, 1.0));
+                    
+                    float va = dot(ga, w - vec3(0.0, 0.0, 0.0));
+                    float vb = dot(gb, w - vec3(1.0, 0.0, 0.0));
+                    float vc = dot(gc, w - vec3(0.0, 1.0, 0.0));
+                    float vd = dot(gd, w - vec3(1.0, 1.0, 0.0));
+                    float ve = dot(ge, w - vec3(0.0, 0.0, 1.0));
+                    float vf = dot(gf, w - vec3(1.0, 0.0, 1.0));
+                    float vg = dot(gg, w - vec3(0.0, 1.0, 1.0));
+                    float vh = dot(gh, w - vec3(1.0, 1.0, 1.0));
+                    
+                    return va + u.x * (vb - va) + u.y * (vc - va) + u.z * (ve - va) +
+                           u.x * u.y * (va - vb - vc + vd) + u.y * u.z * (va - vc - ve + vg) +
+                           u.z * u.x * (va - vb - ve + vf) +
+                           u.x * u.y * u.z * (-va + vb + vc - vd + ve - vf - vg + vh);
+                }
+
+                varying vec2 v_uv;
+                varying float v_y;
+
+                void main() {
+                    v_uv = uv;
+                    float noise_value = noise(position * 0.1);
+                    float y = noise_value;
+                    y = pow(y, 3.0);
+                    vec3 in_position = position;
+                    in_position.y = v_y = min(y * 35.0, 15.0) * 2.0;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(in_position, 1.0);
+                }
+            `;
+
+            const fragmentShader = `
+                uniform float u_time;
+                varying float v_y;
+                varying vec2 v_uv;
+
+                void main() {
+                    gl_FragColor = vec4(v_uv.x, sin(v_y * 100.0 * u_time), 0.5, 1.0);
+                }
+            `;
+
+            const shaderMaterial = new THREE.ShaderMaterial({
+                vertexShader,
+                fragmentShader,
+                side: THREE.DoubleSide,
+                uniforms
+            });
+
+            const mesh = new THREE.Mesh(planeGeometry, shaderMaterial);
+            window.scene.add(mesh);
+
+            return { mesh, uniforms, clock };
+        };
+
+        const { uniforms, clock } = add_plane();
+
+        function animate() {
+            uniforms.u_time.value = clock.getElapsedTime() * 0.01;
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        window.renderer.setAnimationLoop(animate);
+    </script>
+
+    <script>
+        let _screenshotRenderer;
+        
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (!_screenshotRenderer && window.renderer) {
+                        _screenshotRenderer = window.renderer;
+                    }
+                    
+                    if (!_screenshotRenderer) {
+                        throw new Error('渲染器未初始化');
+                    }
+                    
+                    if (window.scene && window.camera) {
+                        _screenshotRenderer.render(window.scene, window.camera);
+                    }
+                    
+                    const quality = event.data.quality || 0.8;
+                    const canvas = _screenshotRenderer.domElement;
+                    
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    
+                    window.parent.postMessage({
+                        type: 'screenshot-data',
+                        dataUrl: dataUrl
+                    }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({
+                        type: 'screenshot-error',
+                        error: error.message
+                    }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

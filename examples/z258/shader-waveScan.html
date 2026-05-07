@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="展示波扫描效果，使用着色器实现动态波纹扫描" />
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 波扫描</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        const container = document.getElementById('threeContainer');
+
+        window.scene = new THREE.Scene();
+
+        window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        window.camera.position.set(0, 0, 0.6);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, logarithmicDepthBuffer: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        window.renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(window.renderer.domElement);
+
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.enableDamping = true;
+
+        window.addEventListener('resize', () => {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            window.renderer.setSize(w, h);
+            window.camera.aspect = w / h;
+            window.camera.updateProjectionMatrix();
+            uniforms.iResolution.value.set(w, h);
+        });
+
+        const uniforms = {
+            iTime: { value: 0 },
+            iResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
+        };
+
+        const geometry = new THREE.PlaneGeometry(1, 1);
+
+        const material = new THREE.ShaderMaterial({
+            uniforms,
+            transparent: true,
+            side: THREE.DoubleSide,
+            vertexShader: `
+                varying vec3 vPosition;
+                varying vec2 vUv;
+                void main() { 
+                    vUv = uv; 
+                    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                    gl_Position = projectionMatrix * mvPosition;
+                }
+            `,
+            fragmentShader: `
+                uniform float iTime;
+                uniform vec2 iResolution;
+                const float PI = 3.14159265359;
+
+                float random(float p) {
+                    return fract(sin(p) * 10000.0);
+                } 
+
+                float noise(vec2 p) {
+                    float t = iTime / 2000.0;
+                    if(t > 1.0) t -= floor(t);
+                    return random(p.x * 14.0 + p.y * sin(t) * 0.5);
+                }
+
+                vec2 sw(vec2 p) {
+                    return vec2(floor(p.x), floor(p.y));
+                }
+
+                vec2 se(vec2 p) {
+                    return vec2(ceil(p.x), floor(p.y));
+                }
+
+                vec2 nw(vec2 p) {
+                    return vec2(floor(p.x), ceil(p.y));
+                }
+
+                vec2 ne(vec2 p) {
+                    return vec2(ceil(p.x), ceil(p.y));
+                }
+
+                float smoothNoise(vec2 p) {
+                    vec2 inter = smoothstep(0.0, 1.0, fract(p));
+                    float s = mix(noise(sw(p)), noise(se(p)), inter.x);
+                    float n = mix(noise(nw(p)), noise(ne(p)), inter.x);
+                    return mix(s, n, inter.y);
+                }
+
+                mat2 rotate(in float theta) {
+                    float c = cos(theta);
+                    float s = sin(theta);
+                    return mat2(c, -s, s, c);
+                }
+
+                float circ(vec2 p) {
+                    float r = length(p);
+                    r = log(sqrt(r));
+                    return abs(mod(4.0 * r, PI * 2.0) - PI) * 3.0 + 0.2;
+                }
+
+                float fbm(in vec2 p) {
+                    float z = 2.0;
+                    float rz = 0.0;
+                    vec2 bp = p;
+                    for(float i = 1.0; i < 6.0; i++) {
+                        rz += abs((smoothNoise(p) - 0.5) * 2.0) / z;
+                        z *= 2.0;
+                        p *= 2.0;
+                    }
+                    return rz;
+                }
+
+                float distanceTo(vec2 src, vec2 dst) {
+                    float dx = src.x - dst.x;
+                    float dy = src.y - dst.y;
+                    float dv = dx * dx + dy * dy;
+                    return sqrt(dv);
+                }
+
+                varying vec2 vUv; 
+
+                void main() { 
+                    float len = distanceTo(vec2(0.5, 0.5), vec2(vUv.x, vUv.y)) * 2.0;
+
+                    vec2 p = vUv - 0.5;
+                    p.x *= iResolution.x / iResolution.y;
+                    p *= 8.0;
+                    float rz = fbm(p);
+                    p /= exp(mod(iTime * 2.0, PI));
+                    rz *= pow(abs(0.1 - circ(p)), 0.9);
+                    vec3 col = vec3(0.2, 0.1, 0.643); 
+
+                    gl_FragColor = vec4(col / rz, 1.0 - pow(len, 3.0));
+                }
+            `
+        });
+
+        const mesh = new THREE.Mesh(geometry, material);
+        window.scene.add(mesh);
+
+        function animate() {
+            uniforms.iTime.value += 0.01;
+            controls.update();
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        window.renderer.setAnimationLoop(animate);
+    </script>
+
+    <script>
+        let _screenshotRenderer;
+        
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (!_screenshotRenderer && window.renderer) {
+                        _screenshotRenderer = window.renderer;
+                    }
+                    
+                    if (!_screenshotRenderer) {
+                        throw new Error('渲染器未初始化');
+                    }
+                    
+                    if (window.scene && window.camera) {
+                        _screenshotRenderer.render(window.scene, window.camera);
+                    }
+                    
+                    const quality = event.data.quality || 0.8;
+                    const canvas = _screenshotRenderer.domElement;
+                    
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    
+                    window.parent.postMessage({
+                        type: 'screenshot-data',
+                        dataUrl: dataUrl
+                    }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({
+                        type: 'screenshot-error',
+                        error: error.message
+                    }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
