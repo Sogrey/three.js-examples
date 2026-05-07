@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="展示等高线效果，使用Perlin噪声生成地形并通过着色器绘制动态等高线" />
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 等高线</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        const container = document.getElementById('threeContainer');
+
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x161616);
+
+        window.camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, 1000);
+        window.camera.position.set(0, 26, 40);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        window.renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(window.renderer.domElement);
+
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.enableDamping = true;
+
+        window.addEventListener('resize', () => {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            window.renderer.setSize(w, h);
+            window.camera.aspect = w / h;
+            window.camera.updateProjectionMatrix();
+        });
+
+        class PerlinNoise {
+            static noise(x, y) {
+                const posIntX = Math.floor(x);
+                const posIntY = Math.floor(y);
+                const posFloatX = x - posIntX;
+                const posFloatY = y - posIntY;
+
+                const sx = PerlinNoise.cubicInterpolate(posFloatX);
+                const sy = PerlinNoise.cubicInterpolate(posFloatY);
+
+                const v00 = PerlinNoise.hash(posIntX, posIntY);
+                const v10 = PerlinNoise.hash(posIntX + 1, posIntY);
+                const v01 = PerlinNoise.hash(posIntX, posIntY + 1);
+                const v11 = PerlinNoise.hash(posIntX + 1, posIntY + 1);
+
+                const v0 = PerlinNoise.mix(v00, v10, sx);
+                const v1 = PerlinNoise.mix(v01, v11, sx);
+                return PerlinNoise.mix(v0, v1, sy);
+            }
+
+            static mix(a, b, t) {
+                return a * (1 - t) + b * t;
+            }
+
+            static hash(x, y) {
+                const dot = x * 12.9898 + y * 78.233;
+                const value = Math.sin(dot) * 43758.5453;
+                return value - Math.floor(value);
+            }
+
+            static cubicInterpolate(x) {
+                return 3.0 * Math.pow(x, 2.0) - 2.0 * Math.pow(x, 3.0);
+            }
+        }
+
+        class GroundGeometry extends THREE.PlaneGeometry {
+            constructor(width, height, widthSegments, heightSegments) {
+                super(width, height, widthSegments, heightSegments);
+
+                this.rotateX(-Math.PI / 2);
+
+                const attr_pos = this.attributes.position;
+                for (let i = 0; i < attr_pos.count; i++) {
+                    const x = attr_pos.getX(i);
+                    const z = attr_pos.getZ(i);
+
+                    attr_pos.setY(i, PerlinNoise.noise(x * 0.1, z * 0.1) * 12.0);
+                }
+
+                this.computeVertexNormals();
+            }
+        }
+
+        const ground_geo = new GroundGeometry(50, 50, 60, 60);
+        const ground_mat = new THREE.ShaderMaterial({
+            uniforms: {
+                range: { value: 12.0 },
+                lw: { value: 0.1 },
+                ln: { value: 10 },
+                c_bg: { value: new THREE.Color(0x161616) },
+                c_l_0: { value: new THREE.Color(0x01bbff) },
+                c_l_1: { value: new THREE.Color(0xff4199) },
+                t: { value: 0.0 },
+            },
+            vertexShader: `
+                uniform float range;
+
+                varying vec3 vPos;
+                varying vec3 vNormal;
+
+                void main() {
+                    vec3 pos = position;
+                    vPos = pos;
+                    vNormal = normalize(normal);
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform float range;
+                uniform float lw;
+                uniform float ln;
+                uniform vec3 c_bg;
+                uniform vec3 c_l_0;
+                uniform vec3 c_l_1;
+                uniform float t;
+
+                varying vec3 vPos;
+                varying vec3 vNormal;
+
+                void main() {
+                    vec4 c_out = vec4(c_bg, 1.0);
+                    float a = length(vNormal / vNormal.y);
+                    float c = a / sqrt(a * a - 1.0);
+                    float clw = lw / c;
+                    float h = vPos.y - t * 0.5;
+
+                    if(fract(h) > 1.0 - clw){
+                        float d = abs(fract(h) - 1.0 + clw * 0.5) / clw;
+                        float v = 1.0 - pow(d, 1.6);
+                        c_out.rgb = mix(c_bg, mix(c_l_0, c_l_1, vPos.y / range), v);
+                    }
+
+                    gl_FragColor = c_out;
+                }
+            `,
+        });
+
+        const ground = new THREE.Mesh(ground_geo, ground_mat);
+        window.scene.add(ground);
+
+        const gui = new GUI();
+        gui.domElement.style.position = 'absolute';
+        gui.domElement.style.top = '50px';
+        gui.domElement.style.right = '10px';
+        gui.domElement.style.zIndex = '1000';
+
+        gui.add(ground_mat.uniforms.lw, 'value', 0.01, 0.2, 0.001).name('宽度');
+        gui.addColor({
+            get value() {
+                return `#${ground_mat.uniforms.c_l_0.value.getHexString()}`;
+            },
+            set value(v) {
+                ground_mat.uniforms.c_l_0.value.set(v);
+            }
+        }, 'value').name('颜色0');
+        gui.addColor({
+            get value() {
+                return `#${ground_mat.uniforms.c_l_1.value.getHexString()}`;
+            },
+            set value(v) {
+                ground_mat.uniforms.c_l_1.value.set(v);
+            }
+        }, 'value').name('颜色1');
+
+        const clock = new THREE.Clock();
+
+        function animate() {
+            const elapsed = clock.getElapsedTime();
+            ground_mat.uniforms.t.value = elapsed;
+            controls.update();
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        window.renderer.setAnimationLoop(animate);
+    </script>
+
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera) {
+                        if (window.composer) {
+                            window.composer.render();
+                        } else if (window.renderer) {
+                            window.renderer.render(window.scene, window.camera);
+                        }
+                    }
+
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.composer ? window.composer.renderer.domElement : window.renderer.domElement;
+
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+
+                    window.parent.postMessage({
+                        type: 'screenshot-data',
+                        dataUrl: dataUrl
+                    }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({
+                        type: 'screenshot-error',
+                        error: error.message
+                    }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

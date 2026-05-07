@@ -1033,6 +1033,110 @@ const threejsData = {
                             thumbnail: "images/shader-fishShader.jpg",
                             version: "r179",
                             url: "examples/z258/shader-fishShader"
+                        },
+                        {
+                            id: "shader-energyBallShader",
+                            title: "能量球",
+                            description: "展示能量球效果，使用着色器实现动态能量球脉冲动画",
+                            thumbnail: "images/shader-energyBallShader.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-energyBallShader"
+                        },
+                        {
+                            id: "shader-girdFloor",
+                            title: "网格地板",
+                            description: "展示网格地板效果，使用自定义着色器实现带有抗锯齿的网格线",
+                            thumbnail: "images/shader-girdFloor.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-girdFloor"
+                        },
+                        {
+                            id: "shader-hologram",
+                            title: "全息投影",
+                            description: "展示全息投影效果，使用自定义着色器实现扫描线和菲涅尔反射效果",
+                            thumbnail: "images/shader-hologram.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-hologram"
+                        },
+                        {
+                            id: "shader-smoke",
+                            title: "燃烧烟雾",
+                            description: "展示燃烧烟雾效果，使用实例化渲染大量粒子实现烟雾粒子系统",
+                            thumbnail: "images/shader-smoke.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-smoke"
+                        },
+                        {
+                            id: "shader-fireMaterial",
+                            title: "火焰材质",
+                            description: "展示火焰材质效果，使用自定义着色器实现燃烧的火焰动画",
+                            thumbnail: "images/shader-fireMaterial.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-fireMaterial"
+                        },
+                        {
+                            id: "shader-contourLine",
+                            title: "等高线",
+                            description: "展示等高线效果，使用Perlin噪声生成地形并通过着色器绘制动态等高线",
+                            thumbnail: "images/shader-contourLine.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-contourLine"
+                        },
+                        {
+                            id: "shader-heatmapShader",
+                            title: "热力图",
+                            description: "展示热力图效果，使用着色器实现动态变化的热力图",
+                            thumbnail: "images/shader-heatmapShader.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-heatmapShader"
+                        },
+                        {
+                            id: "shader-redRose",
+                            title: "红玫瑰",
+                            description: "展示红玫瑰效果，使用raymarching技术渲染动态的红玫瑰",
+                            thumbnail: "images/shader-redRose.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-redRose"
+                        },
+                        {
+                            id: "particle-waveParticleShader",
+                            title: "波浪粒子",
+                            description: "展示波浪粒子效果，使用着色器实现动态波浪粒子动画",
+                            thumbnail: "images/particle-waveParticleShader.jpg",
+                            version: "r179",
+                            url: "examples/z258/particle-waveParticleShader"
+                        },
+                        {
+                            id: "particle-particleLine",
+                            title: "粒子线条",
+                            description: "展示粒子线条效果，粒子间根据距离连线，支持鼠标交互和后处理效果",
+                            thumbnail: "images/particle-particleLine.jpg",
+                            version: "r179",
+                            url: "examples/z258/particle-particleLine"
+                        },
+                        {
+                            id: "particle-sphereLine",
+                            title: "球体线条",
+                            description: "展示球体粒子连线效果，粒子在球面上随机运动，距离近的粒子之间自动连线",
+                            thumbnail: "images/particle-sphereLine.jpg",
+                            version: "r179",
+                            url: "examples/z258/particle-sphereLine"
+                        },
+                        {
+                            id: "particle-particleWire",
+                            title: "粒子线",
+                            description: "展示粒子连线效果，粒子随机运动，距离近的粒子之间自动连线，支持鼠标交互",
+                            thumbnail: "images/particle-particleWire.jpg",
+                            version: "r179",
+                            url: "examples/z258/particle-particleWire"
+                        },
+                        {
+                            id: "particle-starrySky",
+                            title: "粒子星空",
+                            description: "展示粒子星空效果，使用着色器实现动态星空隧道效果",
+                            thumbnail: "images/particle-starrySky.jpg",
+                            version: "r179",
+                            url: "examples/z258/particle-starrySky"
                         }
                     ]
                 },

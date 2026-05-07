@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="展示全息投影效果，使用自定义着色器实现扫描线和菲涅尔反射效果" />
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 全息投影</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        const container = document.getElementById('threeContainer');
+
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x0a0a1a);
+
+        window.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
+        window.camera.position.set(4, 1, -4);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        window.renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(window.renderer.domElement);
+
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.enableDamping = true;
+
+        window.addEventListener('resize', () => {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            window.renderer.setSize(w, h);
+            window.camera.aspect = w / h;
+            window.camera.updateProjectionMatrix();
+        });
+
+        const vertexShader = `
+            precision mediump float;
+
+            uniform float uTime;
+
+            varying vec2 vUv;
+            varying vec3 vPosition;
+            varying vec3 vNormal;
+
+            float random (in vec2 _st) {
+                return fract(sin(dot(_st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
+            }
+
+            void main() {
+                vec4 modelPosition = modelMatrix * vec4(position, 1.0);
+
+                float gltichTime = modelPosition.y - uTime;
+                float gltichStrength = sin(gltichTime) + sin(gltichTime * 3.45) - sin(gltichTime * 8.5);
+                gltichTime = gltichTime / 3.0;
+                gltichStrength = smoothstep(0.3, 1.0, gltichStrength);
+                modelPosition.x += (random(modelPosition.xz + uTime) - 0.5) * gltichStrength * 0.25;
+                modelPosition.z += (random(modelPosition.zx + uTime) - 0.5) * gltichStrength * 0.25;
+
+                mat3 normalMatrix = transpose(inverse(mat3(modelMatrix)));
+                vec3 transformedNormal = normalize(normalMatrix * normal);
+
+                vec4 viewPosition = viewMatrix * modelPosition;
+                vec4 projectedPosition = projectionMatrix * viewPosition;
+                gl_Position = projectedPosition;
+
+                vPosition = modelPosition.xyz;
+                vNormal = transformedNormal;
+            }
+        `;
+
+        const fragmentShader = `
+            precision mediump float;
+
+            varying vec2 vUv;
+            uniform float uTime;
+            uniform vec3 uColor;
+            varying vec3 vPosition;
+            varying vec3 vNormal;
+
+            void main() {
+                float stripes = vPosition.y - uTime * 0.02;
+                stripes = mod(stripes * 20.0, 1.0);
+                stripes = pow(stripes, 3.0);
+
+                vec3 normal = normalize(vNormal);
+
+                if (!gl_FrontFacing)
+                    normal *= -1.0;
+
+                vec3 viewDirection = normalize(vPosition - cameraPosition);
+                float fresnel = dot(viewDirection, normal);
+                fresnel = fresnel + 1.0;
+                fresnel = pow(fresnel, 2.0);
+
+                float falloff = smoothstep(0.8, 0.0, fresnel);
+                float holographic = fresnel * stripes;
+                holographic += fresnel * 1.25;
+                holographic *= falloff;
+
+                gl_FragColor = vec4(uColor, holographic);
+            }
+        `;
+
+        const params = {
+            color: '#801040',
+            stripeSpeed: 0.5,
+            fresnelIntensity: 1.25
+        };
+
+        let animTime = 0.5;
+
+        const material = new THREE.ShaderMaterial({
+            transparent: true,
+            side: THREE.DoubleSide,
+            vertexShader,
+            fragmentShader,
+            blending: THREE.AdditiveBlending,
+            uniforms: {
+                uTime: new THREE.Uniform(0),
+                uColor: new THREE.Uniform(new THREE.Color(params.color))
+            }
+        });
+
+        const torusKnot = new THREE.Mesh(
+            new THREE.TorusKnotGeometry(0.6, 0.25, 128, 32),
+            material
+        );
+        torusKnot.position.x = 3;
+        window.scene.add(torusKnot);
+
+        const sphere = new THREE.Mesh(new THREE.SphereGeometry(0.8, 32, 32), material);
+        sphere.position.x = -3;
+        window.scene.add(sphere);
+
+        const cube = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.2, 1.2), material);
+        cube.position.y = 0;
+        window.scene.add(cube);
+
+        const gui = new GUI();
+        gui.domElement.style.position = 'absolute';
+        gui.domElement.style.top = '50px';
+        gui.domElement.style.right = '10px';
+        gui.domElement.style.zIndex = '1000';
+
+        gui.addColor(params, 'color').name('全息颜色').onChange(value => {
+            material.uniforms.uColor.value.set(value);
+        });
+        gui.add(params, 'stripeSpeed', 0.1, 3.0).name('条纹速度').onChange(value => {
+            animTime = value;
+        });
+
+        const clock = new THREE.Clock();
+
+        function animate() {
+            const elapsedTime = clock.getElapsedTime();
+            material.uniforms.uTime.value = elapsedTime * animTime;
+
+            torusKnot.rotation.y = elapsedTime * 0.5;
+            sphere.rotation.y = elapsedTime * 0.5;
+            cube.rotation.y = elapsedTime * 0.5;
+
+            controls.update();
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        window.renderer.setAnimationLoop(animate);
+    </script>
+
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera) {
+                        if (window.composer) {
+                            window.composer.render();
+                        } else if (window.renderer) {
+                            window.renderer.render(window.scene, window.camera);
+                        }
+                    }
+
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.composer ? window.composer.renderer.domElement : window.renderer.domElement;
+
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+
+                    window.parent.postMessage({
+                        type: 'screenshot-data',
+                        dataUrl: dataUrl
+                    }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({
+                        type: 'screenshot-error',
+                        error: error.message
+                    }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

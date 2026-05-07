@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="展示粒子星空效果，使用着色器实现动态星空隧道效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 粒子星空</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        const container = document.getElementById('threeContainer');
+
+        window.scene = new THREE.Scene();
+
+        window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        window.camera.position.set(0, 0, 0.6);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(window.renderer.domElement);
+
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.enableDamping = true;
+
+        const uniforms = {
+            iTime: { value: 0 },
+            iResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
+        };
+
+        const geometry = new THREE.PlaneGeometry(1, 1);
+
+        const material = new THREE.ShaderMaterial({
+            uniforms,
+            transparent: true,
+            side: THREE.DoubleSide,
+            vertexShader: `
+                varying vec3 vPosition;
+                varying vec2 vUv;
+                void main() { 
+                    vUv = uv; 
+                    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                    gl_Position = projectionMatrix * mvPosition;
+                }
+            `,
+            fragmentShader: `
+                uniform float iTime; 
+                uniform vec2 iResolution; 
+                varying vec2 vUv;  
+
+                #define PASS_COUNT 1
+                vec4 iMouse = vec4(.0, 0, 0.2, 0);
+                float fBrightness = 2.5;
+
+                float fSteps = 121.0;
+                float fParticleSize = 0.015;
+                float fParticleLength = 0.5 / 60.0;
+
+                float fMinDist = 0.8;
+                float fMaxDist = 5.0;
+
+                float fRepeatMin = 1.0;
+                float fRepeatMax = 2.0;
+
+                float fDepthFade = 0.8;
+
+                float Random(float x) {
+                    return fract(sin(x * 123.456) * 23.4567 + sin(x * 345.678) * 45.6789 + sin(x * 456.789) * 56.789);
+                }
+
+                vec3 GetParticleColour(const in vec3 vParticlePos, const in float fParticleSize, const in vec3 vRayDir) {		
+                    vec2 vNormDir = normalize(vRayDir.xy);
+                    float d1 = dot(vParticlePos.xy, vNormDir.xy) / length(vRayDir.xy);
+                    vec3 vClosest2d = vRayDir * d1;
+
+                    vec3 vClampedPos = vParticlePos;
+                    vClampedPos.z = clamp(vClosest2d.z, vParticlePos.z - fParticleLength, vParticlePos.z + fParticleLength);
+
+                    float d = dot(vClampedPos, vRayDir);
+                    vec3 vClosestPos = vRayDir * d;
+                    vec3 vDeltaPos = vClampedPos - vClosestPos;	
+
+                    float fClosestDist = length(vDeltaPos) / fParticleSize;
+                    float fShade = clamp(1.0 - fClosestDist, 0.0, 1.0);
+                    fShade = fShade * exp2(-d * fDepthFade) * fBrightness;
+                    return vec3(fShade);
+                }
+
+                vec3 GetParticlePos(const in vec3 vRayDir, const in float fZPos, const in float fSeed) {
+                    float fAngle = atan(vRayDir.x, vRayDir.y);
+                    float fAngleFraction = fract(fAngle / (3.14 * 2.0));
+
+                    float fSegment = floor(fAngleFraction * fSteps + fSeed) + 0.5 - fSeed;
+                    float fParticleAngle = fSegment / fSteps * (3.14 * 2.0);
+
+                    float fSegmentPos = fSegment / fSteps;
+                    float fRadius = fMinDist + Random(fSegmentPos + fSeed) * (fMaxDist - fMinDist);
+
+                    float tunnelZ = vRayDir.z / length(vRayDir.xy / fRadius);
+                    tunnelZ += fZPos;
+
+                    float fRepeat = fRepeatMin + Random(fSegmentPos + 0.1 + fSeed) * (fRepeatMax - fRepeatMin);
+                    float fParticleZ = (ceil(tunnelZ / fRepeat) - 0.5) * fRepeat - fZPos;
+
+                    return vec3(sin(fParticleAngle) * fRadius, cos(fParticleAngle) * fRadius, fParticleZ);
+                }
+
+                vec3 Starfield(const in vec3 vRayDir, const in float fZPos, const in float fSeed) {	
+                    vec3 vParticlePos = GetParticlePos(vRayDir, fZPos, fSeed);
+                    return GetParticleColour(vParticlePos, fParticleSize, vRayDir);	
+                }
+
+                vec3 RotateX(const in vec3 vPos, const in float fAngle) {
+                    float s = sin(fAngle);
+                    float c = cos(fAngle);
+                    return vec3(vPos.x, c * vPos.y + s * vPos.z, -s * vPos.y + c * vPos.z);
+                }
+
+                vec3 RotateY(const in vec3 vPos, const in float fAngle) {
+                    float s = sin(fAngle);
+                    float c = cos(fAngle);
+                    return vec3(c * vPos.x + s * vPos.z, vPos.y, -s * vPos.x + c * vPos.z);
+                }
+
+                vec3 RotateZ(const in vec3 vPos, const in float fAngle) {
+                    float s = sin(fAngle);
+                    float c = cos(fAngle);
+                    return vec3(c * vPos.x + s * vPos.y, -s * vPos.x + c * vPos.y, vPos.z);
+                }
+
+                void main(void) { 
+                    vec2 vScreenUV = (vUv - 0.5) * 10.0;
+                    vec2 vScreenPos = vScreenUV * 2.0 - 1.0;
+                    vScreenPos.x *= iResolution.x / iResolution.y;
+
+                    vec3 vRayDir = normalize(vec3(vScreenPos, 1.0));
+
+                    vec3 vEuler = vec3(
+                        0.5 + sin(iTime * 0.2) * 0.125, 
+                        0.5 + sin(iTime * 0.1) * 0.125, 
+                        iTime * 0.1 + sin(iTime * 0.3) * 0.5
+                    );
+
+                    vRayDir = RotateX(vRayDir, vEuler.x);
+                    vRayDir = RotateY(vRayDir, vEuler.y);
+                    vRayDir = RotateZ(vRayDir, vEuler.z);
+
+                    float a = 0.2;
+                    float b = 10.0;
+                    float c = 1.0;
+                    float fZPos = 5.0 + iTime * c + sin(iTime * a) * b;
+                    float fSpeed = c + a * b * cos(a * iTime);
+
+                    fParticleLength = 0.25 * fSpeed / 60.0;
+
+                    float fSeed = 0.0;
+                    vec3 vResult = mix(
+                        vec3(0.005, 0.0, 0.01), 
+                        vec3(0.01, 0.005, 0.0), 
+                        vRayDir.y * 0.5 + 0.5
+                    );
+
+                    for(int i = 0; i < PASS_COUNT; i++) {
+                        vResult += Starfield(vRayDir, fZPos, fSeed);
+                        fSeed += 1.234;
+                    }
+
+                    gl_FragColor = vec4(sqrt(vResult), 1.0);
+                }
+            `
+        });
+
+        const mesh = new THREE.Mesh(geometry, material);
+        window.scene.add(mesh);
+
+        window.addEventListener('resize', () => {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            window.camera.aspect = w / h;
+            window.camera.updateProjectionMatrix();
+            window.renderer.setSize(w, h);
+            uniforms.iResolution.value.set(w, h);
+        });
+
+        function animate() {
+            uniforms.iTime.value += 0.01;
+            controls.update();
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        window.renderer.setAnimationLoop(animate);
+    </script>
+
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera) {
+                        if (window.composer) {
+                            window.composer.render();
+                        } else if (window.renderer) {
+                            window.renderer.render(window.scene, window.camera);
+                        }
+                    }
+
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.composer ? window.composer.renderer.domElement : window.renderer.domElement;
+
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+
+                    window.parent.postMessage({
+                        type: 'screenshot-data',
+                        dataUrl: dataUrl
+                    }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({
+                        type: 'screenshot-error',
+                        error: error.message
+                    }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

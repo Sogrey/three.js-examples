@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="展示热力图效果，使用着色器实现动态变化的热力图" />
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 热力图</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        const container = document.getElementById('threeContainer');
+
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x161616);
+
+        window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        window.camera.position.set(0, 0, 20);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        window.renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(window.renderer.domElement);
+
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+
+        window.addEventListener('resize', () => {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            window.renderer.setSize(w, h);
+            window.camera.aspect = w / h;
+            window.camera.updateProjectionMatrix();
+        });
+
+        window.scene.add(new THREE.AmbientLight(0xffffff, 2));
+
+        const arr = [[0., 0., 10.], [.2, .6, 5.], [.25, .7, 8.], [.33, .9, 5.], [.35, .8, 6.], [0.017, 5.311, 6.000], [-.45, .8, 4.], [-.2, -.6, 5.], [-.25, -.7, 8.], [-.33, -.9, 8.], [.35, -.45, 10.], [-.1, -.8, 10.], [.33, -.3, 5.], [-.35, .75, 6.], [.6, .4, 10.], [-.4, -.8, 4.], [.7, -.3, 6.], [.3, -.8, 8.]].map(i => new THREE.Vector3(...i));
+
+        const uniforms1 = {
+            HEAT_MAX: { value: 10 },
+            PointRadius: { value: 0.42 },
+            PointsCount: { value: arr.length },
+            c1: { value: new THREE.Color(0x000000) },
+            c2: { value: new THREE.Color(0x000000) },
+            uvY: { value: 1 },
+            uvX: { value: 1 },
+            opacity: { value: 1 }
+        };
+
+        const uniforms2 = {
+            Points: { value: arr }
+        };
+
+        const uniforms = {
+            ...uniforms1,
+            ...uniforms2
+        };
+
+        const vertexShader = `
+            varying vec2 vUv;
+            void main() {
+                vUv = uv;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `;
+
+        function getFragmentShader() {
+            return `
+                precision highp float;
+                varying vec2 vUv;
+                uniform float HEAT_MAX;
+                uniform float PointRadius;
+                uniform float PointsCount;
+                uniform vec3 c1;
+                uniform vec3 c2;
+                uniform float uvY;
+                uniform float uvX;
+                uniform float opacity;
+                uniform vec3 Points[${uniforms1.PointsCount.value}];
+
+                vec3 gradient(float w, vec2 uv) {
+                    w = pow(clamp(w, 0., 1.) * 3.14159 * .5, .9);
+                    return vec3(sin(w), sin(w * 2.), cos(w)) * 1.1 + mix(c1, c2, w) * 1.1;
+                }
+
+                void main() {
+                    vec2 uv = vUv;
+                    uv.xy *= vec2(uvX, uvY);
+                    float d = 0.;
+                    for (int i = 0; i < ${uniforms1.PointsCount.value}; i++) {
+                        vec3 v = Points[i];
+                        float intensity = v.z / HEAT_MAX;
+                        float pd = (1. - length(uv - v.xy) / PointRadius) * intensity;
+                        d += pow(max(0., pd), 2.);
+                    }
+                    gl_FragColor = vec4(gradient(d, uv), opacity);
+                }
+            `;
+        }
+
+        const shaderMaterial = new THREE.ShaderMaterial({
+            uniforms,
+            vertexShader,
+            fragmentShader: getFragmentShader(),
+            transparent: true
+        });
+
+        const plane = new THREE.Mesh(new THREE.PlaneGeometry(20, 20), shaderMaterial);
+        window.scene.add(plane);
+
+        const gui = new GUI();
+        gui.domElement.style.position = 'absolute';
+        gui.domElement.style.top = '50px';
+        gui.domElement.style.right = '10px';
+        gui.domElement.style.zIndex = '1000';
+
+        gui.add(uniforms1.HEAT_MAX, 'value', 0, 10).name('HEAT_MAX');
+        gui.add(uniforms1.PointRadius, 'value', 0, 1).name('PointRadius');
+        gui.add(uniforms1.uvY, 'value', 0, 1).name('uvY');
+        gui.add(uniforms1.uvX, 'value', 0, 1).name('uvX');
+        gui.add(uniforms1.opacity, 'value', 0, 1).name('opacity');
+        gui.addColor(uniforms1.c1, 'value').name('c1');
+        gui.addColor(uniforms1.c2, 'value').name('c2');
+
+        setInterval(() => {
+            arr.pop();
+            arr.unshift(new THREE.Vector3(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 10));
+            uniforms.PointsCount.value = arr.length;
+            shaderMaterial.fragmentShader = getFragmentShader();
+            shaderMaterial.needsUpdate = true;
+        }, 200);
+
+        function animate() {
+            controls.update();
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        window.renderer.setAnimationLoop(animate);
+    </script>
+
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera) {
+                        if (window.composer) {
+                            window.composer.render();
+                        } else if (window.renderer) {
+                            window.renderer.render(window.scene, window.camera);
+                        }
+                    }
+
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.composer ? window.composer.renderer.domElement : window.renderer.domElement;
+
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+
+                    window.parent.postMessage({
+                        type: 'screenshot-data',
+                        dataUrl: dataUrl
+                    }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({
+                        type: 'screenshot-error',
+                        error: error.message
+                    }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
