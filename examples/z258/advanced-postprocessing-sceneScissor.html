@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="使用ScissorTest实现场景分割显示，左侧无辉光效果，右侧带辉光效果，可拖动滑块调整分割位置。">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 场景裁剪与后处理对比</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+        window.scene = null;
+        window.camera = null;
+        window.renderer = null;
+        let controls;
+        let slider;
+        let composer_original, composer_bloom;
+        let splitPosition = 350;
+
+        function init() {
+            const box = document.getElementById('threeContainer');
+            
+            window.scene = new THREE.Scene();
+            window.scene.background = new THREE.Color(0x1a1a2e);
+
+            window.camera = new THREE.PerspectiveCamera(75, box.clientWidth / box.clientHeight, 0.1, 1000);
+            window.camera.position.set(0, 10, 10);
+
+            window.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, logarithmicDepthBuffer: true });
+            window.renderer.setSize(box.clientWidth, box.clientHeight);
+            box.appendChild(window.renderer.domElement);
+
+            controls = new OrbitControls(window.camera, window.renderer.domElement);
+
+            const renderPass = new RenderPass(window.scene, window.camera);
+
+            composer_original = new EffectComposer(window.renderer);
+            composer_original.addPass(renderPass);
+
+            composer_bloom = new EffectComposer(window.renderer);
+            composer_bloom.addPass(renderPass);
+            composer_bloom.addPass(new UnrealBloomPass(new THREE.Vector2(box.clientWidth, box.clientHeight), 1.5, 0, 0));
+            
+            window.composer = composer_bloom;
+
+            for (let i = 0; i < 100; i++) {
+                const geometry = new THREE.BoxGeometry(1, 1, 1);
+                const material = new THREE.MeshBasicMaterial({ color: Math.random() * 0xffffff });
+                const cube = new THREE.Mesh(geometry, material);
+                cube.position.set(
+                    Math.random() * 10 - 5,
+                    Math.random() * 10 - 5,
+                    Math.random() * 10 - 5
+                );
+                window.scene.add(cube);
+            }
+
+            createSlider(box, splitPosition, (left) => splitPosition = left);
+            window.renderer.setAnimationLoop(animate);
+        }
+
+        function createSlider(box, initialWidth, callback) {
+            const minLeftWidth = 50;
+            const minRightWidth = 100;
+            
+            slider = document.createElement('div');
+            box.prepend(slider);
+
+            const color = 'rgba(255, 255, 255, 0.5)';
+            Object.assign(slider.style, {
+                position: 'absolute',
+                left: initialWidth + 'px',
+                top: '0px',
+                height: box.clientHeight + 'px',
+                width: '2px',
+                backgroundColor: color,
+                cursor: 'ew-resize',
+                zIndex: '9999',
+                transition: 'background-color 0.3s'
+            });
+
+            const move = () => {
+                slider.style.backgroundColor = '#277CD5';
+                document.body.style.cursor = 'ew-resize';
+            };
+
+            const leave = () => {
+                slider.style.backgroundColor = color;
+                document.body.style.cursor = 'default';
+            };
+
+            slider.onmousemove = move;
+            slider.onmouseleave = leave;
+
+            slider.ondblclick = function() {
+                splitPosition = box.clientWidth * 0.5;
+                slider.style.left = splitPosition + 'px';
+                callback(splitPosition);
+            };
+
+            slider.onmousedown = function(e) {
+                e.preventDefault();
+                let old_left = slider.getBoundingClientRect().left - box.getBoundingClientRect().left;
+
+                document.onmousemove = function(e) {
+                    move();
+
+                    if (old_left + e.movementX < minLeftWidth) return;
+                    if (old_left + e.movementX > box.clientWidth - minRightWidth) return;
+
+                    old_left += e.movementX;
+                    slider.style.left = old_left + 'px';
+                    callback(old_left);
+                };
+
+                document.onmouseup = function() {
+                    document.onmousemove = null;
+                    leave();
+                };
+            };
+        }
+
+        function animate() {
+            window.renderer.setScissorTest(true);
+
+            window.renderer.setScissor(0, 0, splitPosition, window.renderer.domElement.offsetHeight);
+            composer_original.render();
+
+            window.renderer.setScissor(splitPosition, 0, window.renderer.domElement.offsetWidth - splitPosition, window.renderer.domElement.offsetHeight);
+            composer_bloom.render();
+
+            window.renderer.setScissorTest(false);
+        }
+
+        window.addEventListener('resize', () => {
+            const box = document.getElementById('threeContainer');
+            window.camera.aspect = box.clientWidth / box.clientHeight;
+            window.camera.updateProjectionMatrix();
+            window.renderer.setSize(box.clientWidth, box.clientHeight);
+            
+            if (composer_original) composer_original.setSize(box.clientWidth, box.clientHeight);
+            if (composer_bloom) composer_bloom.setSize(box.clientWidth, box.clientHeight);
+            
+            if (slider) {
+                slider.style.height = box.clientHeight + 'px';
+            }
+        });
+
+        init();
+    </script>
+
+    <script>
+        let _screenshotRenderer;
+        
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (!_screenshotRenderer && window.renderer) {
+                        _screenshotRenderer = window.renderer;
+                    }
+                    
+                    if (!_screenshotRenderer) {
+                        throw new Error('渲染器未初始化');
+                    }
+                    
+                    if (window.scene && window.camera) {
+                        _screenshotRenderer.render(window.scene, window.camera);
+                    }
+                    
+                    const quality = event.data.quality || 0.8;
+                    const canvas = _screenshotRenderer.domElement;
+                    
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    
+                    window.parent.postMessage({
+                        type: 'screenshot-data',
+                        dataUrl: dataUrl
+                    }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({
+                        type: 'screenshot-error',
+                        error: error.message
+                    }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

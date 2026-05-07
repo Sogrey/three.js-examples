@@ -169,6 +169,22 @@ const threejsData = {
                             thumbnail: "images/basic-geometry-polyhedron.jpg",
                             version: "r179",
                             url: "examples/basic-geometry-polyhedron"
+                        },
+                        {
+                            id: "basic-geometry-gradientTriangle",
+                            title: "渐变三角形",
+                            description: "使用BufferGeometry创建自定义三角形几何体，通过顶点颜色实现RGB渐变效果",
+                            thumbnail: "images/basic-geometry-gradientTriangle.jpg",
+                            version: "r179",
+                            url: "examples/z258/basic-geometry-gradientTriangle"
+                        },
+                        {
+                            id: "basic-geometry-screenCoord",
+                            title: "三维转屏幕坐标",
+                            description: "展示三维坐标转屏幕坐标的方法，将3D物体位置映射到2D屏幕坐标",
+                            thumbnail: "images/basic-geometry-screenCoord.jpg",
+                            version: "r179",
+                            url: "examples/z258/basic-geometry-screenCoord"
                         }
                     ]
                 },
@@ -223,6 +239,36 @@ const threejsData = {
                             thumbnail: "images/basic-materials-shader.jpg",
                             version: "r179",
                             url: "examples/basic-materials-shader"
+                        }
+                    ]
+                },
+                {
+                    id: "basic-camera",
+                    name: "相机与控制",
+                    examples: [
+                        {
+                            id: "basic-camera-cameraAttribute",
+                            title: "相机属性",
+                            description: "展示PerspectiveCamera的各种属性，包括视角、近平面、远平面、缩放、图层等参数的调整",
+                            thumbnail: "images/basic-camera-cameraAttribute.jpg",
+                            version: "r179",
+                            url: "examples/z258/basic-camera-cameraAttribute"
+                        },
+                        {
+                            id: "basic-camera-orbControls",
+                            title: "轨道控制器",
+                            description: "展示OrbitControls的各种控制参数，包括旋转、缩放、平移、阻尼、角度限制等",
+                            thumbnail: "images/basic-camera-orbControls.jpg",
+                            version: "r179",
+                            url: "examples/z258/basic-camera-orbControls"
+                        },
+                        {
+                            id: "basic-camera-viewHelper",
+                            title: "视图辅助",
+                            description: "展示ViewHelper的使用，提供场景视角切换的可视化辅助工具",
+                            thumbnail: "images/basic-camera-viewHelper.jpg",
+                            version: "r179",
+                            url: "examples/z258/basic-camera-viewHelper"
                         }
                     ]
                 }
@@ -827,6 +873,212 @@ const threejsData = {
                             thumbnail: "images/shaderbook-shaderexamples-G.jpg",
                             version: "r179",
                             url: "examples/shaderbook-shaderexamples-G"
+                        },
+                        {
+                            id: "shader-blackhole",
+                            title: "黑洞效果",
+                            description: "展示黑洞效果的着色器实现，使用光线追踪模拟引力透镜效应和吸积盘",
+                            thumbnail: "images/shader-blackhole.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-blackhole"
+                        },
+                        {
+                            id: "shader-heartShader",
+                            title: "心形着色器",
+                            description: "展示心形曲线着色器效果，使用TubeGeometry创建心形并添加渐变色动画",
+                            thumbnail: "images/shader-heartShader.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-heartShader"
+                        },
+                        {
+                            id: "shader-blobShader",
+                            title: "Blob着色器",
+                            description: "展示动态变形的几何体效果，使用Perlin噪声实现一团揉动的视觉效果",
+                            thumbnail: "images/shader-blobShader.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-blobShader"
+                        },
+                        {
+                            id: "shader-circleRotate",
+                            title: "旋转的圆",
+                            description: "展示旋转的圆着色器效果，使用同心圆和三角形噪声创建动态视觉效果",
+                            thumbnail: "images/shader-circleRotate.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-circleRotate"
+                        },
+                        {
+                            id: "shader-shaderLight",
+                            title: "着色器光效",
+                            description: "展示着色器光效，使用自定义着色器创建动态发光的灯光效果",
+                            thumbnail: "images/shader-shaderLight.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-shaderLight"
+                        },
+                        {
+                            id: "shader-whiteCloud",
+                            title: "白云",
+                            description: "展示白云效果，使用光线追踪技术渲染云层",
+                            thumbnail: "images/shader-whiteCloud.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-whiteCloud"
+                        },
+                        {
+                            id: "shader-waterSky",
+                            title: "水天一色",
+                            description: "展示水天一色效果，使用光线追踪技术渲染水面和天空",
+                            thumbnail: "images/shader-waterSky.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-waterSky"
+                        },
+                        {
+                            id: "shader-cloudShader",
+                            title: "天空云",
+                            description: "展示天空云效果，使用实例化网格渲染大量云朵",
+                            thumbnail: "images/shader-cloudShader.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-cloudShader"
+                        },
+                        {
+                            id: "shader-darkClouds",
+                            title: "乌云",
+                            description: "展示乌云效果，使用光线追踪技术渲染动态的乌云",
+                            thumbnail: "images/shader-darkClouds.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-darkClouds"
+                        },
+                        {
+                            id: "shader-cellShader",
+                            title: "细胞",
+                            description: "展示细胞效果，使用光线追踪技术渲染动态的细胞结构",
+                            thumbnail: "images/shader-cellShader.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-cellShader"
+                        },
+                        {
+                            id: "shader-mushroom",
+                            title: "蘑菇",
+                            description: "展示蘑菇效果，使用光线追踪技术渲染动态的蘑菇",
+                            thumbnail: "images/shader-mushroom.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-mushroom"
+                        },
+                        {
+                            id: "shader-mosaicShader",
+                            title: "马赛克",
+                            description: "展示马赛克效果，使用着色器实现图片马赛克化",
+                            thumbnail: "images/shader-mosaicShader.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-mosaicShader"
+                        },
+                        {
+                            id: "shader-contour",
+                            title: "魔幻山体",
+                            description: "展示魔幻山体效果，使用着色器实现等高线示意",
+                            thumbnail: "images/shader-contour.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-contour"
+                        },
+                        {
+                            id: "shader-softLight",
+                            title: "柔光",
+                            description: "展示柔光效果，使用着色器实现柔和的光影效果",
+                            thumbnail: "images/shader-softLight.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-softLight"
+                        },
+                        {
+                            id: "shader-waveScan",
+                            title: "波扫描",
+                            description: "展示波扫描效果，使用着色器实现动态波纹扫描",
+                            thumbnail: "images/shader-waveScan.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-waveScan"
+                        },
+                        {
+                            id: "shader-innerGlow",
+                            title: "内发光",
+                            description: "展示内发光效果，使用菲涅尔反射实现物体边缘发光",
+                            thumbnail: "images/shader-innerGlow.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-innerGlow"
+                        },
+                        {
+                            id: "shader-fireShader",
+                            title: "火焰",
+                            description: "展示火焰效果，使用着色器实现动态火焰",
+                            thumbnail: "images/shader-fireShader.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-fireShader"
+                        },
+                        {
+                            id: "shader-emitShader",
+                            title: "发散着色器",
+                            description: "展示发散着色器效果，使用着色器实现动态发散图案",
+                            thumbnail: "images/shader-emitShader.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-emitShader"
+                        },
+                        {
+                            id: "shader-ephemeralFlower",
+                            title: "幻影花烟",
+                            description: "展示幻影花烟效果，使用4D Simplex噪声实现动态烟雾花朵",
+                            thumbnail: "images/shader-ephemeralFlower.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-ephemeralFlower"
+                        },
+                        {
+                            id: "shader-fishShader",
+                            title: "鱼",
+                            description: "展示鱼游动效果，使用着色器实现动态鱼和水草动画",
+                            thumbnail: "images/shader-fishShader.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-fishShader"
+                        }
+                    ]
+                },
+                {
+                    id: "advanced-postprocessing",
+                    name: "后处理",
+                    examples: [
+                        {
+                            id: "postprocessing-bloom",
+                            title: "物体发光效果",
+                            description: "使用EffectComposer和UnrealBloomPass实现物体的辉光发光效果，支持参数调节",
+                            thumbnail: "images/postprocessing-bloom.jpg",
+                            version: "r179",
+                            url: "examples/postprocessing-bloom"
+                        },
+                        {
+                            id: "advanced-postprocessing-sceneScissor",
+                            title: "场景裁剪与后处理对比",
+                            description: "使用ScissorTest实现场景分割显示，左侧无辉光效果，右侧带辉光效果，可拖动滑块调整分割位置",
+                            thumbnail: "images/advanced-postprocessing-sceneScissor.jpg",
+                            version: "r179",
+                            url: "examples/z258/advanced-postprocessing-sceneScissor"
+                        },
+                        {
+                            id: "advanced-postprocessing-outlinePass",
+                            title: "轮廓光",
+                            description: "展示OutlinePass的使用，点击物体显示轮廓光效果",
+                            thumbnail: "images/advanced-postprocessing-outlinePass.jpg",
+                            version: "r179",
+                            url: "examples/z258/advanced-postprocessing-outlinePass"
+                        },
+                        {
+                            id: "advanced-postprocessing-multOutlinePass",
+                            title: "多轮廓光",
+                            description: "展示多个OutlinePass的使用，每个物体可以有不同颜色的轮廓光效果",
+                            thumbnail: "images/advanced-postprocessing-multOutlinePass.jpg",
+                            version: "r179",
+                            url: "examples/z258/advanced-postprocessing-multOutlinePass"
+                        },
+                        {
+                            id: "advanced-postprocessing-effectComposer",
+                            title: "渲染器配置",
+                            description: "展示EffectComposer的配置和渲染方式切换，支持多种色调映射模式",
+                            thumbnail: "images/advanced-postprocessing-effectComposer.jpg",
+                            version: "r179",
+                            url: "examples/z258/advanced-postprocessing-effectComposer"
                         }
                     ]
                 },

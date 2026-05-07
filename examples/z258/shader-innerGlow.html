@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="展示内发光效果，使用菲涅尔反射实现物体边缘发光" />
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 内发光</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        const container = document.getElementById('threeContainer');
+
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x1a1a2e);
+
+        window.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+        window.camera.position.set(5, 5, 10);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, logarithmicDepthBuffer: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        window.renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(window.renderer.domElement);
+
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.enableDamping = true;
+
+        window.addEventListener('resize', () => {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            window.renderer.setSize(w, h);
+            window.camera.aspect = w / h;
+            window.camera.updateProjectionMatrix();
+        });
+
+        const vertexShader = `
+            varying vec3 vNormal;
+            varying vec3 vPositionNormal;
+
+            void main() {
+                vNormal = normalize(normalMatrix * normal);
+                vPositionNormal = normalize((modelViewMatrix * vec4(position, 1.0)).xyz);
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `;
+
+        const fragmentShader = `
+            uniform vec3 uColor;
+            uniform float uBias;
+            uniform float uPower;
+            uniform float uScale;
+
+            varying vec3 vNormal;
+            varying vec3 vPositionNormal;
+
+            float fresnelReflex() {
+                return pow(uBias + uScale * abs(dot(vNormal, vPositionNormal)), uPower);
+            }
+
+            void main() {
+                float opacity = fresnelReflex();
+                gl_FragColor = vec4(uColor, opacity);
+            }
+        `;
+
+        const material = new THREE.ShaderMaterial({
+            uniforms: {
+                uColor: { value: new THREE.Color(0x00ffff) },
+                uBias: { value: 1.0 },
+                uScale: { value: -1.0 },
+                uPower: { value: 2.0 }
+            },
+            vertexShader,
+            fragmentShader,
+            transparent: true
+        });
+
+        const sphere = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 16), material);
+        window.scene.add(sphere);
+
+        const vertexShader1 = `
+            varying vec2 vUV;
+
+            void main() {
+                vUV = uv;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `;
+
+        const fragmentShader1 = `
+            uniform vec3 uColor;
+
+            varying vec2 vUV;
+
+            float glow(vec2 coord, float radius, float intensity) {
+                return pow(radius / length(coord), intensity);
+            }
+
+            void main() {
+                float ratio = glow(vUV - vec2(0.5), 0.1, 3.0);
+                gl_FragColor = vec4(uColor * ratio, ratio);
+            }
+        `;
+
+        const material1 = new THREE.ShaderMaterial({
+            uniforms: {
+                uColor: { value: new THREE.Color(0x00ffff) }
+            },
+            vertexShader: vertexShader1,
+            fragmentShader: fragmentShader1,
+            depthWrite: false,
+            transparent: true
+        });
+
+        const plane = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material1);
+        plane.position.set(1, 0, 1);
+        window.scene.add(plane);
+
+        function animate() {
+            controls.update();
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        window.renderer.setAnimationLoop(animate);
+    </script>
+
+    <script>
+        let _screenshotRenderer;
+        
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (!_screenshotRenderer && window.renderer) {
+                        _screenshotRenderer = window.renderer;
+                    }
+                    
+                    if (!_screenshotRenderer) {
+                        throw new Error('渲染器未初始化');
+                    }
+                    
+                    if (window.scene && window.camera) {
+                        _screenshotRenderer.render(window.scene, window.camera);
+                    }
+                    
+                    const quality = event.data.quality || 0.8;
+                    const canvas = _screenshotRenderer.domElement;
+                    
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    
+                    window.parent.postMessage({
+                        type: 'screenshot-data',
+                        dataUrl: dataUrl
+                    }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({
+                        type: 'screenshot-error',
+                        error: error.message
+                    }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="展示天空云效果，使用实例化网格渲染大量云朵" />
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 天空云</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/",
+            "dat.gui": "../../libs/dat.gui/0.7.9/dat.gui.module.js"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { GUI } from 'dat.gui';
+
+        function createRandom(min = 0, max = 1) {
+            return Math.random() * (max - min) + min;
+        }
+
+        const vs = `
+            varying vec2 vUv;
+            void main(){
+                vUv = uv;
+                gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position, 1.0);
+            }
+        `;
+
+        const fs = `
+            varying vec2 vUv;
+            uniform sampler2D map;
+            uniform float fogNear;
+            uniform float fogFar;
+            uniform vec3 fogColor;
+            uniform int enableFog;
+
+            void main(){
+                vec4 texColor = texture2D(map, vUv);
+                
+                if(enableFog == 1){
+                    float depth = gl_FragCoord.z / gl_FragCoord.w;
+                    float fogFactor = smoothstep(fogNear, fogFar, depth);
+                    texColor.w *= pow(gl_FragCoord.z, 20.0);
+                    gl_FragColor = mix(texColor, vec4(fogColor, texColor.w), fogFactor);
+                } else {
+                    gl_FragColor = texColor;
+                }
+            }
+        `;
+
+        function createCloudTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 128;
+            canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+
+            ctx.fillStyle = 'rgba(255, 255, 255, 0)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const gradient = ctx.createRadialGradient(64, 64, 0, 64, 64, 60);
+            gradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+            gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.5)');
+            gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            for (let i = 0; i < 5; i++) {
+                const x = createRandom(20, 108);
+                const y = createRandom(20, 108);
+                const radius = createRandom(15, 35);
+                const g = ctx.createRadialGradient(x, y, 0, x, y, radius);
+                g.addColorStop(0, `rgba(255, 255, 255, ${createRandom(0.3, 0.6)})`);
+                g.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                ctx.fillStyle = g;
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            const texture = new THREE.CanvasTexture(canvas);
+            return texture;
+        }
+
+        async function init() {
+            const container = document.getElementById('threeContainer');
+            
+            const dummy = new THREE.Object3D();
+            const mouse = new THREE.Vector2();
+            const halfSize = new THREE.Vector2(window.innerWidth / 2, window.innerHeight / 2);
+            const startTime = Date.now();
+            
+            const params = {
+                count: 800,
+                enableFog: true,
+                fogColor: '#4584b4',
+                fogNear: -100,
+                fogFar: 3000,
+            };
+
+            window.renderer = new THREE.WebGLRenderer({ antialias: true });
+            window.renderer.setPixelRatio(window.devicePixelRatio);
+            window.renderer.setClearColor(new THREE.Color(0x4584b4));
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            container.appendChild(window.renderer.domElement);
+
+            window.camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 1, params.count * 1.5);
+            window.camera.position.z = params.count;
+
+            window.scene = new THREE.Scene();
+
+            const backgroundCanvas = document.createElement('canvas');
+            backgroundCanvas.width = 512;
+            backgroundCanvas.height = 512;
+            const ctx = backgroundCanvas.getContext('2d');
+            const gradient = ctx.createLinearGradient(0, 0, 0, backgroundCanvas.height);
+            gradient.addColorStop(0, '#1e4877');
+            gradient.addColorStop(0.5, '#4584b4');
+            gradient.addColorStop(1, '#87ceeb');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, backgroundCanvas.width, backgroundCanvas.height);
+            const bgTexture = new THREE.CanvasTexture(backgroundCanvas);
+            window.scene.background = bgTexture;
+
+            const cloudTexture = createCloudTexture();
+
+            const geometry = new THREE.PlaneGeometry(64, 64);
+            const material = new THREE.ShaderMaterial({
+                uniforms: {
+                    map: { value: cloudTexture },
+                    fogColor: { value: new THREE.Color(params.fogColor) },
+                    fogNear: { value: params.fogNear },
+                    fogFar: { value: params.fogFar },
+                    enableFog: { value: Number(params.enableFog) }
+                },
+                vertexShader: vs,
+                fragmentShader: fs,
+                depthWrite: false,
+                depthTest: false,
+                transparent: true,
+            });
+
+            const mesh = new THREE.InstancedMesh(geometry, material, params.count);
+            window.scene.add(mesh);
+
+            function updateMeshCount() {
+                const count = params.count;
+                mesh.count = count;
+                mesh.instanceMatrix = new THREE.InstancedBufferAttribute(
+                    new Float32Array(count * 16),
+                    16
+                );
+
+                for (let j = 0; j < count; j++) {
+                    dummy.position.x = createRandom(-500, 500);
+                    dummy.position.y = -Math.random() * Math.random() * 200 - 15;
+                    dummy.position.z = j;
+                    dummy.rotation.z = Math.random() * Math.PI;
+                    dummy.scale.x = dummy.scale.y = Math.random() * Math.random() * 1.5 + 0.5;
+                    dummy.updateMatrix();
+                    mesh.setMatrixAt(j, dummy.matrix);
+                }
+
+                mesh.instanceMatrix.needsUpdate = true;
+                window.camera.position.z = count;
+                window.camera.far = count * 1.5;
+                window.camera.updateProjectionMatrix();
+            }
+
+            updateMeshCount();
+
+            function render() {
+                window.camera.position.x += (mouse.x - window.camera.position.x) * 0.01;
+                window.camera.position.y += (-mouse.y - window.camera.position.y) * 0.01;
+                window.camera.position.z = -((Date.now() - startTime) * 0.03) % params.count + params.count;
+
+                window.renderer.render(window.scene, window.camera);
+            }
+
+            window.renderer.setAnimationLoop(render);
+
+            window.renderer.domElement.addEventListener('mousemove', ({ clientX, clientY }) => {
+                mouse.set(
+                    (clientX - halfSize.x) * 0.25,
+                    (clientY - halfSize.y) * 0.15
+                );
+            });
+
+            window.addEventListener('resize', () => {
+                const w = window.innerWidth;
+                const h = window.innerHeight;
+                window.renderer.setSize(w, h);
+                window.camera.aspect = w / h;
+                window.camera.updateProjectionMatrix();
+                halfSize.set(w / 2, h / 2);
+            });
+
+            const gui = new GUI();
+            gui.domElement.style.top = '50px';
+            gui.domElement.style.position = 'relative';
+
+            gui.add(params, 'count', 0, 10000).onChange(updateMeshCount).name('Count');
+            const enableFogOption = gui.add(params, 'enableFog').name('Enable Fog');
+
+            const fogFolder = gui.addFolder('Fog');
+            fogFolder.show(params.enableFog);
+            fogFolder.addColor(params, 'fogColor').onChange((e) => {
+                material.uniforms.fogColor.value.set(e);
+            }).name('Fog Color');
+            fogFolder.add(params, 'fogNear', -1000, 1000).onChange((e) => {
+                material.uniforms.fogNear.value = e;
+            }).name('Fog Near');
+            fogFolder.add(params, 'fogFar', 0, 5000).onChange((e) => {
+                material.uniforms.fogFar.value = e;
+            }).name('Fog Far');
+
+            enableFogOption.onChange((e) => {
+                material.uniforms.enableFog.value = e ? 1 : 0;
+                fogFolder.show(e);
+            });
+        }
+
+        window.addEventListener('load', init);
+    </script>
+
+    <script>
+        let _screenshotRenderer;
+        
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (!_screenshotRenderer && window.renderer) {
+                        _screenshotRenderer = window.renderer;
+                    }
+                    
+                    if (!_screenshotRenderer) {
+                        throw new Error('渲染器未初始化');
+                    }
+                    
+                    if (window.scene && window.camera) {
+                        _screenshotRenderer.render(window.scene, window.camera);
+                    }
+                    
+                    const quality = event.data.quality || 0.8;
+                    const canvas = _screenshotRenderer.domElement;
+                    
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    
+                    window.parent.postMessage({
+                        type: 'screenshot-data',
+                        dataUrl: dataUrl
+                    }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({
+                        type: 'screenshot-error',
+                        error: error.message
+                    }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

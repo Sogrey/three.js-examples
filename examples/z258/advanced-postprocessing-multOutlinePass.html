@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="展示多个OutlinePass的使用，每个物体可以有不同颜色的轮廓光效果。">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 多轮廓光</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { OutlinePass } from 'three/addons/postprocessing/OutlinePass.js';
+        import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+        window.scene = null;
+        window.camera = null;
+        window.renderer = null;
+        let controls;
+        let composer;
+
+        function init() {
+            window.scene = new THREE.Scene();
+            window.scene.background = new THREE.Color(0x1a1a2e);
+
+            window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            window.camera.position.set(0, 0, 5);
+
+            window.renderer = new THREE.WebGLRenderer({ antialias: true });
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            window.renderer.setPixelRatio(window.devicePixelRatio);
+            document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+
+            controls = new OrbitControls(window.camera, window.renderer.domElement);
+            controls.enableDamping = true;
+
+            composer = new EffectComposer(window.renderer);
+            window.composer = composer;
+
+            const renderPass = new RenderPass(window.scene, window.camera);
+            composer.addPass(renderPass);
+
+            const outlinePass = new OutlinePass(new THREE.Vector2(window.innerWidth, window.innerHeight), window.scene, window.camera);
+            outlinePass.visibleEdgeColor.set('red');
+            composer.addPass(outlinePass);
+
+            const outlinePass2 = new OutlinePass(new THREE.Vector2(window.innerWidth, window.innerHeight), window.scene, window.camera);
+            composer.addPass(outlinePass2);
+
+            const outlinePass3 = new OutlinePass(new THREE.Vector2(window.innerWidth, window.innerHeight), window.scene, window.camera);
+            outlinePass3.visibleEdgeColor.set('blue');
+            composer.addPass(outlinePass3);
+
+            const outputPass = new OutputPass();
+            composer.addPass(outputPass);
+
+            const cone = new THREE.Mesh(new THREE.ConeGeometry(1, 2, 32), new THREE.MeshBasicMaterial());
+            cone.position.set(2, 0, 0);
+            window.scene.add(cone);
+            outlinePass.selectedObjects = [cone];
+
+            const cube = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0x00ff00 }));
+            window.scene.add(cube);
+            outlinePass2.selectedObjects = [cube];
+
+            const sphere = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 32), new THREE.MeshBasicMaterial({ color: 0xffff00 }));
+            sphere.position.set(-2, 0, 0);
+            window.scene.add(sphere);
+            outlinePass3.selectedObjects = [sphere];
+
+            animate();
+        }
+
+        function animate() {
+            if (controls) controls.update();
+            composer.render();
+        }
+
+        window.addEventListener('resize', () => {
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        init();
+        window.renderer.setAnimationLoop(animate);
+    </script>
+
+    <script>
+        let _screenshotRenderer;
+        
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (!_screenshotRenderer && window.renderer) {
+                        _screenshotRenderer = window.renderer;
+                    }
+                    
+                    if (!_screenshotRenderer) {
+                        throw new Error('渲染器未初始化');
+                    }
+                    
+                    if (window.scene && window.camera) {
+                        _screenshotRenderer.render(window.scene, window.camera);
+                    }
+                    
+                    const quality = event.data.quality || 0.8;
+                    const canvas = _screenshotRenderer.domElement;
+                    
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    
+                    window.parent.postMessage({
+                        type: 'screenshot-data',
+                        dataUrl: dataUrl
+                    }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({
+                        type: 'screenshot-error',
+                        error: error.message
+                    }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
