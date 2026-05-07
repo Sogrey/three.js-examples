@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="展示网格地板效果，使用自定义着色器实现带有抗锯齿的网格线" />
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 网格地板</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        const container = document.getElementById('threeContainer');
+
+        window.scene = new THREE.Scene();
+
+        window.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 50);
+        window.camera.position.set(1, 1, 1);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        window.renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(window.renderer.domElement);
+
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.enableDamping = true;
+        controls.minDistance = 0.5;
+        controls.maxDistance = 15;
+
+        window.addEventListener('resize', () => {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            window.renderer.setSize(w, h);
+            window.camera.aspect = w / h;
+            window.camera.updateProjectionMatrix();
+        });
+
+        const baseVertexShader = `
+            varying vec2 vUv;
+            void main() {
+                vUv = uv;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `;
+
+        const baseFragmentShader = `
+            uniform float uGridThickness;
+            uniform vec3 uGridColor;
+            uniform float uCrossScale;
+            uniform float uCrossThickness;
+            uniform float uCross;
+            uniform vec3 uCrossColor;
+            uniform vec3 uFloorColor;
+
+            varying vec2 vUv;
+
+            float gridFloor(vec2 uv, vec2 lineWidth) {
+                vec4 uvDDXY = vec4(dFdx(uv), dFdy(uv));
+                vec2 uvDeriv = vec2(length(uvDDXY.xz), length(uvDDXY.yw));
+
+                bool invertLine = lineWidth.x > 0.5;
+                vec2 targetWidth = invertLine ? 1.0 - lineWidth : lineWidth;
+
+                vec2 drawWidth = clamp(targetWidth, uvDeriv, vec2(0.5));
+                vec2 lineAA = uvDeriv * 1.5;
+
+                vec2 gridUV = abs(fract(uv) * 2.0 - 1.0);
+                gridUV = invertLine ? gridUV : 1.0 - gridUV;
+
+                vec2 grid2 = smoothstep(drawWidth + lineAA, drawWidth - lineAA, gridUV);
+                grid2 *= clamp(targetWidth / drawWidth, 0.0, 1.0);
+                grid2 = mix(grid2, targetWidth, clamp(uvDeriv * 2.0 - 1.0, 0.0, 1.0));
+                grid2 = invertLine ? 1.0 - grid2 : grid2;
+
+                float grid = mix(grid2.x, 1.0, grid2.y);
+                return grid;
+            }
+
+            float crossFloor(vec2 uv, float scale, float thickness, float crossIntensity) {
+                vec2 lineWidth = vec2(thickness);
+
+                vec4 uvDDXY = vec4(dFdx(uv), dFdy(uv));
+                vec2 uvDeriv = vec2(length(uvDDXY.xz), length(uvDDXY.yw));
+
+                bool invertLine = lineWidth.x > 0.5;
+                vec2 targetWidth = lineWidth;
+
+                vec2 drawWidth = clamp(targetWidth, uvDeriv, vec2(0.5));
+                vec2 lineAA = uvDeriv * 1.5;
+
+                float cutOffX = abs(fract(uv.y) * 2.0 - 1.0) > crossIntensity ? 1.0 : 0.0;
+                float cutOffY = abs(fract(uv.x) * 2.0 - 1.0) > crossIntensity ? 1.0 : 0.0;
+
+                float uvX = abs(fract(uv.x) * 2.0 - 1.0) + cutOffX;
+                float uvY = abs(fract(uv.y) * 2.0 - 1.0) + cutOffY;
+                vec2 gridUV = vec2(uvX, uvY);
+
+                vec2 grid2 = smoothstep(drawWidth + lineAA, drawWidth - lineAA, gridUV);
+                grid2 *= clamp(targetWidth / drawWidth, 0.0, 1.0);
+                grid2 = mix(grid2, targetWidth, clamp(uvDeriv * 2.0 - 1.0, 0.0, 1.0));
+
+                float grid = mix(grid2.x, 1.0, grid2.y);
+                return grid;
+            }
+
+            void main() {
+                vec2 lineWidth = vec2(uGridThickness);
+                vec2 uv = vUv * 20.0;
+
+                float grid = gridFloor(uv, lineWidth);
+                vec3 gridColor = mix(uFloorColor, uGridColor, vec3(grid));
+
+                float crossUv = crossFloor(uv, uCrossScale, uCrossThickness, uCross);
+                vec3 gridColor2 = mix(gridColor, uCrossColor, vec3(crossUv));
+
+                vec3 color = gridColor2;
+                gl_FragColor = vec4(color, 1.0);
+            }
+        `;
+
+        const params = {
+            color: '#c4d6ff',
+            crossColor: '#7a91df',
+            fogColor: '#c3dce2',
+            backgroundColor: '#1a1a2e',
+            floorColor: '#ffffff',
+            gridThickness: 0.02,
+            crossThickness: 0.02,
+            cross: 0.2,
+            fogNear: 1,
+            fogFar: 5
+        };
+
+        const geometry = new THREE.PlaneGeometry(10, 10, 32, 32);
+
+        const material = new THREE.ShaderMaterial({
+            vertexShader: baseVertexShader,
+            fragmentShader: baseFragmentShader,
+            side: THREE.DoubleSide,
+            transparent: true,
+            uniforms: {
+                uFloorColor: { value: new THREE.Color(params.floorColor) },
+                uGridThickness: { value: params.gridThickness },
+                uGridColor: { value: new THREE.Color(params.color) },
+                uCrossThickness: { value: params.crossThickness },
+                uCross: { value: params.cross },
+                uCrossColor: { value: new THREE.Color(params.crossColor) }
+            }
+        });
+
+        const gridFloor = new THREE.Mesh(geometry, material);
+        gridFloor.rotation.x = -Math.PI * 0.5;
+        window.scene.add(gridFloor);
+
+        window.scene.fog = new THREE.Fog(params.fogColor, params.fogNear, params.fogFar);
+        window.scene.background = new THREE.Color(params.backgroundColor);
+
+        const axesHelper = new THREE.AxesHelper(3);
+        window.scene.add(axesHelper);
+
+        const gui = new GUI();
+        gui.domElement.style.position = 'absolute';
+        gui.domElement.style.top = '50px';
+        gui.domElement.style.right = '10px';
+        gui.domElement.style.zIndex = '1000';
+
+        const gridFolder = gui.addFolder({ title: 'Grid Floor' });
+        gridFolder.add(params, 'gridThickness', 0, 1, 0.001).name('thickness').onChange(value => {
+            material.uniforms.uGridThickness.value = value;
+        });
+        gridFolder.addColor(params, 'color').name('color').onChange(value => {
+            material.uniforms.uGridColor.value.set(value);
+        });
+
+        const crossFolder = gui.addFolder({ title: 'Cross Floor' });
+        crossFolder.add(params, 'crossThickness', 0, 1, 0.001).name('thickness').onChange(value => {
+            material.uniforms.uCrossThickness.value = value;
+        });
+        crossFolder.add(params, 'cross', 0, 1, 0.01).name('cross').onChange(value => {
+            material.uniforms.uCross.value = value;
+        });
+        crossFolder.addColor(params, 'crossColor').name('color').onChange(value => {
+            material.uniforms.uCrossColor.value.set(value);
+        });
+
+        const fogFolder = gui.addFolder({ title: 'Fog' });
+        fogFolder.add(params, 'fogNear', -5, 2, 0.1).name('near').onChange(value => {
+            window.scene.fog.near = value;
+        });
+        fogFolder.add(params, 'fogFar', 2, 50, 0.1).name('far').onChange(value => {
+            window.scene.fog.far = value;
+        });
+        fogFolder.addColor(params, 'fogColor').name('color').onChange(value => {
+            window.scene.fog.color.set(value);
+        });
+
+        const envFolder = gui.addFolder({ title: 'Environment' });
+        envFolder.addColor(params, 'backgroundColor').name('sky').onChange(value => {
+            window.scene.background = new THREE.Color(value);
+        });
+        envFolder.addColor(params, 'floorColor').name('floor').onChange(value => {
+            material.uniforms.uFloorColor.value.set(value);
+        });
+
+        function animate() {
+            controls.update();
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        window.renderer.setAnimationLoop(animate);
+    </script>
+
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera) {
+                        if (window.composer) {
+                            window.composer.render();
+                        } else if (window.renderer) {
+                            window.renderer.render(window.scene, window.camera);
+                        }
+                    }
+
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.composer ? window.composer.renderer.domElement : window.renderer.domElement;
+
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+
+                    window.parent.postMessage({
+                        type: 'screenshot-data',
+                        dataUrl: dataUrl
+                    }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({
+                        type: 'screenshot-error',
+                        error: error.message
+                    }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
