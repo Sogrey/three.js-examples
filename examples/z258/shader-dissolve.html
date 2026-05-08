@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="溶解 - 展示溶解效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 溶解</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        window.scene = new THREE.Scene();
+
+        window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        window.camera.position.set(0, 0, 3);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+
+        window.addEventListener('resize', () => {
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+        });
+
+        const dissolveTex = createDissolveTexture();
+        const dissolveRampTex = createRampTexture();
+        const textureLoader = new THREE.TextureLoader();
+        const diffuseTex = textureLoader.load('../../images/textures/15-30-11-41_1280.jpg');
+
+        const shaderMaterial = new THREE.ShaderMaterial({
+            side: THREE.DoubleSide,
+            transparent: true,
+            vertexShader: `
+                varying vec2 vUv;
+                void main() {
+                    vUv = uv;
+                    vec4 modelPosition = modelMatrix * vec4(position, 1.0);
+                    vec4 viewPosition = viewMatrix * modelPosition;
+                    vec4 projectedPosition = projectionMatrix * viewPosition;
+                    gl_Position = projectedPosition;
+                }
+            `,
+            fragmentShader: `
+                uniform sampler2D uDissloveTex;
+                uniform sampler2D uRamTex;
+                uniform sampler2D uDiffuseTex;
+                uniform float uClip;
+                varying vec2 vUv;
+
+                float customSmoothstep(float min, float max, float x) {
+                    return (x - min) / (max - min);
+                }
+
+                vec4 map(in vec4 value, in vec4 inMin, in vec4 inMax, in vec4 outMin, in vec4 outMax) {
+                    return outMin + (outMax - outMin) * (value - inMin) / (inMax - inMin);
+                }
+
+                void main() {
+                    vec4 DissloveTex = texture2D(uDissloveTex, vUv);
+                    DissloveTex = map(DissloveTex, vec4(0.0), vec4(1.0), vec4(0.1), vec4(1.0));
+
+                    if ((DissloveTex.r - uClip) < 0.0) {
+                        discard;
+                    }
+
+                    float dissloveValue = clamp(customSmoothstep(uClip, uClip + 0.1, DissloveTex.r), 0.0, 1.0);
+                    vec4 RamTex = texture2D(uRamTex, vec2(dissloveValue));
+                    vec4 diffuse = texture2D(uDiffuseTex, vUv);
+
+                    vec3 color = vec3(clamp(diffuse.rgb + RamTex.rgb, 0.0, 1.0));
+
+                    gl_FragColor = vec4(color, 1.0);
+                }
+            `,
+            uniforms: {
+                uDissloveTex: { value: dissolveTex },
+                uRamTex: { value: dissolveRampTex },
+                uDiffuseTex: { value: diffuseTex },
+                uClip: { value: 0.25 }
+            }
+        });
+
+        const gui = new GUI();
+        
+        gui.domElement.style.top = '50px';
+        gui.add(shaderMaterial.uniforms.uClip, 'value').min(0).max(1).step(0.01).name('Clip');
+
+        const geometry = new THREE.PlaneGeometry(4, 3, 32, 32);
+        const mesh = new THREE.Mesh(geometry, shaderMaterial);
+        window.scene.add(mesh);
+
+        function animate() {
+            controls.update();
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        window.renderer.setAnimationLoop(animate);
+
+        function createDissolveTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+
+            const imageData = ctx.createImageData(canvas.width, canvas.height);
+            for (let y = 0; y < canvas.height; y++) {
+                for (let x = 0; x < canvas.width; x++) {
+                    const i = (y * canvas.width + x) * 4;
+                    const noise = Math.random() * 0.3 + (y / canvas.height) * 0.7;
+                    imageData.data[i] = Math.floor(noise * 255);
+                    imageData.data[i + 1] = Math.floor(noise * 255);
+                    imageData.data[i + 2] = Math.floor(noise * 255);
+                    imageData.data[i + 3] = 255;
+                }
+            }
+            ctx.putImageData(imageData, 0, 0);
+
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.colorSpace = THREE.SRGBColorSpace;
+            return tex;
+        }
+
+        function createRampTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 1;
+            const ctx = canvas.getContext('2d');
+
+            const gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
+            gradient.addColorStop(0, '#ff0000');
+            gradient.addColorStop(0.3, '#ff6600');
+            gradient.addColorStop(0.6, '#ffff00');
+            gradient.addColorStop(1, '#ffffff');
+
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.colorSpace = THREE.SRGBColorSpace;
+            tex.wrapS = THREE.ClampToEdgeWrapping;
+            return tex;
+        }
+    </script>
+
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera) {
+                        if (window.composer) window.composer.render();
+                        else window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.composer ? window.composer.renderer.domElement : window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -875,6 +875,262 @@ const threejsData = {
                             url: "examples/shaderbook-shaderexamples-G"
                         },
                         {
+                            id: "shader-transparentGradient",
+                            title: "透明渐变",
+                            description: "展示多边形透明渐变效果，使用ShaderMaterial实现从中心向外的渐变透明效果",
+                            thumbnail: "images/shader-transparentGradient.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-transparentGradient"
+                        },
+                        {
+                            id: "shader-circleWave",
+                            title: "圆波扫光",
+                            description: "展示圆形波纹扫描效果，使用着色器实现动态圆波扫光动画",
+                            thumbnail: "images/shader-circleWave.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-circleWave"
+                        },
+                        {
+                            id: "shader-fenceWall",
+                            title: "围墙着色器",
+                            description: "展示动态波浪围墙效果，使用圆柱体和着色器实现波浪形围墙",
+                            thumbnail: "images/shader-fenceWall.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-fenceWall"
+                        },
+                        {
+                            id: "shader-fenceShader",
+                            title: "围栏着色器",
+                            description: "展示动态渐变围栏效果，使用着色器实现渐变和波纹动画",
+                            thumbnail: "images/shader-fenceShader.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-fenceShader"
+                        },
+                        {
+                            id: "shader-planeScan",
+                            title: "平面扫描",
+                            description: "展示圆形扫描线效果，使用着色器实现动态扫描动画",
+                            thumbnail: "images/shader-planeScan.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-planeScan"
+                        },
+                        {
+                            id: "shader-wallShader",
+                            title: "扩散圆墙",
+                            description: "展示圆柱形扩散动画效果，使用着色器实现从下向上的渐变透明",
+                            thumbnail: "images/shader-wallShader.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-wallShader"
+                        },
+                        {
+                            id: "shader-radarShader",
+                            title: "雷达着色器",
+                            description: "展示雷达扫描效果，包含圆形、十字、动态扫描线等复杂着色器效果",
+                            thumbnail: "images/shader-radarShader.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-radarShader"
+                        },
+                        {
+                            id: "shader-candleShader",
+                            title: "蜡烛着色器",
+                            description: "展示3D蜡烛和火焰效果，使用着色器实现火焰摇曳动画",
+                            thumbnail: "images/shader-candleShader.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-candleShader"
+                        },
+                        {
+                            id: "shader-ringShader",
+                            title: "环形着色器",
+                            description: "展示环形火焰效果，使用极坐标映射和噪声函数实现动态火焰动画",
+                            thumbnail: "images/shader-ringShader.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-ringShader"
+                        },
+                        {
+                            id: "shader-smokeCircle",
+                            title: "圆泡吸附",
+                            description: "展示粒子吸附效果，120个二十面体粒子跟随引导粒子运动",
+                            thumbnail: "images/shader-smokeCircle.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-smokeCircle"
+                        },
+                        {
+                            id: "shader-radarScan",
+                            title: "雷达扫描",
+                            description: "展示雷达扫描效果，使用着色器实现动态扫描线和尾焰效果",
+                            thumbnail: "images/shader-radarScan.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-radarScan"
+                        },
+                        {
+                            id: "shader-imageParticle",
+                            title: "颗粒图像",
+                            description: "展示图像粒子破碎效果，使用贝塞尔曲线实现三角面分离动画",
+                            thumbnail: "images/shader-imageParticle.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-imageParticle"
+                        },
+                        {
+                            id: "shader-gaussianBlur",
+                            title: "高斯模糊",
+                            description: "展示高斯模糊着色器效果，支持通过GUI调节模糊程度",
+                            thumbnail: "images/shader-gaussianBlur.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-gaussianBlur"
+                        },
+                        {
+                            id: "shader-gridShader",
+                            title: "网格着色器",
+                            description: "展示动态网格效果，带有脉冲动画和随机哈希函数",
+                            thumbnail: "images/shader-gridShader.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-gridShader"
+                        },
+                        {
+                            id: "shader-compassShader",
+                            title: "罗盘",
+                            description: "展示罗盘效果着色器，带有多层同心圆和旋转动画",
+                            thumbnail: "images/shader-compassShader.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-compassShader"
+                        },
+                        {
+                            id: "shader-halfCircle",
+                            title: "半圆",
+                            description: "展示半圆效果着色器，带有旋转动画和渐变透明度",
+                            thumbnail: "images/shader-halfCircle.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-halfCircle"
+                        },
+                        {
+                            id: "shader-vortexShader",
+                            title: "扭曲",
+                            description: "展示漩涡扭曲效果着色器，支持通过GUI调节扭曲强度和半径",
+                            thumbnail: "images/shader-vortexShader.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-vortexShader"
+                        },
+                        {
+                            id: "shader-ringsShader",
+                            title: "环彩虹着色器",
+                            description: "展示环形彩虹效果，带有旋转动画和颜色渐变",
+                            thumbnail: "images/shader-ringsShader.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-ringsShader"
+                        },
+                        {
+                            id: "shader-videoShader",
+                            title: "视频着色器",
+                            description: "展示动态纹理与着色器混合效果，支持多种混合运算类型",
+                            thumbnail: "images/shader-videoShader.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-videoShader"
+                        },
+                        {
+                            id: "shader-steamWaveSun",
+                            title: "蒸汽波太阳",
+                            description: "展示蒸汽波风格太阳效果，带有渐变色彩和动态扫描线",
+                            thumbnail: "images/shader-steamWaveSun.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-steamWaveSun"
+                        },
+                        {
+                            id: "shader-groundglass",
+                            title: "毛玻璃",
+                            description: "展示毛玻璃马赛克效果，支持通过GUI调节模糊程度",
+                            thumbnail: "images/shader-groundglass.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-groundglass"
+                        },
+                        {
+                            id: "shader-infiniteGrid",
+                            title: "无限网格",
+                            description: "展示无限延伸的网格效果，基于相机位置动态渲染",
+                            thumbnail: "images/shader-infiniteGrid.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-infiniteGrid"
+                        },
+                        {
+                            id: "shader-cobwebBox",
+                            title: "蛛网箱子",
+                            description: "展示蛛网纹理效果，使用极坐标转换实现圆环和线条图案",
+                            thumbnail: "images/shader-cobwebBox.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-cobwebBox"
+                        },
+                        {
+                            id: "shader-jumpHeart",
+                            title: "跳动的心",
+                            description: "展示跳动的心形动画效果，使用数学公式绘制心形曲线",
+                            thumbnail: "images/shader-jumpHeart.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-jumpHeart"
+                        },
+                        {
+                            id: "shader-rasterGrid",
+                            title: "栅格网格",
+                            description: "展示动态栅格网格效果，使用分形和调色板函数创建绚丽的网格图案",
+                            thumbnail: "images/shader-rasterGrid.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-rasterGrid"
+                        },
+                        {
+                            id: "shader-flowLight",
+                            title: "流光",
+                            description: "展示流光效果，使用环面结几何体配合后期处理bloom效果",
+                            thumbnail: "images/shader-flowLight.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-flowLight"
+                        },
+                        {
+                            id: "shader-grayShader",
+                            title: "灰度",
+                            description: "展示灰度着色器效果，将彩色图像转换为灰度",
+                            thumbnail: "images/shader-grayShader.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-grayShader"
+                        },
+                        {
+                            id: "shader-waveShader",
+                            title: "图像波动",
+                            description: "展示图像波动效果，使用正弦波使平面产生波动动画",
+                            thumbnail: "images/shader-waveShader.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-waveShader"
+                        },
+                        {
+                            id: "shader-dissolve",
+                            title: "溶解",
+                            description: "展示溶解效果，通过Clip参数控制溶解程度",
+                            thumbnail: "images/shader-dissolve.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-dissolve"
+                        },
+                        {
+                            id: "shader-changeShaderToy",
+                            title: "切换ShaderToy",
+                            description: "展示多个内置的ShaderToy效果，可以通过GUI切换不同的着色器效果",
+                            thumbnail: "images/shader-changeShaderToy.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-changeShaderToy"
+                        },
+                        {
+                            id: "shader-reliefImage",
+                            title: "浮雕图像",
+                            description: "展示浮雕效果，通过边缘检测算法将图像转换为浮雕样式",
+                            thumbnail: "images/shader-reliefImage.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-reliefImage"
+                        },
+                        {
+                            id: "shader-dissolveAnimate",
+                            title: "溶解动画",
+                            description: "展示基于Y轴的溶解效果，支持正向和反向动画切换",
+                            thumbnail: "images/shader-dissolveAnimate.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-dissolveAnimate"
+                        },
+                        {
                             id: "shader-blackhole",
                             title: "黑洞效果",
                             description: "展示黑洞效果的着色器实现，使用光线追踪模拟引力透镜效应和吸积盘",

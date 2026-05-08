@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="蜡烛着色器 - 展示3D蜡烛和火焰效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 蜡烛着色器</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x101005);
+
+        window.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1000);
+        window.camera.position.set(3, 5, 8).setLength(15);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        window.renderer.shadowMap.enabled = true;
+        window.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+
+        window.addEventListener('resize', event => {
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.enablePan = false;
+        controls.minPolarAngle = THREE.MathUtils.degToRad(60);
+        controls.maxPolarAngle = THREE.MathUtils.degToRad(95);
+        controls.minDistance = 4;
+        controls.maxDistance = 20;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 1;
+        controls.target.set(0, 2, 0);
+        controls.update();
+
+        const light = new THREE.DirectionalLight(0xffffff, 0.025);
+        light.position.setScalar(10);
+        window.scene.add(light);
+        window.scene.add(new THREE.AmbientLight(0xffffff, 0.0625));
+
+        const casePath = new THREE.Path();
+        casePath.moveTo(0, 0);
+        casePath.lineTo(0, 0);
+        casePath.absarc(1.5, 0.5, 0.5, Math.PI * 1.5, Math.PI * 2);
+        casePath.lineTo(2, 1.5);
+        casePath.lineTo(1.99, 1.5);
+        casePath.lineTo(1.9, 0.5);
+        const caseGeo = new THREE.LatheGeometry(casePath.getPoints(), 64);
+        const caseMat = new THREE.MeshStandardMaterial({ color: 'silver' });
+        const caseMesh = new THREE.Mesh(caseGeo, caseMat);
+        caseMesh.castShadow = true;
+
+        const paraffinPath = new THREE.Path();
+        paraffinPath.moveTo(0, -0.25);
+        paraffinPath.lineTo(0, -0.25);
+        paraffinPath.absarc(1, 0, 0.25, Math.PI * 1.5, Math.PI * 2);
+        paraffinPath.lineTo(1.25, 0);
+        paraffinPath.absarc(1.89, 0.1, 0.1, Math.PI * 1.5, Math.PI * 2);
+        let paraffinGeo = new THREE.LatheGeometry(paraffinPath.getPoints(), 64);
+        paraffinGeo.translate(0, 1.25, 0);
+        const paraffinMat = new THREE.MeshStandardMaterial({ color: 0xffff99, side: THREE.BackSide, metalness: 0, roughness: 0.75 });
+        const paraffinMesh = new THREE.Mesh(paraffinGeo, paraffinMat);
+        caseMesh.add(paraffinMesh);
+
+        const candlewickProfile = new THREE.Shape();
+        candlewickProfile.absarc(0, 0, 0.0625, 0, Math.PI * 2);
+        const candlewickCurve = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(0, 0, 0),
+            new THREE.Vector3(0, 0.5, -0.0625),
+            new THREE.Vector3(0.25, 0.5, 0.125)
+        ]);
+        let candlewickGeo = new THREE.ExtrudeGeometry(candlewickProfile, {
+            steps: 8,
+            bevelEnabled: false,
+            extrudePath: candlewickCurve
+        });
+
+        const colors = [];
+        const color1 = new THREE.Color('black');
+        const color2 = new THREE.Color(0x994411);
+        const color3 = new THREE.Color(0xffff44);
+        for (let i = 0; i < candlewickGeo.attributes.position.count; i++) {
+            if (candlewickGeo.attributes.position.getY(i) < 0.4) {
+                color1.toArray(colors, i * 3);
+            } else {
+                color2.toArray(colors, i * 3);
+            }
+            if (candlewickGeo.attributes.position.getY(i) < 0.15) color3.toArray(colors, i * 3);
+        }
+        candlewickGeo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(colors), 3));
+        candlewickGeo.translate(0, 0.95, 0);
+        const candlewickMat = new THREE.MeshBasicMaterial({ vertexColors: true });
+        const candlewickMesh = new THREE.Mesh(candlewickGeo, candlewickMat);
+        caseMesh.add(candlewickMesh);
+
+        const candleLight = new THREE.PointLight(0xffaa33, 1, 5, 2);
+        candleLight.position.set(0, 3, 0);
+        candleLight.castShadow = true;
+        caseMesh.add(candleLight);
+        const candleLight2 = new THREE.PointLight(0xffaa33, 1, 10, 2);
+        candleLight2.position.set(0, 4, 0);
+        candleLight2.castShadow = true;
+        caseMesh.add(candleLight2);
+
+        const flameMaterials = [];
+        function flame(isFrontSide) {
+            let flameGeo = new THREE.SphereGeometry(0.5, 32, 32);
+            flameGeo.translate(0, 0.5, 0);
+            let flameMat = getFlameMaterial(true);
+            flameMaterials.push(flameMat);
+            let flame = new THREE.Mesh(flameGeo, flameMat);
+            flame.position.set(0.06, 1.2, 0.06);
+            flame.rotation.y = THREE.MathUtils.degToRad(-45);
+            caseMesh.add(flame);
+        }
+
+        flame(false);
+        flame(true);
+
+        function getFlameMaterial(isFrontSide) {
+            return new THREE.ShaderMaterial({
+                uniforms: {
+                    time: { value: 0 }
+                },
+                vertexShader: `
+                    varying vec2 vUv;
+                    void main() {
+                        vUv = uv;
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                    }
+                `,
+                fragmentShader: `
+                    uniform float time;
+                    varying vec2 vUv;
+                    void main() {
+                        float glow = 1.0 - vUv.y;
+                        glow = pow(glow, 2.0);
+                        float flicker = 0.8 + 0.2 * sin(time * 8.0 + vUv.y * 10.0);
+                        vec3 color1 = vec3(1.0, 0.8, 0.2);
+                        vec3 color2 = vec3(1.0, 0.2, 0.1);
+                        vec3 finalColor = mix(color1, color2, glow);
+                        float alpha = glow * flicker;
+                        gl_FragColor = vec4(finalColor, alpha);
+                    }
+                `,
+                transparent: true,
+                side: isFrontSide ? THREE.FrontSide : THREE.BackSide,
+                depthWrite: false,
+                blending: THREE.AdditiveBlending
+            });
+        }
+
+        const tableGeo = new THREE.CylinderGeometry(14, 14, 0.5, 64);
+        tableGeo.translate(0, -0.25, 0);
+        const tableTexture = new THREE.TextureLoader().load('../../../images/textures/hardwood2_diffuse.jpg');
+        tableTexture.wrapS = THREE.RepeatWrapping;
+        tableTexture.wrapT = THREE.RepeatWrapping;
+        tableTexture.repeat.set(4, 4);
+        const tableMat = new THREE.MeshStandardMaterial({
+            map: tableTexture,
+            metalness: 0,
+            roughness: 0.75
+        });
+        const tableMesh = new THREE.Mesh(tableGeo, tableMat);
+        tableMesh.receiveShadow = true;
+
+        tableMesh.add(caseMesh);
+        window.scene.add(tableMesh);
+
+        const clock = new THREE.Clock();
+        let time = 0;
+
+        function render() {
+            requestAnimationFrame(render);
+            time += clock.getDelta();
+            flameMaterials[0].uniforms.time.value = time;
+            flameMaterials[1].uniforms.time.value = time;
+            candleLight2.position.x = Math.sin(time * Math.PI) * 0.25;
+            candleLight2.position.z = Math.cos(time * Math.PI) * 0.25;
+            window.renderer.render(window.scene, window.camera);
+        }
+        window.renderer.setAnimationLoop(render);
+    </script>
+
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera) {
+                        if (window.composer) window.composer.render();
+                        else window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.composer ? window.composer.renderer.domElement : window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

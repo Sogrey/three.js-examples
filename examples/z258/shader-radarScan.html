@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="雷达扫描 - 展示雷达扫描效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 雷达扫描</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        const container = document.getElementById('threeContainer');
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x0a0a1a);
+
+        window.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 10000);
+        window.camera.position.set(0, 800, 1000);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, logarithmicDepthBuffer: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(window.renderer.domElement);
+
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.enableDamping = true;
+
+        window.addEventListener('resize', () => {
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+        });
+
+        const radarData = {
+            position: { x: 0, y: 20, z: 0 },
+            radius: 240,
+            color: '#f005f0',
+            opacity: 0.5,
+            speed: 300,
+            followWidth: 220
+        };
+
+        const circleGeometry = new THREE.CircleGeometry(radarData.radius, 1000);
+        const rotateMatrix = new THREE.Matrix4().makeRotationX((-Math.PI / 180) * 90);
+        circleGeometry.applyMatrix4(rotateMatrix);
+
+        const material = new THREE.MeshBasicMaterial({
+            color: radarData.color,
+            opacity: radarData.opacity,
+            transparent: true
+        });
+
+        const radar = new THREE.Mesh(circleGeometry, material);
+        radar.updateMatrix();
+        window.scene.add(radar);
+
+        const uniforms = {
+            uSpeed: { value: radarData.speed },
+            uRadius: { value: radarData.radius },
+            uTime: { value: 0 },
+            uFollowWidth: { value: radarData.followWidth }
+        };
+
+        material.onBeforeCompile = (shader) => {
+            Object.assign(shader.uniforms, uniforms);
+
+            const vertex = `
+                varying vec3 vPosition;
+                void main() {
+                    vPosition = position;
+            `;
+            shader.vertexShader = shader.vertexShader.replace('void main() {', vertex);
+
+            const fragment = `
+                uniform float uRadius;
+                uniform float uTime;
+                uniform float uSpeed;
+                uniform float uFollowWidth;
+                varying vec3 vPosition;
+
+                float calcAngle(vec3 oFrag) {
+                    float fragAngle;
+                    const vec3 ox = vec3(1, 0, 0);
+                    float dianji = oFrag.x * ox.x + oFrag.z * ox.z;
+                    float oFrag_length = length(oFrag);
+                    float ox_length = length(ox);
+                    float yuxian = dianji / (oFrag_length * ox_length);
+                    fragAngle = acos(yuxian);
+                    fragAngle = degrees(fragAngle);
+                    if(oFrag.z > 0.0) {
+                        fragAngle = -fragAngle + 360.0;
+                    }
+                    float scanAngle = uTime * uSpeed - floor(uTime * uSpeed / 360.0) * 360.0;
+                    float angle = scanAngle - fragAngle;
+                    if(angle < 0.0) {
+                        angle = angle + 360.0;
+                    }
+                    return angle;
+                }
+
+                void main() {
+            `;
+
+            const fragementColor = `
+                if(length(vPosition) == 0.0 || length(vPosition) > uRadius - 2.0) {
+                    gl_FragColor = vec4(outgoingLight, diffuseColor.a);
+                } else {
+                    float angle = calcAngle(vPosition);
+                    if(angle < uFollowWidth) {
+                        float opacity = 1.0 - angle / uFollowWidth;
+                        gl_FragColor = vec4(outgoingLight, diffuseColor.a * opacity);
+                    } else {
+                        gl_FragColor = vec4(outgoingLight, 0.0);
+                    }
+                }
+            `;
+
+            shader.fragmentShader = shader.fragmentShader.replace('void main() {', fragment);
+            shader.fragmentShader = shader.fragmentShader.replace('#include <opaque_fragment>', fragementColor);
+        };
+
+        function animate(time) {
+            uniforms.uTime.value = time / 1000;
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        window.renderer.setAnimationLoop(animate);
+    </script>
+
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera) {
+                        if (window.composer) window.composer.render();
+                        else window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.composer ? window.composer.renderer.domElement : window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

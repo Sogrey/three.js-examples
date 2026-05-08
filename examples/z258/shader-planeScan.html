@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="平面扫描 - 展示圆形扫描线效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 平面扫描</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        const container = document.getElementById('threeContainer');
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x0a0a1a);
+
+        window.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+        window.camera.position.set(0, 2, 2);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, logarithmicDepthBuffer: true });
+        window.renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(window.renderer.domElement);
+
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.enableDamping = true;
+
+        const plane = new THREE.PlaneGeometry(5, 5);
+
+        const textureLoader = new THREE.TextureLoader();
+        const map = textureLoader.load('../../images/textures/uv-grid.jpg');
+
+        const uniforms = {
+            innerCircleWidth: { value: 0.59, type: 'number', unit: 'float' },
+            circleWidth: { value: 0.2, type: 'number', unit: 'float' },
+            circleMax: { value: 0.7, type: 'number', unit: 'float' },
+            opacityScale: { value: 0.8, type: 'number', unit: 'float' },
+            reverseOpacity: { value: false, type: 'bool', unit: 'bool' },
+            circleSpeed: { value: 0.003, type: 'number', unit: 'float' },
+            diff: { value: new THREE.Color(0xfff25f), type: 'color', unit: 'vec3' },
+            color3: { value: new THREE.Color(0xff), type: 'color', unit: 'vec3' },
+            center: { value: new THREE.Vector3(0, 0, 0), type: 'position', unit: 'vec3' },
+            intensity: { value: 3, type: 'number', unit: 'float' },
+            isDisCard: { value: true, type: 'bool', unit: 'bool' },
+        };
+
+        const material = new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            side: THREE.DoubleSide,
+            map: map,
+            transparent: true
+        });
+
+        material.onBeforeCompile = (shader) => {
+            Object.keys(uniforms).forEach((key) => shader.uniforms[key] = uniforms[key]);
+
+            shader.vertexShader = shader.vertexShader.replace(
+                `void main() {`,
+                `varying vec2 vUv;
+                varying vec3 v_position;
+                void main() {
+                    vUv = uv;
+                    v_position = position;`
+            );
+
+            shader.fragmentShader = shader.fragmentShader.replace(
+                /#include <common>/,
+                Object.keys(uniforms).map(i => 'uniform ' + uniforms[i].unit + ' ' + i + ';').join('\n') + '\n' + 'varying vec3 v_position; varying vec2 vUv;\n' + '\n#include <common>\n'
+            );
+
+            shader.fragmentShader = shader.fragmentShader.replace('vec4 diffuseColor = vec4( diffuse, opacity );', `
+                float dis = length(v_position - center);
+                vec4 diffuseColor;
+                if(dis < (innerCircleWidth + circleWidth) && dis > innerCircleWidth) {
+                    float r = (dis - innerCircleWidth) / circleWidth;
+                    float cOpacity = reverseOpacity ? (innerCircleWidth / circleMax) : 1.0 - (innerCircleWidth / circleMax);
+                    #ifdef USE_MAP
+                        vec3 textureColor = texture2D(map, vUv).rgb;
+                        if(isDisCard && textureColor.r < 0.1 && textureColor.g < 0.1 && textureColor.b < 0.1) discard;
+                    #endif
+                    diffuseColor = vec4(mix(diff, color3, r) * vec3(intensity, intensity, intensity), opacity * cOpacity * opacityScale);
+                }
+                else {
+                    if(isDisCard) discard;
+                    else diffuseColor = vec4(diffuse, opacity);
+                }
+            `);
+        };
+
+        material.needsUpdate = true;
+
+        const mesh = new THREE.Mesh(plane, material);
+        window.scene.add(mesh);
+
+        window.addEventListener('resize', () => {
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        let time = 0;
+        function animate() {
+            time += uniforms.circleSpeed.value;
+            uniforms.innerCircleWidth.value = 0.3 + 0.3 * Math.sin(time);
+            window.renderer.render(window.scene, window.camera);
+        }
+        window.renderer.setAnimationLoop(animate);
+    </script>
+
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera) {
+                        if (window.composer) window.composer.render();
+                        else window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.composer ? window.composer.renderer.domElement : window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

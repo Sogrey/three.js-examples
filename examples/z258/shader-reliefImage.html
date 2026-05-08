@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="浮雕图像 - 展示浮雕效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 浮雕图像</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        window.scene = new THREE.Scene();
+
+        window.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 10000);
+        window.camera.position.set(1, 1, 1);
+        window.camera.lookAt(0, 0, 0);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        window.renderer.setPixelRatio(window.devicePixelRatio);
+        document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.enableDamping = true;
+        controls.minDistance = 2;
+        controls.maxDistance = 10;
+
+        const light = new THREE.DirectionalLight(0xffffff);
+        light.position.set(0, 200, 100);
+        window.scene.add(light);
+
+        window.addEventListener('resize', onWindowResize);
+
+        const textureLoader = new THREE.TextureLoader();
+        const diffuseTexture = textureLoader.load('../../images/textures/15-30-11-41_1280.jpg');
+
+        const cubeShader = {
+            uniforms: {
+                tDiffuse: { type: 't', value: diffuseTexture },
+                fScale: { type: 'float', value: 100.0 },
+            },
+            vertexShader: `
+                varying vec2 vUv;
+                void main() {
+                    vUv = uv;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                varying vec2 vUv;
+                uniform sampler2D tDiffuse;
+                uniform float fScale;
+                const highp vec3 W = vec3(0.2125, 0.7154, 0.0721);
+                const vec4 bkColor = vec4(0.5, 0.5, 0.5, 1.0);
+
+                void main() {
+                    vec2 upLeftUV = vec2(vUv.x - 1.0 / fScale, vUv.y - 1.0 / fScale);
+                    vec4 curColor = texture2D(tDiffuse, vUv);
+                    vec4 upLeftColor = texture2D(tDiffuse, upLeftUV);
+                    vec4 delColor = curColor - upLeftColor;
+                    float luminance = dot(delColor.rgb, W);
+                    gl_FragColor = vec4(vec3(luminance), 0.0) + bkColor;
+                }
+            `,
+        };
+
+        const cubeMaterial = new THREE.ShaderMaterial({
+            uniforms: cubeShader.uniforms,
+            vertexShader: cubeShader.vertexShader,
+            fragmentShader: cubeShader.fragmentShader,
+            side: THREE.DoubleSide
+        });
+
+        const geometry = new THREE.PlaneGeometry(2, 1.5);
+        const cube = new THREE.Mesh(geometry, cubeMaterial);
+        window.scene.add(cube);
+
+        const gui = new GUI();
+        gui.domElement.style.top = '50px';
+        gui.add(cubeShader.uniforms.fScale, 'value', 50, 500).step(1).name('Scale');
+
+        function onWindowResize() {
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+        }
+
+        function animate() {
+            controls.update();
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        window.renderer.setAnimationLoop(animate);
+    </script>
+
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera) {
+                        if (window.composer) window.composer.render();
+                        else window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.composer ? window.composer.renderer.domElement : window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
