@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="圆波扫光效果 - 展示圆形波纹扫描效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 圆波扫光</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        const container = document.getElementById('threeContainer');
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x0a0a1a);
+
+        window.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+        window.camera.position.set(0, 1, 0);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, logarithmicDepthBuffer: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(window.renderer.domElement);
+
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.enableDamping = true;
+
+        const geometry = new THREE.PlaneGeometry(2, 2);
+
+        const noiseTexture = createNoiseTexture();
+
+        const material = new THREE.ShaderMaterial({
+            side: THREE.DoubleSide,
+            transparent: true,
+            blending: THREE.AdditiveBlending,
+            uniforms: {
+                uTime: { value: 0.0 },
+                uScanTex: { value: noiseTexture },
+                uScanColor: { value: new THREE.Color(0x00ffff) },
+                uScanColorDark: { value: new THREE.Color(0x0088ff) }
+            },
+            vertexShader: `
+                varying vec2 vUv;
+                varying vec3 vPosition;
+                void main() {
+                    vUv = uv;
+                    vPosition = position;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform float uTime;
+                uniform sampler2D uScanTex;
+                uniform vec3 uScanColor;
+                uniform vec3 uScanColorDark;
+                varying vec2 vUv;
+                varying vec3 vPosition;
+
+                float circleWave(vec3 p, vec3 origin, float distRatio) {
+                    float t = uTime;
+                    float dist = distance(p, origin) * distRatio;
+                    float radialMove = fract(dist - t);
+                    float fadeOutMask = 1.0 - smoothstep(1.0, 3.0, dist);
+                    radialMove *= fadeOutMask;
+                    float cutInitialMask = 1.0 - step(t, dist);
+                    return radialMove * cutInitialMask;
+                }
+
+                vec3 getScanColor(vec3 worldPos, vec2 uv, vec3 col) {
+                    float scanMask = texture2D(uScanTex, uv).r;
+                    float cw = circleWave(worldPos, vec3(0.0, 0.0, 0.0), 3.2);
+                    float cw2 = circleWave(worldPos, vec3(0.0, 0.0, 0.0), 2.8);
+                    float mask1 = smoothstep(0.3, 0.0, 1.0 - cw);
+                    mask1 *= (1.0 + scanMask * 0.7);
+                    float mask2 = smoothstep(0.07, 0.0, 1.0 - cw2) * 0.8;
+                    mask1 += mask2;
+                    float mask3 = smoothstep(0.09, 0.0, 1.0 - cw) * 1.5;
+                    mask1 += mask3;
+                    vec3 scanCol = mix(uScanColorDark, uScanColor, mask1);
+                    return scanCol * mask1;
+                }
+
+                void main() {
+                    vec3 col = vec3(0.0);
+                    col = getScanColor(vPosition, vUv * 10.0, col);
+                    float alpha = length(col);
+                    gl_FragColor = vec4(col, alpha);
+                }
+            `
+        });
+
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.rotation.x = Math.PI / 2;
+        window.scene.add(mesh);
+
+        const gui = new GUI();
+        gui.domElement.style.top = '50px';
+        const params = {
+            uScanColor: '#00ffff',
+            uScanColorDark: '#0088ff'
+        };
+        gui.addColor(params, 'uScanColor').onChange((value) => {
+            material.uniforms.uScanColor.value.set(value);
+        });
+        gui.addColor(params, 'uScanColorDark').onChange((value) => {
+            material.uniforms.uScanColorDark.value.set(value);
+        });
+
+        function createNoiseTexture() {
+            const size = 256;
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            const imageData = ctx.createImageData(size, size);
+            for (let i = 0; i < imageData.data.length; i += 4) {
+                const value = Math.random() * 255;
+                imageData.data[i] = value;
+                imageData.data[i + 1] = value;
+                imageData.data[i + 2] = value;
+                imageData.data[i + 3] = 255;
+            }
+            ctx.putImageData(imageData, 0, 0);
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            return texture;
+        }
+
+        window.addEventListener('resize', () => {
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        function animate() {
+            material.uniforms.uTime.value += 0.005;
+            window.renderer.render(window.scene, window.camera);
+        }
+        window.renderer.setAnimationLoop(animate);
+    </script>
+
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera) {
+                        if (window.composer) window.composer.render();
+                        else window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.composer ? window.composer.renderer.domElement : window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

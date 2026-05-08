@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="高斯模糊 - 展示高斯模糊着色器效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 高斯模糊</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x1a1a1a);
+
+        window.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 10000);
+        window.camera.position.set(0, 0, 2);
+        window.camera.target = new THREE.Vector3(0, 0, 0);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        window.renderer.setPixelRatio(window.devicePixelRatio);
+        document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.enableDamping = true;
+        controls.minDistance = 2;
+        controls.maxDistance = 10;
+
+        const light = new THREE.DirectionalLight(0xffffff);
+        light.position.set(0, 200, 100);
+        window.scene.add(light);
+
+        const cubeShader = {
+            uniforms: {
+                tDiffuse: { type: 't', value: new THREE.TextureLoader().load('../../../images/textures/15-30-11-41_1280.jpg') },
+                vScreenSize: { type: 'v2', value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+                fScale: { type: 'float', value: 5.0 },
+            },
+            vertexShader: `
+                varying vec2 vUv;
+                void main() {
+                    vUv = uv;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                varying vec2 vUv;
+                uniform sampler2D tDiffuse;
+                uniform vec2 vScreenSize;
+                uniform float fScale;
+
+                void main() {
+                    vec4 sum = vec4(0.0);
+                    float h = fScale / vScreenSize.x;
+                    float v = fScale / vScreenSize.y;
+
+                    sum += texture2D(tDiffuse, vec2(vUv.x, vUv.y - 4.0 * v)) * (0.051 / 2.0);
+                    sum += texture2D(tDiffuse, vec2(vUv.x, vUv.y - 3.0 * v)) * (0.0918 / 2.0);
+                    sum += texture2D(tDiffuse, vec2(vUv.x, vUv.y - 2.0 * v)) * (0.12245 / 2.0);
+                    sum += texture2D(tDiffuse, vec2(vUv.x, vUv.y - 1.0 * v)) * (0.1531 / 2.0);
+                    sum += texture2D(tDiffuse, vec2(vUv.x, vUv.y)) * (0.1633 / 2.0);
+                    sum += texture2D(tDiffuse, vec2(vUv.x, vUv.y + 1.0 * v)) * (0.1531 / 2.0);
+                    sum += texture2D(tDiffuse, vec2(vUv.x, vUv.y + 2.0 * v)) * (0.12245 / 2.0);
+                    sum += texture2D(tDiffuse, vec2(vUv.x, vUv.y + 3.0 * v)) * (0.0918 / 2.0);
+                    sum += texture2D(tDiffuse, vec2(vUv.x, vUv.y + 4.0 * v)) * (0.051 / 2.0);
+
+                    sum += texture2D(tDiffuse, vec2(vUv.x - 4.0 * h, vUv.y)) * (0.051 / 2.0);
+                    sum += texture2D(tDiffuse, vec2(vUv.x - 3.0 * h, vUv.y)) * (0.0918 / 2.0);
+                    sum += texture2D(tDiffuse, vec2(vUv.x - 2.0 * h, vUv.y)) * (0.12245 / 2.0);
+                    sum += texture2D(tDiffuse, vec2(vUv.x - 1.0 * h, vUv.y)) * (0.1531 / 2.0);
+                    sum += texture2D(tDiffuse, vec2(vUv.x, vUv.y)) * (0.1633 / 2.0);
+                    sum += texture2D(tDiffuse, vec2(vUv.x + 1.0 * h, vUv.y)) * (0.1531 / 2.0);
+                    sum += texture2D(tDiffuse, vec2(vUv.x + 2.0 * h, vUv.y)) * (0.12245 / 2.0);
+                    sum += texture2D(tDiffuse, vec2(vUv.x + 3.0 * h, vUv.y)) * (0.0918 / 2.0);
+                    sum += texture2D(tDiffuse, vec2(vUv.x + 4.0 * h, vUv.y)) * (0.051 / 2.0);
+
+                    gl_FragColor = sum;
+                }
+            `,
+        };
+
+        const cubeMaterial = new THREE.ShaderMaterial({
+            uniforms: cubeShader.uniforms,
+            vertexShader: cubeShader.vertexShader,
+            fragmentShader: cubeShader.fragmentShader,
+            side: THREE.DoubleSide
+        });
+
+        const geometry = new THREE.PlaneGeometry(2, 2);
+        const plane = new THREE.Mesh(geometry, cubeMaterial);
+        window.scene.add(plane);
+
+        window.addEventListener('resize', () => {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            window.camera.aspect = w / h;
+            window.camera.updateProjectionMatrix();
+            window.renderer.setSize(w, h);
+            cubeMaterial.uniforms.vScreenSize.value.set(w, h);
+        });
+
+        const gui = new GUI();
+        gui.domElement.style.position = 'absolute';
+        gui.domElement.style.top = '50px';
+        gui.domElement.style.right = '10px';
+        gui.domElement.style.zIndex = '1000';
+        gui.add(cubeMaterial.uniforms.fScale, 'value', 0.0, 20.0).step(1.0).name('模糊程度');
+
+        function animate() {
+            window.renderer.render(window.scene, window.camera);
+            controls.update();
+        }
+        window.renderer.setAnimationLoop(animate);
+    </script>
+
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera) {
+                        if (window.composer) window.composer.render();
+                        else window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.composer ? window.composer.renderer.domElement : window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

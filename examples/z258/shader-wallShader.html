@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="扩散圆墙 - 展示圆柱形扩散动画效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 扩散圆墙</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        const container = document.getElementById('threeContainer');
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x0a0a1a);
+
+        window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        window.camera.position.set(0, 10, 10);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(window.renderer.domElement);
+
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.25;
+
+        const curve = new THREE.LineCurve3(new THREE.Vector3(), new THREE.Vector3().setY(3));
+        const geometry = new THREE.TubeGeometry(curve, 20, 5, 300, false);
+
+        geometry.computeBoundingBox();
+        const { max, min } = geometry.boundingBox;
+
+        const material = new THREE.ShaderMaterial({
+            transparent: true,
+            side: THREE.DoubleSide,
+            uniforms: {
+                uMax: { value: max },
+                uMin: { value: min },
+                uColor: { value: new THREE.Color('#409eff') }
+            },
+            vertexShader: `
+                varying vec4 vPosition;
+                void main() {
+                    vPosition = modelMatrix * vec4(position, 1.0);
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform vec3 uColor;
+                uniform vec3 uMax;
+                uniform vec3 uMin;
+                uniform mat4 modelMatrix;
+                varying vec4 vPosition;
+                void main() {
+                    vec4 uMax_world = modelMatrix * vec4(uMax, 1.0);
+                    vec4 uMin_world = modelMatrix * vec4(uMin, 1.0);
+                    float opacity = 1.0 - (vPosition.y - uMin_world.y) / (uMax_world.y - uMin_world.y);
+                    gl_FragColor = vec4(uColor, opacity);
+                }
+            `
+        });
+
+        const mesh = new THREE.Mesh(geometry, material);
+        window.scene.add(mesh);
+
+        let time = 0;
+
+        window.addEventListener('resize', () => {
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        function animate() {
+            if (time >= 1) time = 0;
+            else {
+                time += 0.01;
+                mesh.scale.set(time, 1, time);
+            }
+            window.renderer.render(window.scene, window.camera);
+        }
+        window.renderer.setAnimationLoop(animate);
+    </script>
+
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera) {
+                        if (window.composer) window.composer.render();
+                        else window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.composer ? window.composer.renderer.domElement : window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

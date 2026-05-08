@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="圆泡吸附 - 展示粒子吸附效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 圆泡吸附</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        window.scene = new THREE.Scene();
+        window.scene.fog = new THREE.Fog(0x000000, 4, 12);
+
+        const _width = window.innerWidth;
+        const _height = window.innerHeight;
+
+        window.camera = new THREE.PerspectiveCamera(35, _width / _height, 1, 1000);
+        window.camera.position.set(0, 0, 8);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+        window.renderer.setSize(_width, _height);
+        window.renderer.shadowMap.enabled = true;
+        document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+
+        window.addEventListener('resize', () => {
+            const newWidth = window.innerWidth;
+            const newHeight = window.innerHeight;
+            window.renderer.setSize(newWidth, newHeight);
+            window.camera.aspect = newWidth / newHeight;
+            window.camera.updateProjectionMatrix();
+        });
+
+        const _ambientLights = new THREE.HemisphereLight(0x111111, 0x000000, 5);
+        const _lights = new THREE.PointLight(0xF00555, 0.5);
+        _lights.position.set(0, 0, 3);
+        _lights.castShadow = true;
+        window.scene.add(_ambientLights);
+        window.scene.add(_lights);
+
+        const world = new THREE.Object3D();
+
+        const createParticleWord = function () {
+            const geometry = new THREE.IcosahedronGeometry(0.7, 3);
+            const circle_start = 10;
+
+            for (let i = 0; i < 120; i++) {
+                const material = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
+                const circle = new THREE.Mesh(geometry, material);
+                circle.castShadow = true;
+                circle.receiveShadow = true;
+
+                circle.position.x = -Math.random() * circle_start + Math.random() * circle_start;
+                circle.position.z = -Math.random() * circle_start + Math.random() * circle_start;
+                circle.position.y = -Math.random() * circle_start + Math.random() * circle_start;
+                const circle_scale = Math.random() * 1;
+                circle.scale.set(circle_scale, circle_scale, circle_scale);
+
+                circle.targetX = circle.position.x;
+                circle.targetY = circle.position.y;
+                circle.targetZ = circle.position.z;
+
+                world.add(circle);
+            }
+            window.scene.add(world);
+        }
+
+        createParticleWord();
+
+        const object_speed = 0.02;
+
+        function animate() {
+            const time = Date.now() * 0.003;
+            world.rotation.y = Math.sin(time) * Math.PI / 180;
+            world.rotation.z = Math.cos(time) * Math.PI / 180;
+
+            const object_place = world.children[0];
+            object_place.visible = false;
+
+            for (let i = 1; i < world.children.length; i++) {
+                const object = world.children[i];
+                const object_left = world.children[i - 1];
+
+                object.targetX = Math.cos(object_left.position.x * Math.PI) * 1;
+                object.targetY = Math.sin(object_left.position.y * Math.PI) * 1;
+                object.targetZ = Math.cos(object_left.position.z * Math.PI) * 1;
+            }
+
+            const object_guide = world.children[1];
+            object_guide.position.x += (Math.sin(object_place.position.x) - object_guide.position.x) * object_speed;
+            object_guide.position.y += (Math.cos(object_place.position.y) - object_guide.position.y) * object_speed;
+            object_guide.position.z += (object_place.position.z - object_guide.position.z) * object_speed;
+
+            for (let i = 2; i < world.children.length; i++) {
+                const object = world.children[i];
+                object.position.x += (object.targetX - object.position.x) * 0.05;
+                object.position.y += (object.targetY - object.position.y) * 0.05;
+                object.position.z += (object.targetZ - object.position.z) * 0.05;
+            }
+
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        window.renderer.setAnimationLoop(animate);
+    </script>
+
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera) {
+                        if (window.composer) window.composer.render();
+                        else window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.composer ? window.composer.renderer.domElement : window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

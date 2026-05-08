@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="蒸汽波太阳 - 展示蒸汽波风格太阳效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 蒸汽波太阳</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x0a0a1a);
+
+        window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        window.camera.position.set(0, 0, 2);
+
+        window.renderer = new THREE.WebGLRenderer();
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+
+        window.addEventListener('resize', () => {
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+        });
+
+        const vertexShader = `
+            varying vec2 vUv;
+            void main() {
+                vec4 mPosition = modelMatrix * vec4(position, 1.0);
+                gl_Position = projectionMatrix * viewMatrix * mPosition;
+                vUv = uv;
+            }
+        `;
+
+        const fragmentShader = `
+            varying vec2 vUv;
+            uniform float uTime;
+
+            void main() {
+                vec2 uv = vUv;
+                float circular = length(uv - vec2(0.5));
+                circular = smoothstep(0.3, 0.29, circular);
+                vec3 color = vec3(0.0);
+                vec3 sumCol = mix(vec3(4.0, 0.0, 0.2), vec3(1.0, 1.1, 0.0), uv.y);
+                float decreasing = (-uv.y + 0.3);
+                uv.y += uTime / 10.0;
+                float line = fract(uv.y * 20.0);
+                line = abs(line - 0.5);
+                line -= decreasing;
+                line = step(line, 0.2);
+                color += circular * sumCol * (1.0 - line);
+                gl_FragColor = vec4(color, 1.0);
+            }
+        `;
+
+        const material = new THREE.ShaderMaterial({
+            fragmentShader: fragmentShader,
+            vertexShader: vertexShader,
+            uniforms: {
+                uTime: { value: 0 },
+            },
+            side: THREE.DoubleSide,
+        });
+
+        const geometry = new THREE.PlaneGeometry(2, 2);
+        const mesh = new THREE.Mesh(geometry, material);
+        window.scene.add(mesh);
+
+        function animate(time) {
+            material.uniforms.uTime.value = time / 1000;
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        window.renderer.setAnimationLoop(animate);
+    </script>
+
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera) {
+                        if (window.composer) window.composer.render();
+                        else window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.composer ? window.composer.renderer.domElement : window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="灰度 - 展示灰度着色器效果" />
+    <meta name="three-version" content="r179" />
+    <title>Three.js 示例 - 灰度</title>
+    <link rel="stylesheet" href="../../css/example-common.css" />
+  </head>
+  <body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "../../libs/three/r179/build/three.module.js",
+          "three/addons/": "../../libs/three/r179/jsm/"
+        }
+      }
+    </script>
+
+    <script type="module">
+      import * as THREE from "three";
+      import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+      window.scene = new THREE.Scene();
+
+      window.camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000,
+      );
+      window.camera.position.set(0, 0, 1);
+
+      window.renderer = new THREE.WebGLRenderer();
+      window.renderer.setSize(window.innerWidth, window.innerHeight);
+      document
+        .getElementById("threeContainer")
+        .appendChild(window.renderer.domElement);
+
+      const controls = new OrbitControls(
+        window.camera,
+        window.renderer.domElement,
+      );
+
+      window.addEventListener("resize", () => {
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        window.camera.aspect = window.innerWidth / window.innerHeight;
+        window.camera.updateProjectionMatrix();
+      });
+
+      const vertexShader = `
+            varying vec2 vUv;
+            void main() {
+                vUv = uv;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `;
+
+      const fragmentShader = `
+            #define R_LUMINANCE 0.298912
+            #define G_LUMINANCE 0.586611
+            #define B_LUMINANCE 0.114478
+
+            varying vec2 vUv;
+            uniform sampler2D tDiffuse;
+            const vec3 monochromeScale = vec3(R_LUMINANCE, G_LUMINANCE, B_LUMINANCE);
+
+            void main() {
+                vec4 color = texture2D(tDiffuse, vUv);
+                float grayColor = dot(color.rgb, monochromeScale);
+                color = vec4(vec3(grayColor), 1.0);
+                gl_FragColor = vec4(color);
+            }
+        `;
+
+      const textureLoader = new THREE.TextureLoader();
+      let texture;
+
+      texture = textureLoader.load("../../images/textures/z2586300277.png");
+
+      const uniforms = {
+        tDiffuse: { type: "t", value: texture },
+      };
+
+      const material = new THREE.ShaderMaterial({
+        uniforms,
+        vertexShader,
+        fragmentShader,
+      });
+
+      const geometry = new THREE.PlaneGeometry();
+      const mesh = new THREE.Mesh(geometry, material);
+      window.scene.add(mesh);
+
+      function animate() {
+        window.renderer.render(window.scene, window.camera);
+      }
+
+      window.renderer.setAnimationLoop(animate);
+    </script>
+
+    <script>
+      window.addEventListener("message", function (event) {
+        if (event.data && event.data.type === "take-screenshot") {
+          try {
+            if (window.scene && window.camera) {
+              if (window.composer) window.composer.render();
+              else window.renderer.render(window.scene, window.camera);
+            }
+            const quality = event.data.quality || 0.8;
+            const canvas = window.composer
+              ? window.composer.renderer.domElement
+              : window.renderer.domElement;
+            const tempCanvas = document.createElement("canvas");
+            const maxSize = 600;
+            const scale = Math.min(
+              maxSize / canvas.width,
+              maxSize / canvas.height,
+            );
+            tempCanvas.width = Math.floor(canvas.width * scale);
+            tempCanvas.height = Math.floor(canvas.height * scale);
+            const ctx = tempCanvas.getContext("2d");
+            ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+            const dataUrl = tempCanvas.toDataURL("image/jpeg", quality);
+            window.parent.postMessage(
+              { type: "screenshot-data", dataUrl: dataUrl },
+              "*",
+            );
+          } catch (error) {
+            console.error("截图失败:", error);
+            window.parent.postMessage(
+              { type: "screenshot-error", error: error.message },
+              "*",
+            );
+          }
+        }
+      });
+    </script>
+  </body>
+</html>

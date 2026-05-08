@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="网格着色器 - 展示动态网格效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 网格着色器</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x0a0a1a);
+
+        window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100000);
+        window.camera.position.set(50, 50, 50);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, logarithmicDepthBuffer: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        window.scene.add(new THREE.AxesHelper(100));
+
+        window.addEventListener('resize', () => {
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+            uniforms.uResolution.value.set(window.innerWidth, window.innerHeight);
+        });
+
+        const uniforms = {
+            uTime: { value: 0 },
+            uColor: { value: new THREE.Color('#00ff23') },
+            uRepititions: { value: 5, min: 1, max: 10, step: 1 },
+            uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
+        };
+
+        const vert = `
+            varying vec3 vNormal;
+            varying vec3 vPosition;
+
+            void main() {
+                vec4 modelPosition = modelMatrix * vec4(position, 1.0);
+                gl_Position = projectionMatrix * viewMatrix * modelPosition;
+
+                vec3 modelNormal = (modelMatrix * vec4(normal, 0.0)).xyz;
+
+                vNormal = modelNormal;
+                vPosition = modelPosition.xyz;
+            }
+        `;
+
+        const frag = `
+            uniform vec2 uResolution;
+            uniform int uRepititions;
+            uniform vec3 uColor;
+            uniform float uTime;
+
+            varying vec3 vPosition;
+
+            const float PI = 3.14159265;
+
+            float hash(vec3 uv) {
+                uint x = floatBitsToUint(uv.x) | 1u;
+                uint y = floatBitsToUint(uv.y);
+                uint z = floatBitsToUint(uv.z);
+
+                y ^= y >> 13u;
+                y ^= y << 17u;
+                y ^= y >> 5u;
+                y *= 0x2545F491u;
+
+                x ^= y;
+                x ^= x >> 13u;
+                x ^= x << 17u;
+                x ^= x >> 5u;
+                x *= 0x4F6CDD1Du;
+
+                z ^= x;
+                z ^= z >> 13u;
+                z ^= z << 17u;
+                z ^= z >> 5u;
+                z *= 0x1D6C45F4u;
+
+                uint w = (z >> 9u) | 0x3f000000u;
+                return 2.0 * uintBitsToFloat(w) - 1.0;
+            }
+
+            void main() {
+                vec2 uv = (gl_FragCoord.xy - 0.5 * uResolution) / min(uResolution.x, uResolution.y);
+                uv *= 2.0;
+
+                vec3 color = vec3(0);
+                float hash_cnt = 0.0;
+
+                float grid_size = 40.0;
+                vec2 g = cos(grid_size * (1.0 + uv) * PI);
+                float grid = smoothstep(0.98, 0.99, max(g.x, g.y));
+                grid += (0.0001 / (1.5 + max(g.x, g.y)) + grid * (grid_size / 255.0) * hash(vec3(uv, 0.0)));
+
+                vec2 mask_uv = abs(uv);
+                float square_mask = smoothstep(1.01, 1.0, max(mask_uv.x, mask_uv.y));
+                float disc_mask = smoothstep(1.0, 0.66, length(uv));
+
+                float circle = smoothstep(0.01, 0.005, abs(length(uv) - 1.0));
+
+                for(int i = 0; i < uRepititions; i++) {
+                    int anim_instance = i;
+                    float time_offset = hash(vec3(float(anim_instance), 1.0, hash_cnt++));
+                    float speed_offset = hash(vec3(float(anim_instance), 1.0, hash_cnt++));
+
+                    float speed = sin(0.1 * mix(0.2, 2.0, speed_offset));
+                    float t = speed * uTime + time_offset;
+                    float drop_cycle = fract(t);
+                    float drop_instance = floor(t);
+
+                    vec3 pulse_color = uColor;
+                    vec2 pos = vec2(0.0);
+                    vec2 p = vec2(max(abs(uv.x - pos.x), abs(uv.y - pos.y)));
+
+                    float drop_width = 0.1;
+                    float drop_softness = 0.02;
+                    float drop = smoothstep(drop_width + drop_softness, drop_width - drop_softness, p.x);
+                    drop *= smoothstep(drop_width + drop_softness, drop_width - drop_softness, p.y);
+
+                    float drop_length = 0.3;
+                    float drop_length_soft = 0.1;
+                    float drop_fade = smoothstep(drop_length - drop_length_soft, drop_length + drop_length_soft, p.y);
+
+                    float drop_anim = smoothstep(0.0, 0.15, drop_cycle) * smoothstep(0.85, 1.0, drop_cycle);
+                    drop *= drop_fade * drop_anim;
+
+                    color += drop * pulse_color;
+                }
+
+                color += grid * 0.1;
+                color *= disc_mask;
+                color += circle * 0.5;
+
+                gl_FragColor = vec4(color, 1.0);
+            }
+        `;
+
+        const geometry = new THREE.PlaneGeometry(50, 50);
+        const material = new THREE.ShaderMaterial({
+            uniforms: uniforms,
+            vertexShader: vert,
+            fragmentShader: frag
+        });
+
+        const plane = new THREE.Mesh(geometry, material);
+        window.scene.add(plane);
+
+        function animate(time) {
+            uniforms.uTime.value = time / 1000;
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        window.renderer.setAnimationLoop(animate);
+    </script>
+
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera) {
+                        if (window.composer) window.composer.render();
+                        else window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.composer ? window.composer.renderer.domElement : window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

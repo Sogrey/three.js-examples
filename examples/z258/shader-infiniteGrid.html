@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="无限网格 - 展示无限延伸的网格效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 无限网格</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { Sky } from 'three/addons/objects/Sky.js';
+
+        window.scene = new THREE.Scene();
+
+        window.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100000000);
+        window.camera.position.set(1000, 1000, 1000);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, logarithmicDepthBuffer: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.enableDamping = true;
+
+        window.addEventListener('resize', () => {
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+        });
+
+        window.scene.add(new THREE.AmbientLight(0x222222));
+
+        const light = new THREE.DirectionalLight(0xffffff, 1);
+        light.position.set(80, 80, 80);
+        window.scene.add(light);
+
+        const sky = new Sky();
+        sky.scale.setScalar(450000);
+        const { uniforms } = sky.material;
+        uniforms.sunPosition.value = new THREE.Vector3().setFromSphericalCoords(1, THREE.MathUtils.degToRad(90), THREE.MathUtils.degToRad(180));
+        uniforms["rayleigh"].value = 2;
+        window.scene.add(sky);
+
+        class InfiniteGridHelper extends THREE.Mesh {
+            constructor(size1 = 10, size2 = 100, color = new THREE.Color('white'), distance = 8000, axes = 'xzy') {
+                const planeAxes = axes.substring(0, 2);
+                const geometry = new THREE.PlaneGeometry(2, 2, 1, 1);
+
+                const material = new THREE.ShaderMaterial({
+                    side: THREE.DoubleSide,
+                    uniforms: {
+                        uSize1: { value: size1 },
+                        uSize2: { value: size2 },
+                        uColor: { value: color },
+                        uDistance: { value: distance }
+                    },
+                    transparent: true,
+                    vertexShader: `
+                        varying vec3 worldPosition;
+                        uniform float uDistance;
+
+                        void main() {
+                            vec3 pos = position.${axes} * uDistance;
+                            pos.${planeAxes} += cameraPosition.${planeAxes};
+                            worldPosition = pos;
+                            gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+                        }
+                    `,
+                    fragmentShader: `
+                        varying vec3 worldPosition;
+                        uniform float uSize1;
+                        uniform float uSize2;
+                        uniform vec3 uColor;
+                        uniform float uDistance;
+
+                        float getGrid(float size) {
+                            vec2 r = worldPosition.${planeAxes} / size;
+                            vec2 grid = abs(fract(r - 0.5) - 0.5) / fwidth(r);
+                            float line = min(grid.x, grid.y);
+                            return 1.0 - min(line, 1.0);
+                        }
+
+                        void main() {
+                            float d = 1.0 - min(distance(cameraPosition.${planeAxes}, worldPosition.${planeAxes}) / uDistance, 1.0);
+                            float g1 = getGrid(uSize1);
+                            float g2 = getGrid(uSize2);
+                            gl_FragColor = vec4(uColor.rgb, mix(g2, g1, g1) * pow(d, 3.0));
+                            gl_FragColor.a = mix(0.5 * gl_FragColor.a, gl_FragColor.a, g2);
+                            if (gl_FragColor.a <= 0.0) discard;
+                        }
+                    `,
+                    extensions: {
+                        derivatives: true
+                    }
+                });
+
+                super(geometry, material);
+                this.frustumCulled = false;
+            }
+        }
+
+        const gridHelper = new InfiniteGridHelper(10, 100);
+        window.scene.add(gridHelper);
+
+        function animate() {
+            controls.update();
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        window.renderer.setAnimationLoop(animate);
+    </script>
+
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera) {
+                        if (window.composer) window.composer.render();
+                        else window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.composer ? window.composer.renderer.domElement : window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

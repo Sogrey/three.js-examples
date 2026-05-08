@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="透明渐变着色器 - 展示多边形透明渐变效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 透明渐变</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        const container = document.getElementById('threeContainer');
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x0a0a1a);
+
+        window.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+        window.camera.position.set(0, 0, 50);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, logarithmicDepthBuffer: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(window.renderer.domElement);
+
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.enableDamping = true;
+
+        const uniforms = {
+            color: { value: new THREE.Color(0xffffff * Math.random()) },
+            uvScale: { value: 0.1 },
+            intensity: { value: 3 }
+        };
+
+        const material = new THREE.ShaderMaterial({
+            vertexShader: `
+                varying vec2 vUv;
+                void main() {
+                    vUv = uv;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                varying vec2 vUv;
+                uniform vec3 color;
+                uniform float uvScale;
+                uniform float intensity;
+                void main() {
+                    vec2 uv = vUv * uvScale;
+                    float distance = length(uv);
+                    float alpha = smoothstep(0.0, 1., distance);
+                    gl_FragColor = vec4(color * intensity, alpha);
+                }
+            `,
+            transparent: true,
+            side: THREE.DoubleSide,
+            uniforms: uniforms
+        });
+
+        const gui = new GUI();
+        gui.domElement.style.top = '50px';
+        gui.addColor(material.uniforms.color, 'value').name('color');
+        gui.add(material.uniforms.intensity, 'value').min(0).max(10).name('intensity');
+        gui.add(material.uniforms.uvScale, 'value').min(0).max(1).name('uvScale');
+
+        function createStarShape(radiusOuter, radiusInner, points) {
+            const shape = new THREE.Shape();
+            const angleStep = (Math.PI * 2) / points;
+            for (let i = 0; i < points; i++) {
+                const angleOuter = i * angleStep;
+                const angleInner = angleOuter + angleStep / 2;
+                const xOuter = Math.cos(angleOuter) * radiusOuter;
+                const yOuter = Math.sin(angleOuter) * radiusOuter;
+                const xInner = Math.cos(angleInner) * radiusInner;
+                const yInner = Math.sin(angleInner) * radiusInner;
+                if (i === 0) {
+                    shape.moveTo(xOuter, yOuter);
+                } else {
+                    shape.lineTo(xOuter, yOuter);
+                }
+                shape.lineTo(xInner, yInner);
+            }
+            shape.closePath();
+            return shape;
+        }
+
+        const starShape = createStarShape(5, 2, 5);
+        const starGeometry = new THREE.ShapeGeometry(starShape);
+        const star = new THREE.Mesh(starGeometry, material);
+        star.position.y += 10;
+        window.scene.add(star);
+
+        function createPolygonShape(radius, points) {
+            const shape = new THREE.Shape();
+            const angleStep = (Math.PI * 2) / points;
+            for (let i = 0; i < points; i++) {
+                const angle = i * angleStep;
+                const x = Math.cos(angle) * radius;
+                const y = Math.sin(angle) * radius;
+                if (i === 0) {
+                    shape.moveTo(x, y);
+                } else {
+                    shape.lineTo(x, y);
+                }
+            }
+            shape.closePath();
+            return shape;
+        }
+
+        const polygonGeometries = [4, 5, 6, 7, 8].map(points => {
+            const shape = createPolygonShape(5, points);
+            return new THREE.ShapeGeometry(shape);
+        });
+
+        const polygons = polygonGeometries.map(geometry => {
+            const m = new THREE.ShaderMaterial({
+                vertexShader: material.vertexShader,
+                fragmentShader: material.fragmentShader,
+                transparent: true,
+                side: THREE.DoubleSide,
+                uniforms: {
+                    ...uniforms,
+                    color: {
+                        value: new THREE.Color(0xffffff * Math.random())
+                    }
+                }
+            });
+            return new THREE.Mesh(geometry, m);
+        });
+
+        polygons.forEach((polygon, index) => {
+            polygon.position.x = (index - 2) * 10;
+            window.scene.add(polygon);
+        });
+
+        window.addEventListener('resize', () => {
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        function animate() {
+            window.renderer.render(window.scene, window.camera);
+        }
+        window.renderer.setAnimationLoop(animate);
+    </script>
+
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera) {
+                        if (window.composer) window.composer.render();
+                        else window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.composer ? window.composer.renderer.domElement : window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
