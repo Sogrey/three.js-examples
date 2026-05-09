@@ -1508,6 +1508,14 @@ const threejsData = {
               version: "r179",
               url: "examples/z258/particle-galaxyStar",
             },
+            {
+              id: "particle-pointsEarth",
+              title: "粒子地球",
+              description: "粒子组成的地球效果，带有大气层和光晕",
+              thumbnail: "images/particle-pointsEarth.jpg",
+              version: "r179",
+              url: "examples/z258/particle-pointsEarth",
+            },
           ],
         },
         {
