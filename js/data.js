@@ -1651,6 +1651,14 @@ const threejsData = {
               url: "examples/z258/canvasTexture",
             },
             {
+              id: "flowLine",
+              title: "贴图飞线",
+              description: "使用纹理贴图实现飞线流动效果",
+              thumbnail: "images/flowLine.jpg",
+              version: "r179",
+              url: "examples/z258/flowLine",
+            },
+            {
               id: "flyLine",
               title: "飞线效果",
               description: "使用自定义shader实现飞线动画效果",

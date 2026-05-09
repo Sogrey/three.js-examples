@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="贴图飞线效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 贴图飞线</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x0a0a1a);
+
+        window.camera = new THREE.PerspectiveCamera(85, window.innerWidth / window.innerHeight, 0.1, 1000);
+        window.camera.position.set(-50, 60, 80);
+        window.camera.lookAt(0, 0, 0);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.enableDamping = true;
+
+        const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0x444444, 2);
+        hemisphereLight.position.set(0, 200, 0);
+        window.scene.add(hemisphereLight);
+
+        window.scene.add(new THREE.AxesHelper(100));
+
+        const gridHelper = new THREE.GridHelper(200, 20);
+        window.scene.add(gridHelper);
+
+        const flowLines = [];
+
+        function createFlowLine(start, end, texture, color) {
+            const midPoint = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
+            midPoint.y = Math.random() * 30 + 10;
+
+            const curve = new THREE.QuadraticBezierCurve3(start, midPoint, end);
+            const tubeGeometry = new THREE.TubeGeometry(curve, 100, 1.5, 8, false);
+
+            const material = new THREE.MeshBasicMaterial({
+                map: texture,
+                transparent: true,
+                opacity: 0.8,
+                color: color
+            });
+
+            const mesh = new THREE.Mesh(tubeGeometry, material);
+            flowLines.push(mesh);
+            window.scene.add(mesh);
+        }
+
+        const textureLoader = new THREE.TextureLoader();
+
+        const map1 = textureLoader.load('../../images/textures/flyLine1.png');
+        map1.wrapS = THREE.RepeatWrapping;
+        map1.repeat.set(5, 2);
+
+        const map2 = textureLoader.load('../../images/textures/flyLine4.png');
+        map2.wrapS = THREE.RepeatWrapping;
+        map2.repeat.set(8, 2);
+
+        const colors = [
+            0x00ffff,
+            0xff00ff,
+            0x00ff00,
+            0xffff00,
+            0xff6600,
+            0x00ff88,
+            0x8888ff,
+            0xff0066
+        ];
+
+        function randomPointOnPlane(radius) {
+            const angle = Math.random() * Math.PI * 2;
+            const r = Math.sqrt(Math.random()) * radius;
+            return new THREE.Vector3(Math.cos(angle) * r, 0, Math.sin(angle) * r);
+        }
+
+        for (let i = 0; i < 15; i++) {
+            const start = randomPointOnPlane(40);
+            const end = randomPointOnPlane(40);
+            const texture = i % 2 === 0 ? map1 : map2;
+            const color = colors[i % colors.length];
+            createFlowLine(start, end, texture, color);
+        }
+
+        window.addEventListener('resize', () => {
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            map1.offset.x -= 0.015;
+            map2.offset.x -= 0.015;
+
+            flowLines.forEach((line, index) => {
+                line.rotation.y += 0.005 + index * 0.001;
+            });
+
+            controls.update();
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        animate();
+
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
