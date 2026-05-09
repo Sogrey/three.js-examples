@@ -1650,6 +1650,14 @@ const threejsData = {
               version: "r179",
               url: "examples/z258/canvasTexture",
             },
+            {
+              id: "flyLine",
+              title: "飞线效果",
+              description: "使用自定义shader实现飞线动画效果",
+              thumbnail: "images/flyLine.jpg",
+              version: "r179",
+              url: "examples/z258/flyLine",
+            },
           ],
         },
         {

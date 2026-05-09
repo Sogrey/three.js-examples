@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="飞线效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 飞线效果</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x0a0a1a);
+
+        window.camera = new THREE.PerspectiveCamera(85, window.innerWidth / window.innerHeight, 0.1, 1000);
+        window.camera.position.set(-50, 60, 80);
+        window.camera.lookAt(0, 0, 0);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.enableDamping = true;
+
+        const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0x444444, 2);
+        hemisphereLight.position.set(0, 200, 0);
+        window.scene.add(hemisphereLight);
+
+        window.scene.add(new THREE.AxesHelper(100));
+
+        const gridHelper = new THREE.GridHelper(200, 20);
+        window.scene.add(gridHelper);
+
+        const lineGroup = [];
+
+        function createFlyLineMaterial() {
+            return new THREE.ShaderMaterial({
+                uniforms: {
+                    time: { type: 'f', value: -70.0 },
+                    size: { type: 'f', value: 25.0 },
+                    colorf: { type: 'v3', value: new THREE.Vector3(0.0, 0.5, 1.0) },
+                    colort: { type: 'v3', value: new THREE.Vector3(1.0, 0.2, 0.5) }
+                },
+                vertexShader: `
+                    uniform float time;
+                    uniform float size;
+                    varying vec3 iPosition;
+
+                    void main() {
+                        iPosition = vec3(position);
+                        float pointsize = 1.0;
+                        if (position.x > time && position.x < (time + size)) {
+                            pointsize = (position.x - time) / size;
+                        }
+                        gl_PointSize = pointsize * 3.0;
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                    }
+                `,
+                fragmentShader: `
+                    uniform float time;
+                    uniform float size;
+                    uniform vec3 colorf;
+                    uniform vec3 colort;
+                    varying vec3 iPosition;
+
+                    void main() {
+                        float end = time + size;
+                        vec4 color;
+
+                        if (iPosition.x > end || iPosition.x < time) {
+                            discard;
+                        } else if (iPosition.x > time && iPosition.x < end) {
+                            float step = fract((iPosition.x - time) / size);
+
+                            float dr = abs(colort.x - colorf.x);
+                            float dg = abs(colort.y - colorf.y);
+                            float db = abs(colort.z - colorf.z);
+
+                            float r = colort.x > colorf.x ? (dr * step + colorf.x) : (colorf.x - dr * step);
+                            float g = colort.y > colorf.y ? (dg * step + colorf.y) : (colorf.y - dg * step);
+                            float b = colort.z > colorf.z ? (db * step + colorf.z) : (colorf.z - db * step);
+
+                            color = vec4(r, g, b, 1.0);
+                        }
+
+                        float d = distance(gl_PointCoord, vec2(0.5, 0.5));
+                        if (abs(iPosition.x - end) < 0.2 || abs(iPosition.x - time) < 0.2) {
+                            if (d > 0.5) {
+                                discard;
+                            }
+                        }
+                        gl_FragColor = color;
+                    }
+                `,
+                transparent: true
+            });
+        }
+
+        function addFlyLine(minx, maxx, colorf, colort) {
+            const curve = new THREE.CubicBezierCurve3(
+                new THREE.Vector3(minx, 0, minx),
+                new THREE.Vector3(minx / 2, maxx % 70 + 100, maxx / 2),
+                new THREE.Vector3(maxx / 2, maxx % 70 + 70, maxx / 2),
+                new THREE.Vector3(maxx, 0, maxx)
+            );
+
+            const points = curve.getPoints((maxx - minx) * 5);
+            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            const material = createFlyLineMaterial();
+
+            const flyline = new THREE.Points(geometry, material);
+            flyline.material.uniforms.time.value = minx;
+            flyline.material.uniforms.colorf.value.set(colorf.r, colorf.g, colorf.b);
+            flyline.material.uniforms.colort.value.set(colort.r, colort.g, colort.b);
+
+            flyline.userData.minx = minx;
+            flyline.userData.maxx = maxx;
+            lineGroup.push(flyline);
+            window.scene.add(flyline);
+        }
+
+        function createGlobe() {
+            const globeGeometry = new THREE.SphereGeometry(30, 64, 64);
+            const globeMaterial = new THREE.MeshStandardMaterial({
+                color: 0x223355,
+                emissive: 0x112244,
+                emissiveIntensity: 0.2
+            });
+            const globeMesh = new THREE.Mesh(globeGeometry, globeMaterial);
+            window.scene.add(globeMesh);
+            return globeMesh;
+        }
+
+        const globeMesh = createGlobe();
+
+        function randomNum(minNum, maxNum) {
+            return parseInt(Math.random() * (maxNum - minNum + 1) + minNum, 10);
+        }
+
+        for (let j = 0; j < 100; j++) {
+            const start = randomNum(-200, -50) / 10;
+            const end = randomNum(50, 200) / 10;
+
+            const fr = randomNum(100, 1000) / 1000;
+            const fg = randomNum(100, 1000) / 1000;
+            const fb = randomNum(100, 1000) / 1000;
+
+            const tr = randomNum(100, 1000) / 1000;
+            const tg = randomNum(100, 1000) / 1000;
+            const tb = randomNum(100, 1000) / 1000;
+
+            addFlyLine(start, end, { r: fr, g: fg, b: fb }, { r: tr, g: tg, b: tb });
+        }
+
+        window.addEventListener('resize', () => {
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+        });
+
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            globeMesh.rotation.x += 0.002;
+            globeMesh.rotation.y += 0.005;
+
+            for (let i = 0; i < lineGroup.length; i++) {
+                const flyline = lineGroup[i];
+                const time = flyline.material.uniforms.time.value;
+                const size = flyline.material.uniforms.size.value;
+
+                if (time > flyline.userData.maxx) {
+                    flyline.material.uniforms.time.value = flyline.userData.minx - size;
+                }
+                flyline.material.uniforms.time.value += 0.5;
+            }
+
+            controls.update();
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        animate();
+
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
