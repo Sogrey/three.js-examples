@@ -1625,6 +1625,20 @@ const threejsData = {
           ],
         },
         {
+          id: "game",
+          name: "游戏复刻",
+          examples: [
+            {
+              id: "characterBlur",
+              title: "人物虚化",
+              description: "使用自定义shader实现人物虚化效果，带有走路动画",
+              thumbnail: "images/characterBlur.jpg",
+              version: "r179",
+              url: "examples/z258/characterBlur",
+            },
+          ],
+        },
+        {
           id: "advanced-physics",
           name: "物理引擎",
           examples: [
