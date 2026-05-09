@@ -28,6 +28,7 @@
         const container = document.getElementById('threeContainer');
 
         window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x1f1f1f);
 
         window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.0000001, 100000);
         window.camera.position.set(10, 10, 5);
@@ -277,7 +278,7 @@
                         this.positions[alive * 3 + 1] = p.position.y;
                         this.positions[alive * 3 + 2] = p.position.z;
                         this.sizes[alive] = p.size;
-                        this.opacities[alive] = 1.0 - (p.life / this.maxLife);
+                        this.opacities[alive] = 1.0 - (p.life / p.maxLife);
                         alive++;
                         aliveParticles.push(p);
                     }
@@ -296,6 +297,7 @@
 
         let emitter = new ParticleSystem(params.maxParticles);
         emitter.points.frustumCulled = false;
+        window.scene.add(emitter.points);
 
         const clock = new THREE.Clock();
 
@@ -303,8 +305,12 @@
             requestAnimationFrame(animate);
             const delta = clock.getDelta();
 
-            splashSystem.material.uniforms.color.value.copy(emitter.material.uniforms.color.value);
-            splashSystem.material.uniforms.globalOpacity.value = emitter.material.uniforms.globalOpacity.value;
+            emitter.material.uniforms.color.value.set(params.color);
+            emitter.material.uniforms.rainLength.value = params.rainLength;
+            emitter.material.uniforms.globalOpacity.value = params.opacity;
+
+            splashSystem.material.uniforms.color.value.set(params.color);
+            splashSystem.material.uniforms.globalOpacity.value = params.opacity;
 
             emitter.update(delta);
             splashSystem.update(delta);
@@ -340,7 +346,10 @@
         const particleVisualFolder = gui.addFolder('视觉属性');
         particleVisualFolder.add(params, 'minSize', 0.1, 2, 0.1).name('最小粒子尺寸');
         particleVisualFolder.add(params, 'maxSize', 0.1, 2, 0.1).name('最大粒子尺寸');
-        particleVisualFolder.addColor(params, 'color').name('粒子颜色');
+        particleVisualFolder.addColor(params, 'color').name('粒子颜色').onChange(value => {
+            emitter.material.uniforms.color.value.set(value);
+            splashSystem.material.uniforms.color.value.set(value);
+        });
         particleVisualFolder.add(params, 'burstProbability', 0, 1, 0.05).name('突发概率');
         particleVisualFolder.add(params, 'burstMultiplier', 1, 10, 1).name('突发倍数');
         particleVisualFolder.add(params, 'blendingMode', ['Additive', 'Normal']).name('混合模式').onChange(value => {
