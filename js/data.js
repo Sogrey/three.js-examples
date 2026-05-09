@@ -1147,6 +1147,14 @@ const threejsData = {
                             url: "examples/z258/shader-loveShader"
                         },
                         {
+                            id: "shader-raningSea",
+                            title: "波涛海浪",
+                            description: "使用Perlin噪声实现逼真的海浪效果，支持多种参数调节",
+                            thumbnail: "images/shader-raningSea.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-raningSea"
+                        },
+                        {
                             id: "shader-blackhole",
                             title: "黑洞效果",
                             description: "展示黑洞效果的着色器实现，使用光线追踪模拟引力透镜效应和吸积盘",
