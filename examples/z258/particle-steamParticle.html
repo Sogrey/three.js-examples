@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="蒸汽粒子效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 蒸汽粒子</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x445566);
+
+        window.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+        window.camera.position.set(0, 8, 20);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.enableDamping = true;
+
+        window.scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+
+        const params = {
+            particleCount: 3000,
+            particleSize: 1.2,
+            width: 12,
+            depth: 2,
+            height: 15,
+            riseSpeed: 0.4,
+            spread: 0.3,
+            turbulence: 0.3,
+            density: 0.4,
+            color: '#ffffff'
+        };
+
+        const uniforms = {
+            time: { value: 0 },
+            baseColor: { value: new THREE.Color(params.color) },
+            height: { value: params.height },
+            turbulence: { value: params.turbulence },
+            density: { value: params.density },
+        };
+
+        const material = new THREE.ShaderMaterial({
+            uniforms,
+            vertexShader: `
+                attribute float size;
+                attribute float phase;
+                attribute vec3 velocity;
+                uniform float time;
+                uniform float height;
+                uniform float turbulence;
+                varying float vAlpha;
+                varying float vAge;
+                void main() {
+                    float age = mod(time * 0.3 + phase, 1.0);
+                    vAge = age;
+                    vec3 pos = position + velocity * age * height;
+                    pos.x += sin(age * 8.0 + phase * 20.0) * turbulence * (0.5 + age);
+                    pos.z += cos(age * 6.0 + phase * 15.0) * turbulence * (0.3 + age * 0.5);
+                    pos.x *= (1.0 + age * 1.5);
+                    pos.z *= (1.0 + age * 0.8);
+                    vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+                    gl_Position = projectionMatrix * mvPosition;
+                    gl_PointSize = size * (1.0 + age * 3.0) * (250.0 / -mvPosition.z);
+                    float fadeIn = smoothstep(0.0, 0.1, age);
+                    float fadeOut = 1.0 - smoothstep(0.6, 1.0, age);
+                    vAlpha = fadeIn * fadeOut;
+                }
+            `,
+            fragmentShader: `
+                uniform vec3 baseColor;
+                uniform float density;
+                varying float vAlpha;
+                varying float vAge;
+                void main() {
+                    float dist = length(gl_PointCoord - 0.5) * 2.0;
+                    if (dist > 1.0) discard;
+                    float edge = 1.0 - smoothstep(0.3, 1.0, dist);
+                    vec3 color = mix(baseColor, vec3(0.85, 0.88, 0.92), vAge * 0.3);
+                    gl_FragColor = vec4(color, vAlpha * edge * density);
+                }
+            `,
+            blending: THREE.NormalBlending,
+            depthWrite: false,
+            transparent: true,
+        });
+
+        function buildGeometry() {
+            const geo = new THREE.BufferGeometry();
+            const positions = [], sizes = [], phases = [], velocities = [];
+            for (let i = 0; i < params.particleCount; i++) {
+                positions.push(
+                    (Math.random() - 0.5) * params.width,
+                    Math.random() * 0.3,
+                    (Math.random() - 0.5) * params.depth
+                );
+                sizes.push(params.particleSize * (0.6 + Math.random() * 0.8));
+                phases.push(Math.random());
+                velocities.push(
+                    (Math.random() - 0.5) * params.spread,
+                    params.riseSpeed * (0.8 + Math.random() * 0.4),
+                    (Math.random() - 0.5) * params.spread * 0.5
+                );
+            }
+            geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            geo.setAttribute('size', new THREE.Float32BufferAttribute(sizes, 1));
+            geo.setAttribute('phase', new THREE.Float32BufferAttribute(phases, 1));
+            geo.setAttribute('velocity', new THREE.Float32BufferAttribute(velocities, 3));
+            return geo;
+        }
+
+        const steam = new THREE.Points(buildGeometry(), material);
+        window.scene.add(steam);
+
+        window.addEventListener('resize', () => {
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+        });
+
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            uniforms.time.value = clock.getElapsedTime();
+            controls.update();
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        window.renderer.setAnimationLoop(animate);
+
+        const gui = new GUI();
+        gui.domElement.style.top = '50px';
+        gui.title('蒸汽粒子参数调节');
+        gui.add(params, 'height', 5, 30, 0.5).name('上升高度').onChange(v => uniforms.height.value = v);
+        gui.add(params, 'turbulence', 0, 1, 0.01).name('湍流强度').onChange(v => uniforms.turbulence.value = v);
+        gui.add(params, 'density', 0.1, 1, 0.05).name('浓度').onChange(v => uniforms.density.value = v);
+        gui.add(params, 'width', 1, 20, 0.5).name('喷口宽度').onChange(() => {
+            steam.geometry.dispose();
+            steam.geometry = buildGeometry();
+        });
+        gui.add(params, 'depth', 0.5, 10, 0.5).name('喷口深度').onChange(() => {
+            steam.geometry.dispose();
+            steam.geometry = buildGeometry();
+        });
+        gui.add(params, 'riseSpeed', 0.1, 1, 0.05).name('上升速度').onChange(() => {
+            steam.geometry.dispose();
+            steam.geometry = buildGeometry();
+        });
+        gui.add(params, 'particleCount', 500, 8000, 100).name('粒子数量').onChange(() => {
+            steam.geometry.dispose();
+            steam.geometry = buildGeometry();
+        });
+        gui.add(params, 'particleSize', 0.3, 3, 0.1).name('粒子大小').onChange(() => {
+            steam.geometry.dispose();
+            steam.geometry = buildGeometry();
+        });
+        gui.addColor(params, 'color').name('蒸汽颜色').onChange(v => uniforms.baseColor.value.set(v));
+
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

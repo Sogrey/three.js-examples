@@ -1556,6 +1556,14 @@ const threejsData = {
               version: "r179",
               url: "examples/z258/particle-waterLeakage",
             },
+            {
+              id: "particle-steamParticle",
+              title: "蒸汽粒子",
+              description: "蒸汽粒子效果，带有上升、湍流和浓度控制",
+              thumbnail: "images/particle-steamParticle.jpg",
+              version: "r179",
+              url: "examples/z258/particle-steamParticle",
+            },
           ],
         },
         {
