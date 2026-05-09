@@ -42,29 +42,45 @@
         });
 
         const canvas = document.createElement('canvas');
-        canvas.width = 256;
-        canvas.height = 170;
+        canvas.width = 300;
+        canvas.height = 200;
         const ctx = canvas.getContext('2d');
         ctx.fillStyle = '#de2910';
-        ctx.fillRect(0, 0, 256, 170);
+        ctx.fillRect(0, 0, 300, 200);
         ctx.fillStyle = '#ffde00';
-        const starSize = 20;
-        const star1X = 30, star1Y = 25;
-        drawStar(ctx, star1X, star1Y, starSize);
-        drawStar(ctx, 60, 45, starSize * 0.4, -Math.PI * 0.15);
-        drawStar(ctx, 75, 20, starSize * 0.4, Math.PI * 0.15);
-        drawStar(ctx, 75, 55, starSize * 0.4, -Math.PI * 0.15);
-        drawStar(ctx, 90, 35, starSize * 0.4, Math.PI * 0.15);
 
-        function drawStar(ctx, cx, cy, size, rotation = 0) {
+        const flagHeight = 200;
+        const flagWidth = 300;
+
+        const bigStarRadius = flagHeight * 0.3 / 2;
+        const smallStarRadius = flagHeight * 0.1 / 2;
+
+        const bigStarCenterX = (5 / 15) * flagWidth;
+        const bigStarCenterY = (5 / 10) * flagHeight;
+
+        drawStar(ctx, bigStarCenterX, bigStarCenterY, bigStarRadius, 0);
+
+        const smallStarPositions = [
+            { x: (10 / 15) * flagWidth, y: (2 / 10) * flagHeight },
+            { x: (12 / 15) * flagWidth, y: (4 / 10) * flagHeight },
+            { x: (12 / 15) * flagWidth, y: (7 / 10) * flagHeight },
+            { x: (10 / 15) * flagWidth, y: (9 / 10) * flagHeight }
+        ];
+
+        smallStarPositions.forEach(pos => {
+            const angle = Math.atan2(bigStarCenterY - pos.y, bigStarCenterX - pos.x);
+            drawStar(ctx, pos.x, pos.y, smallStarRadius, angle);
+        });
+
+        function drawStar(ctx, cx, cy, radius, rotation = 0) {
             ctx.save();
             ctx.translate(cx, cy);
             ctx.rotate(rotation);
             ctx.beginPath();
             for (let i = 0; i < 5; i++) {
                 const angle = (i * 4 * Math.PI) / 5 - Math.PI / 2;
-                const x = Math.cos(angle) * size;
-                const y = Math.sin(angle) * size;
+                const x = Math.cos(angle) * radius;
+                const y = Math.sin(angle) * radius;
                 if (i === 0) ctx.moveTo(x, y);
                 else ctx.lineTo(x, y);
             }
