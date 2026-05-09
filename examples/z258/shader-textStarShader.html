@@ -33,11 +33,14 @@
         const loader = new FontLoader();
         loader.load('../../libs/three/r179/fonts/helvetiker_regular.typeface.json', font => init(font));
 
+        let scene;
+
         function init(font) {
             camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 10000);
             camera.position.set(100, 200, 400);
 
-            window.scene = new THREE.Scene();
+            scene = new THREE.Scene();
+            window.scene = scene;
             scene.background = new THREE.Color(0x050505);
 
             let geometry = new TextGeometry(text, {
