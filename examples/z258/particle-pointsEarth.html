@@ -33,6 +33,9 @@
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
         camera.position.z = 2;
 
+        window.scene = scene;
+        window.camera = camera;
+
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
         renderer.setClearColor(0x332148);
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -247,6 +250,9 @@
         window.addEventListener('message', function(event) {
             if (event.data && event.data.type === 'take-screenshot') {
                 try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
                     const quality = event.data.quality || 0.8;
                     const canvas = window.renderer.domElement;
                     const tempCanvas = document.createElement('canvas');
