@@ -1639,6 +1639,20 @@ const threejsData = {
           ],
         },
         {
+          id: "application",
+          name: "应用场景",
+          examples: [
+            {
+              id: "canvasTexture",
+              title: "Canvas贴图",
+              description: "使用echarts图表作为Three.js纹理贴图",
+              thumbnail: "images/canvasTexture.jpg",
+              version: "r179",
+              url: "examples/z258/canvasTexture",
+            },
+          ],
+        },
+        {
           id: "advanced-physics",
           name: "物理引擎",
           examples: [
