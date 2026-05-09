@@ -170,7 +170,8 @@
 
         window.renderer.setAnimationLoop(animate);
 
-        const gui = new GUI();
+        const gui = new GUI();        
+        gui.domElement.style.top = '50px';
         gui.title('粒子聚散参数');
         gui.add(params, 'particleCount', 100, 3000, 100).name('粒子数量').onChange(() => {
             initParticles();
