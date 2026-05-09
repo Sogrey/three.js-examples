@@ -1165,6 +1165,14 @@ const threejsData = {
                         {
                             id: "shader-blackhole",
                             title: "黑洞效果",
+                            description: "使用光线追踪模拟引力透镜效应和吸积盘",
+                            thumbnail: "images/shader-blackhole.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-blackhole"
+                        },
+                        {
+                            id: "shader-tunnel",
+                            title: "黑洞效果",
                             description: "展示黑洞效果的着色器实现，使用光线追踪模拟引力透镜效应和吸积盘",
                             thumbnail: "images/shader-blackhole.jpg",
                             version: "r179",
