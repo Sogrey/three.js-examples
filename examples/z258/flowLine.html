@@ -54,7 +54,7 @@
             midPoint.y = Math.random() * 30 + 10;
 
             const curve = new THREE.QuadraticBezierCurve3(start, midPoint, end);
-            const tubeGeometry = new THREE.TubeGeometry(curve, 100, 1.5, 8, false);
+            const tubeGeometry = new THREE.TubeGeometry(curve, 100, 0.3, 8, false);
 
             const material = new THREE.MeshBasicMaterial({
                 map: texture,
