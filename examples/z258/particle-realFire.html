@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="真实火焰粒子效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 真实火焰</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        const container = document.getElementById('threeContainer');
+
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x000000);
+
+        window.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+        window.camera.position.set(0, 10, 6);
+
+        window.renderer = new THREE.WebGLRenderer({
+            antialias: true,
+            alpha: true,
+            logarithmicDepthBuffer: true
+        });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(window.renderer.domElement);
+
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.enableDamping = true;
+
+        const params = {
+            particleCount: 1500,
+            particleSize: 0.5,
+            baseHeight: 5,
+            baseRadius: 1.2,
+            velocityFactor: 0.6,
+            wiggleFactor: 0.2,
+            lightIntensity: 1
+        };
+
+        function createRealisticFire() {
+            const fireConfig = {
+                particleCount: params.particleCount,
+                particleSize: params.particleSize,
+                baseHeight: params.baseHeight,
+                baseRadius: params.baseRadius,
+                colors: {
+                    inner: new THREE.Color(0xffff80),
+                    mid: new THREE.Color(0xff8000),
+                    outer: new THREE.Color(0xff4400),
+                    smoke: new THREE.Color(0x111111)
+                },
+                velocityFactor: params.velocityFactor,
+                wiggleFactor: params.wiggleFactor
+            };
+
+            const fireMaterial = new THREE.ShaderMaterial({
+                uniforms: {
+                    time: { value: 0 },
+                    baseColor: { value: fireConfig.colors.inner },
+                    midColor: { value: fireConfig.colors.mid },
+                    tipColor: { value: fireConfig.colors.outer },
+                    smokeColor: { value: fireConfig.colors.smoke }
+                },
+                vertexShader: `
+                    attribute float size;
+                    attribute float life;
+                    attribute float phase;
+                    attribute vec3 velocity;
+                    uniform float time;
+                    varying float vLife;
+                    varying float vPhase;
+
+                    void main() {
+                        vLife = life;
+                        vPhase = phase;
+
+                        float age = mod(time + phase, 1.0);
+
+                        vec3 pos = position + velocity * age;
+
+                        float wiggle = sin(age * 20.0 + phase * 10.0) * (1.0 - age) * 0.2;
+                        pos.x += wiggle;
+
+                        vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+                        gl_Position = projectionMatrix * mvPosition;
+
+                        gl_PointSize = size * (1.0 - age) * (300.0 / -mvPosition.z);
+                    }
+                `,
+                fragmentShader: `
+                    uniform vec3 baseColor;
+                    uniform vec3 midColor;
+                    uniform vec3 tipColor;
+                    uniform vec3 smokeColor;
+                    varying float vLife;
+                    varying float vPhase;
+
+                    void main() {
+                        vec2 center = gl_PointCoord - 0.5;
+                        float dist = length(center) * 2.0;
+
+                        if (dist > 1.0) discard;
+
+                        vec3 color;
+                        float age = vLife;
+
+                        if (age < 0.3) {
+                            color = mix(baseColor, midColor, age / 0.3);
+                        } else if (age < 0.8) {
+                            color = mix(midColor, tipColor, (age - 0.3) / 0.5);
+                        } else {
+                            color = mix(tipColor, smokeColor, (age - 0.8) / 0.2);
+                        }
+
+                        float alpha = (1.0 - dist) * (1.0 - age);
+
+                        gl_FragColor = vec4(color, alpha);
+                    }
+                `,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false,
+                transparent: true
+            });
+
+            const fireGeometry = new THREE.BufferGeometry();
+            const positions = [];
+            const sizes = [];
+            const lives = [];
+            const phases = [];
+            const velocities = [];
+
+            for (let i = 0; i < fireConfig.particleCount; i++) {
+                const radius = Math.random() * fireConfig.baseRadius;
+                const theta = Math.random() * Math.PI * 2;
+                const x = radius * Math.cos(theta);
+                const z = radius * Math.sin(theta);
+                const y = Math.random() * 0.5;
+
+                positions.push(x, y, z);
+
+                sizes.push(fireConfig.particleSize * (0.5 + Math.random() * 0.5));
+
+                lives.push(Math.random());
+                phases.push(Math.random());
+
+                const speed = fireConfig.velocityFactor * (0.8 + Math.random() * 0.4);
+                const vx = (Math.random() - 0.5) * fireConfig.wiggleFactor;
+                const vy = speed * fireConfig.baseHeight;
+                const vz = (Math.random() - 0.5) * fireConfig.wiggleFactor;
+
+                velocities.push(vx, vy, vz);
+            }
+
+            fireGeometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            fireGeometry.setAttribute('size', new THREE.Float32BufferAttribute(sizes, 1));
+            fireGeometry.setAttribute('life', new THREE.Float32BufferAttribute(lives, 1));
+            fireGeometry.setAttribute('phase', new THREE.Float32BufferAttribute(phases, 1));
+            fireGeometry.setAttribute('velocity', new THREE.Float32BufferAttribute(velocities, 3));
+
+            const fireParticles = new THREE.Points(fireGeometry, fireMaterial);
+
+            const fireLight = new THREE.PointLight(0xff5500, params.lightIntensity, 10);
+            fireLight.position.set(0, 2, 0);
+
+            const fireGroup = new THREE.Group();
+            fireGroup.add(fireParticles);
+            fireGroup.add(fireLight);
+
+            return { fireGroup, fireMaterial, fireLight, fireGeometry };
+        }
+
+        let fireInstance = createRealisticFire();
+        window.scene.add(fireInstance.fireGroup);
+
+        const ambientLight = new THREE.AmbientLight(0x333333);
+        window.scene.add(ambientLight);
+
+        const clock = new THREE.Clock();
+
+        function rebuildFire() {
+            window.scene.remove(fireInstance.fireGroup);
+            fireInstance = createRealisticFire();
+            window.scene.add(fireInstance.fireGroup);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const elapsedTime = clock.getElapsedTime();
+
+            fireInstance.fireMaterial.uniforms.time.value = elapsedTime;
+
+            fireInstance.fireLight.intensity = params.lightIntensity * (1 + Math.sin(elapsedTime * 5) * 0.2);
+
+            controls.update();
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        window.renderer.setAnimationLoop(animate);
+
+        window.addEventListener('resize', () => {
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+        });
+
+        const gui = new GUI();
+        gui.domElement.style.top = '50px';
+        gui.title('真实火焰参数调节');
+        gui.add(params, 'particleCount', 100, 3000, 50).name('粒子数量').onChange(() => {
+            rebuildFire();
+        });
+        gui.add(params, 'particleSize', 0.1, 2, 0.1).name('粒子大小').onChange(() => {
+            rebuildFire();
+        });
+        gui.add(params, 'baseHeight', 1, 10, 0.5).name('火焰高度').onChange(() => {
+            rebuildFire();
+        });
+        gui.add(params, 'baseRadius', 0.3, 3, 0.1).name('底部半径').onChange(() => {
+            rebuildFire();
+        });
+        gui.add(params, 'velocityFactor', 0.1, 2, 0.1).name('上升速度');
+        gui.add(params, 'wiggleFactor', 0, 1, 0.05).name('摇摆程度');
+        gui.add(params, 'lightIntensity', 0.1, 3, 0.1).name('光源强度');
+
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

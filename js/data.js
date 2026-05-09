@@ -1532,6 +1532,14 @@ const threejsData = {
               version: "r179",
               url: "examples/z258/particle-fireParticles",
             },
+            {
+              id: "particle-realFire",
+              title: "真实火焰",
+              description: "真实火焰粒子效果，使用着色器实现颜色渐变和烟雾效果",
+              thumbnail: "images/particle-realFire.jpg",
+              version: "r179",
+              url: "examples/z258/particle-realFire",
+            },
           ],
         },
         {
