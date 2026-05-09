@@ -1492,6 +1492,14 @@ const threejsData = {
               version: "r179",
               url: "examples/z258/particle-snow",
             },
+            {
+              id: "particle-scattered",
+              title: "粒子聚散",
+              description: "粒子聚散动画效果，可在聚集和分散状态之间切换",
+              thumbnail: "images/particle-scattered.jpg",
+              version: "r179",
+              url: "examples/z258/particle-scattered",
+            },
           ],
         },
         {

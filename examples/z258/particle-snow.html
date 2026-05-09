@@ -142,6 +142,7 @@
         });
 
         const gui = new GUI();
+        gui.domElement.style.top = '50px';
         gui.title('雪花参数调节');
         gui.add(params, 'snowCount', 100, 5000, 100).name('雪花数量').onChange(v => {
             snowCount = v;

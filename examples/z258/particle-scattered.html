@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="粒子聚散动画效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 粒子聚散</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        const container = document.getElementById('threeContainer');
+
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x0a0a2a);
+
+        window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        window.camera.position.set(0, 0, 5);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(window.renderer.domElement);
+
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+
+        const params = {
+            particleCount: 1000,
+            spreadRadius: 3,
+            clusterCount: 5,
+            animSpeed: 1,
+            clusterRadius: 2,
+            particleSize: 0.03,
+            autoScatter: true,
+            cycleTime: 4
+        };
+
+        const positions = new Float32Array(params.particleCount * 3);
+        const originalPositions = new Float32Array(params.particleCount * 3);
+        const colors = new Float32Array(params.particleCount * 3);
+        const sizes = new Float32Array(params.particleCount);
+
+        const colorPalette = [
+            new THREE.Color(0xff6b6b),
+            new THREE.Color(0x4ecdc4),
+            new THREE.Color(0x45b7d1),
+            new THREE.Color(0xffa07a),
+            new THREE.Color(0x98d8c8)
+        ];
+
+        function initParticles() {
+            for (let i = 0; i < params.particleCount; i++) {
+                const clusterIndex = Math.floor(Math.random() * params.clusterCount);
+                const clusterAngle = (clusterIndex / params.clusterCount) * Math.PI * 2;
+                const clusterRadius = params.clusterRadius * Math.random();
+
+                const x = Math.cos(clusterAngle) * clusterRadius + (Math.random() - 0.5) * 0.5;
+                const y = (Math.random() - 0.5) * 2;
+                const z = Math.sin(clusterAngle) * clusterRadius + (Math.random() - 0.5) * 0.5;
+
+                positions[i * 3] = x;
+                positions[i * 3 + 1] = y;
+                positions[i * 3 + 2] = z;
+
+                originalPositions[i * 3] = x;
+                originalPositions[i * 3 + 1] = y;
+                originalPositions[i * 3 + 2] = z;
+
+                const color = colorPalette[clusterIndex % colorPalette.length];
+                colors[i * 3] = color.r;
+                colors[i * 3 + 1] = color.g;
+                colors[i * 3 + 2] = color.b;
+
+                sizes[i] = Math.random() * 0.02 + params.particleSize;
+            }
+        }
+
+        initParticles();
+
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+
+        const material = new THREE.ShaderMaterial({
+            uniforms: {
+                uTime: { value: 0 }
+            },
+            vertexShader: `
+                attribute float size;
+                attribute vec3 color;
+                varying vec3 vColor;
+                varying float vAlpha;
+                
+                void main() {
+                    vColor = color;
+                    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                    gl_PointSize = size * (300.0 / -mvPosition.z);
+                    gl_Position = projectionMatrix * mvPosition;
+                    vAlpha = 1.0;
+                }
+            `,
+            fragmentShader: `
+                varying vec3 vColor;
+                varying float vAlpha;
+                
+                void main() {
+                    float dist = length(gl_PointCoord - vec2(0.5));
+                    if (dist > 0.5) discard;
+                    float alpha = (1.0 - dist * 2.0) * vAlpha;
+                    gl_FragColor = vec4(vColor, alpha);
+                }
+            `,
+            transparent: true,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+
+        const particles = new THREE.Points(geometry, material);
+        window.scene.add(particles);
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        window.scene.add(ambientLight);
+
+        window.addEventListener('resize', () => {
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+        });
+
+        function animate() {
+            const time = material.uniforms.uTime.value += 0.01 * params.animSpeed;
+            const cyclePos = params.autoScatter ? (Math.sin(time * Math.PI / params.cycleTime) + 1) / 2 : 0;
+
+            const posAttr = particles.geometry.attributes.position;
+            for (let i = 0; i < params.particleCount; i++) {
+                const origX = originalPositions[i * 3];
+                const origY = originalPositions[i * 3 + 1];
+                const origZ = originalPositions[i * 3 + 2];
+
+                const spreadFactor = cyclePos * params.spreadRadius;
+                const randomOffset = (Math.random() - 0.5) * spreadFactor;
+
+                posAttr.array[i * 3] = origX + randomOffset + (Math.random() - 0.5) * spreadFactor * 0.5;
+                posAttr.array[i * 3 + 1] = origY + (Math.random() - 0.5) * spreadFactor * 0.5;
+                posAttr.array[i * 3 + 2] = origZ + randomOffset + (Math.random() - 0.5) * spreadFactor * 0.5;
+            }
+            posAttr.needsUpdate = true;
+
+            particles.rotation.y += 0.002 * params.animSpeed;
+
+            controls.update();
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        window.renderer.setAnimationLoop(animate);
+
+        const gui = new GUI();
+        gui.title('粒子聚散参数');
+        gui.add(params, 'particleCount', 100, 3000, 100).name('粒子数量').onChange(() => {
+            initParticles();
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+        });
+        gui.add(params, 'spreadRadius', 0, 10, 0.1).name('分散半径');
+        gui.add(params, 'clusterCount', 1, 20, 1).name('聚类数量').onChange(() => {
+            initParticles();
+            geometry.attributes.position.needsUpdate = true;
+            geometry.attributes.color.needsUpdate = true;
+        });
+        gui.add(params, 'clusterRadius', 0.5, 5, 0.1).name('聚类半径').onChange(() => {
+            initParticles();
+            geometry.attributes.position.needsUpdate = true;
+        });
+        gui.add(params, 'animSpeed', 0.1, 5, 0.1).name('动画速度');
+        gui.add(params, 'particleSize', 0.01, 0.1, 0.01).name('粒子大小');
+        gui.add(params, 'autoScatter').name('自动聚散');
+        gui.add(params, 'cycleTime', 1, 10, 0.5).name('周期时间');
+    </script>
+
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera) {
+                        if (window.composer) window.composer.render();
+                        else window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.composer ? window.composer.renderer.domElement : window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
