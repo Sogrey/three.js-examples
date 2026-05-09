@@ -1155,6 +1155,14 @@ const threejsData = {
                             url: "examples/z258/shader-raningSea"
                         },
                         {
+                            id: "shader-textStarShader",
+                            title: "点星感谢",
+                            description: "文字粒子动画效果，展示感谢信息的波浪发光效果",
+                            thumbnail: "images/shader-textStarShader.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-textStarShader"
+                        },
+                        {
                             id: "shader-blackhole",
                             title: "黑洞效果",
                             description: "展示黑洞效果的着色器实现，使用光线追踪模拟引力透镜效应和吸积盘",
