@@ -1516,6 +1516,14 @@ const threejsData = {
               version: "r179",
               url: "examples/z258/particle-pointsEarth",
             },
+            {
+              id: "particle-blendShader",
+              title: "粒子混合着色器",
+              description: "高级粒子混合着色器效果，支持多种运动模式和参数调节",
+              thumbnail: "images/particle-blendShader.jpg",
+              version: "r179",
+              url: "examples/z258/particle-blendShader",
+            },
           ],
         },
         {
