@@ -38,6 +38,8 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         container.appendChild(renderer.domElement);
 
+        window.renderer = renderer;
+
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.target.set(0, 0, 0);
         controls.update();
@@ -209,7 +211,8 @@
 
         scene.add(group);
 
-        const gui = new GUI();
+        const gui = new GUI();        
+        gui.domElement.style.top = '50px';
         const debugFolder = gui.addFolder('Debug');
 
         debugFolder.addColor(params, 'color').name('颜色').onChange((value) => {
@@ -245,7 +248,7 @@
             if (event.data && event.data.type === 'take-screenshot') {
                 try {
                     const quality = event.data.quality || 0.8;
-                    const canvas = renderer.domElement;
+                    const canvas = window.renderer.domElement;
                     const tempCanvas = document.createElement('canvas');
                     const maxSize = 600;
                     const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
