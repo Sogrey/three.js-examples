@@ -131,6 +131,8 @@
                 }
             `,
             fragmentShader: `
+                uniform float iTime;
+                uniform vec2 iResolution;
                 uniform float intensity;
                 uniform float mixRatio;
                 uniform vec3 mixColor;
