@@ -1216,6 +1216,14 @@ const threejsData = {
               url: "examples/z258/shader-heartShader",
             },
             {
+              id: "shader-chinaFlag",
+              title: "中国旗帜",
+              description: "飘动的中国红旗，使用程序化生成的红旗纹理",
+              thumbnail: "images/shader-chinaFlag.jpg",
+              version: "r179",
+              url: "examples/z258/shader-chinaFlag",
+            },
+            {
               id: "shader-blobShader",
               title: "Blob着色器",
               description:

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="中国旗帜 - 飘动的中国红旗">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 中国旗帜</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        window.scene = new THREE.Scene();
+
+        window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        window.camera.position.set(0.5, -0.5, 3);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+
+        window.addEventListener('resize', () => {
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+        });
+
+        const canvas = document.createElement('canvas');
+        canvas.width = 256;
+        canvas.height = 170;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#de2910';
+        ctx.fillRect(0, 0, 256, 170);
+        ctx.fillStyle = '#ffde00';
+        const starSize = 20;
+        const star1X = 30, star1Y = 25;
+        drawStar(ctx, star1X, star1Y, starSize);
+        drawStar(ctx, 60, 45, starSize * 0.4, -Math.PI * 0.15);
+        drawStar(ctx, 75, 20, starSize * 0.4, Math.PI * 0.15);
+        drawStar(ctx, 75, 55, starSize * 0.4, -Math.PI * 0.15);
+        drawStar(ctx, 90, 35, starSize * 0.4, Math.PI * 0.15);
+
+        function drawStar(ctx, cx, cy, size, rotation = 0) {
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(rotation);
+            ctx.beginPath();
+            for (let i = 0; i < 5; i++) {
+                const angle = (i * 4 * Math.PI) / 5 - Math.PI / 2;
+                const x = Math.cos(angle) * size;
+                const y = Math.sin(angle) * size;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+        }
+
+        const flagTexture = new THREE.CanvasTexture(canvas);
+        flagTexture.colorSpace = THREE.SRGBColorSpace;
+
+        const flagMaterial = new THREE.ShaderMaterial({
+            vertexShader: `
+                uniform mat4 projectionMatrix;
+                uniform mat4 modelMatrix;
+                uniform mat4 viewMatrix;
+                uniform vec2 uFrequency;
+                uniform float uTime;
+                uniform float uStrength;
+                varying float vDark;
+                varying vec2 vUv;
+
+                void main() {
+                    vec4 modelPosition = modelMatrix * vec4(position, 1.0);
+                    float xFactor = clamp((modelPosition.x + 1.5) / 3.0, 0.0, 1.0);
+                    float vWave = sin(modelPosition.x * uFrequency.x - uTime) * xFactor * uStrength;
+                    vWave += sin(modelPosition.y * uFrequency.y - uTime) * xFactor * uStrength * 0.5;
+                    modelPosition.y += sin(modelPosition.x * 2.0 + uTime * 0.5) * 0.05 * xFactor;
+                    modelPosition.z += vWave;
+                    vec4 viewPosition = viewMatrix * modelPosition;
+                    vec4 projectedPosition = projectionMatrix * viewPosition;
+                    gl_Position = projectedPosition;
+                    vUv = uv;
+                    vDark = vWave;
+                }
+            `,
+            fragmentShader: `
+                precision mediump float;
+                varying float vDark;
+                uniform sampler2D uTexture;
+                varying vec2 vUv;
+
+                void main() {
+                    vec4 textColor = texture2D(uTexture, vUv);
+                    textColor.rgb *= vDark + 0.85;
+                    gl_FragColor = textColor;
+                }
+            `,
+            side: THREE.DoubleSide,
+            uniforms: {
+                uFrequency: { value: new THREE.Vector2(3, 3) },
+                uTime: { value: 0 },
+                uTexture: { value: flagTexture },
+                uStrength: { value: 0.2 }
+            }
+        });
+
+        const flagGeometry = new THREE.PlaneGeometry(3, 2, 64, 64);
+        const flagMesh = new THREE.Mesh(flagGeometry, flagMaterial);
+        window.scene.add(flagMesh);
+
+        function animate() {
+            flagMaterial.uniforms.uTime.value += 0.06;
+            controls.update();
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        window.renderer.setAnimationLoop(animate);
+    </script>
+
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera) {
+                        if (window.composer) window.composer.render();
+                        else window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.composer ? window.composer.renderer.domElement : window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
