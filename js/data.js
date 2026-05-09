@@ -1500,6 +1500,14 @@ const threejsData = {
               version: "r179",
               url: "examples/z258/particle-scattered",
             },
+            {
+              id: "particle-galaxyStar",
+              title: "星系",
+              description: "星系粒子效果，带有旋臂结构可调节",
+              thumbnail: "images/particle-galaxyStar.jpg",
+              version: "r179",
+              url: "examples/z258/particle-galaxyStar",
+            },
           ],
         },
         {
