@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="粒子地球效果">
+    <meta name="description" content="粒子地球效果 - 使用真实世界地图纹理">
     <meta name="three-version" content="r179">
     <title>Three.js 示例 - 粒子地球</title>
     <link rel="stylesheet" href="../../css/example-common.css">
@@ -41,53 +41,107 @@
 
         const params = {
             earthRadius: 1,
-            particleCount: 3000,
-            particleSize: 0.015,
+            particleCount: 5000,
+            particleSize: 0.012,
             rotationSpeed: 0.5,
-            glowIntensity: 0.8,
+            glowIntensity: 0.6,
             atmosphereColor: '#4fc3f7',
-            landColor: '#4caf50',
-            oceanColor: '#1976d2',
             showAtmosphere: true,
-            showGlow: true
+            showGlow: true,
+            useTexture: true
         };
 
         let earth, atmosphere, glow;
+        let worldTexture;
 
-        function createEarth() {
+        const textureLoader = new THREE.TextureLoader();
+        
+        function loadTexture() {
+            return new Promise((resolve) => {
+                textureLoader.load('../../images/textures/world.jpg', (texture) => {
+                    texture.colorSpace = THREE.SRGBColorSpace;
+                    resolve(texture);
+                }, undefined, () => {
+                    resolve(null);
+                });
+            });
+        }
+
+        function latLngToUV(lat, lng) {
+            const u = (lng + 180) / 360;
+            const v = (90 - lat) / 180;
+            return { u, v };
+        }
+
+        function sphericalToCartesian(radius, theta, phi) {
+            return {
+                x: radius * Math.sin(phi) * Math.cos(theta),
+                y: radius * Math.sin(phi) * Math.sin(theta),
+                z: radius * Math.cos(phi)
+            };
+        }
+
+        async function createEarth() {
             if (earth) {
                 window.scene.remove(earth);
                 earth.geometry.dispose();
                 earth.material.dispose();
             }
 
+            if (!worldTexture && params.useTexture) {
+                worldTexture = await loadTexture();
+            }
+
             const positions = new Float32Array(params.particleCount * 3);
             const colors = new Float32Array(params.particleCount * 3);
             const sizes = new Float32Array(params.particleCount);
 
-            const landColorObj = new THREE.Color(params.landColor);
-            const oceanColorObj = new THREE.Color(params.oceanColor);
+            const canvas = document.createElement('canvas');
+            canvas.width = 1024;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+
+            if (worldTexture) {
+                ctx.drawImage(worldTexture.image, 0, 0, 1024, 512);
+            } else {
+                ctx.fillStyle = '#1976d2';
+                ctx.fillRect(0, 0, 1024, 512);
+                ctx.fillStyle = '#4caf50';
+                ctx.fillRect(100, 100, 200, 100);
+                ctx.fillRect(400, 80, 150, 120);
+                ctx.fillRect(600, 150, 250, 150);
+                ctx.fillRect(850, 200, 120, 100);
+            }
+
+            const imageData = ctx.getImageData(0, 0, 1024, 512);
+            const data = imageData.data;
 
             for (let i = 0; i < params.particleCount; i++) {
                 const theta = Math.random() * Math.PI * 2;
                 const phi = Math.acos(2 * Math.random() - 1);
 
-                const x = params.earthRadius * Math.sin(phi) * Math.cos(theta);
-                const y = params.earthRadius * Math.sin(phi) * Math.sin(theta);
-                const z = params.earthRadius * Math.cos(phi);
+                const pos = sphericalToCartesian(params.earthRadius, theta, phi);
 
-                positions[i * 3] = x;
-                positions[i * 3 + 1] = y;
-                positions[i * 3 + 2] = z;
+                positions[i * 3] = pos.x;
+                positions[i * 3 + 1] = pos.y;
+                positions[i * 3 + 2] = pos.z;
 
-                const isLand = Math.random() > 0.7;
-                const color = isLand ? landColorObj : oceanColorObj;
-                const brightness = 0.7 + Math.random() * 0.3;
-                color.multiplyScalar(brightness);
+                const lat = (Math.PI / 2 - phi) * 180 / Math.PI;
+                const lng = theta * 180 / Math.PI;
+                const uv = latLngToUV(lat, lng);
 
-                colors[i * 3] = color.r;
-                colors[i * 3 + 1] = color.g;
-                colors[i * 3 + 2] = color.b;
+                const x = Math.floor(uv.u * 1024);
+                const y = Math.floor(uv.v * 512);
+                const idx = (y * 1024 + x) * 4;
+
+                const r = data[idx] / 255;
+                const g = data[idx + 1] / 255;
+                const b = data[idx + 2] / 255;
+
+                const brightness = 0.8 + Math.random() * 0.2;
+                colors[i * 3] = r * brightness;
+                colors[i * 3 + 1] = g * brightness;
+                colors[i * 3 + 2] = b * brightness;
 
                 sizes[i] = params.particleSize * (0.5 + Math.random() * 0.5);
             }
@@ -102,12 +156,10 @@
                     attribute float size;
                     varying vec3 vColor;
                     varying vec3 vNormal;
-                    varying vec3 vPosition;
                     
                     void main() {
                         vColor = color;
                         vNormal = normalize(position);
-                        vPosition = position;
                         vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
                         gl_PointSize = size * (300.0 / -mvPosition.z);
                         gl_Position = projectionMatrix * mvPosition;
@@ -116,7 +168,6 @@
                 fragmentShader: `
                     varying vec3 vColor;
                     varying vec3 vNormal;
-                    varying vec3 vPosition;
                     
                     void main() {
                         float dist = length(gl_PointCoord - vec2(0.5));
@@ -127,7 +178,7 @@
                         
                         vec3 lightDir = normalize(vec3(1.0, 0.5, 1.0));
                         float diff = max(dot(vNormal, lightDir), 0.0);
-                        diff = diff * 0.6 + 0.4;
+                        diff = diff * 0.7 + 0.3;
                         
                         gl_FragColor = vec4(vColor * diff, alpha);
                     }
@@ -171,8 +222,8 @@
                     void main() {
                         vec3 viewDir = normalize(cameraPosition - vPosition);
                         float rim = 1.0 - max(dot(viewDir, vNormal), 0.0);
-                        rim = pow(rim, 3.0);
-                        gl_FragColor = vec4(uColor, rim * 0.6);
+                        rim = pow(rim, 3.5);
+                        gl_FragColor = vec4(uColor, rim * 0.5);
                     }
                 `,
                 uniforms: {
@@ -197,7 +248,7 @@
 
             if (!params.showGlow) return;
 
-            const geometry = new THREE.SphereGeometry(params.earthRadius * 1.2, 64, 64);
+            const geometry = new THREE.SphereGeometry(params.earthRadius * 1.25, 64, 64);
             const material = new THREE.ShaderMaterial({
                 vertexShader: `
                     varying vec3 vNormal;
@@ -209,12 +260,16 @@
                 `,
                 fragmentShader: `
                     varying vec3 vNormal;
+                    uniform float uIntensity;
                     
                     void main() {
-                        float intensity = pow(0.5 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0);
-                        gl_FragColor = vec4(0.3, 0.6, 1.0, intensity * ${params.glowIntensity.toFixed(1)});
+                        float intensity = pow(0.45 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0);
+                        gl_FragColor = vec4(0.2, 0.5, 0.9, intensity * uIntensity);
                     }
                 `,
+                uniforms: {
+                    uIntensity: { value: params.glowIntensity }
+                },
                 transparent: true,
                 blending: THREE.AdditiveBlending,
                 side: THREE.BackSide,
@@ -225,9 +280,10 @@
             window.scene.add(glow);
         }
 
-        createEarth();
-        createAtmosphere();
-        createGlow();
+        createEarth().then(() => {
+            createAtmosphere();
+            createGlow();
+        });
 
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
         window.scene.add(ambientLight);
@@ -255,19 +311,19 @@
         const gui = new GUI();
         gui.title('粒子地球参数');
         gui.add(params, 'earthRadius', 0.5, 2, 0.1).name('地球半径').onChange(() => {
-            createEarth();
-            createAtmosphere();
-            createGlow();
+            createEarth().then(() => {
+                createAtmosphere();
+                createGlow();
+            });
         });
-        gui.add(params, 'particleCount', 500, 10000, 100).name('粒子数量').onChange(() => createEarth());
+        gui.add(params, 'particleCount', 1000, 10000, 500).name('粒子数量').onChange(() => createEarth());
         gui.add(params, 'particleSize', 0.005, 0.05, 0.005).name('粒子大小').onChange(() => createEarth());
         gui.add(params, 'rotationSpeed', 0, 3, 0.1).name('旋转速度');
         gui.add(params, 'glowIntensity', 0.1, 2, 0.1).name('光晕强度').onChange(() => createGlow());
-        gui.addColor(params, 'landColor').name('陆地颜色').onChange(() => createEarth());
-        gui.addColor(params, 'oceanColor').name('海洋颜色').onChange(() => createEarth());
         gui.addColor(params, 'atmosphereColor').name('大气颜色').onChange(() => createAtmosphere());
         gui.add(params, 'showAtmosphere').name('显示大气层').onChange(() => createAtmosphere());
         gui.add(params, 'showGlow').name('显示光晕').onChange(() => createGlow());
+        gui.add(params, 'useTexture').name('使用纹理').onChange(() => createEarth());
     </script>
 
     <script>
