@@ -23,6 +23,7 @@
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 
         const container = document.getElementById('threeContainer');
         
@@ -99,36 +100,58 @@
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
         window.scene.add(ambientLight);
 
-        window.addEventListener('resize', () => {
-            window.renderer.setSize(window.innerWidth, window.innerHeight);
-            window.camera.aspect = window.innerWidth / window.innerHeight;
-            window.camera.updateProjectionMatrix();
-        });
+        const params = {
+            snowCount: 2000,
+            fallSpeed: 1,
+            swayAmount: 1,
+            rotationSpeed: 0.001,
+            pointSize: 0.03,
+            areaWidth: 10,
+            areaHeight: 10
+        };
 
         function animate() {
             const positions = snow.geometry.attributes.position.array;
             const time = material.uniforms.uTime.value += 0.01;
 
             for (let i = 0; i < snowCount; i++) {
-                positions[i * 3] += velocities[i * 3] + Math.sin(time + i * 0.1) * 0.005;
-                positions[i * 3 + 1] += velocities[i * 3 + 1];
-                positions[i * 3 + 2] += velocities[i * 3 + 2] + Math.cos(time + i * 0.1) * 0.005;
+                positions[i * 3] += velocities[i * 3] * params.swayAmount + Math.sin(time + i * 0.1) * 0.005 * params.swayAmount;
+                positions[i * 3 + 1] += velocities[i * 3 + 1] * params.fallSpeed;
+                positions[i * 3 + 2] += velocities[i * 3 + 2] * params.swayAmount + Math.cos(time + i * 0.1) * 0.005 * params.swayAmount;
 
-                if (positions[i * 3 + 1] < -5) {
-                    positions[i * 3 + 1] = 5;
-                    positions[i * 3] = (Math.random() - 0.5) * 10;
-                    positions[i * 3 + 2] = (Math.random() - 0.5) * 10;
+                if (positions[i * 3 + 1] < -params.areaHeight / 2) {
+                    positions[i * 3 + 1] = params.areaHeight / 2;
+                    positions[i * 3] = (Math.random() - 0.5) * params.areaWidth;
+                    positions[i * 3 + 2] = (Math.random() - 0.5) * params.areaWidth;
                 }
             }
 
             snow.geometry.attributes.position.needsUpdate = true;
-            snow.rotation.y += 0.001;
+            snow.rotation.y += params.rotationSpeed;
 
             controls.update();
             window.renderer.render(window.scene, window.camera);
         }
 
         window.renderer.setAnimationLoop(animate);
+
+        window.addEventListener('resize', () => {
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+        });
+
+        const gui = new GUI();
+        gui.title('雪花参数调节');
+        gui.add(params, 'snowCount', 100, 5000, 100).name('雪花数量').onChange(v => {
+            snowCount = v;
+        });
+        gui.add(params, 'fallSpeed', 0.1, 5, 0.1).name('下落速度');
+        gui.add(params, 'swayAmount', 0, 3, 0.1).name('摇摆幅度');
+        gui.add(params, 'rotationSpeed', 0, 0.01, 0.001).name('旋转速度');
+        gui.add(params, 'pointSize', 0.01, 0.1, 0.01).name('雪花大小');
+        gui.add(params, 'areaWidth', 5, 20, 1).name('区域宽度');
+        gui.add(params, 'areaHeight', 5, 20, 1).name('区域高度');
     </script>
 
     <script>

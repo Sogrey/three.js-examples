@@ -23,7 +23,6 @@
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 
         window.scene = new THREE.Scene();
 
@@ -150,32 +149,6 @@
             controls.update();
             window.renderer.render(window.scene, window.camera);
         }
-
-        const params = {
-            waveFrequencyX: 3,
-            waveFrequencyY: 3,
-            waveStrength: 0.2,
-            waveSpeed: 0.06
-        };
-
-        function animate() {
-            flagMaterial.uniforms.uTime.value += params.waveSpeed;
-            controls.update();
-            window.renderer.render(window.scene, window.camera);
-        }
-
-        const gui = new GUI();
-        gui.title('旗帜参数调节');
-        gui.add(params, 'waveFrequencyX', 0.1, 10, 0.1).name('波浪频率X').onChange(v => {
-            flagMaterial.uniforms.uFrequency.value.x = v;
-        });
-        gui.add(params, 'waveFrequencyY', 0.1, 10, 0.1).name('波浪频率Y').onChange(v => {
-            flagMaterial.uniforms.uFrequency.value.y = v;
-        });
-        gui.add(params, 'waveStrength', 0, 1, 0.01).name('波浪强度').onChange(v => {
-            flagMaterial.uniforms.uStrength.value = v;
-        });
-        gui.add(params, 'waveSpeed', 0.01, 0.2, 0.01).name('波浪速度');
 
         window.renderer.setAnimationLoop(animate);
     </script>
