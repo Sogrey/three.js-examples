@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="星系粒子效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 星系</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        const container = document.getElementById('threeContainer');
+
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x000005);
+
+        window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        window.camera.position.set(0, 0, 5);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(window.renderer.domElement);
+
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+
+        const params = {
+            galaxyRadius: 3,
+            armCount: 5,
+            armSpread: 0.5,
+            twistAmount: 2,
+            starCount: 5000,
+            coreRadius: 0.5,
+            coreBrightness: 1.5,
+            rotationSpeed: 0.5,
+            starSize: 0.02,
+            color1: '#ff6b6b',
+            color2: '#4ecdc4',
+            color3: '#ffffff'
+        };
+
+        let positions, colors, sizes, galaxy;
+
+        function createGalaxy() {
+            if (galaxy) {
+                window.scene.remove(galaxy);
+                galaxy.geometry.dispose();
+                galaxy.material.dispose();
+            }
+
+            positions = new Float32Array(params.starCount * 3);
+            colors = new Float32Array(params.starCount * 3);
+            sizes = new Float32Array(params.starCount);
+
+            const colorObj1 = new THREE.Color(params.color1);
+            const colorObj2 = new THREE.Color(params.color2);
+            const colorObj3 = new THREE.Color(params.color3);
+
+            for (let i = 0; i < params.starCount; i++) {
+                const armIndex = i % params.armCount;
+                const armAngle = (armIndex / params.armCount) * Math.PI * 2;
+
+                const distance = Math.random() * params.galaxyRadius;
+                const distanceFactor = distance / params.galaxyRadius;
+
+                const twist = distance * params.twistAmount;
+                const spread = params.armSpread * distanceFactor;
+
+                const angle = armAngle + twist + (Math.random() - 0.5) * spread;
+
+                const x = Math.cos(angle) * distance + (Math.random() - 0.5) * 0.1;
+                const y = (Math.random() - 0.5) * 0.2 * (1 - distanceFactor);
+                const z = Math.sin(angle) * distance + (Math.random() - 0.5) * 0.1;
+
+                positions[i * 3] = x;
+                positions[i * 3 + 1] = y;
+                positions[i * 3 + 2] = z;
+
+                let color;
+                const colorRand = Math.random();
+                if (colorRand < 0.33) {
+                    color = colorObj1.clone();
+                } else if (colorRand < 0.66) {
+                    color = colorObj2.clone();
+                } else {
+                    color = colorObj3.clone();
+                }
+
+                const brightness = 0.5 + Math.random() * 0.5;
+                color.multiplyScalar(brightness);
+
+                colors[i * 3] = color.r;
+                colors[i * 3 + 1] = color.g;
+                colors[i * 3 + 2] = color.b;
+
+                sizes[i] = params.starSize * (0.5 + Math.random() * 0.5) * (1 - distanceFactor * 0.5);
+            }
+
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+
+            const material = new THREE.ShaderMaterial({
+                uniforms: {
+                    uCoreRadius: { value: params.coreRadius },
+                    uCoreBrightness: { value: params.coreBrightness }
+                },
+                vertexShader: `
+                    attribute float size;
+                    varying vec3 vColor;
+                    varying float vDistance;
+                    
+                    void main() {
+                        vColor = color;
+                        vDistance = length(position);
+                        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                        gl_PointSize = size * (300.0 / -mvPosition.z);
+                        gl_Position = projectionMatrix * mvPosition;
+                    }
+                `,
+                fragmentShader: `
+                    uniform float uCoreRadius;
+                    uniform float uCoreBrightness;
+                    varying vec3 vColor;
+                    varying float vDistance;
+                    
+                    void main() {
+                        float dist = length(gl_PointCoord - vec2(0.5));
+                        if (dist > 0.5) discard;
+                        
+                        float coreBrightness = 1.0 + uCoreBrightness * (1.0 - vDistance / 3.0);
+                        float alpha = (1.0 - dist * 2.0);
+                        alpha = pow(alpha, 1.5);
+                        
+                        gl_FragColor = vec4(vColor * coreBrightness, alpha);
+                    }
+                `,
+                transparent: true,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false,
+                vertexColors: true
+            });
+
+            galaxy = new THREE.Points(geometry, material);
+            window.scene.add(galaxy);
+        }
+
+        createGalaxy();
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+        window.scene.add(ambientLight);
+
+        window.addEventListener('resize', () => {
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+        });
+
+        function animate() {
+            if (galaxy) {
+                galaxy.rotation.y += 0.002 * params.rotationSpeed;
+            }
+            controls.update();
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        window.renderer.setAnimationLoop(animate);
+
+        const gui = new GUI();
+        gui.title('星系参数');
+        gui.add(params, 'starCount', 1000, 20000, 500).name('星星数量').onChange(() => createGalaxy());
+        gui.add(params, 'galaxyRadius', 1, 10, 0.1).name('星系半径').onChange(() => createGalaxy());
+        gui.add(params, 'armCount', 2, 12, 1).name('旋臂数量').onChange(() => createGalaxy());
+        gui.add(params, 'armSpread', 0.1, 2, 0.1).name('旋臂展开').onChange(() => createGalaxy());
+        gui.add(params, 'twistAmount', 0, 5, 0.1).name('扭曲程度').onChange(() => createGalaxy());
+        gui.add(params, 'coreRadius', 0.1, 2, 0.1).name('核心半径');
+        gui.add(params, 'coreBrightness', 0.5, 3, 0.1).name('核心亮度');
+        gui.add(params, 'rotationSpeed', 0, 2, 0.1).name('旋转速度');
+        gui.add(params, 'starSize', 0.01, 0.1, 0.01).name('星星大小').onChange(() => createGalaxy());
+        gui.addColor(params, 'color1').name('颜色1').onChange(() => createGalaxy());
+        gui.addColor(params, 'color2').name('颜色2').onChange(() => createGalaxy());
+        gui.addColor(params, 'color3').name('颜色3').onChange(() => createGalaxy());
+    </script>
+
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera) {
+                        if (window.composer) window.composer.render();
+                        else window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.composer ? window.composer.renderer.domElement : window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

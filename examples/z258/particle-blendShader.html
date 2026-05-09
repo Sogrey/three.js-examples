@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="粒子混合着色器效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 粒子混合着色器</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        const container = document.getElementById('threeContainer');
+
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x000000);
+
+        window.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+        window.camera.position.set(0, 10, 10);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(window.renderer.domElement);
+
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.enableDamping = true;
+
+        const params = {
+            particlesSum: 10000,
+            inner: 0,
+            outer: 150,
+            maxVelocity: 30,
+            sportType: '全随机',
+            speed: 0.01,
+            intensity: 8,
+            mixRatio: 0.7,
+            mixColor: '#ffffff',
+            hasUv: true,
+            size: 30,
+            discardVal: 0.5,
+            opacity: 1,
+            isdecaySize: true
+        };
+
+        const positions = new Float32Array(params.particlesSum * 3);
+        const velocities = new Float32Array(params.particlesSum * 3);
+
+        function getPosition() {
+            let x, y, z;
+            do {
+                x = Math.random() * 2 * params.outer - params.outer;
+                y = Math.random() * 2 * params.outer - params.outer;
+                z = Math.random() * 2 * params.outer - params.outer;
+            } while (Math.abs(x) <= params.inner && Math.abs(y) <= params.inner && Math.abs(z) <= params.inner);
+            return [x, y, z];
+        }
+
+        for (let i = 0; i < params.particlesSum; i++) {
+            const [x, y, z] = getPosition();
+            positions[i * 3] = x;
+            positions[i * 3 + 1] = y;
+            positions[i * 3 + 2] = z;
+        }
+
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+        const uniforms = {
+            iResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+            iTime: { value: 1.0 },
+            speed: { value: params.speed },
+            intensity: { value: params.intensity },
+            mixRatio: { value: params.mixRatio },
+            mixColor: { value: new THREE.Color(params.mixColor) },
+            hasUv: { value: params.hasUv },
+            pointTexture: { value: null },
+            size: { value: params.size },
+            discardVal: { value: params.discardVal },
+            opacity: { value: params.opacity },
+            isdecaySize: { value: params.isdecaySize }
+        };
+
+        const loader = new THREE.TextureLoader();
+        loader.load('../../images/textures/particle/circle.png', (texture) => {
+            uniforms.pointTexture.value = texture;
+        });
+
+        const blendFrag = `
+            vec3 c;
+            float l,z=iTime;
+            for(int i=0;i<3;i++) {
+                vec2 uv,p=gl_FragCoord.xy/iResolution.xy/2.0;
+                uv=p;
+                p-=.3;
+                if(hasUv) uv=vUv;
+                z+=.07;
+                l=length(p);
+                uv+=p/l*(sin(z)+1.)*abs(sin(l*9.-z-z));
+                c[i]=.01/length(mod(uv,1.)-.5);
+            }
+            vec3 effect_color = c;
+        `;
+
+        const material = new THREE.ShaderMaterial({
+            uniforms: uniforms,
+            vertexShader: `
+                uniform float size;
+                uniform bool isdecaySize;
+                varying vec2 vUv;
+                
+                void main() {
+                    vUv = uv;
+                    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                    gl_PointSize = isdecaySize ? size * (300.0 / -mvPosition.z) : size;
+                    gl_Position = projectionMatrix * mvPosition;
+                }
+            `,
+            fragmentShader: `
+                uniform float iTime;
+                uniform vec2 iResolution;
+                uniform float intensity;
+                uniform float mixRatio;
+                uniform vec3 mixColor;
+                uniform bool hasUv;
+                uniform sampler2D pointTexture;
+                uniform float discardVal;
+                uniform float opacity;
+                varying vec2 vUv;
+                
+                void main() {
+                    vec2 vUvPoint = gl_PointCoord.xy;
+                    vec3 c;
+                    float l,z=iTime;
+                    for(int i=0;i<3;i++) {
+                        vec2 uv,p=gl_FragCoord.xy/iResolution.xy/2.0;
+                        uv=p;
+                        p-=.3;
+                        if(hasUv) uv=vUv;
+                        z+=.07;
+                        l=length(p);
+                        uv+=p/l*(sin(z)+1.)*abs(sin(l*9.-z-z));
+                        c[i]=.01/length(mod(uv,1.)-.5);
+                    }
+                    vec3 effect_color = c;
+                    
+                    vec3 useColor = effect_color;
+                    vec4 textureColor = texture2D(pointTexture, vUvPoint);
+                    if (textureColor.a < discardVal) discard;
+                    else useColor *= textureColor.rgb;
+                    gl_FragColor = vec4(mix(mixColor, useColor * vec3(intensity, intensity, intensity), mixRatio), opacity);
+                }
+            `,
+            transparent: true,
+            depthTest: true,
+            blending: THREE.AdditiveBlending
+        });
+
+        const mesh = new THREE.Points(geometry, material);
+        window.scene.add(mesh);
+
+        function updateParticles() {
+            const posAttr = geometry.attributes.position;
+            const arr = posAttr.array;
+
+            for (let i = 0; i < params.particlesSum; i++) {
+                let vx = 0, vy = 0, vz = 0;
+
+                switch (params.sportType) {
+                    case '全随机':
+                        vx = (Math.random() - 0.5) * params.maxVelocity / 1000;
+                        vy = (Math.random() - 0.5) * params.maxVelocity / 1000;
+                        vz = (Math.random() - 0.5) * params.maxVelocity / 1000;
+                        break;
+                    case '随机向上':
+                        vx = (Math.random() - 0.5) * params.maxVelocity / 1000;
+                        vy = Math.abs((Math.random() - 0.5) * params.maxVelocity / 100000);
+                        vz = (Math.random() - 0.5) * params.maxVelocity / 1000;
+                        break;
+                    case '随机向下':
+                        vx = (Math.random() - 0.5) * params.maxVelocity / 1000;
+                        vy = -Math.abs((Math.random() - 0.5) * params.maxVelocity / 100000);
+                        vz = (Math.random() - 0.5) * params.maxVelocity / 1000;
+                        break;
+                    case '直线匀速向上':
+                        vy = params.maxVelocity / 2 / 100000;
+                        break;
+                    case '直线匀速向下':
+                        vy = -params.maxVelocity / 2 / 100000;
+                        break;
+                }
+
+                arr[i * 3] += vx;
+                arr[i * 3 + 1] += vy;
+                arr[i * 3 + 2] += vz;
+
+                if (Math.abs(arr[i * 3]) > params.outer ||
+                    Math.abs(arr[i * 3 + 1]) > params.outer ||
+                    Math.abs(arr[i * 3 + 2]) > params.outer ||
+                    (Math.abs(arr[i * 3]) < params.inner &&
+                     Math.abs(arr[i * 3 + 1]) < params.inner &&
+                     Math.abs(arr[i * 3 + 2]) < params.inner)) {
+
+                    const [x, y, z] = getPosition();
+                    arr[i * 3] = x;
+                    arr[i * 3 + 1] = y;
+                    arr[i * 3 + 2] = z;
+                }
+            }
+            posAttr.needsUpdate = true;
+        }
+
+        function animate() {
+            updateParticles();
+            uniforms.iTime.value += uniforms.speed.value;
+            controls.update();
+            window.renderer.render(window.scene, window.camera);
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+            uniforms.iResolution.value.set(window.innerWidth, window.innerHeight);
+        });
+
+        const gui = new GUI();
+        gui.domElement.style.position = 'absolute';
+        gui.domElement.style.top = '50px';
+        gui.domElement.style.right = '10px';
+        gui.domElement.style.zIndex = '1000';
+        const particleFolder = gui.addFolder('粒子设置');
+        particleFolder.add(params, 'particlesSum', 1000, 50000, 1000).name('粒子数量').onChange(() => {
+            location.reload();
+        });
+        particleFolder.add(params, 'outer', 10, 300, 1).name('区域范围');
+        particleFolder.add(params, 'sportType', ['全随机', '随机向上', '随机向下', '直线匀速向上', '直线匀速向下']).name('运动类型');
+
+        const shaderFolder = gui.addFolder('着色器参数');
+        shaderFolder.add(params, 'speed', 0, 0.1, 0.001).name('速度').onChange(v => uniforms.speed.value = v);
+        shaderFolder.add(params, 'intensity', 0, 100, 0.1).name('亮度').onChange(v => uniforms.intensity.value = v);
+        shaderFolder.add(params, 'mixRatio', 0, 1, 0.01).name('混合比例').onChange(v => uniforms.mixRatio.value = v);
+        shaderFolder.addColor(params, 'mixColor').name('基础颜色').onChange(v => uniforms.mixColor.value.set(v));
+        shaderFolder.add(params, 'hasUv').name('使用UV').onChange(v => uniforms.hasUv.value = v);
+
+        const visualFolder = gui.addFolder('视觉效果');
+        visualFolder.add(params, 'size', 1, 100, 1).name('粒子大小').onChange(v => uniforms.size.value = v);
+        visualFolder.add(params, 'discardVal', 0, 1, 0.01).name('透明度阈值').onChange(v => uniforms.discardVal.value = v);
+        visualFolder.add(params, 'opacity', 0, 1, 0.01).name('不透明度').onChange(v => uniforms.opacity.value = v);
+        visualFolder.add(params, 'isdecaySize').name('距离衰减').onChange(v => uniforms.isdecaySize.value = v);
+    </script>
+
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

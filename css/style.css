@@ -376,6 +376,7 @@ header {
     justify-content: center;
     opacity: 0;
     transition: var(--transition);
+    z-index: 9;
 }
 
 .example-card:hover .view-btn {

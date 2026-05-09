@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="建筑线条效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 建筑线条</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { LineSegments2 } from 'three/addons/lines/LineSegments2.js';
+        import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
+        import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
+
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x1a1a2e);
+
+        window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100000);
+        window.camera.position.set(100, 80, 100);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        window.renderer.setPixelRatio(window.devicePixelRatio * 1.3);
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('threeContainer').appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(window.camera, renderer.domElement);
+        controls.target.set(0, 20, 0);
+        controls.update();
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        window.scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+        directionalLight.position.set(50, 100, 50);
+        window.scene.add(directionalLight);
+
+        window.scene.add(new THREE.AxesHelper(100));
+
+        function createBuilding(x, z, width, depth, height, color) {
+            const geometry = new THREE.BoxGeometry(width, height, depth);
+            const material = new THREE.MeshPhongMaterial({ 
+                color: color,
+                transparent: true,
+                opacity: 0.3
+            });
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.set(x, height / 2, z);
+            window.scene.add(mesh);
+
+            const edges = new THREE.EdgesGeometry(geometry);
+            const lineGeometry = new LineSegmentsGeometry().fromEdgesGeometry(edges);
+            const lineMaterial = new LineMaterial({
+                color: 0xfcde8c,
+                linewidth: 2.5,
+                resolution: new THREE.Vector2(window.innerWidth, window.innerHeight)
+            });
+
+            const lines = new LineSegments2(lineGeometry, lineMaterial);
+            lines.computeLineDistances();
+            lines.position.copy(mesh.position);
+            window.scene.add(lines);
+
+            return { mesh, lines };
+        }
+
+        createBuilding(-40, -30, 20, 20, 50, 0x4a90d9);
+        createBuilding(-10, -30, 15, 15, 70, 0x5ab8e8);
+        createBuilding(20, -30, 25, 25, 40, 0x6cc4f0);
+        createBuilding(-30, 10, 18, 18, 60, 0x7dd0f8);
+        createBuilding(0, 10, 22, 22, 80, 0x8ddcff);
+        createBuilding(30, 10, 16, 16, 55, 0x9ee8ff);
+        createBuilding(-20, 40, 20, 20, 45, 0xafefff);
+        createBuilding(10, 40, 18, 18, 75, 0xbff5ff);
+        createBuilding(40, 40, 24, 24, 50, 0xcffbff);
+
+        window.addEventListener('resize', () => {
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        animate();
+
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

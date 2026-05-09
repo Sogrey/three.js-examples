@@ -1,1939 +1,2179 @@
 // Three.js 示例数据
 const threejsData = {
-    categories: [
+  categories: [
+    {
+      id: "basic",
+      name: "基础示例",
+      icon: "bi-box",
+      subcategories: [
         {
-            id: "basic",
-            name: "基础示例",
-            icon: "bi-box",
-            subcategories: [
-                {
-                    id: "basic-geometry",
-                    name: "几何体",
-                    examples: [
-                        {
-                            id: "basic-geometry-cube",
-                            title: "立方体",
-                            description: "创建一个简单的立方体，并添加基本的旋转动画",
-                            thumbnail: "images/basic-geometry-cube.jpg",
-                            version: "r179",
-                            url: "examples/basic-geometry-cube"
-                        },
-                        {
-                            id: "basic-geometry-sphere",
-                            title: "球体",
-                            description: "创建一个带有纹理的球体，模拟行星效果",
-                            thumbnail: "images/basic-geometry-sphere.jpg",
-                            version: "r179",
-                            url: "examples/basic-geometry-sphere"
-                        },
-                        {
-                            id: "basic-geometry-cylinder",
-                            title: "圆柱体",
-                            description: "创建一个带有渐变材质的圆柱体，展示不同参数效果",
-                            thumbnail: "images/basic-geometry-cylinder.jpg",
-                            version: "r179",
-                            url: "examples/basic-geometry-cylinder"
-                        },
-                        {
-                            id: "basic-geometry-torus",
-                            title: "圆环",
-                            description: "创建一个带有金属材质的圆环，展示光照效果",
-                            thumbnail: "images/basic-geometry-torus.jpg",
-                            version: "r179",
-                            url: "examples/basic-geometry-torus"
-                        },
-                        {
-                            id: "basic-geometry-tetrahedron",
-                            title: "正四面体",
-                            description: "创建一个正四面体，展示基本多面体几何形状",
-                            thumbnail: "images/basic-geometry-tetrahedron.jpg",
-                            version: "r179",
-                            url: "examples/basic-geometry-tetrahedron"
-                        },
-                        {
-                            id: "basic-geometry-octahedron",
-                            title: "正八面体",
-                            description: "创建一个正八面体，展示对称多面体结构",
-                            thumbnail: "images/basic-geometry-octahedron.jpg",
-                            version: "r179",
-                            url: "examples/basic-geometry-octahedron"
-                        },
-                        {
-                            id: "basic-geometry-dodecahedron",
-                            title: "正十二面体",
-                            description: "创建一个正十二面体，展示复杂多面体结构",
-                            thumbnail: "images/basic-geometry-dodecahedron.jpg",
-                            version: "r179",
-                            url: "examples/basic-geometry-dodecahedron"
-                        },
-                        {
-                            id: "basic-geometry-icosahedron",
-                            title: "正二十面体",
-                            description: "创建一个正二十面体，展示高复杂度多面体",
-                            thumbnail: "images/basic-geometry-icosahedron.jpg",
-                            version: "r179",
-                            url: "examples/basic-geometry-icosahedron"
-                        },
-                        {
-                            id: "basic-geometry-ring",
-                            title: "环平面",
-                            description: "创建一个环形平面，可调整内外半径和分段数",
-                            thumbnail: "images/basic-geometry-ring.jpg",
-                            version: "r179",
-                            url: "examples/basic-geometry-ring"
-                        },
-                        {
-                            id: "basic-geometry-plane",
-                            title: "矩形平面",
-                            description: "创建一个矩形平面，可调整宽度、高度和分段数",
-                            thumbnail: "images/basic-geometry-plane.jpg",
-                            version: "r179",
-                            url: "examples/basic-geometry-plane"
-                        },
-                        {
-                            id: "basic-geometry-circle",
-                            title: "圆平面",
-                            description: "创建一个圆形平面，可调整半径、分段数和扇形角度",
-                            thumbnail: "images/basic-geometry-circle.jpg",
-                            version: "r179",
-                            url: "examples/basic-geometry-circle"
-                        },
-                        {
-                            id: "basic-geometry-extrude",
-                            title: "拉伸几何体",
-                            description: "通过拉伸二维形状创建三维几何体，展示ExtrudeGeometry的用法",
-                            thumbnail: "images/basic-geometry-extrude.jpg",
-                            version: "r179",
-                            url: "examples/basic-geometry-extrude"
-                        },
-                        {
-                            id: "basic-geometry-lathe",
-                            title: "旋转几何体",
-                            description: "通过旋转轮廓线创建三维几何体，如花瓶或杯子",
-                            thumbnail: "images/basic-geometry-lathe.jpg",
-                            version: "r179",
-                            url: "examples/basic-geometry-lathe"
-                        },
-                        {
-                            id: "basic-geometry-tube",
-                            title: "管道几何体",
-                            description: "沿着三维路径创建管道几何体，可调整管径和分段数",
-                            thumbnail: "images/basic-geometry-tube.jpg",
-                            version: "r179",
-                            url: "examples/basic-geometry-tube"
-                        },
-                        {
-                            id: "basic-geometry-shape",
-                            title: "轮廓填充",
-                            description: "创建复杂的二维形状并进行填充，支持内部孔洞",
-                            thumbnail: "images/basic-geometry-shape.jpg",
-                            version: "r179",
-                            url: "examples/basic-geometry-shape"
-                        },
-                        {
-                            id: "basic-geometry-text",
-                            title: "文字几何体",
-                            description: "创建三维文字几何体，可调整字体、大小和厚度",
-                            thumbnail: "images/basic-geometry-text.jpg",
-                            version: "r179",
-                            url: "examples/basic-geometry-text"
-                        },
-                        {
-                            id: "basic-geometry-parametric",
-                            title: "参数化曲面",
-                            description: "通过数学函数创建参数化曲面，如波浪、螺旋等",
-                            thumbnail: "images/basic-geometry-parametric.jpg",
-                            version: "r179",
-                            url: "examples/basic-geometry-parametric"
-                        },
-                        {
-                            id: "basic-geometry-cone",
-                            title: "圆锥体",
-                            description: "创建一个圆锥体，可调整底部半径、高度和分段数",
-                            thumbnail: "images/basic-geometry-cone.jpg",
-                            version: "r179",
-                            url: "examples/basic-geometry-cone"
-                        },
-                        {
-                            id: "basic-geometry-torusknot",
-                            title: "环形扭结",
-                            description: "创建一个环形扭结，展示复杂的参数化几何体",
-                            thumbnail: "images/basic-geometry-torusknot.jpg",
-                            version: "r179",
-                            url: "examples/basic-geometry-torusknot"
-                        },
-                        {
-                            id: "basic-geometry-polyhedron",
-                            title: "多面体",
-                            description: "创建一个基于顶点和面的多面体，展示PolyhedronGeometry的用法。",
-                            thumbnail: "images/basic-geometry-polyhedron.jpg",
-                            version: "r179",
-                            url: "examples/basic-geometry-polyhedron"
-                        },
-                        {
-                            id: "basic-geometry-gradientTriangle",
-                            title: "渐变三角形",
-                            description: "使用BufferGeometry创建自定义三角形几何体，通过顶点颜色实现RGB渐变效果",
-                            thumbnail: "images/basic-geometry-gradientTriangle.jpg",
-                            version: "r179",
-                            url: "examples/z258/basic-geometry-gradientTriangle"
-                        },
-                        {
-                            id: "basic-geometry-screenCoord",
-                            title: "三维转屏幕坐标",
-                            description: "展示三维坐标转屏幕坐标的方法，将3D物体位置映射到2D屏幕坐标",
-                            thumbnail: "images/basic-geometry-screenCoord.jpg",
-                            version: "r179",
-                            url: "examples/z258/basic-geometry-screenCoord"
-                        }
-                    ]
-                },
-                {
-                    id: "basic-materials",
-                    name: "材质",
-                    examples: [
-                        {
-                            id: "basic-materials-mesh",
-                            title: "网格材质对比",
-                            description: "展示和对比不同类型的网格材质效果",
-                            thumbnail: "images/basic-materials-mesh.jpg",
-                            version: "r179",
-                            url: "examples/basic-materials-mesh"
-                        },
-                        {
-                            id: "basic-materials-points",
-                            title: "点材质",
-                            description: "展示PointsMaterial的使用方法和效果，创建各种分布的粒子系统",
-                            thumbnail: "images/basic-materials-points.jpg",
-                            version: "r179",
-                            url: "examples/basic-materials-points"
-                        },
-                        {
-                            id: "basic-materials-lines",
-                            title: "线材质",
-                            description: "展示LineBasicMaterial和LineDashedMaterial的使用方法和效果对比",
-                            thumbnail: "images/basic-materials-lines.jpg",
-                            version: "r179",
-                            url: "examples/basic-materials-lines"
-                        },
-                        {
-                            id: "basic-materials-sprite",
-                            title: "精灵材质",
-                            description: "展示SpriteMaterial的使用方法和效果，创建各种分布的精灵系统",
-                            thumbnail: "images/basic-materials-sprite.jpg",
-                            version: "r179",
-                            url: "examples/basic-materials-sprite"
-                        },
-                        {
-                            id: "basic-materials-raw-shader",
-                            title: "原始着色器材质",
-                            description: "使用RawShaderMaterial创建自定义着色器效果，展示GLSL着色器编程的基础知识",
-                            thumbnail: "images/basic-materials-raw-shader.jpg",
-                            version: "r179",
-                            url: "examples/basic-materials-raw-shader"
-                        },
-                        {
-                            id: "basic-materials-shader",
-                            title: "着色器材质",
-                            description: "使用ShaderMaterial创建自定义着色器效果，展示Three.js内置变量和着色器编程技术",
-                            thumbnail: "images/basic-materials-shader.jpg",
-                            version: "r179",
-                            url: "examples/basic-materials-shader"
-                        }
-                    ]
-                },
-                {
-                    id: "basic-camera",
-                    name: "相机与控制",
-                    examples: [
-                        {
-                            id: "basic-camera-cameraAttribute",
-                            title: "相机属性",
-                            description: "展示PerspectiveCamera的各种属性，包括视角、近平面、远平面、缩放、图层等参数的调整",
-                            thumbnail: "images/basic-camera-cameraAttribute.jpg",
-                            version: "r179",
-                            url: "examples/z258/basic-camera-cameraAttribute"
-                        },
-                        {
-                            id: "basic-camera-orbControls",
-                            title: "轨道控制器",
-                            description: "展示OrbitControls的各种控制参数，包括旋转、缩放、平移、阻尼、角度限制等",
-                            thumbnail: "images/basic-camera-orbControls.jpg",
-                            version: "r179",
-                            url: "examples/z258/basic-camera-orbControls"
-                        },
-                        {
-                            id: "basic-camera-viewHelper",
-                            title: "视图辅助",
-                            description: "展示ViewHelper的使用，提供场景视角切换的可视化辅助工具",
-                            thumbnail: "images/basic-camera-viewHelper.jpg",
-                            version: "r179",
-                            url: "examples/z258/basic-camera-viewHelper"
-                        }
-                    ]
-                }
-            ]
+          id: "basic-geometry",
+          name: "几何体",
+          examples: [
+            {
+              id: "basic-geometry-cube",
+              title: "立方体",
+              description: "创建一个简单的立方体，并添加基本的旋转动画",
+              thumbnail: "images/basic-geometry-cube.jpg",
+              version: "r179",
+              url: "examples/basic-geometry-cube",
+            },
+            {
+              id: "basic-geometry-sphere",
+              title: "球体",
+              description: "创建一个带有纹理的球体，模拟行星效果",
+              thumbnail: "images/basic-geometry-sphere.jpg",
+              version: "r179",
+              url: "examples/basic-geometry-sphere",
+            },
+            {
+              id: "basic-geometry-cylinder",
+              title: "圆柱体",
+              description: "创建一个带有渐变材质的圆柱体，展示不同参数效果",
+              thumbnail: "images/basic-geometry-cylinder.jpg",
+              version: "r179",
+              url: "examples/basic-geometry-cylinder",
+            },
+            {
+              id: "basic-geometry-torus",
+              title: "圆环",
+              description: "创建一个带有金属材质的圆环，展示光照效果",
+              thumbnail: "images/basic-geometry-torus.jpg",
+              version: "r179",
+              url: "examples/basic-geometry-torus",
+            },
+            {
+              id: "basic-geometry-tetrahedron",
+              title: "正四面体",
+              description: "创建一个正四面体，展示基本多面体几何形状",
+              thumbnail: "images/basic-geometry-tetrahedron.jpg",
+              version: "r179",
+              url: "examples/basic-geometry-tetrahedron",
+            },
+            {
+              id: "basic-geometry-octahedron",
+              title: "正八面体",
+              description: "创建一个正八面体，展示对称多面体结构",
+              thumbnail: "images/basic-geometry-octahedron.jpg",
+              version: "r179",
+              url: "examples/basic-geometry-octahedron",
+            },
+            {
+              id: "basic-geometry-dodecahedron",
+              title: "正十二面体",
+              description: "创建一个正十二面体，展示复杂多面体结构",
+              thumbnail: "images/basic-geometry-dodecahedron.jpg",
+              version: "r179",
+              url: "examples/basic-geometry-dodecahedron",
+            },
+            {
+              id: "basic-geometry-icosahedron",
+              title: "正二十面体",
+              description: "创建一个正二十面体，展示高复杂度多面体",
+              thumbnail: "images/basic-geometry-icosahedron.jpg",
+              version: "r179",
+              url: "examples/basic-geometry-icosahedron",
+            },
+            {
+              id: "basic-geometry-ring",
+              title: "环平面",
+              description: "创建一个环形平面，可调整内外半径和分段数",
+              thumbnail: "images/basic-geometry-ring.jpg",
+              version: "r179",
+              url: "examples/basic-geometry-ring",
+            },
+            {
+              id: "basic-geometry-plane",
+              title: "矩形平面",
+              description: "创建一个矩形平面，可调整宽度、高度和分段数",
+              thumbnail: "images/basic-geometry-plane.jpg",
+              version: "r179",
+              url: "examples/basic-geometry-plane",
+            },
+            {
+              id: "basic-geometry-circle",
+              title: "圆平面",
+              description: "创建一个圆形平面，可调整半径、分段数和扇形角度",
+              thumbnail: "images/basic-geometry-circle.jpg",
+              version: "r179",
+              url: "examples/basic-geometry-circle",
+            },
+            {
+              id: "basic-geometry-extrude",
+              title: "拉伸几何体",
+              description:
+                "通过拉伸二维形状创建三维几何体，展示ExtrudeGeometry的用法",
+              thumbnail: "images/basic-geometry-extrude.jpg",
+              version: "r179",
+              url: "examples/basic-geometry-extrude",
+            },
+            {
+              id: "basic-geometry-lathe",
+              title: "旋转几何体",
+              description: "通过旋转轮廓线创建三维几何体，如花瓶或杯子",
+              thumbnail: "images/basic-geometry-lathe.jpg",
+              version: "r179",
+              url: "examples/basic-geometry-lathe",
+            },
+            {
+              id: "basic-geometry-tube",
+              title: "管道几何体",
+              description: "沿着三维路径创建管道几何体，可调整管径和分段数",
+              thumbnail: "images/basic-geometry-tube.jpg",
+              version: "r179",
+              url: "examples/basic-geometry-tube",
+            },
+            {
+              id: "basic-geometry-shape",
+              title: "轮廓填充",
+              description: "创建复杂的二维形状并进行填充，支持内部孔洞",
+              thumbnail: "images/basic-geometry-shape.jpg",
+              version: "r179",
+              url: "examples/basic-geometry-shape",
+            },
+            {
+              id: "basic-geometry-text",
+              title: "文字几何体",
+              description: "创建三维文字几何体，可调整字体、大小和厚度",
+              thumbnail: "images/basic-geometry-text.jpg",
+              version: "r179",
+              url: "examples/basic-geometry-text",
+            },
+            {
+              id: "basic-geometry-parametric",
+              title: "参数化曲面",
+              description: "通过数学函数创建参数化曲面，如波浪、螺旋等",
+              thumbnail: "images/basic-geometry-parametric.jpg",
+              version: "r179",
+              url: "examples/basic-geometry-parametric",
+            },
+            {
+              id: "basic-geometry-cone",
+              title: "圆锥体",
+              description: "创建一个圆锥体，可调整底部半径、高度和分段数",
+              thumbnail: "images/basic-geometry-cone.jpg",
+              version: "r179",
+              url: "examples/basic-geometry-cone",
+            },
+            {
+              id: "basic-geometry-torusknot",
+              title: "环形扭结",
+              description: "创建一个环形扭结，展示复杂的参数化几何体",
+              thumbnail: "images/basic-geometry-torusknot.jpg",
+              version: "r179",
+              url: "examples/basic-geometry-torusknot",
+            },
+            {
+              id: "basic-geometry-polyhedron",
+              title: "多面体",
+              description:
+                "创建一个基于顶点和面的多面体，展示PolyhedronGeometry的用法。",
+              thumbnail: "images/basic-geometry-polyhedron.jpg",
+              version: "r179",
+              url: "examples/basic-geometry-polyhedron",
+            },
+            {
+              id: "basic-geometry-gradientTriangle",
+              title: "渐变三角形",
+              description:
+                "使用BufferGeometry创建自定义三角形几何体，通过顶点颜色实现RGB渐变效果",
+              thumbnail: "images/basic-geometry-gradientTriangle.jpg",
+              version: "r179",
+              url: "examples/z258/basic-geometry-gradientTriangle",
+            },
+            {
+              id: "basic-geometry-screenCoord",
+              title: "三维转屏幕坐标",
+              description:
+                "展示三维坐标转屏幕坐标的方法，将3D物体位置映射到2D屏幕坐标",
+              thumbnail: "images/basic-geometry-screenCoord.jpg",
+              version: "r179",
+              url: "examples/z258/basic-geometry-screenCoord",
+            },
+          ],
         },
         {
-            id: "lighting",
-            name: "光照效果",
-            icon: "bi-lightbulb",
-            subcategories: [
-                {
-                    id: "lighting-types",
-                    name: "光源类型",
-                    examples: [
-                        {
-                            id: "lighting-point",
-                            title: "点光源",
-                            description: "展示点光源的效果和阴影",
-                            thumbnail: "images/lighting-point.jpg",
-                            version: "r179",
-                            url: "examples/lighting-point"
-                        },
-                        {
-                            id: "lighting-spot",
-                            title: "聚光灯",
-                            description: "使用聚光灯创建舞台照明效果，展示聚光灯的特性和阴影",
-                            thumbnail: "images/lighting-spot.jpg",
-                            version: "r179",
-                            url: "examples/lighting-spot"
-                        },
-                        {
-                            id: "lighting-directional",
-                            title: "平行光",
-                            description: "模拟太阳光的平行光效果，展示平行光的特性和阴影",
-                            thumbnail: "images/lighting-directional.jpg",
-                            version: "r179",
-                            url: "examples/lighting-directional"
-                        }
-                    ]
-                },
-                {
-                    id: "lighting-effects",
-                    name: "特殊效果",
-                    examples: [
-                        {
-                            id: "lighting-shadows",
-                            title: "阴影效果",
-                            description: "展示不同类型的阴影映射技术",
-                            thumbnail: "images/lighting-shadows.jpg",
-                            version: "r179",
-                            url: "examples/lighting-shadows"
-                        },
-                        {
-                            id: "lighting-ambient-occlusion",
-                            title: "环境光遮蔽",
-                            description: "使用环境光遮蔽增强场景深度感",
-                            thumbnail: "images/lighting-ambient-occlusion.jpg",
-                            version: "r179",
-                            url: "examples/lighting-ambient-occlusion"
-                        }
-                    ]
-                }
-            ]
+          id: "basic-materials",
+          name: "材质",
+          examples: [
+            {
+              id: "basic-materials-mesh",
+              title: "网格材质对比",
+              description: "展示和对比不同类型的网格材质效果",
+              thumbnail: "images/basic-materials-mesh.jpg",
+              version: "r179",
+              url: "examples/basic-materials-mesh",
+            },
+            {
+              id: "basic-materials-points",
+              title: "点材质",
+              description:
+                "展示PointsMaterial的使用方法和效果，创建各种分布的粒子系统",
+              thumbnail: "images/basic-materials-points.jpg",
+              version: "r179",
+              url: "examples/basic-materials-points",
+            },
+            {
+              id: "basic-materials-lines",
+              title: "线材质",
+              description:
+                "展示LineBasicMaterial和LineDashedMaterial的使用方法和效果对比",
+              thumbnail: "images/basic-materials-lines.jpg",
+              version: "r179",
+              url: "examples/basic-materials-lines",
+            },
+            {
+              id: "basic-materials-sprite",
+              title: "精灵材质",
+              description:
+                "展示SpriteMaterial的使用方法和效果，创建各种分布的精灵系统",
+              thumbnail: "images/basic-materials-sprite.jpg",
+              version: "r179",
+              url: "examples/basic-materials-sprite",
+            },
+            {
+              id: "basic-materials-raw-shader",
+              title: "原始着色器材质",
+              description:
+                "使用RawShaderMaterial创建自定义着色器效果，展示GLSL着色器编程的基础知识",
+              thumbnail: "images/basic-materials-raw-shader.jpg",
+              version: "r179",
+              url: "examples/basic-materials-raw-shader",
+            },
+            {
+              id: "basic-materials-shader",
+              title: "着色器材质",
+              description:
+                "使用ShaderMaterial创建自定义着色器效果，展示Three.js内置变量和着色器编程技术",
+              thumbnail: "images/basic-materials-shader.jpg",
+              version: "r179",
+              url: "examples/basic-materials-shader",
+            },
+          ],
         },
         {
-            id: "loaders",
-            name: "加载器",
-            icon: "bi-cloud-download",
-            subcategories: [
-                {
-                    id: "loaders-model",
-                    name: "模型加载器",
-                    examples: [
-                        {
-                            id: "loaders-model-gltf",
-                            title: "GLTF 模型加载器",
-                            description: "加载和显示 GLTF/GLB 格式的 3D 模型",
-                            thumbnail: "images/loaders-model-gltf.jpg",
-                            version: "r179",
-                            url: "examples/loaders-model-gltf"
-                        },
-                        {
-                            id: "loaders-model-obj",
-                            title: "OBJ 模型加载器",
-                            description: "加载和显示 OBJ 格式的 3D 模型及其材质",
-                            thumbnail: "images/loaders-model-obj.jpg",
-                            version: "r179",
-                            url: "examples/loaders-model-obj"
-                        },
-                        {
-                            id: "loaders-model-fbx",
-                            title: "FBX 模型加载器",
-                            description: "加载和显示 FBX 格式的 3D 模型及其动画",
-                            thumbnail: "images/loaders-model-fbx.jpg",
-                            version: "r179",
-                            url: "examples/loaders-model-fbx"
-                        },
-                        {
-                            id: "loaders-model-stl",
-                            title: "STL 模型加载器",
-                            description: "加载和显示 STL 格式的 3D 模型",
-                            thumbnail: "images/loaders-model-stl.jpg",
-                            version: "r179",
-                            url: "examples/loaders-model-stl"
-                        },
-                        {
-                            id: "loaders-model-dae",
-                            title: "DAE/COLLADA 模型加载器",
-                            description: "加载和显示 DAE/COLLADA 格式的 3D 模型",
-                            thumbnail: "images/loaders-model-dae.jpg",
-                            version: "r179",
-                            url: "examples/loaders-model-dae"
-                        },
-                        {
-                            id: "loaders-model-vtk",
-                            title: "VTK 模型加载器",
-                            description: "加载和显示 VTK 格式的 3D 模型",
-                            thumbnail: "images/loaders-model-vtk.jpg",
-                            version: "r179",
-                            url: "examples/loaders-model-vtk"
-                        },
-                        {
-                            id: "loaders-model-pcd",
-                            title: "PCD 点云模型加载器",
-                            description: "加载和显示 PCD 格式的点云模型",
-                            thumbnail: "images/loaders-model-pcd.jpg",
-                            version: "r179",
-                            url: "examples/loaders-model-pcd"
-                        },
-                        {
-                            id: "loaders-model-3ds",
-                            title: "3DS 模型加载器",
-                            description: "加载和显示 3DS 格式的 3D 模型",
-                            thumbnail: "images/loaders-model-3ds.jpg",
-                            version: "r179",
-                            url: "examples/loaders-model-3ds"
-                        },
-                        {
-                            id: "loaders-model-amf",
-                            title: "AMF 模型加载器",
-                            description: "加载和显示 AMF 格式的 3D 模型",
-                            thumbnail: "images/loaders-model-amf.jpg",
-                            version: "r179",
-                            url: "examples/loaders-model-amf"
-                        },
-                        {
-                            id: "loaders-model-gcode",
-                            title: "GCODE 模型加载器",
-                            description: "加载和显示 GCODE 格式的 3D 打印模型",
-                            thumbnail: "images/loaders-model-gcode.jpg",
-                            version: "r179",
-                            url: "examples/loaders-model-gcode"
-                        },
-                        {
-                            id: "loaders-model-multi",
-                            title: "多格式模型加载器",
-                            description: "使用统一接口加载多种格式的 3D 模型",
-                            thumbnail: "images/loaders-model-multi.jpg",
-                            version: "r179",
-                            url: "examples/loaders-model-multi"
-                        }
-                    ]
-                },
-                {
-                    id: "loaders-texture",
-                    name: "纹理加载器",
-                    examples: [
-                        {
-                            id: "loaders-texture-basic",
-                            title: "基础纹理加载器",
-                            description: "加载和应用各种图像格式的纹理",
-                            thumbnail: "images/loaders-texture-basic.jpg",
-                            version: "r179",
-                            url: "examples/loaders-texture-basic"
-                        },
-                        {
-                            id: "loaders-texture-hdr",
-                            title: "HDR 纹理加载器",
-                            description: "加载和应用高动态范围(HDR)纹理",
-                            thumbnail: "images/loaders-texture-hdr.jpg",
-                            version: "r179",
-                            url: "examples/loaders-texture-hdr"
-                        },
-                        {
-                            id: "loaders-texture-cube",
-                            title: "立方体纹理加载器",
-                            description: "加载和应用立方体贴图纹理",
-                            thumbnail: "images/loaders-texture-cube.jpg",
-                            version: "r179",
-                            url: "examples/loaders-texture-cube"
-                        }
-                    ]
-                },
-                {
-                    id: "loaders-other",
-                    name: "其他加载器",
-                    examples: [
-                        {
-                            id: "loaders-font",
-                            title: "字体加载器",
-                            description: "加载和使用 3D 文本字体",
-                            thumbnail: "images/loaders-font.jpg",
-                            version: "r179",
-                            url: "examples/loaders-font"
-                        },
-                        {
-                            id: "loaders-audio",
-                            title: "音频加载器",
-                            description: "加载和播放 3D 场景中的音频",
-                            thumbnail: "images/loaders-audio.jpg",
-                            version: "r179",
-                            url: "examples/loaders-audio"
-                        }
-                    ]
-                }
-            ]
+          id: "basic-camera",
+          name: "相机与控制",
+          examples: [
+            {
+              id: "basic-camera-cameraAttribute",
+              title: "相机属性",
+              description:
+                "展示PerspectiveCamera的各种属性，包括视角、近平面、远平面、缩放、图层等参数的调整",
+              thumbnail: "images/basic-camera-cameraAttribute.jpg",
+              version: "r179",
+              url: "examples/z258/basic-camera-cameraAttribute",
+            },
+            {
+              id: "basic-camera-orbControls",
+              title: "轨道控制器",
+              description:
+                "展示OrbitControls的各种控制参数，包括旋转、缩放、平移、阻尼、角度限制等",
+              thumbnail: "images/basic-camera-orbControls.jpg",
+              version: "r179",
+              url: "examples/z258/basic-camera-orbControls",
+            },
+            {
+              id: "basic-camera-viewHelper",
+              title: "视图辅助",
+              description:
+                "展示ViewHelper的使用，提供场景视角切换的可视化辅助工具",
+              thumbnail: "images/basic-camera-viewHelper.jpg",
+              version: "r179",
+              url: "examples/z258/basic-camera-viewHelper",
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: "lighting",
+      name: "光照效果",
+      icon: "bi-lightbulb",
+      subcategories: [
+        {
+          id: "lighting-types",
+          name: "光源类型",
+          examples: [
+            {
+              id: "lighting-point",
+              title: "点光源",
+              description: "展示点光源的效果和阴影",
+              thumbnail: "images/lighting-point.jpg",
+              version: "r179",
+              url: "examples/lighting-point",
+            },
+            {
+              id: "lighting-spot",
+              title: "聚光灯",
+              description: "使用聚光灯创建舞台照明效果，展示聚光灯的特性和阴影",
+              thumbnail: "images/lighting-spot.jpg",
+              version: "r179",
+              url: "examples/lighting-spot",
+            },
+            {
+              id: "lighting-directional",
+              title: "平行光",
+              description: "模拟太阳光的平行光效果，展示平行光的特性和阴影",
+              thumbnail: "images/lighting-directional.jpg",
+              version: "r179",
+              url: "examples/lighting-directional",
+            },
+          ],
         },
         {
-            id: "animation",
-            name: "动画与交互",
-            icon: "bi-film",
-            subcategories: [
-                {
-                    id: "animation-basics",
-                    name: "基础动画",
-                    examples: [
-                        {
-                            id: "animation-keyframes",
-                            title: "关键帧动画",
-                            description: "使用关键帧创建复杂的动画序列",
-                            thumbnail: "images/animation-keyframes.jpg",
-                            version: "r179",
-                            url: "examples/animation-keyframes"
-                        },
-                        {
-                            id: "animation-morph",
-                            title: "变形动画",
-                            description: "在不同几何体之间平滑过渡的变形效果",
-                            thumbnail: "images/animation-morph.jpg",
-                            version: "r179",
-                            url: "examples/animation-morph"
-                        }
-                    ]
-                },
-                {
-                    id: "animation-interaction",
-                    name: "交互效果",
-                    examples: [
-                        {
-                            id: "animation-raycaster",
-                            title: "射线检测",
-                            description: "使用射线检测实现对象选择和交互",
-                            thumbnail: "images/animation-raycaster.jpg",
-                            version: "r179",
-                            url: "examples/animation-raycaster"
-                        },
-                        {
-                            id: "animation-drag",
-                            title: "拖拽控制",
-                            description: "实现3D对象的拖拽和放置功能",
-                            thumbnail: "images/animation-drag.jpg",
-                            version: "r179",
-                            url: "examples/animation-drag"
-                        }
-                    ]
-                }
-            ]
+          id: "lighting-effects",
+          name: "特殊效果",
+          examples: [
+            {
+              id: "lighting-shadows",
+              title: "阴影效果",
+              description: "展示不同类型的阴影映射技术",
+              thumbnail: "images/lighting-shadows.jpg",
+              version: "r179",
+              url: "examples/lighting-shadows",
+            },
+            {
+              id: "lighting-ambient-occlusion",
+              title: "环境光遮蔽",
+              description: "使用环境光遮蔽增强场景深度感",
+              thumbnail: "images/lighting-ambient-occlusion.jpg",
+              version: "r179",
+              url: "examples/lighting-ambient-occlusion",
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: "loaders",
+      name: "加载器",
+      icon: "bi-cloud-download",
+      subcategories: [
+        {
+          id: "loaders-model",
+          name: "模型加载器",
+          examples: [
+            {
+              id: "loaders-model-gltf",
+              title: "GLTF 模型加载器",
+              description: "加载和显示 GLTF/GLB 格式的 3D 模型",
+              thumbnail: "images/loaders-model-gltf.jpg",
+              version: "r179",
+              url: "examples/loaders-model-gltf",
+            },
+            {
+              id: "loaders-model-obj",
+              title: "OBJ 模型加载器",
+              description: "加载和显示 OBJ 格式的 3D 模型及其材质",
+              thumbnail: "images/loaders-model-obj.jpg",
+              version: "r179",
+              url: "examples/loaders-model-obj",
+            },
+            {
+              id: "loaders-model-fbx",
+              title: "FBX 模型加载器",
+              description: "加载和显示 FBX 格式的 3D 模型及其动画",
+              thumbnail: "images/loaders-model-fbx.jpg",
+              version: "r179",
+              url: "examples/loaders-model-fbx",
+            },
+            {
+              id: "loaders-model-stl",
+              title: "STL 模型加载器",
+              description: "加载和显示 STL 格式的 3D 模型",
+              thumbnail: "images/loaders-model-stl.jpg",
+              version: "r179",
+              url: "examples/loaders-model-stl",
+            },
+            {
+              id: "loaders-model-dae",
+              title: "DAE/COLLADA 模型加载器",
+              description: "加载和显示 DAE/COLLADA 格式的 3D 模型",
+              thumbnail: "images/loaders-model-dae.jpg",
+              version: "r179",
+              url: "examples/loaders-model-dae",
+            },
+            {
+              id: "loaders-model-vtk",
+              title: "VTK 模型加载器",
+              description: "加载和显示 VTK 格式的 3D 模型",
+              thumbnail: "images/loaders-model-vtk.jpg",
+              version: "r179",
+              url: "examples/loaders-model-vtk",
+            },
+            {
+              id: "loaders-model-pcd",
+              title: "PCD 点云模型加载器",
+              description: "加载和显示 PCD 格式的点云模型",
+              thumbnail: "images/loaders-model-pcd.jpg",
+              version: "r179",
+              url: "examples/loaders-model-pcd",
+            },
+            {
+              id: "loaders-model-3ds",
+              title: "3DS 模型加载器",
+              description: "加载和显示 3DS 格式的 3D 模型",
+              thumbnail: "images/loaders-model-3ds.jpg",
+              version: "r179",
+              url: "examples/loaders-model-3ds",
+            },
+            {
+              id: "loaders-model-amf",
+              title: "AMF 模型加载器",
+              description: "加载和显示 AMF 格式的 3D 模型",
+              thumbnail: "images/loaders-model-amf.jpg",
+              version: "r179",
+              url: "examples/loaders-model-amf",
+            },
+            {
+              id: "loaders-model-gcode",
+              title: "GCODE 模型加载器",
+              description: "加载和显示 GCODE 格式的 3D 打印模型",
+              thumbnail: "images/loaders-model-gcode.jpg",
+              version: "r179",
+              url: "examples/loaders-model-gcode",
+            },
+            {
+              id: "loaders-model-multi",
+              title: "多格式模型加载器",
+              description: "使用统一接口加载多种格式的 3D 模型",
+              thumbnail: "images/loaders-model-multi.jpg",
+              version: "r179",
+              url: "examples/loaders-model-multi",
+            },
+          ],
         },
         {
-            id: "advanced",
-            name: "高级技术",
-            icon: "bi-stars",
-            subcategories: [
-                {
-                    id: "advanced-shaders",
-                    name: "着色器",
-                    examples: [
-                        {
-                            id: "visualization-water-shader",
-                            title: "水着色器效果",
-                            description: "带有水面反射和动态光照的场景，使用Water和Sky对象",
-                            thumbnail: "images/visualization-water-shader.jpg",
-                            version: "r179",
-                            url: "examples/visualization-water-shader"
-                        },
-                        {
-                            id: "cyberpunk-lightning-tunnel",
-                            title: "赛博朋克闪电隧道",
-                            description: "使用自定义着色器和后处理实现高速飞行的赛博朋克数据隧道效果",
-                            thumbnail: "images/cyberpunk-lightning-tunnel.jpg",
-                            version: "r179",
-                            url: "examples/cyberpunk-lightning-tunnel"
-                        },
-                        {
-                            id: "visualization-custom-shader-lines",
-                            title: "自定义shader线元素",
-                            description: "使用自定义着色器实现渐变色和流光效果的线元素",
-                            thumbnail: "images/visualization-custom-shader-lines.jpg",
-                            version: "r179",
-                            url: "examples/visualization-custom-shader-lines"
-                        },
-                        {
-                            id: "visualization-neon-flow",
-                            title: "流动霓虹效果",
-                            description: "炫酷的流动霓虹视觉动画，支持鼠标交互效果",
-                            thumbnail: "images/visualization-neon-flow.jpg",
-                            version: "r179",
-                            url: "examples/visualization-neon-flow"
-                        },
-                        {
-                            id: "visualization-wind-terrain",
-                            title: "流过地形的风线",
-                            description: "使用SimplexNoise生成地形，并让风线流过起伏的地形表面",
-                            thumbnail: "images/visualization-wind-terrain.jpg",
-                            version: "r179",
-                            url: "examples/visualization-wind-terrain"
-                        },
-                        {
-                            id: "shader-abstract-art",
-                            title: "抽象艺术动画",
-                            description: "动态抽象艺术作品，旋转流动的光影图案，支持鼠标交互",
-                            thumbnail: "images/shader-abstract-art.jpg",
-                            version: "r179",
-                            url: "examples/shader-abstract-art"
-                        },
-                        {
-                            id: "visualization-aurora",
-                            title: "星空极光动效",
-                            description: "绚丽的极光与星空背景Shader效果，支持多种参数调节",
-                            thumbnail: "images/visualization-aurora.jpg",
-                            version: "r179",
-                            url: "examples/visualization-aurora"
-                        },
-                        {
-                            id: "visualization-shader-transform",
-                            title: "着色器变形",
-                            description: "圆环与方块之间的动态变形效果，支持鼠标交互和按钮切换",
-                            thumbnail: "images/visualization-shader-transform.jpg",
-                            version: "r179",
-                            url: "examples/visualization-shader-transform"
-                        },
-                        {
-                            id: "visualization-particle-transform",
-                            title: "变形粒子艺术",
-                            description: "多种粒子形态动态切换变形效果，支持超新星螺旋、量子晶格、恒星环面、天体螺旋",
-                            thumbnail: "images/visualization-particle-transform.jpg",
-                            version: "r179",
-                            url: "examples/visualization-particle-transform"
-                        },
-                        {
-                            id: "visualization-energy-bubble",
-                            title: "漂流的3D能量球",
-                            description: "交互式能量气泡效果，点击产生能量波纹和闪电分支，带折射和色散效果",
-                            thumbnail: "images/visualization-energy-bubble.jpg",
-                            version: "r179",
-                            url: "examples/visualization-energy-bubble"
-                        },
-                        {
-                            id: "visualization-hologram",
-                            title: "全息影像效果",
-                            description: "动态切换的几何体全息投影，带故障效果和扫描线",
-                            thumbnail: "images/visualization-hologram.jpg",
-                            version: "r179",
-                            url: "examples/visualization-hologram"
-                        },
-                        {
-                            id: "advanced-rain-roof",
-                            title: "雨和屋顶效果",
-                            description: "使用深度纹理和自定义着色器实现雨滴与物体的真实交互效果，包括动态屋顶",
-                            thumbnail: "images/advanced-rain-roof.jpg",
-                            version: "r179",
-                            url: "examples/advanced-rain-roof"
-                        },
-                        {
-                            id: "postprocessing-bloom",
-                            title: "物体发光效果",
-                            description: "使用EffectComposer和UnrealBloomPass实现物体的辉光发光效果，支持参数调节",
-                            thumbnail: "images/postprocessing-bloom.jpg",
-                            version: "r179",
-                            url: "examples/postprocessing-bloom"
-                        },
-                        {
-                            id: "shader-raymarching-fire",
-                            title: "光线追踪火花特效",
-                            description: "使用光线追踪(Ray Marching)技术结合Perlin噪声实现逼真的动态火花/火焰效果",
-                            thumbnail: "images/shader-raymarching-fire.jpg",
-                            version: "r179",
-                            url: "examples/shader-raymarching-fire"
-                        },
-                        {
-                            id: "shaderbook-shaderexamples-01",
-                            title: "UV位置渐变",
-                            description: "使用UV坐标生成渐变色彩和透明度效果",
-                            thumbnail: "images/shaderbook-shaderexamples-01.jpg",
-                            version: "r179",
-                            url: "examples/shaderbook-shaderexamples-01"
-                        },
-                        {
-                            id: "shaderbook-shaderexamples-02",
-                            title: "正弦彩色图案",
-                            description: "使用sin函数生成动态彩色图案",
-                            thumbnail: "images/shaderbook-shaderexamples-02.jpg",
-                            version: "r179",
-                            url: "examples/shaderbook-shaderexamples-02"
-                        },
-                        {
-                            id: "shaderbook-shaderexamples-03",
-                            title: "数学曲线绘制",
-                            description: "使用plot函数绘制y=x³数学曲线",
-                            thumbnail: "images/shaderbook-shaderexamples-03.jpg",
-                            version: "r179",
-                            url: "examples/shaderbook-shaderexamples-03"
-                        },
-                        {
-                            id: "shaderbook-shaderexamples-04a",
-                            title: "圆形波纹效果",
-                            description: "使用circ函数生成正弦波纹图案",
-                            thumbnail: "images/shaderbook-shaderexamples-04a.jpg",
-                            version: "r179",
-                            url: "examples/shaderbook-shaderexamples-04a"
-                        },
-                        {
-                            id: "shaderbook-shaderexamples-04b",
-                            title: "彩色圆形渐变",
-                            description: "使用circ函数和clamp限制颜色范围",
-                            thumbnail: "images/shaderbook-shaderexamples-04b.jpg",
-                            version: "r179",
-                            url: "examples/shaderbook-shaderexamples-04b"
-                        },
-                        {
-                            id: "shaderbook-shaderexamples-04c",
-                            title: "双色渐变",
-                            description: "使用mix函数实现红色到紫色的渐变效果",
-                            thumbnail: "images/shaderbook-shaderexamples-04c.jpg",
-                            version: "r179",
-                            url: "examples/shaderbook-shaderexamples-04c"
-                        },
-                        {
-                            id: "shaderbook-shaderexamples-05",
-                            title: "抛物线绘制",
-                            description: "使用plot函数绘制y=x²抛物线并添加边界裁剪效果",
-                            thumbnail: "images/shaderbook-shaderexamples-05.jpg",
-                            version: "r179",
-                            url: "examples/shaderbook-shaderexamples-05"
-                        },
-                        {
-                            id: "shaderbook-shaderexamples-06",
-                            title: "圆形混合效果",
-                            description: "使用circle函数绘制圆形并混合两种颜色",
-                            thumbnail: "images/shaderbook-shaderexamples-06.jpg",
-                            version: "r179",
-                            url: "examples/shaderbook-shaderexamples-06"
-                        },
-                        {
-                            id: "shaderbook-shaderexamples-07",
-                            title: "鼠标跟随圆形",
-                            description: "使用raycaster检测鼠标位置，绘制跟随的绿色圆形",
-                            thumbnail: "images/shaderbook-shaderexamples-07.jpg",
-                            version: "r179",
-                            url: "examples/shaderbook-shaderexamples-07"
-                        },
-                        {
-                            id: "shaderbook-shaderexamples-08",
-                            title: "纹理叠加动画",
-                            description: "在纹理上叠加随时间移动的圆形效果",
-                            thumbnail: "images/shaderbook-shaderexamples-08.jpg",
-                            version: "r179",
-                            url: "examples/shaderbook-shaderexamples-08"
-                        },
-                        {
-                            id: "shaderbook-shaderexamples-09",
-                            title: "周期性开合盒子",
-                            description: "立方体表面创建多个动态开合的圆形孔洞",
-                            thumbnail: "images/shaderbook-shaderexamples-09.jpg",
-                            version: "r179",
-                            url: "examples/shaderbook-shaderexamples-09"
-                        },
-                        {
-                            id: "shaderbook-shaderexamples-09a",
-                            title: "动态孔洞效果",
-                            description: "在立方体表面创建随时间变化的圆形孔洞",
-                            thumbnail: "images/shaderbook-shaderexamples-09a.jpg",
-                            version: "r179",
-                            url: "examples/shaderbook-shaderexamples-09a"
-                        },
-                        {
-                            id: "shaderbook-shaderexamples-10a",
-                            title: "交互式圆形绘制",
-                            description: "点击创建圆形遮罩，最多支持100个圆形",
-                            thumbnail: "images/shaderbook-shaderexamples-10a.jpg",
-                            version: "r179",
-                            url: "examples/shaderbook-shaderexamples-10a"
-                        },
-                        {
-                            id: "shaderbook-shaderexamples-10b",
-                            title: "纹理切换遮罩",
-                            description: "点击切换纹理，圆形遮罩显示不同纹理",
-                            thumbnail: "images/shaderbook-shaderexamples-10b.jpg",
-                            version: "r179",
-                            url: "examples/shaderbook-shaderexamples-10b"
-                        },
-                        {
-                            id: "shaderbook-shaderexamples-11",
-                            title: "网格筛子效果",
-                            description: "使用step函数创建网格图案",
-                            thumbnail: "images/shaderbook-shaderexamples-11.jpg",
-                            version: "r179",
-                            url: "examples/shaderbook-shaderexamples-11"
-                        },
-                        {
-                            id: "shaderbook-shaderexamples-12",
-                            title: "圆形交集遮罩",
-                            description: "使用circle函数创建多个圆形边框并求交集",
-                            thumbnail: "images/shaderbook-shaderexamples-12.jpg",
-                            version: "r179",
-                            url: "examples/shaderbook-shaderexamples-12"
-                        },
-                        {
-                            id: "shaderbook-shaderexamples-13",
-                            title: "正多边形绘制",
-                            description: "使用极坐标公式绘制正多边形",
-                            thumbnail: "images/shaderbook-shaderexamples-13.jpg",
-                            version: "r179",
-                            url: "examples/shaderbook-shaderexamples-13"
-                        },
-                        {
-                            id: "shaderbook-shaderexamples-14",
-                            title: "3D波浪效果",
-                            description: "使用顶点着色器创建动态波浪效果",
-                            thumbnail: "images/shaderbook-shaderexamples-14.jpg",
-                            version: "r179",
-                            url: "examples/shaderbook-shaderexamples-14"
-                        },
-                        {
-                            id: "shaderbook-shaderexamples-15",
-                            title: "材质着色器修改",
-                            description: "使用onBeforeCompile修改标准材质创建动态效果",
-                            thumbnail: "images/shaderbook-shaderexamples-15.jpg",
-                            version: "r179",
-                            url: "examples/shaderbook-shaderexamples-15"
-                        },
-                        {
-                            id: "shaderbook-shaderexamples-16",
-                            title: "可变形圆形着色器",
-                            description: "使用onBeforeCompile和自定义法线计算创建动态变形效果",
-                            thumbnail: "images/shaderbook-shaderexamples-16.jpg",
-                            version: "r179",
-                            url: "examples/shaderbook-shaderexamples-16"
-                        },
-                        {
-                            id: "shaderbook-shaderexamples-A",
-                            title: "旋转盒子",
-                            description: "使用顶点着色器旋转矩阵实现立方体旋转动画",
-                            thumbnail: "images/shaderbook-shaderexamples-A.jpg",
-                            version: "r179",
-                            url: "examples/shaderbook-shaderexamples-A"
-                        },
-                        {
-                            id: "shaderbook-shaderexamples-B",
-                            title: "阶梯图案着色器",
-                            description: "使用step函数创建阶梯效果",
-                            thumbnail: "images/shaderbook-shaderexamples-B.jpg",
-                            version: "r179",
-                            url: "examples/shaderbook-shaderexamples-B"
-                        },
-                        {
-                            id: "shaderbook-shaderexamples-C",
-                            title: "2D云彩着色器",
-                            description: "使用噪声函数和fbm创建云彩效果",
-                            thumbnail: "images/shaderbook-shaderexamples-C.jpg",
-                            version: "r179",
-                            url: "examples/shaderbook-shaderexamples-C"
-                        },
-                        {
-                            id: "shaderbook-shaderexamples-D",
-                            title: "平面水效果着色器",
-                            description: "使用波浪函数和反射效果模拟水面",
-                            thumbnail: "images/shaderbook-shaderexamples-D.jpg",
-                            version: "r179",
-                            url: "examples/shaderbook-shaderexamples-D"
-                        },
-                        {
-                            id: "shaderbook-shaderexamples-E",
-                            title: "云彩着色器",
-                            description: "使用多层噪声混合创建云朵效果",
-                            thumbnail: "images/shaderbook-shaderexamples-E.jpg",
-                            version: "r179",
-                            url: "examples/shaderbook-shaderexamples-E"
-                        },
-                        {
-                            id: "shaderbook-shaderexamples-F",
-                            title: "大气散射着色器",
-                            description: "模拟逼真的天空和太阳效果",
-                            thumbnail: "images/shaderbook-shaderexamples-F.jpg",
-                            version: "r179",
-                            url: "examples/shaderbook-shaderexamples-F"
-                        },
-                        {
-                            id: "shaderbook-shaderexamples-G",
-                            title: "快速鱼群着色器",
-                            description: "模拟水下场景中有鱼、水草和气泡",
-                            thumbnail: "images/shaderbook-shaderexamples-G.jpg",
-                            version: "r179",
-                            url: "examples/shaderbook-shaderexamples-G"
-                        },
-                        {
-                            id: "shader-transparentGradient",
-                            title: "透明渐变",
-                            description: "展示多边形透明渐变效果，使用ShaderMaterial实现从中心向外的渐变透明效果",
-                            thumbnail: "images/shader-transparentGradient.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-transparentGradient"
-                        },
-                        {
-                            id: "shader-circleWave",
-                            title: "圆波扫光",
-                            description: "展示圆形波纹扫描效果，使用着色器实现动态圆波扫光动画",
-                            thumbnail: "images/shader-circleWave.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-circleWave"
-                        },
-                        {
-                            id: "shader-fenceWall",
-                            title: "围墙着色器",
-                            description: "展示动态波浪围墙效果，使用圆柱体和着色器实现波浪形围墙",
-                            thumbnail: "images/shader-fenceWall.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-fenceWall"
-                        },
-                        {
-                            id: "shader-fenceShader",
-                            title: "围栏着色器",
-                            description: "展示动态渐变围栏效果，使用着色器实现渐变和波纹动画",
-                            thumbnail: "images/shader-fenceShader.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-fenceShader"
-                        },
-                        {
-                            id: "shader-planeScan",
-                            title: "平面扫描",
-                            description: "展示圆形扫描线效果，使用着色器实现动态扫描动画",
-                            thumbnail: "images/shader-planeScan.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-planeScan"
-                        },
-                        {
-                            id: "shader-wallShader",
-                            title: "扩散圆墙",
-                            description: "展示圆柱形扩散动画效果，使用着色器实现从下向上的渐变透明",
-                            thumbnail: "images/shader-wallShader.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-wallShader"
-                        },
-                        {
-                            id: "shader-radarShader",
-                            title: "雷达着色器",
-                            description: "展示雷达扫描效果，包含圆形、十字、动态扫描线等复杂着色器效果",
-                            thumbnail: "images/shader-radarShader.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-radarShader"
-                        },
-                        {
-                            id: "shader-candleShader",
-                            title: "蜡烛着色器",
-                            description: "展示3D蜡烛和火焰效果，使用着色器实现火焰摇曳动画",
-                            thumbnail: "images/shader-candleShader.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-candleShader"
-                        },
-                        {
-                            id: "shader-ringShader",
-                            title: "环形着色器",
-                            description: "展示环形火焰效果，使用极坐标映射和噪声函数实现动态火焰动画",
-                            thumbnail: "images/shader-ringShader.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-ringShader"
-                        },
-                        {
-                            id: "shader-smokeCircle",
-                            title: "圆泡吸附",
-                            description: "展示粒子吸附效果，120个二十面体粒子跟随引导粒子运动",
-                            thumbnail: "images/shader-smokeCircle.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-smokeCircle"
-                        },
-                        {
-                            id: "shader-radarScan",
-                            title: "雷达扫描",
-                            description: "展示雷达扫描效果，使用着色器实现动态扫描线和尾焰效果",
-                            thumbnail: "images/shader-radarScan.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-radarScan"
-                        },
-                        {
-                            id: "shader-imageParticle",
-                            title: "颗粒图像",
-                            description: "展示图像粒子破碎效果，使用贝塞尔曲线实现三角面分离动画",
-                            thumbnail: "images/shader-imageParticle.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-imageParticle"
-                        },
-                        {
-                            id: "shader-gaussianBlur",
-                            title: "高斯模糊",
-                            description: "展示高斯模糊着色器效果，支持通过GUI调节模糊程度",
-                            thumbnail: "images/shader-gaussianBlur.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-gaussianBlur"
-                        },
-                        {
-                            id: "shader-gridShader",
-                            title: "网格着色器",
-                            description: "展示动态网格效果，带有脉冲动画和随机哈希函数",
-                            thumbnail: "images/shader-gridShader.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-gridShader"
-                        },
-                        {
-                            id: "shader-compassShader",
-                            title: "罗盘",
-                            description: "展示罗盘效果着色器，带有多层同心圆和旋转动画",
-                            thumbnail: "images/shader-compassShader.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-compassShader"
-                        },
-                        {
-                            id: "shader-halfCircle",
-                            title: "半圆",
-                            description: "展示半圆效果着色器，带有旋转动画和渐变透明度",
-                            thumbnail: "images/shader-halfCircle.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-halfCircle"
-                        },
-                        {
-                            id: "shader-vortexShader",
-                            title: "扭曲",
-                            description: "展示漩涡扭曲效果着色器，支持通过GUI调节扭曲强度和半径",
-                            thumbnail: "images/shader-vortexShader.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-vortexShader"
-                        },
-                        {
-                            id: "shader-ringsShader",
-                            title: "环彩虹着色器",
-                            description: "展示环形彩虹效果，带有旋转动画和颜色渐变",
-                            thumbnail: "images/shader-ringsShader.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-ringsShader"
-                        },
-                        {
-                            id: "shader-videoShader",
-                            title: "视频着色器",
-                            description: "展示动态纹理与着色器混合效果，支持多种混合运算类型",
-                            thumbnail: "images/shader-videoShader.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-videoShader"
-                        },
-                        {
-                            id: "shader-steamWaveSun",
-                            title: "蒸汽波太阳",
-                            description: "展示蒸汽波风格太阳效果，带有渐变色彩和动态扫描线",
-                            thumbnail: "images/shader-steamWaveSun.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-steamWaveSun"
-                        },
-                        {
-                            id: "shader-groundglass",
-                            title: "毛玻璃",
-                            description: "展示毛玻璃马赛克效果，支持通过GUI调节模糊程度",
-                            thumbnail: "images/shader-groundglass.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-groundglass"
-                        },
-                        {
-                            id: "shader-infiniteGrid",
-                            title: "无限网格",
-                            description: "展示无限延伸的网格效果，基于相机位置动态渲染",
-                            thumbnail: "images/shader-infiniteGrid.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-infiniteGrid"
-                        },
-                        {
-                            id: "shader-cobwebBox",
-                            title: "蛛网箱子",
-                            description: "展示蛛网纹理效果，使用极坐标转换实现圆环和线条图案",
-                            thumbnail: "images/shader-cobwebBox.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-cobwebBox"
-                        },
-                        {
-                            id: "shader-jumpHeart",
-                            title: "跳动的心",
-                            description: "展示跳动的心形动画效果，使用数学公式绘制心形曲线",
-                            thumbnail: "images/shader-jumpHeart.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-jumpHeart"
-                        },
-                        {
-                            id: "shader-rasterGrid",
-                            title: "栅格网格",
-                            description: "展示动态栅格网格效果，使用分形和调色板函数创建绚丽的网格图案",
-                            thumbnail: "images/shader-rasterGrid.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-rasterGrid"
-                        },
-                        {
-                            id: "shader-flowLight",
-                            title: "流光",
-                            description: "展示流光效果，使用环面结几何体配合后期处理bloom效果",
-                            thumbnail: "images/shader-flowLight.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-flowLight"
-                        },
-                        {
-                            id: "shader-grayShader",
-                            title: "灰度",
-                            description: "展示灰度着色器效果，将彩色图像转换为灰度",
-                            thumbnail: "images/shader-grayShader.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-grayShader"
-                        },
-                        {
-                            id: "shader-waveShader",
-                            title: "图像波动",
-                            description: "展示图像波动效果，使用正弦波使平面产生波动动画",
-                            thumbnail: "images/shader-waveShader.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-waveShader"
-                        },
-                        {
-                            id: "shader-dissolve",
-                            title: "溶解",
-                            description: "展示溶解效果，通过Clip参数控制溶解程度",
-                            thumbnail: "images/shader-dissolve.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-dissolve"
-                        },
-                        {
-                            id: "shader-changeShaderToy",
-                            title: "切换ShaderToy",
-                            description: "展示多个内置的ShaderToy效果，可以通过GUI切换不同的着色器效果",
-                            thumbnail: "images/shader-changeShaderToy.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-changeShaderToy"
-                        },
-                        {
-                            id: "shader-reliefImage",
-                            title: "浮雕图像",
-                            description: "展示浮雕效果，通过边缘检测算法将图像转换为浮雕样式",
-                            thumbnail: "images/shader-reliefImage.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-reliefImage"
-                        },
-                        {
-                            id: "shader-dissolveAnimate",
-                            title: "溶解动画",
-                            description: "展示基于Y轴的溶解效果，支持正向和反向动画切换",
-                            thumbnail: "images/shader-dissolveAnimate.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-dissolveAnimate"
-                        },
-                        {
-                            id: "shader-blackhole",
-                            title: "黑洞效果",
-                            description: "展示黑洞效果的着色器实现，使用光线追踪模拟引力透镜效应和吸积盘",
-                            thumbnail: "images/shader-blackhole.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-blackhole"
-                        },
-                        {
-                            id: "shader-heartShader",
-                            title: "心形着色器",
-                            description: "展示心形曲线着色器效果，使用TubeGeometry创建心形并添加渐变色动画",
-                            thumbnail: "images/shader-heartShader.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-heartShader"
-                        },
-                        {
-                            id: "shader-blobShader",
-                            title: "Blob着色器",
-                            description: "展示动态变形的几何体效果，使用Perlin噪声实现一团揉动的视觉效果",
-                            thumbnail: "images/shader-blobShader.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-blobShader"
-                        },
-                        {
-                            id: "shader-circleRotate",
-                            title: "旋转的圆",
-                            description: "展示旋转的圆着色器效果，使用同心圆和三角形噪声创建动态视觉效果",
-                            thumbnail: "images/shader-circleRotate.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-circleRotate"
-                        },
-                        {
-                            id: "shader-shaderLight",
-                            title: "着色器光效",
-                            description: "展示着色器光效，使用自定义着色器创建动态发光的灯光效果",
-                            thumbnail: "images/shader-shaderLight.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-shaderLight"
-                        },
-                        {
-                            id: "shader-whiteCloud",
-                            title: "白云",
-                            description: "展示白云效果，使用光线追踪技术渲染云层",
-                            thumbnail: "images/shader-whiteCloud.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-whiteCloud"
-                        },
-                        {
-                            id: "shader-waterSky",
-                            title: "水天一色",
-                            description: "展示水天一色效果，使用光线追踪技术渲染水面和天空",
-                            thumbnail: "images/shader-waterSky.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-waterSky"
-                        },
-                        {
-                            id: "shader-cloudShader",
-                            title: "天空云",
-                            description: "展示天空云效果，使用实例化网格渲染大量云朵",
-                            thumbnail: "images/shader-cloudShader.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-cloudShader"
-                        },
-                        {
-                            id: "shader-darkClouds",
-                            title: "乌云",
-                            description: "展示乌云效果，使用光线追踪技术渲染动态的乌云",
-                            thumbnail: "images/shader-darkClouds.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-darkClouds"
-                        },
-                        {
-                            id: "shader-cellShader",
-                            title: "细胞",
-                            description: "展示细胞效果，使用光线追踪技术渲染动态的细胞结构",
-                            thumbnail: "images/shader-cellShader.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-cellShader"
-                        },
-                        {
-                            id: "shader-mushroom",
-                            title: "蘑菇",
-                            description: "展示蘑菇效果，使用光线追踪技术渲染动态的蘑菇",
-                            thumbnail: "images/shader-mushroom.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-mushroom"
-                        },
-                        {
-                            id: "shader-mosaicShader",
-                            title: "马赛克",
-                            description: "展示马赛克效果，使用着色器实现图片马赛克化",
-                            thumbnail: "images/shader-mosaicShader.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-mosaicShader"
-                        },
-                        {
-                            id: "shader-contour",
-                            title: "魔幻山体",
-                            description: "展示魔幻山体效果，使用着色器实现等高线示意",
-                            thumbnail: "images/shader-contour.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-contour"
-                        },
-                        {
-                            id: "shader-softLight",
-                            title: "柔光",
-                            description: "展示柔光效果，使用着色器实现柔和的光影效果",
-                            thumbnail: "images/shader-softLight.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-softLight"
-                        },
-                        {
-                            id: "shader-waveScan",
-                            title: "波扫描",
-                            description: "展示波扫描效果，使用着色器实现动态波纹扫描",
-                            thumbnail: "images/shader-waveScan.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-waveScan"
-                        },
-                        {
-                            id: "shader-innerGlow",
-                            title: "内发光",
-                            description: "展示内发光效果，使用菲涅尔反射实现物体边缘发光",
-                            thumbnail: "images/shader-innerGlow.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-innerGlow"
-                        },
-                        {
-                            id: "shader-fireShader",
-                            title: "火焰",
-                            description: "展示火焰效果，使用着色器实现动态火焰",
-                            thumbnail: "images/shader-fireShader.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-fireShader"
-                        },
-                        {
-                            id: "shader-emitShader",
-                            title: "发散着色器",
-                            description: "展示发散着色器效果，使用着色器实现动态发散图案",
-                            thumbnail: "images/shader-emitShader.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-emitShader"
-                        },
-                        {
-                            id: "shader-ephemeralFlower",
-                            title: "幻影花烟",
-                            description: "展示幻影花烟效果，使用4D Simplex噪声实现动态烟雾花朵",
-                            thumbnail: "images/shader-ephemeralFlower.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-ephemeralFlower"
-                        },
-                        {
-                            id: "shader-fishShader",
-                            title: "鱼",
-                            description: "展示鱼游动效果，使用着色器实现动态鱼和水草动画",
-                            thumbnail: "images/shader-fishShader.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-fishShader"
-                        },
-                        {
-                            id: "shader-energyBallShader",
-                            title: "能量球",
-                            description: "展示能量球效果，使用着色器实现动态能量球脉冲动画",
-                            thumbnail: "images/shader-energyBallShader.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-energyBallShader"
-                        },
-                        {
-                            id: "shader-girdFloor",
-                            title: "网格地板",
-                            description: "展示网格地板效果，使用自定义着色器实现带有抗锯齿的网格线",
-                            thumbnail: "images/shader-girdFloor.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-girdFloor"
-                        },
-                        {
-                            id: "shader-hologram",
-                            title: "全息投影",
-                            description: "展示全息投影效果，使用自定义着色器实现扫描线和菲涅尔反射效果",
-                            thumbnail: "images/shader-hologram.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-hologram"
-                        },
-                        {
-                            id: "shader-smoke",
-                            title: "燃烧烟雾",
-                            description: "展示燃烧烟雾效果，使用实例化渲染大量粒子实现烟雾粒子系统",
-                            thumbnail: "images/shader-smoke.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-smoke"
-                        },
-                        {
-                            id: "shader-fireMaterial",
-                            title: "火焰材质",
-                            description: "展示火焰材质效果，使用自定义着色器实现燃烧的火焰动画",
-                            thumbnail: "images/shader-fireMaterial.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-fireMaterial"
-                        },
-                        {
-                            id: "shader-contourLine",
-                            title: "等高线",
-                            description: "展示等高线效果，使用Perlin噪声生成地形并通过着色器绘制动态等高线",
-                            thumbnail: "images/shader-contourLine.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-contourLine"
-                        },
-                        {
-                            id: "shader-heatmapShader",
-                            title: "热力图",
-                            description: "展示热力图效果，使用着色器实现动态变化的热力图",
-                            thumbnail: "images/shader-heatmapShader.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-heatmapShader"
-                        },
-                        {
-                            id: "shader-redRose",
-                            title: "红玫瑰",
-                            description: "展示红玫瑰效果，使用raymarching技术渲染动态的红玫瑰",
-                            thumbnail: "images/shader-redRose.jpg",
-                            version: "r179",
-                            url: "examples/z258/shader-redRose"
-                        },
-                        {
-                            id: "particle-waveParticleShader",
-                            title: "波浪粒子",
-                            description: "展示波浪粒子效果，使用着色器实现动态波浪粒子动画",
-                            thumbnail: "images/particle-waveParticleShader.jpg",
-                            version: "r179",
-                            url: "examples/z258/particle-waveParticleShader"
-                        },
-                        {
-                            id: "particle-particleLine",
-                            title: "粒子线条",
-                            description: "展示粒子线条效果，粒子间根据距离连线，支持鼠标交互和后处理效果",
-                            thumbnail: "images/particle-particleLine.jpg",
-                            version: "r179",
-                            url: "examples/z258/particle-particleLine"
-                        },
-                        {
-                            id: "particle-sphereLine",
-                            title: "球体线条",
-                            description: "展示球体粒子连线效果，粒子在球面上随机运动，距离近的粒子之间自动连线",
-                            thumbnail: "images/particle-sphereLine.jpg",
-                            version: "r179",
-                            url: "examples/z258/particle-sphereLine"
-                        },
-                        {
-                            id: "particle-particleWire",
-                            title: "粒子线",
-                            description: "展示粒子连线效果，粒子随机运动，距离近的粒子之间自动连线，支持鼠标交互",
-                            thumbnail: "images/particle-particleWire.jpg",
-                            version: "r179",
-                            url: "examples/z258/particle-particleWire"
-                        },
-                        {
-                            id: "particle-starrySky",
-                            title: "粒子星空",
-                            description: "展示粒子星空效果，使用着色器实现动态星空隧道效果",
-                            thumbnail: "images/particle-starrySky.jpg",
-                            version: "r179",
-                            url: "examples/z258/particle-starrySky"
-                        }
-                    ]
-                },
-                {
-                    id: "advanced-postprocessing",
-                    name: "后处理",
-                    examples: [
-                        {
-                            id: "postprocessing-bloom",
-                            title: "物体发光效果",
-                            description: "使用EffectComposer和UnrealBloomPass实现物体的辉光发光效果，支持参数调节",
-                            thumbnail: "images/postprocessing-bloom.jpg",
-                            version: "r179",
-                            url: "examples/postprocessing-bloom"
-                        },
-                        {
-                            id: "advanced-postprocessing-sceneScissor",
-                            title: "场景裁剪与后处理对比",
-                            description: "使用ScissorTest实现场景分割显示，左侧无辉光效果，右侧带辉光效果，可拖动滑块调整分割位置",
-                            thumbnail: "images/advanced-postprocessing-sceneScissor.jpg",
-                            version: "r179",
-                            url: "examples/z258/advanced-postprocessing-sceneScissor"
-                        },
-                        {
-                            id: "advanced-postprocessing-outlinePass",
-                            title: "轮廓光",
-                            description: "展示OutlinePass的使用，点击物体显示轮廓光效果",
-                            thumbnail: "images/advanced-postprocessing-outlinePass.jpg",
-                            version: "r179",
-                            url: "examples/z258/advanced-postprocessing-outlinePass"
-                        },
-                        {
-                            id: "advanced-postprocessing-multOutlinePass",
-                            title: "多轮廓光",
-                            description: "展示多个OutlinePass的使用，每个物体可以有不同颜色的轮廓光效果",
-                            thumbnail: "images/advanced-postprocessing-multOutlinePass.jpg",
-                            version: "r179",
-                            url: "examples/z258/advanced-postprocessing-multOutlinePass"
-                        },
-                        {
-                            id: "advanced-postprocessing-effectComposer",
-                            title: "渲染器配置",
-                            description: "展示EffectComposer的配置和渲染方式切换，支持多种色调映射模式",
-                            thumbnail: "images/advanced-postprocessing-effectComposer.jpg",
-                            version: "r179",
-                            url: "examples/z258/advanced-postprocessing-effectComposer"
-                        }
-                    ]
-                },
-                {
-                    id: "advanced-physics",
-                    name: "物理引擎",
-                    examples: [
-                        {
-                            id: "advanced-physics-cannon",
-                            title: "Cannon.js 物理",
-                            description: "使用 Cannon.js 实现物理碰撞和重力效果",
-                            thumbnail: "images/advanced-physics-cannon.jpg",
-                            version: "r150",
-                            url: "examples/advanced-physics-cannon"
-                        },
-                        {
-                            id: "advanced-physics-ammo",
-                            title: "Ammo.js 物理",
-                            description: "使用 Ammo.js 创建复杂的物理交互场景",
-                            thumbnail: "images/advanced-physics-ammo.jpg",
-                            version: "r150",
-                            url: "examples/advanced-physics-ammo"
-                        }
-                    ]
-                }
-            ]
+          id: "loaders-texture",
+          name: "纹理加载器",
+          examples: [
+            {
+              id: "loaders-texture-basic",
+              title: "基础纹理加载器",
+              description: "加载和应用各种图像格式的纹理",
+              thumbnail: "images/loaders-texture-basic.jpg",
+              version: "r179",
+              url: "examples/loaders-texture-basic",
+            },
+            {
+              id: "loaders-texture-hdr",
+              title: "HDR 纹理加载器",
+              description: "加载和应用高动态范围(HDR)纹理",
+              thumbnail: "images/loaders-texture-hdr.jpg",
+              version: "r179",
+              url: "examples/loaders-texture-hdr",
+            },
+            {
+              id: "loaders-texture-cube",
+              title: "立方体纹理加载器",
+              description: "加载和应用立方体贴图纹理",
+              thumbnail: "images/loaders-texture-cube.jpg",
+              version: "r179",
+              url: "examples/loaders-texture-cube",
+            },
+          ],
         },
         {
-            id: "performance",
-            name: "性能优化",
-            icon: "bi-speedometer2",
-            subcategories: [
-                {
-                    id: "performance-techniques",
-                    name: "优化技术",
-                    examples: [
-                        {
-                            id: "performance-instancing",
-                            title: "实例化渲染",
-                            description: "使用实例化技术渲染大量相似对象",
-                            thumbnail: "images/performance-instancing.jpg",
-                            version: "r150",
-                            url: "examples/performance-instancing"
-                        },
-                        {
-                            id: "performance-lod",
-                            title: "LOD 技术",
-                            description: "根据距离使用不同细节级别的模型",
-                            thumbnail: "images/performance-lod.jpg",
-                            version: "r150",
-                            url: "examples/performance-lod"
-                        }
-                    ]
-                }
-            ]
+          id: "loaders-other",
+          name: "其他加载器",
+          examples: [
+            {
+              id: "loaders-font",
+              title: "字体加载器",
+              description: "加载和使用 3D 文本字体",
+              thumbnail: "images/loaders-font.jpg",
+              version: "r179",
+              url: "examples/loaders-font",
+            },
+            {
+              id: "loaders-audio",
+              title: "音频加载器",
+              description: "加载和播放 3D 场景中的音频",
+              thumbnail: "images/loaders-audio.jpg",
+              version: "r179",
+              url: "examples/loaders-audio",
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: "animation",
+      name: "动画与交互",
+      icon: "bi-film",
+      subcategories: [
+        {
+          id: "animation-basics",
+          name: "基础动画",
+          examples: [
+            {
+              id: "animation-keyframes",
+              title: "关键帧动画",
+              description: "使用关键帧创建复杂的动画序列",
+              thumbnail: "images/animation-keyframes.jpg",
+              version: "r179",
+              url: "examples/animation-keyframes",
+            },
+            {
+              id: "animation-morph",
+              title: "变形动画",
+              description: "在不同几何体之间平滑过渡的变形效果",
+              thumbnail: "images/animation-morph.jpg",
+              version: "r179",
+              url: "examples/animation-morph",
+            },
+          ],
         },
         {
-            id: "digital-twin",
-            name: "数字孪生",
-            icon: "bi-diagram-3",
-            subcategories: [
-                {
-                    id: "digital-twin-effects",
-                    name: "场景特效",
-                    examples: [
-                        {
-                            id: "digital-twin-particle-system",
-                            title: "粒子系统",
-                            description: "创建各种粒子特效，如烟雾、火焰、雨雪等环境效果",
-                            thumbnail: "images/digital-twin-particle-system.jpg",
-                            version: "r179",
-                            url: "examples/digital-twin-particle-system"
-                        },
-                        {
-                            id: "digital-twin-water-simulation",
-                            title: "水面模拟",
-                            description: "模拟真实的水面波动效果，适用于海洋、湖泊场景",
-                            thumbnail: "images/digital-twin-water-simulation.jpg",
-                            version: "r179",
-                            url: "examples/digital-twin-water-simulation"
-                        },
-                        {
-                            id: "digital-twin-fog-atmosphere",
-                            title: "雾气大气",
-                            description: "创建逼真的雾气和大气散射效果，增强场景真实感",
-                            thumbnail: "images/digital-twin-fog-atmosphere.jpg",
-                            version: "r179",
-                            url: "examples/digital-twin-fog-atmosphere"
-                        },
-                        {
-                            id: "digital-twin-volumetric-lighting",
-                            title: "体积光照",
-                            description: "实现体积光照效果，如光束、光柱等戏剧性光照",
-                            thumbnail: "images/digital-twin-volumetric-lighting.jpg",
-                            version: "r179",
-                            url: "examples/digital-twin-volumetric-lighting"
-                        }
-                    ]
-                },
-                {
-                    id: "digital-twin-visualization",
-                    name: "数据可视化",
-                    examples: [
-                        {
-                            id: "digital-twin-data-flow",
-                            title: "数据流动画",
-                            description: "可视化数据在系统中的流动过程，适用于网络拓扑展示",
-                            thumbnail: "images/digital-twin-data-flow.jpg",
-                            version: "r179",
-                            url: "examples/digital-twin-data-flow"
-                        },
-                        {
-                            id: "digital-twin-heatmap",
-                            title: "热力图显示",
-                            description: "在3D场景中展示热力图数据，如温度分布、人流密度等",
-                            thumbnail: "images/digital-twin-heatmap.jpg",
-                            version: "r179",
-                            url: "examples/digital-twin-heatmap"
-                        },
-                        {
-                            id: "digital-twin-sensor-visualization",
-                            title: "传感器可视化",
-                            description: "实时显示传感器数据，包括状态指示和数据变化动画",
-                            thumbnail: "images/digital-twin-sensor-visualization.jpg",
-                            version: "r179",
-                            url: "examples/digital-twin-sensor-visualization"
-                        },
-                        {
-                            id: "digital-twin-timeline-animation",
-                            title: "时间轴动画",
-                            description: "基于时间轴的数据回放和预测动画，展示历史和未来趋势",
-                            thumbnail: "images/digital-twin-timeline-animation.jpg",
-                            version: "r179",
-                            url: "examples/digital-twin-timeline-animation"
-                        }
-                    ]
-                },
-                {
-                    id: "digital-twin-interaction",
-                    name: "交互控制",
-                    examples: [
-                        {
-                            id: "digital-twin-device-control",
-                            title: "设备控制面板",
-                            description: "3D场景中的设备控制界面，支持实时操作和状态反馈",
-                            thumbnail: "images/digital-twin-device-control.jpg",
-                            version: "r179",
-                            url: "examples/digital-twin-device-control"
-                        },
-                        {
-                            id: "digital-twin-path-planning",
-                            title: "路径规划",
-                            description: "可视化路径规划算法，适用于机器人导航和物流优化",
-                            thumbnail: "images/digital-twin-path-planning.jpg",
-                            version: "r179",
-                            url: "examples/digital-twin-path-planning"
-                        },
-                        {
-                            id: "digital-twin-alarm-system",
-                            title: "报警系统",
-                            description: "3D场景中的报警提示和状态指示，包括声光报警效果",
-                            thumbnail: "images/digital-twin-alarm-system.jpg",
-                            version: "r179",
-                            url: "examples/digital-twin-alarm-system"
-                        },
-                        {
-                            id: "digital-twin-virtual-assembly",
-                            title: "虚拟装配",
-                            description: "模拟产品装配过程，支持拖拽组装和碰撞检测",
-                            thumbnail: "images/digital-twin-virtual-assembly.jpg",
-                            version: "r179",
-                            url: "examples/digital-twin-virtual-assembly"
-                        }
-                    ]
-                },
-                {
-                    id: "digital-twin-simulation",
-                    name: "仿真模拟",
-                    examples: [
-                        {
-                            id: "digital-twin-factory-simulation",
-                            title: "工厂仿真",
-                            description: "完整的工厂生产线仿真，包括设备运行和产品流转",
-                            thumbnail: "images/digital-twin-factory-simulation.jpg",
-                            version: "r179",
-                            url: "examples/digital-twin-factory-simulation"
-                        },
-                        {
-                            id: "digital-twin-city-simulation",
-                            title: "城市仿真",
-                            description: "智慧城市场景仿真，包括交通流、人流和基础设施",
-                            thumbnail: "images/digital-twin-city-simulation.jpg",
-                            version: "r179",
-                            url: "examples/digital-twin-city-simulation"
-                        },
-                        {
-                            id: "digital-twin-building-bim",
-                            title: "建筑BIM",
-                            description: "建筑信息模型展示，支持楼层切换和构件信息查看",
-                            thumbnail: "images/digital-twin-building-bim.jpg",
-                            version: "r179",
-                            url: "examples/digital-twin-building-bim"
-                        },
-                        {
-                            id: "digital-twin-energy-flow",
-                            title: "能源流动",
-                            description: "可视化能源系统中的电力、热力等能源流动过程",
-                            thumbnail: "images/digital-twin-energy-flow.jpg",
-                            version: "r179",
-                            url: "examples/digital-twin-energy-flow"
-                        },
-                        {
-                            id: "visualization-radar-uv",
-                            title: "UV雷达扩散特效",
-                            description: "基于UV坐标的雷达扩散波纹动画效果",
-                            thumbnail: "images/visualization-radar-uv.jpg",
-                            version: "r179",
-                            url: "examples/visualization-radar-uv"
-                        },
-                        {
-                            id: "visualization-radar-spread",
-                            title: "雷达扩散特效",
-                            description: "圆形波纹向外扩散效果，模拟雷达探测波",
-                            thumbnail: "images/visualization-radar-spread.jpg",
-                            version: "r179",
-                            url: "examples/visualization-radar-spread"
-                        },
-                        {
-                            id: "visualization-radar-scan",
-                            title: "雷达扫描特效",
-                            description: "旋转扫描线效果，带有渐变衰减",
-                            thumbnail: "images/visualization-radar-scan.jpg",
-                            version: "r179",
-                            url: "examples/visualization-radar-scan"
-                        },
-                        {
-                            id: "visualization-earth-sweep",
-                            title: "地球渐变扫光",
-                            description: "地球表面的渐变扫描光效果",
-                            thumbnail: "images/visualization-earth-sweep.jpg",
-                            version: "r179",
-                            url: "examples/visualization-earth-sweep"
-                        },
-                        {
-                            id: "visualization-earth-spot-sweep",
-                            title: "地球斑点扫光",
-                            description: "地球表面的斑点状扫描光效果",
-                            thumbnail: "images/visualization-earth-spot-sweep.jpg",
-                            version: "r179",
-                            url: "examples/visualization-earth-spot-sweep"
-                        },
-                        {
-                            id: "visualization-merged-shape-monitor",
-                            title: "合并形状监测",
-                            description: "使用射线检测合并几何体中的单个形状动作",
-                            thumbnail: "images/visualization-merged-shape-monitor.jpg",
-                            version: "r179",
-                            url: "examples/visualization-merged-shape-monitor"
-                        },
-                        {
-                            id: "visualization-procedural-buildings",
-                            title: "程序化生成随机建筑",
-                            description: "程序化生成随机建筑模型，俯视视角城市建筑群",
-                            thumbnail: "images/visualization-procedural-buildings.jpg",
-                            version: "r179",
-                            url: "examples/visualization-procedural-buildings"
-                        },
-                        {
-                            id: "visualization-windfield-canvas-texture",
-                            title: "Canvas贴图3D风场图",
-                            description: "风场流渲染到Canvas并贴图在球体上，支持展开收起动画",
-                            thumbnail: "images/visualization-windfield-canvas-texture.jpg",
-                            version: "r179",
-                            url: "examples/visualization-windfield-canvas-texture"
-                        },
-                        {
-                            id: "visualization-windfield-3d-plane",
-                            title: "平面3D风场图",
-                            description: "平面上的风场粒子流动效果，带参数控制面板",
-                            thumbnail: "images/visualization-windfield-3d-plane.jpg",
-                            version: "r179",
-                            url: "examples/visualization-windfield-3d-plane"
-                        },
-                        {
-                            id: "visualization-windfield-3d-globe",
-                            title: "地球3D风场图",
-                            description: "地球上的风场粒子流动效果，带参数控制面板",
-                            thumbnail: "images/visualization-windfield-3d-globe.jpg",
-                            version: "r179",
-                            url: "examples/visualization-windfield-3d-globe"
-                        },
-                        {
-                            id: "visualization-earth-texture",
-                            title: "地球贴图",
-                            description: "带有纹理贴图的旋转地球",
-                            thumbnail: "images/visualization-earth-texture.jpg",
-                            version: "r179",
-                            url: "examples/visualization-earth-texture"
-                        },
-                        {
-                            id: "visualization-earth-columns",
-                            title: "地球柱体",
-                            description: "使用InstancedMesh实现的地球柱状图",
-                            thumbnail: "images/visualization-earth-columns.jpg",
-                            version: "r179",
-                            url: "examples/visualization-earth-columns"
-                        },
-                        {
-                            id: "visualization-earth-columns-optimized",
-                            title: "地球柱体优化",
-                            description: "使用BufferGeometryUtils.mergeGeometries合并优化的地球柱状图",
-                            thumbnail: "images/visualization-earth-columns-optimized.jpg",
-                            version: "r179",
-                            url: "examples/visualization-earth-columns-optimized"
-                        },
-                        {
-                            id: "visualization-earth-columns-animation",
-                            title: "地球柱体合并优化动画",
-                            description: "带动画效果的地球柱状图，柱体高度随时间波动",
-                            thumbnail: "images/visualization-earth-columns-animation.jpg",
-                            version: "r179",
-                            url: "examples/visualization-earth-columns-animation"
-                        },
-                        {
-                            id: "visualization-gradient-fence",
-                            title: "渐变围栏 3D 区块",
-                            description: "带渐变色的围栏效果",
-                            thumbnail: "images/visualization-gradient-fence.jpg",
-                            version: "r179",
-                            url: "examples/visualization-gradient-fence"
-                        },
-                        {
-                            id: "visualization-multi-gradient-fence",
-                            title: "多重渐变围栏",
-                            description: "多层渐变围栏组合效果",
-                            thumbnail: "images/visualization-multi-gradient-fence.jpg",
-                            version: "r179",
-                            url: "examples/visualization-multi-gradient-fence"
-                        },
-                        {
-                            id: "visualization-earth-sweep",
-                            title: "地球渐变扫光",
-                            description: "地球表面的渐变扫描光效果",
-                            thumbnail: "images/visualization-earth-sweep.jpg",
-                            version: "r179",
-                            url: "examples/visualization-earth-sweep"
-                        },
-                        {
-                            id: "visualization-earth-spot-sweep",
-                            title: "地球斑点扫光",
-                            description: "地球表面的斑点状扫描光效果",
-                            thumbnail: "images/visualization-earth-spot-sweep.jpg",
-                            version: "r179",
-                            url: "examples/visualization-earth-spot-sweep"
-                        },
-                        {
-                            id: "visualization-windfield-canvas2d",
-                            title: "canvas 2D风场图",
-                            description: "使用canvas绘制的2D风场流向图",
-                            thumbnail: "images/visualization-windfield-canvas2d.jpg",
-                            // version: "r179",
-                            url: "examples/visualization-windfield-canvas2d"
-                        },
-                        {
-                            id: "visualization-heatmap-2d",
-                            title: "2D热力图",
-                            description: "平面热力图可视化，支持动态热点",
-                            thumbnail: "images/visualization-heatmap-2d.jpg",
-                            version: "r179",
-                            url: "examples/visualization-heatmap-2d"
-                        },
-                        {
-                            id: "visualization-neural-network",
-                            title: "交互式神经网络可视化",
-                            description: "四种不同结构的神经网络可视化，支持主题切换和密度调整",
-                            thumbnail: "images/visualization-neural-network.jpg",
-                            version: "r179",
-                            url: "examples/visualization-neural-network"
-                        },
-                        {
-                            id: "visualization-smooth-seconds",
-                            title: "平滑运动秒针",
-                            description: "使用弹性缓动函数实现的平滑运动秒针",
-                            thumbnail: "images/visualization-smooth-seconds.jpg",
-                            version: "r179",
-                            url: "examples/visualization-smooth-seconds"
-                        },
-                        {
-                            id: "visualization-interactive-globe",
-                            title: "交互式地球",
-                            description: "可旋转缩放的3D地球仪，带有大气光晕效果和GUI控制面板",
-                            thumbnail: "images/visualization-interactive-globe.jpg",
-                            version: "r179",
-                            url: "examples/visualization-interactive-globe"
-                        },
+          id: "animation-interaction",
+          name: "交互效果",
+          examples: [
+            {
+              id: "animation-raycaster",
+              title: "射线检测",
+              description: "使用射线检测实现对象选择和交互",
+              thumbnail: "images/animation-raycaster.jpg",
+              version: "r179",
+              url: "examples/animation-raycaster",
+            },
+            {
+              id: "animation-drag",
+              title: "拖拽控制",
+              description: "实现3D对象的拖拽和放置功能",
+              thumbnail: "images/animation-drag.jpg",
+              version: "r179",
+              url: "examples/animation-drag",
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: "advanced",
+      name: "高级技术",
+      icon: "bi-stars",
+      subcategories: [
+        {
+          id: "advanced-shaders",
+          name: "着色器",
+          examples: [
+            {
+              id: "visualization-water-shader",
+              title: "水着色器效果",
+              description: "带有水面反射和动态光照的场景，使用Water和Sky对象",
+              thumbnail: "images/visualization-water-shader.jpg",
+              version: "r179",
+              url: "examples/visualization-water-shader",
+            },
+            {
+              id: "cyberpunk-lightning-tunnel",
+              title: "赛博朋克闪电隧道",
+              description:
+                "使用自定义着色器和后处理实现高速飞行的赛博朋克数据隧道效果",
+              thumbnail: "images/cyberpunk-lightning-tunnel.jpg",
+              version: "r179",
+              url: "examples/cyberpunk-lightning-tunnel",
+            },
+            {
+              id: "visualization-custom-shader-lines",
+              title: "自定义shader线元素",
+              description: "使用自定义着色器实现渐变色和流光效果的线元素",
+              thumbnail: "images/visualization-custom-shader-lines.jpg",
+              version: "r179",
+              url: "examples/visualization-custom-shader-lines",
+            },
+            {
+              id: "visualization-neon-flow",
+              title: "流动霓虹效果",
+              description: "炫酷的流动霓虹视觉动画，支持鼠标交互效果",
+              thumbnail: "images/visualization-neon-flow.jpg",
+              version: "r179",
+              url: "examples/visualization-neon-flow",
+            },
+            {
+              id: "visualization-wind-terrain",
+              title: "流过地形的风线",
+              description:
+                "使用SimplexNoise生成地形，并让风线流过起伏的地形表面",
+              thumbnail: "images/visualization-wind-terrain.jpg",
+              version: "r179",
+              url: "examples/visualization-wind-terrain",
+            },
+            {
+              id: "shader-abstract-art",
+              title: "抽象艺术动画",
+              description: "动态抽象艺术作品，旋转流动的光影图案，支持鼠标交互",
+              thumbnail: "images/shader-abstract-art.jpg",
+              version: "r179",
+              url: "examples/shader-abstract-art",
+            },
+            {
+              id: "visualization-aurora",
+              title: "星空极光动效",
+              description: "绚丽的极光与星空背景Shader效果，支持多种参数调节",
+              thumbnail: "images/visualization-aurora.jpg",
+              version: "r179",
+              url: "examples/visualization-aurora",
+            },
+            {
+              id: "visualization-shader-transform",
+              title: "着色器变形",
+              description:
+                "圆环与方块之间的动态变形效果，支持鼠标交互和按钮切换",
+              thumbnail: "images/visualization-shader-transform.jpg",
+              version: "r179",
+              url: "examples/visualization-shader-transform",
+            },
+            {
+              id: "visualization-particle-transform",
+              title: "变形粒子艺术",
+              description:
+                "多种粒子形态动态切换变形效果，支持超新星螺旋、量子晶格、恒星环面、天体螺旋",
+              thumbnail: "images/visualization-particle-transform.jpg",
+              version: "r179",
+              url: "examples/visualization-particle-transform",
+            },
+            {
+              id: "visualization-energy-bubble",
+              title: "漂流的3D能量球",
+              description:
+                "交互式能量气泡效果，点击产生能量波纹和闪电分支，带折射和色散效果",
+              thumbnail: "images/visualization-energy-bubble.jpg",
+              version: "r179",
+              url: "examples/visualization-energy-bubble",
+            },
+            {
+              id: "visualization-hologram",
+              title: "全息影像效果",
+              description: "动态切换的几何体全息投影，带故障效果和扫描线",
+              thumbnail: "images/visualization-hologram.jpg",
+              version: "r179",
+              url: "examples/visualization-hologram",
+            },
+            {
+              id: "advanced-rain-roof",
+              title: "雨和屋顶效果",
+              description:
+                "使用深度纹理和自定义着色器实现雨滴与物体的真实交互效果，包括动态屋顶",
+              thumbnail: "images/advanced-rain-roof.jpg",
+              version: "r179",
+              url: "examples/advanced-rain-roof",
+            },
+            {
+              id: "postprocessing-bloom",
+              title: "物体发光效果",
+              description:
+                "使用EffectComposer和UnrealBloomPass实现物体的辉光发光效果，支持参数调节",
+              thumbnail: "images/postprocessing-bloom.jpg",
+              version: "r179",
+              url: "examples/postprocessing-bloom",
+            },
+            {
+              id: "shader-raymarching-fire",
+              title: "光线追踪火花特效",
+              description:
+                "使用光线追踪(Ray Marching)技术结合Perlin噪声实现逼真的动态火花/火焰效果",
+              thumbnail: "images/shader-raymarching-fire.jpg",
+              version: "r179",
+              url: "examples/shader-raymarching-fire",
+            },
+            {
+              id: "shaderbook-shaderexamples-01",
+              title: "UV位置渐变",
+              description: "使用UV坐标生成渐变色彩和透明度效果",
+              thumbnail: "images/shaderbook-shaderexamples-01.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-01",
+            },
+            {
+              id: "shaderbook-shaderexamples-02",
+              title: "正弦彩色图案",
+              description: "使用sin函数生成动态彩色图案",
+              thumbnail: "images/shaderbook-shaderexamples-02.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-02",
+            },
+            {
+              id: "shaderbook-shaderexamples-03",
+              title: "数学曲线绘制",
+              description: "使用plot函数绘制y=x³数学曲线",
+              thumbnail: "images/shaderbook-shaderexamples-03.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-03",
+            },
+            {
+              id: "shaderbook-shaderexamples-04a",
+              title: "圆形波纹效果",
+              description: "使用circ函数生成正弦波纹图案",
+              thumbnail: "images/shaderbook-shaderexamples-04a.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-04a",
+            },
+            {
+              id: "shaderbook-shaderexamples-04b",
+              title: "彩色圆形渐变",
+              description: "使用circ函数和clamp限制颜色范围",
+              thumbnail: "images/shaderbook-shaderexamples-04b.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-04b",
+            },
+            {
+              id: "shaderbook-shaderexamples-04c",
+              title: "双色渐变",
+              description: "使用mix函数实现红色到紫色的渐变效果",
+              thumbnail: "images/shaderbook-shaderexamples-04c.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-04c",
+            },
+            {
+              id: "shaderbook-shaderexamples-05",
+              title: "抛物线绘制",
+              description: "使用plot函数绘制y=x²抛物线并添加边界裁剪效果",
+              thumbnail: "images/shaderbook-shaderexamples-05.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-05",
+            },
+            {
+              id: "shaderbook-shaderexamples-06",
+              title: "圆形混合效果",
+              description: "使用circle函数绘制圆形并混合两种颜色",
+              thumbnail: "images/shaderbook-shaderexamples-06.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-06",
+            },
+            {
+              id: "shaderbook-shaderexamples-07",
+              title: "鼠标跟随圆形",
+              description: "使用raycaster检测鼠标位置，绘制跟随的绿色圆形",
+              thumbnail: "images/shaderbook-shaderexamples-07.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-07",
+            },
+            {
+              id: "shaderbook-shaderexamples-08",
+              title: "纹理叠加动画",
+              description: "在纹理上叠加随时间移动的圆形效果",
+              thumbnail: "images/shaderbook-shaderexamples-08.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-08",
+            },
+            {
+              id: "shaderbook-shaderexamples-09",
+              title: "周期性开合盒子",
+              description: "立方体表面创建多个动态开合的圆形孔洞",
+              thumbnail: "images/shaderbook-shaderexamples-09.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-09",
+            },
+            {
+              id: "shaderbook-shaderexamples-09a",
+              title: "动态孔洞效果",
+              description: "在立方体表面创建随时间变化的圆形孔洞",
+              thumbnail: "images/shaderbook-shaderexamples-09a.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-09a",
+            },
+            {
+              id: "shaderbook-shaderexamples-10a",
+              title: "交互式圆形绘制",
+              description: "点击创建圆形遮罩，最多支持100个圆形",
+              thumbnail: "images/shaderbook-shaderexamples-10a.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-10a",
+            },
+            {
+              id: "shaderbook-shaderexamples-10b",
+              title: "纹理切换遮罩",
+              description: "点击切换纹理，圆形遮罩显示不同纹理",
+              thumbnail: "images/shaderbook-shaderexamples-10b.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-10b",
+            },
+            {
+              id: "shaderbook-shaderexamples-11",
+              title: "网格筛子效果",
+              description: "使用step函数创建网格图案",
+              thumbnail: "images/shaderbook-shaderexamples-11.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-11",
+            },
+            {
+              id: "shaderbook-shaderexamples-12",
+              title: "圆形交集遮罩",
+              description: "使用circle函数创建多个圆形边框并求交集",
+              thumbnail: "images/shaderbook-shaderexamples-12.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-12",
+            },
+            {
+              id: "shaderbook-shaderexamples-13",
+              title: "正多边形绘制",
+              description: "使用极坐标公式绘制正多边形",
+              thumbnail: "images/shaderbook-shaderexamples-13.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-13",
+            },
+            {
+              id: "shaderbook-shaderexamples-14",
+              title: "3D波浪效果",
+              description: "使用顶点着色器创建动态波浪效果",
+              thumbnail: "images/shaderbook-shaderexamples-14.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-14",
+            },
+            {
+              id: "shaderbook-shaderexamples-15",
+              title: "材质着色器修改",
+              description: "使用onBeforeCompile修改标准材质创建动态效果",
+              thumbnail: "images/shaderbook-shaderexamples-15.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-15",
+            },
+            {
+              id: "shaderbook-shaderexamples-16",
+              title: "可变形圆形着色器",
+              description:
+                "使用onBeforeCompile和自定义法线计算创建动态变形效果",
+              thumbnail: "images/shaderbook-shaderexamples-16.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-16",
+            },
+            {
+              id: "shaderbook-shaderexamples-A",
+              title: "旋转盒子",
+              description: "使用顶点着色器旋转矩阵实现立方体旋转动画",
+              thumbnail: "images/shaderbook-shaderexamples-A.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-A",
+            },
+            {
+              id: "shaderbook-shaderexamples-B",
+              title: "阶梯图案着色器",
+              description: "使用step函数创建阶梯效果",
+              thumbnail: "images/shaderbook-shaderexamples-B.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-B",
+            },
+            {
+              id: "shaderbook-shaderexamples-C",
+              title: "2D云彩着色器",
+              description: "使用噪声函数和fbm创建云彩效果",
+              thumbnail: "images/shaderbook-shaderexamples-C.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-C",
+            },
+            {
+              id: "shaderbook-shaderexamples-D",
+              title: "平面水效果着色器",
+              description: "使用波浪函数和反射效果模拟水面",
+              thumbnail: "images/shaderbook-shaderexamples-D.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-D",
+            },
+            {
+              id: "shaderbook-shaderexamples-E",
+              title: "云彩着色器",
+              description: "使用多层噪声混合创建云朵效果",
+              thumbnail: "images/shaderbook-shaderexamples-E.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-E",
+            },
+            {
+              id: "shaderbook-shaderexamples-F",
+              title: "大气散射着色器",
+              description: "模拟逼真的天空和太阳效果",
+              thumbnail: "images/shaderbook-shaderexamples-F.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-F",
+            },
+            {
+              id: "shaderbook-shaderexamples-G",
+              title: "快速鱼群着色器",
+              description: "模拟水下场景中有鱼、水草和气泡",
+              thumbnail: "images/shaderbook-shaderexamples-G.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-G",
+            },
+            {
+              id: "shader-transparentGradient",
+              title: "透明渐变",
+              description:
+                "展示多边形透明渐变效果，使用ShaderMaterial实现从中心向外的渐变透明效果",
+              thumbnail: "images/shader-transparentGradient.jpg",
+              version: "r179",
+              url: "examples/z258/shader-transparentGradient",
+            },
+            {
+              id: "shader-circleWave",
+              title: "圆波扫光",
+              description:
+                "展示圆形波纹扫描效果，使用着色器实现动态圆波扫光动画",
+              thumbnail: "images/shader-circleWave.jpg",
+              version: "r179",
+              url: "examples/z258/shader-circleWave",
+            },
+            {
+              id: "shader-fenceWall",
+              title: "围墙着色器",
+              description:
+                "展示动态波浪围墙效果，使用圆柱体和着色器实现波浪形围墙",
+              thumbnail: "images/shader-fenceWall.jpg",
+              version: "r179",
+              url: "examples/z258/shader-fenceWall",
+            },
+            {
+              id: "shader-fenceShader",
+              title: "围栏着色器",
+              description: "展示动态渐变围栏效果，使用着色器实现渐变和波纹动画",
+              thumbnail: "images/shader-fenceShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-fenceShader",
+            },
+            {
+              id: "shader-planeScan",
+              title: "平面扫描",
+              description: "展示圆形扫描线效果，使用着色器实现动态扫描动画",
+              thumbnail: "images/shader-planeScan.jpg",
+              version: "r179",
+              url: "examples/z258/shader-planeScan",
+            },
+            {
+              id: "shader-wallShader",
+              title: "扩散圆墙",
+              description:
+                "展示圆柱形扩散动画效果，使用着色器实现从下向上的渐变透明",
+              thumbnail: "images/shader-wallShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-wallShader",
+            },
+            {
+              id: "shader-radarShader",
+              title: "雷达着色器",
+              description:
+                "展示雷达扫描效果，包含圆形、十字、动态扫描线等复杂着色器效果",
+              thumbnail: "images/shader-radarShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-radarShader",
+            },
+            {
+              id: "shader-candleShader",
+              title: "蜡烛着色器",
+              description: "展示3D蜡烛和火焰效果，使用着色器实现火焰摇曳动画",
+              thumbnail: "images/shader-candleShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-candleShader",
+            },
+            {
+              id: "shader-ringShader",
+              title: "环形着色器",
+              description:
+                "展示环形火焰效果，使用极坐标映射和噪声函数实现动态火焰动画",
+              thumbnail: "images/shader-ringShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-ringShader",
+            },
+            {
+              id: "shader-smokeCircle",
+              title: "圆泡吸附",
+              description:
+                "展示粒子吸附效果，120个二十面体粒子跟随引导粒子运动",
+              thumbnail: "images/shader-smokeCircle.jpg",
+              version: "r179",
+              url: "examples/z258/shader-smokeCircle",
+            },
+            {
+              id: "shader-radarScan",
+              title: "雷达扫描",
+              description:
+                "展示雷达扫描效果，使用着色器实现动态扫描线和尾焰效果",
+              thumbnail: "images/shader-radarScan.jpg",
+              version: "r179",
+              url: "examples/z258/shader-radarScan",
+            },
+            {
+              id: "shader-imageParticle",
+              title: "颗粒图像",
+              description:
+                "展示图像粒子破碎效果，使用贝塞尔曲线实现三角面分离动画",
+              thumbnail: "images/shader-imageParticle.jpg",
+              version: "r179",
+              url: "examples/z258/shader-imageParticle",
+            },
+            {
+              id: "shader-gaussianBlur",
+              title: "高斯模糊",
+              description: "展示高斯模糊着色器效果，支持通过GUI调节模糊程度",
+              thumbnail: "images/shader-gaussianBlur.jpg",
+              version: "r179",
+              url: "examples/z258/shader-gaussianBlur",
+            },
+            {
+              id: "shader-gridShader",
+              title: "网格着色器",
+              description: "展示动态网格效果，带有脉冲动画和随机哈希函数",
+              thumbnail: "images/shader-gridShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-gridShader",
+            },
+            {
+              id: "shader-compassShader",
+              title: "罗盘",
+              description: "展示罗盘效果着色器，带有多层同心圆和旋转动画",
+              thumbnail: "images/shader-compassShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-compassShader",
+            },
+            {
+              id: "shader-halfCircle",
+              title: "半圆",
+              description: "展示半圆效果着色器，带有旋转动画和渐变透明度",
+              thumbnail: "images/shader-halfCircle.jpg",
+              version: "r179",
+              url: "examples/z258/shader-halfCircle",
+            },
+            {
+              id: "shader-vortexShader",
+              title: "扭曲",
+              description:
+                "展示漩涡扭曲效果着色器，支持通过GUI调节扭曲强度和半径",
+              thumbnail: "images/shader-vortexShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-vortexShader",
+            },
+            {
+              id: "shader-ringsShader",
+              title: "环彩虹着色器",
+              description: "展示环形彩虹效果，带有旋转动画和颜色渐变",
+              thumbnail: "images/shader-ringsShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-ringsShader",
+            },
+            {
+              id: "shader-videoShader",
+              title: "视频着色器",
+              description: "展示动态纹理与着色器混合效果，支持多种混合运算类型",
+              thumbnail: "images/shader-videoShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-videoShader",
+            },
+            {
+              id: "shader-steamWaveSun",
+              title: "蒸汽波太阳",
+              description: "展示蒸汽波风格太阳效果，带有渐变色彩和动态扫描线",
+              thumbnail: "images/shader-steamWaveSun.jpg",
+              version: "r179",
+              url: "examples/z258/shader-steamWaveSun",
+            },
+            {
+              id: "shader-groundglass",
+              title: "毛玻璃",
+              description: "展示毛玻璃马赛克效果，支持通过GUI调节模糊程度",
+              thumbnail: "images/shader-groundglass.jpg",
+              version: "r179",
+              url: "examples/z258/shader-groundglass",
+            },
+            {
+              id: "shader-infiniteGrid",
+              title: "无限网格",
+              description: "展示无限延伸的网格效果，基于相机位置动态渲染",
+              thumbnail: "images/shader-infiniteGrid.jpg",
+              version: "r179",
+              url: "examples/z258/shader-infiniteGrid",
+            },
+            {
+              id: "shader-cobwebBox",
+              title: "蛛网箱子",
+              description: "展示蛛网纹理效果，使用极坐标转换实现圆环和线条图案",
+              thumbnail: "images/shader-cobwebBox.jpg",
+              version: "r179",
+              url: "examples/z258/shader-cobwebBox",
+            },
+            {
+              id: "shader-jumpHeart",
+              title: "跳动的心",
+              description: "展示跳动的心形动画效果，使用数学公式绘制心形曲线",
+              thumbnail: "images/shader-jumpHeart.jpg",
+              version: "r179",
+              url: "examples/z258/shader-jumpHeart",
+            },
+            {
+              id: "shader-rasterGrid",
+              title: "栅格网格",
+              description:
+                "展示动态栅格网格效果，使用分形和调色板函数创建绚丽的网格图案",
+              thumbnail: "images/shader-rasterGrid.jpg",
+              version: "r179",
+              url: "examples/z258/shader-rasterGrid",
+            },
+            {
+              id: "shader-flowLight",
+              title: "流光",
+              description:
+                "展示流光效果，使用环面结几何体配合后期处理bloom效果",
+              thumbnail: "images/shader-flowLight.jpg",
+              version: "r179",
+              url: "examples/z258/shader-flowLight",
+            },
+            {
+              id: "shader-grayShader",
+              title: "灰度",
+              description: "展示灰度着色器效果，将彩色图像转换为灰度",
+              thumbnail: "images/shader-grayShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-grayShader",
+            },
+            {
+              id: "shader-waveShader",
+              title: "图像波动",
+              description: "展示图像波动效果，使用正弦波使平面产生波动动画",
+              thumbnail: "images/shader-waveShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-waveShader",
+            },
+            {
+              id: "shader-dissolve",
+              title: "溶解",
+              description: "展示溶解效果，通过Clip参数控制溶解程度",
+              thumbnail: "images/shader-dissolve.jpg",
+              version: "r179",
+              url: "examples/z258/shader-dissolve",
+            },
+            {
+              id: "shader-changeShaderToy",
+              title: "切换ShaderToy",
+              description:
+                "展示多个内置的ShaderToy效果，可以通过GUI切换不同的着色器效果",
+              thumbnail: "images/shader-changeShaderToy.jpg",
+              version: "r179",
+              url: "examples/z258/shader-changeShaderToy",
+            },
+            {
+              id: "shader-reliefImage",
+              title: "浮雕图像",
+              description: "展示浮雕效果，通过边缘检测算法将图像转换为浮雕样式",
+              thumbnail: "images/shader-reliefImage.jpg",
+              version: "r179",
+              url: "examples/z258/shader-reliefImage",
+            },
+            {
+              id: "shader-dissolveAnimate",
+              title: "溶解动画",
+              description: "展示基于Y轴的溶解效果，支持正向和反向动画切换",
+              thumbnail: "images/shader-dissolveAnimate.jpg",
+              version: "r179",
+              url: "examples/z258/shader-dissolveAnimate",
+            },
+            {
+              id: "shader-threeLogo",
+              title: "Three.js Logo",
+              description:
+                "展示three.js标志的3D渲染效果，具有动态渐变和边缘发光效果",
+              thumbnail: "images/shader-threeLogo.jpg",
+              version: "r179",
+              url: "examples/z258/shader-threeLogo",
+            },
+            {
+              id: "shader-loveShader",
+              title: "爱心",
+              description: "粒子组成的心形动画效果，支持多种配色方案切换",
+              thumbnail: "images/shader-loveShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-loveShader",
+            },
+            {
+              id: "shader-raningSea",
+              title: "波涛海浪",
+              description: "使用Perlin噪声实现逼真的海浪效果，支持多种参数调节",
+              thumbnail: "images/shader-raningSea.jpg",
+              version: "r179",
+              url: "examples/z258/shader-raningSea",
+            },
+            {
+              id: "shader-textStarShader",
+              title: "点星感谢",
+              description: "文字粒子动画效果，展示感谢信息的波浪发光效果",
+              thumbnail: "images/shader-textStarShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-textStarShader",
+            },
+            {
+              id: "shader-blackhole",
+              title: "黑洞效果",
+              description:
+                "展示黑洞效果的着色器实现，使用光线追踪模拟引力透镜效应和吸积盘",
+              thumbnail: "images/shader-blackhole.jpg",
+              version: "r179",
+              url: "examples/z258/shader-blackhole",
+            },
+            {
+              id: "shader-heartShader",
+              title: "心形着色器",
+              description:
+                "展示心形曲线着色器效果，使用TubeGeometry创建心形并添加渐变色动画",
+              thumbnail: "images/shader-heartShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-heartShader",
+            },
+            {
+              id: "shader-chinaFlag",
+              title: "中国旗帜",
+              description: "飘动的中国红旗，使用程序化生成的红旗纹理",
+              thumbnail: "images/shader-chinaFlag.jpg",
+              version: "r179",
+              url: "examples/z258/shader-chinaFlag",
+            },
+            {
+              id: "shader-blobShader",
+              title: "Blob着色器",
+              description:
+                "展示动态变形的几何体效果，使用Perlin噪声实现一团揉动的视觉效果",
+              thumbnail: "images/shader-blobShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-blobShader",
+            },
+            {
+              id: "shader-circleRotate",
+              title: "旋转的圆",
+              description:
+                "展示旋转的圆着色器效果，使用同心圆和三角形噪声创建动态视觉效果",
+              thumbnail: "images/shader-circleRotate.jpg",
+              version: "r179",
+              url: "examples/z258/shader-circleRotate",
+            },
+            {
+              id: "shader-shaderLight",
+              title: "着色器光效",
+              description:
+                "展示着色器光效，使用自定义着色器创建动态发光的灯光效果",
+              thumbnail: "images/shader-shaderLight.jpg",
+              version: "r179",
+              url: "examples/z258/shader-shaderLight",
+            },
+            {
+              id: "shader-whiteCloud",
+              title: "白云",
+              description: "展示白云效果，使用光线追踪技术渲染云层",
+              thumbnail: "images/shader-whiteCloud.jpg",
+              version: "r179",
+              url: "examples/z258/shader-whiteCloud",
+            },
+            {
+              id: "shader-waterSky",
+              title: "水天一色",
+              description: "展示水天一色效果，使用光线追踪技术渲染水面和天空",
+              thumbnail: "images/shader-waterSky.jpg",
+              version: "r179",
+              url: "examples/z258/shader-waterSky",
+            },
+            {
+              id: "shader-cloudShader",
+              title: "天空云",
+              description: "展示天空云效果，使用实例化网格渲染大量云朵",
+              thumbnail: "images/shader-cloudShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-cloudShader",
+            },
+            {
+              id: "shader-darkClouds",
+              title: "乌云",
+              description: "展示乌云效果，使用光线追踪技术渲染动态的乌云",
+              thumbnail: "images/shader-darkClouds.jpg",
+              version: "r179",
+              url: "examples/z258/shader-darkClouds",
+            },
+            {
+              id: "shader-cellShader",
+              title: "细胞",
+              description: "展示细胞效果，使用光线追踪技术渲染动态的细胞结构",
+              thumbnail: "images/shader-cellShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-cellShader",
+            },
+            {
+              id: "shader-mushroom",
+              title: "蘑菇",
+              description: "展示蘑菇效果，使用光线追踪技术渲染动态的蘑菇",
+              thumbnail: "images/shader-mushroom.jpg",
+              version: "r179",
+              url: "examples/z258/shader-mushroom",
+            },
+            {
+              id: "shader-mosaicShader",
+              title: "马赛克",
+              description: "展示马赛克效果，使用着色器实现图片马赛克化",
+              thumbnail: "images/shader-mosaicShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-mosaicShader",
+            },
+            {
+              id: "shader-contour",
+              title: "魔幻山体",
+              description: "展示魔幻山体效果，使用着色器实现等高线示意",
+              thumbnail: "images/shader-contour.jpg",
+              version: "r179",
+              url: "examples/z258/shader-contour",
+            },
+            {
+              id: "shader-softLight",
+              title: "柔光",
+              description: "展示柔光效果，使用着色器实现柔和的光影效果",
+              thumbnail: "images/shader-softLight.jpg",
+              version: "r179",
+              url: "examples/z258/shader-softLight",
+            },
+            {
+              id: "shader-waveScan",
+              title: "波扫描",
+              description: "展示波扫描效果，使用着色器实现动态波纹扫描",
+              thumbnail: "images/shader-waveScan.jpg",
+              version: "r179",
+              url: "examples/z258/shader-waveScan",
+            },
+            {
+              id: "shader-innerGlow",
+              title: "内发光",
+              description: "展示内发光效果，使用菲涅尔反射实现物体边缘发光",
+              thumbnail: "images/shader-innerGlow.jpg",
+              version: "r179",
+              url: "examples/z258/shader-innerGlow",
+            },
+            {
+              id: "shader-fireShader",
+              title: "火焰",
+              description: "展示火焰效果，使用着色器实现动态火焰",
+              thumbnail: "images/shader-fireShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-fireShader",
+            },
+            {
+              id: "shader-emitShader",
+              title: "发散着色器",
+              description: "展示发散着色器效果，使用着色器实现动态发散图案",
+              thumbnail: "images/shader-emitShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-emitShader",
+            },
+            {
+              id: "shader-ephemeralFlower",
+              title: "幻影花烟",
+              description:
+                "展示幻影花烟效果，使用4D Simplex噪声实现动态烟雾花朵",
+              thumbnail: "images/shader-ephemeralFlower.jpg",
+              version: "r179",
+              url: "examples/z258/shader-ephemeralFlower",
+            },
+            {
+              id: "shader-fishShader",
+              title: "鱼",
+              description: "展示鱼游动效果，使用着色器实现动态鱼和水草动画",
+              thumbnail: "images/shader-fishShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-fishShader",
+            },
+            {
+              id: "shader-energyBallShader",
+              title: "能量球",
+              description: "展示能量球效果，使用着色器实现动态能量球脉冲动画",
+              thumbnail: "images/shader-energyBallShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-energyBallShader",
+            },
+            {
+              id: "shader-girdFloor",
+              title: "网格地板",
+              description:
+                "展示网格地板效果，使用自定义着色器实现带有抗锯齿的网格线",
+              thumbnail: "images/shader-girdFloor.jpg",
+              version: "r179",
+              url: "examples/z258/shader-girdFloor",
+            },
+            {
+              id: "shader-hologram",
+              title: "全息投影",
+              description:
+                "展示全息投影效果，使用自定义着色器实现扫描线和菲涅尔反射效果",
+              thumbnail: "images/shader-hologram.jpg",
+              version: "r179",
+              url: "examples/z258/shader-hologram",
+            },
+            {
+              id: "shader-smoke",
+              title: "燃烧烟雾",
+              description:
+                "展示燃烧烟雾效果，使用实例化渲染大量粒子实现烟雾粒子系统",
+              thumbnail: "images/shader-smoke.jpg",
+              version: "r179",
+              url: "examples/z258/shader-smoke",
+            },
+            {
+              id: "shader-fireMaterial",
+              title: "火焰材质",
+              description:
+                "展示火焰材质效果，使用自定义着色器实现燃烧的火焰动画",
+              thumbnail: "images/shader-fireMaterial.jpg",
+              version: "r179",
+              url: "examples/z258/shader-fireMaterial",
+            },
+            {
+              id: "shader-contourLine",
+              title: "等高线",
+              description:
+                "展示等高线效果，使用Perlin噪声生成地形并通过着色器绘制动态等高线",
+              thumbnail: "images/shader-contourLine.jpg",
+              version: "r179",
+              url: "examples/z258/shader-contourLine",
+            },
+            {
+              id: "shader-heatmapShader",
+              title: "热力图",
+              description: "展示热力图效果，使用着色器实现动态变化的热力图",
+              thumbnail: "images/shader-heatmapShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-heatmapShader",
+            },
+            {
+              id: "shader-redRose",
+              title: "红玫瑰",
+              description:
+                "展示红玫瑰效果，使用raymarching技术渲染动态的红玫瑰",
+              thumbnail: "images/shader-redRose.jpg",
+              version: "r179",
+              url: "examples/z258/shader-redRose",
+            },
+            {
+              id: "particle-waveParticleShader",
+              title: "波浪粒子",
+              description: "展示波浪粒子效果，使用着色器实现动态波浪粒子动画",
+              thumbnail: "images/particle-waveParticleShader.jpg",
+              version: "r179",
+              url: "examples/z258/particle-waveParticleShader",
+            },
+            {
+              id: "particle-particleLine",
+              title: "粒子线条",
+              description:
+                "展示粒子线条效果，粒子间根据距离连线，支持鼠标交互和后处理效果",
+              thumbnail: "images/particle-particleLine.jpg",
+              version: "r179",
+              url: "examples/z258/particle-particleLine",
+            },
+            {
+              id: "particle-sphereLine",
+              title: "球体线条",
+              description:
+                "展示球体粒子连线效果，粒子在球面上随机运动，距离近的粒子之间自动连线",
+              thumbnail: "images/particle-sphereLine.jpg",
+              version: "r179",
+              url: "examples/z258/particle-sphereLine",
+            },
+            {
+              id: "particle-particleWire",
+              title: "粒子线",
+              description:
+                "展示粒子连线效果，粒子随机运动，距离近的粒子之间自动连线，支持鼠标交互",
+              thumbnail: "images/particle-particleWire.jpg",
+              version: "r179",
+              url: "examples/z258/particle-particleWire",
+            },
+            {
+              id: "particle-starrySky",
+              title: "粒子星空",
+              description: "展示粒子星空效果，使用着色器实现动态星空隧道效果",
+              thumbnail: "images/particle-starrySky.jpg",
+              version: "r179",
+              url: "examples/z258/particle-starrySky",
+            },
+            {
+              id: "particle-snow",
+              title: "雪花",
+              description: "雪花粒子效果，模拟下雪场景",
+              thumbnail: "images/particle-snow.jpg",
+              version: "r179",
+              url: "examples/z258/particle-snow",
+            },
+            {
+              id: "particle-scattered",
+              title: "粒子聚散",
+              description: "粒子聚散动画效果，可在聚集和分散状态之间切换",
+              thumbnail: "images/particle-scattered.jpg",
+              version: "r179",
+              url: "examples/z258/particle-scattered",
+            },
+            {
+              id: "particle-galaxyStar",
+              title: "星系",
+              description: "星系粒子效果，带有旋臂结构可调节",
+              thumbnail: "images/particle-galaxyStar.jpg",
+              version: "r179",
+              url: "examples/z258/particle-galaxyStar",
+            },
+            {
+              id: "particle-pointsEarth",
+              title: "粒子地球",
+              description: "粒子组成的地球效果，带有大气层和光晕",
+              thumbnail: "images/particle-pointsEarth.jpg",
+              version: "r179",
+              url: "examples/z258/particle-pointsEarth",
+            },
+            {
+              id: "particle-blendShader",
+              title: "粒子混合着色器",
+              description: "高级粒子混合着色器效果，支持多种运动模式和参数调节",
+              thumbnail: "images/particle-blendShader.jpg",
+              version: "r179",
+              url: "examples/z258/particle-blendShader",
+            },
+            {
+              id: "particle-fireParticles",
+              title: "火焰粒子",
+              description: "火焰粒子效果，带有颜色渐变和粒子更新动画",
+              thumbnail: "images/particle-fireParticles.jpg",
+              version: "r179",
+              url: "examples/z258/particle-fireParticles",
+            },
+            {
+              id: "particle-realFire",
+              title: "真实火焰",
+              description: "真实火焰粒子效果，使用着色器实现颜色渐变和烟雾效果",
+              thumbnail: "images/particle-realFire.jpg",
+              version: "r179",
+              url: "examples/z258/particle-realFire",
+            },
+            {
+              id: "particle-globeParticle",
+              title: "地球粒子",
+              description: "地球粒子效果，带有Bloom后处理和脉冲动画",
+              thumbnail: "images/particle-globeParticle.jpg",
+              version: "r179",
+              url: "examples/z258/particle-globeParticle",
+            },
+            {
+              id: "particle-waterLeakage",
+              title: "水流粒子",
+              description: "水流粒子效果，带有水花飞溅物理模拟",
+              thumbnail: "images/particle-waterLeakage.jpg",
+              version: "r179",
+              url: "examples/z258/particle-waterLeakage",
+            },
+            {
+              id: "particle-waterFlow",
+              title: "喷泉水流",
+              description: "喷泉水流粒子效果，带有抛物线运动轨迹",
+              thumbnail: "images/particle-waterFlow.jpg",
+              version: "r179",
+              url: "examples/z258/particle-waterFlow",
+            },
+            {
+              id: "particle-steamParticle",
+              title: "蒸汽粒子",
+              description: "蒸汽粒子效果，带有上升、湍流和浓度控制",
+              thumbnail: "images/particle-steamParticle.jpg",
+              version: "r179",
+              url: "examples/z258/particle-steamParticle",
+            },
+          ],
+        },
+        {
+          id: "advanced-postprocessing",
+          name: "后处理",
+          examples: [
+            {
+              id: "postprocessing-bloom",
+              title: "物体发光效果",
+              description:
+                "使用EffectComposer和UnrealBloomPass实现物体的辉光发光效果，支持参数调节",
+              thumbnail: "images/postprocessing-bloom.jpg",
+              version: "r179",
+              url: "examples/postprocessing-bloom",
+            },
+            {
+              id: "advanced-postprocessing-sceneScissor",
+              title: "场景裁剪与后处理对比",
+              description:
+                "使用ScissorTest实现场景分割显示，左侧无辉光效果，右侧带辉光效果，可拖动滑块调整分割位置",
+              thumbnail: "images/advanced-postprocessing-sceneScissor.jpg",
+              version: "r179",
+              url: "examples/z258/advanced-postprocessing-sceneScissor",
+            },
+            {
+              id: "advanced-postprocessing-outlinePass",
+              title: "轮廓光",
+              description: "展示OutlinePass的使用，点击物体显示轮廓光效果",
+              thumbnail: "images/advanced-postprocessing-outlinePass.jpg",
+              version: "r179",
+              url: "examples/z258/advanced-postprocessing-outlinePass",
+            },
+            {
+              id: "advanced-postprocessing-multOutlinePass",
+              title: "多轮廓光",
+              description:
+                "展示多个OutlinePass的使用，每个物体可以有不同颜色的轮廓光效果",
+              thumbnail: "images/advanced-postprocessing-multOutlinePass.jpg",
+              version: "r179",
+              url: "examples/z258/advanced-postprocessing-multOutlinePass",
+            },
+            {
+              id: "advanced-postprocessing-effectComposer",
+              title: "渲染器配置",
+              description:
+                "展示EffectComposer的配置和渲染方式切换，支持多种色调映射模式",
+              thumbnail: "images/advanced-postprocessing-effectComposer.jpg",
+              version: "r179",
+              url: "examples/z258/advanced-postprocessing-effectComposer",
+            },
+          ],
+        },
+        {
+          id: "game",
+          name: "游戏复刻",
+          examples: [
+            {
+              id: "characterBlur",
+              title: "人物虚化",
+              description: "使用自定义shader实现人物虚化效果，带有走路动画",
+              thumbnail: "images/characterBlur.jpg",
+              version: "r179",
+              url: "examples/z258/characterBlur",
+            },
+          ],
+        },
+        {
+          id: "application",
+          name: "应用场景",
+          examples: [
+            {
+              id: "canvasTexture",
+              title: "Canvas贴图",
+              description: "使用echarts图表作为Three.js纹理贴图",
+              thumbnail: "images/canvasTexture.jpg",
+              version: "r179",
+              url: "examples/z258/canvasTexture",
+            },
+            {
+              id: "flowLine",
+              title: "贴图飞线",
+              description: "使用纹理贴图实现飞线流动效果",
+              thumbnail: "images/flowLine.jpg",
+              version: "r179",
+              url: "examples/z258/flowLine",
+            },
+            {
+              id: "flyLine",
+              title: "飞线效果",
+              description: "使用自定义shader实现飞线动画效果",
+              thumbnail: "images/flyLine.jpg",
+              version: "r179",
+              url: "examples/z258/flyLine",
+            },
+            {
+              id: "pipeFlow",
+              title: "管道流动",
+              description: "使用gsap实现管道内流体流动效果",
+              thumbnail: "images/pipeFlow.jpg",
+              version: "r179",
+              url: "examples/z258/pipeFlow",
+            },
+            {
+              id: "buildingLine",
+              title: "建筑线条",
+              description: "使用LineSegments2实现建筑轮廓线条效果",
+              thumbnail: "images/buildingLine.jpg",
+              version: "r179",
+              url: "examples/z258/buildingLine",
+            },
+          ],
+        },
+        {
+          id: "advanced-physics",
+          name: "物理引擎",
+          examples: [
+            {
+              id: "advanced-physics-cannon",
+              title: "Cannon.js 物理",
+              description: "使用 Cannon.js 实现物理碰撞和重力效果",
+              thumbnail: "images/advanced-physics-cannon.jpg",
+              version: "r150",
+              url: "examples/advanced-physics-cannon",
+            },
+            {
+              id: "advanced-physics-ammo",
+              title: "Ammo.js 物理",
+              description: "使用 Ammo.js 创建复杂的物理交互场景",
+              thumbnail: "images/advanced-physics-ammo.jpg",
+              version: "r150",
+              url: "examples/advanced-physics-ammo",
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: "performance",
+      name: "性能优化",
+      icon: "bi-speedometer2",
+      subcategories: [
+        {
+          id: "performance-techniques",
+          name: "优化技术",
+          examples: [
+            {
+              id: "performance-instancing",
+              title: "实例化渲染",
+              description: "使用实例化技术渲染大量相似对象",
+              thumbnail: "images/performance-instancing.jpg",
+              version: "r150",
+              url: "examples/performance-instancing",
+            },
+            {
+              id: "performance-lod",
+              title: "LOD 技术",
+              description: "根据距离使用不同细节级别的模型",
+              thumbnail: "images/performance-lod.jpg",
+              version: "r150",
+              url: "examples/performance-lod",
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: "digital-twin",
+      name: "数字孪生",
+      icon: "bi-diagram-3",
+      subcategories: [
+        {
+          id: "digital-twin-effects",
+          name: "场景特效",
+          examples: [
+            {
+              id: "digital-twin-particle-system",
+              title: "粒子系统",
+              description: "创建各种粒子特效，如烟雾、火焰、雨雪等环境效果",
+              thumbnail: "images/digital-twin-particle-system.jpg",
+              version: "r179",
+              url: "examples/digital-twin-particle-system",
+            },
+            {
+              id: "digital-twin-water-simulation",
+              title: "水面模拟",
+              description: "模拟真实的水面波动效果，适用于海洋、湖泊场景",
+              thumbnail: "images/digital-twin-water-simulation.jpg",
+              version: "r179",
+              url: "examples/digital-twin-water-simulation",
+            },
+            {
+              id: "digital-twin-fog-atmosphere",
+              title: "雾气大气",
+              description: "创建逼真的雾气和大气散射效果，增强场景真实感",
+              thumbnail: "images/digital-twin-fog-atmosphere.jpg",
+              version: "r179",
+              url: "examples/digital-twin-fog-atmosphere",
+            },
+            {
+              id: "digital-twin-volumetric-lighting",
+              title: "体积光照",
+              description: "实现体积光照效果，如光束、光柱等戏剧性光照",
+              thumbnail: "images/digital-twin-volumetric-lighting.jpg",
+              version: "r179",
+              url: "examples/digital-twin-volumetric-lighting",
+            },
+          ],
+        },
+        {
+          id: "digital-twin-visualization",
+          name: "数据可视化",
+          examples: [
+            {
+              id: "digital-twin-data-flow",
+              title: "数据流动画",
+              description: "可视化数据在系统中的流动过程，适用于网络拓扑展示",
+              thumbnail: "images/digital-twin-data-flow.jpg",
+              version: "r179",
+              url: "examples/digital-twin-data-flow",
+            },
+            {
+              id: "digital-twin-heatmap",
+              title: "热力图显示",
+              description: "在3D场景中展示热力图数据，如温度分布、人流密度等",
+              thumbnail: "images/digital-twin-heatmap.jpg",
+              version: "r179",
+              url: "examples/digital-twin-heatmap",
+            },
+            {
+              id: "digital-twin-sensor-visualization",
+              title: "传感器可视化",
+              description: "实时显示传感器数据，包括状态指示和数据变化动画",
+              thumbnail: "images/digital-twin-sensor-visualization.jpg",
+              version: "r179",
+              url: "examples/digital-twin-sensor-visualization",
+            },
+          ],
+        },
+        {
+          id: "digital-twin-interaction",
+          name: "交互控制",
+          examples: [
+            {
+              id: "digital-twin-device-control",
+              title: "设备控制面板",
+              description: "3D场景中的设备控制界面，支持实时操作和状态反馈",
+              thumbnail: "images/digital-twin-device-control.jpg",
+              version: "r179",
+              url: "examples/digital-twin-device-control",
+            },
+            {
+              id: "digital-twin-path-planning",
+              title: "路径规划",
+              description: "可视化路径规划算法，适用于机器人导航和物流优化",
+              thumbnail: "images/digital-twin-path-planning.jpg",
+              version: "r179",
+              url: "examples/digital-twin-path-planning",
+            },
+            {
+              id: "digital-twin-alarm-system",
+              title: "报警系统",
+              description: "3D场景中的报警提示和状态指示，包括声光报警效果",
+              thumbnail: "images/digital-twin-alarm-system.jpg",
+              version: "r179",
+              url: "examples/digital-twin-alarm-system",
+            },
+            {
+              id: "digital-twin-virtual-assembly",
+              title: "虚拟装配",
+              description: "模拟产品装配过程，支持拖拽组装和碰撞检测",
+              thumbnail: "images/digital-twin-virtual-assembly.jpg",
+              version: "r179",
+              url: "examples/digital-twin-virtual-assembly",
+            },
+          ],
+        },
+        {
+          id: "digital-twin-simulation",
+          name: "仿真模拟",
+          examples: [
+            {
+              id: "digital-twin-factory-simulation",
+              title: "工厂仿真",
+              description: "完整的工厂生产线仿真，包括设备运行和产品流转",
+              thumbnail: "images/digital-twin-factory-simulation.jpg",
+              version: "r179",
+              url: "examples/digital-twin-factory-simulation",
+            },
+            {
+              id: "digital-twin-city-simulation",
+              title: "城市仿真",
+              description: "智慧城市场景仿真，包括交通流、人流和基础设施",
+              thumbnail: "images/digital-twin-city-simulation.jpg",
+              version: "r179",
+              url: "examples/digital-twin-city-simulation",
+            },
+            {
+              id: "digital-twin-building-bim",
+              title: "建筑BIM",
+              description: "建筑信息模型展示，支持楼层切换和构件信息查看",
+              thumbnail: "images/digital-twin-building-bim.jpg",
+              version: "r179",
+              url: "examples/digital-twin-building-bim",
+            },
+            {
+              id: "digital-twin-energy-flow",
+              title: "能源流动",
+              description: "可视化能源系统中的电力、热力等能源流动过程",
+              thumbnail: "images/digital-twin-energy-flow.jpg",
+              version: "r179",
+              url: "examples/digital-twin-energy-flow",
+            },
+            {
+              id: "visualization-radar-uv",
+              title: "UV雷达扩散特效",
+              description: "基于UV坐标的雷达扩散波纹动画效果",
+              thumbnail: "images/visualization-radar-uv.jpg",
+              version: "r179",
+              url: "examples/visualization-radar-uv",
+            },
+            {
+              id: "visualization-radar-spread",
+              title: "雷达扩散特效",
+              description: "圆形波纹向外扩散效果，模拟雷达探测波",
+              thumbnail: "images/visualization-radar-spread.jpg",
+              version: "r179",
+              url: "examples/visualization-radar-spread",
+            },
+            {
+              id: "visualization-radar-scan",
+              title: "雷达扫描特效",
+              description: "旋转扫描线效果，带有渐变衰减",
+              thumbnail: "images/visualization-radar-scan.jpg",
+              version: "r179",
+              url: "examples/visualization-radar-scan",
+            },
+            {
+              id: "visualization-earth-sweep",
+              title: "地球渐变扫光",
+              description: "地球表面的渐变扫描光效果",
+              thumbnail: "images/visualization-earth-sweep.jpg",
+              version: "r179",
+              url: "examples/visualization-earth-sweep",
+            },
+            {
+              id: "visualization-earth-spot-sweep",
+              title: "地球斑点扫光",
+              description: "地球表面的斑点状扫描光效果",
+              thumbnail: "images/visualization-earth-spot-sweep.jpg",
+              version: "r179",
+              url: "examples/visualization-earth-spot-sweep",
+            },
+            {
+              id: "visualization-merged-shape-monitor",
+              title: "合并形状监测",
+              description: "使用射线检测合并几何体中的单个形状动作",
+              thumbnail: "images/visualization-merged-shape-monitor.jpg",
+              version: "r179",
+              url: "examples/visualization-merged-shape-monitor",
+            },
+            {
+              id: "visualization-procedural-buildings",
+              title: "程序化生成随机建筑",
+              description: "程序化生成随机建筑模型，俯视视角城市建筑群",
+              thumbnail: "images/visualization-procedural-buildings.jpg",
+              version: "r179",
+              url: "examples/visualization-procedural-buildings",
+            },
+            {
+              id: "visualization-windfield-canvas-texture",
+              title: "Canvas贴图3D风场图",
+              description: "风场流渲染到Canvas并贴图在球体上，支持展开收起动画",
+              thumbnail: "images/visualization-windfield-canvas-texture.jpg",
+              version: "r179",
+              url: "examples/visualization-windfield-canvas-texture",
+            },
+            {
+              id: "visualization-windfield-3d-plane",
+              title: "平面3D风场图",
+              description: "平面上的风场粒子流动效果，带参数控制面板",
+              thumbnail: "images/visualization-windfield-3d-plane.jpg",
+              version: "r179",
+              url: "examples/visualization-windfield-3d-plane",
+            },
+            {
+              id: "visualization-windfield-3d-globe",
+              title: "地球3D风场图",
+              description: "地球上的风场粒子流动效果，带参数控制面板",
+              thumbnail: "images/visualization-windfield-3d-globe.jpg",
+              version: "r179",
+              url: "examples/visualization-windfield-3d-globe",
+            },
+            {
+              id: "visualization-earth-texture",
+              title: "地球贴图",
+              description: "带有纹理贴图的旋转地球",
+              thumbnail: "images/visualization-earth-texture.jpg",
+              version: "r179",
+              url: "examples/visualization-earth-texture",
+            },
+            {
+              id: "visualization-earth-columns",
+              title: "地球柱体",
+              description: "使用InstancedMesh实现的地球柱状图",
+              thumbnail: "images/visualization-earth-columns.jpg",
+              version: "r179",
+              url: "examples/visualization-earth-columns",
+            },
+            {
+              id: "visualization-earth-columns-optimized",
+              title: "地球柱体优化",
+              description:
+                "使用BufferGeometryUtils.mergeGeometries合并优化的地球柱状图",
+              thumbnail: "images/visualization-earth-columns-optimized.jpg",
+              version: "r179",
+              url: "examples/visualization-earth-columns-optimized",
+            },
+            {
+              id: "visualization-earth-columns-animation",
+              title: "地球柱体合并优化动画",
+              description: "带动画效果的地球柱状图，柱体高度随时间波动",
+              thumbnail: "images/visualization-earth-columns-animation.jpg",
+              version: "r179",
+              url: "examples/visualization-earth-columns-animation",
+            },
+            {
+              id: "visualization-gradient-fence",
+              title: "渐变围栏 3D 区块",
+              description: "带渐变色的围栏效果",
+              thumbnail: "images/visualization-gradient-fence.jpg",
+              version: "r179",
+              url: "examples/visualization-gradient-fence",
+            },
+            {
+              id: "visualization-multi-gradient-fence",
+              title: "多重渐变围栏",
+              description: "多层渐变围栏组合效果",
+              thumbnail: "images/visualization-multi-gradient-fence.jpg",
+              version: "r179",
+              url: "examples/visualization-multi-gradient-fence",
+            },
+            {
+              id: "visualization-earth-sweep",
+              title: "地球渐变扫光",
+              description: "地球表面的渐变扫描光效果",
+              thumbnail: "images/visualization-earth-sweep.jpg",
+              version: "r179",
+              url: "examples/visualization-earth-sweep",
+            },
+            {
+              id: "visualization-earth-spot-sweep",
+              title: "地球斑点扫光",
+              description: "地球表面的斑点状扫描光效果",
+              thumbnail: "images/visualization-earth-spot-sweep.jpg",
+              version: "r179",
+              url: "examples/visualization-earth-spot-sweep",
+            },
+            {
+              id: "visualization-windfield-canvas2d",
+              title: "canvas 2D风场图",
+              description: "使用canvas绘制的2D风场流向图",
+              thumbnail: "images/visualization-windfield-canvas2d.jpg",
+              // version: "r179",
+              url: "examples/visualization-windfield-canvas2d",
+            },
+            {
+              id: "visualization-heatmap-2d",
+              title: "2D热力图",
+              description: "平面热力图可视化，支持动态热点",
+              thumbnail: "images/visualization-heatmap-2d.jpg",
+              version: "r179",
+              url: "examples/visualization-heatmap-2d",
+            },
+            {
+              id: "visualization-neural-network",
+              title: "交互式神经网络可视化",
+              description:
+                "四种不同结构的神经网络可视化，支持主题切换和密度调整",
+              thumbnail: "images/visualization-neural-network.jpg",
+              version: "r179",
+              url: "examples/visualization-neural-network",
+            },
+            {
+              id: "visualization-smooth-seconds",
+              title: "平滑运动秒针",
+              description: "使用弹性缓动函数实现的平滑运动秒针",
+              thumbnail: "images/visualization-smooth-seconds.jpg",
+              version: "r179",
+              url: "examples/visualization-smooth-seconds",
+            },
+            {
+              id: "visualization-interactive-globe",
+              title: "交互式地球",
+              description:
+                "可旋转缩放的3D地球仪，带有大气光晕效果和GUI控制面板",
+              thumbnail: "images/visualization-interactive-globe.jpg",
+              version: "r179",
+              url: "examples/visualization-interactive-globe",
+            },
 
-                        {
-                            id: "visualization-heatmap-3d-hill",
-                            title: "3D热力山丘图",
-                            description: "3D热力图山丘可视化，带光照和颜色渐变",
-                            thumbnail: "images/visualization-heatmap-3d-hill.jpg",
-                            version: "r179",
-                            url: "examples/visualization-heatmap-3d-hill"
-                        },
-                        {
-                            id: "visualization-contour-line-3d",
-                            title: "纯色3D等高线图",
-                            description: "基于热力图数据的3D等高线可视化，纯色线条",
-                            thumbnail: "images/visualization-contour-line-3d.jpg",
-                            version: "r179",
-                            url: "examples/visualization-contour-line-3d"
-                        },
-                        {
-                            id: "visualization-contour-line-3d-colored",
-                            title: "彩色3D等高线图",
-                            description: "基于热力图数据的3D彩色等高线可视化",
-                            thumbnail: "images/visualization-contour-line-3d-colored.jpg",
-                            version: "r179",
-                            url: "examples/visualization-contour-line-3d-colored"
-                        },
-                        {
-                            id: "visualization-contour-heatmap-3d",
-                            title: "3D等高线图+热力图",
-                            description: "同时显示等高线和热力渐变效果的3D可视化",
-                            thumbnail: "images/visualization-contour-heatmap-3d.jpg",
-                            version: "r179",
-                            url: "examples/visualization-contour-heatmap-3d"
-                        },
-                        {
-                            id: "visualization-stepped-contour-heatmap-3d",
-                            title: "3D断层阶梯热力图",
-                            description: "阶梯状热力图可视化，形成断层效果",
-                            thumbnail: "images/visualization-stepped-contour-heatmap-3d.jpg",
-                            version: "r179",
-                            url: "examples/visualization-stepped-contour-heatmap-3d"
-                        },
-                        {
-                            id: "visualization-glow-blocks",
-                            title: "泛光3D区块",
-                            description: "带泛光效果的发光方块组合",
-                            thumbnail: "images/visualization-glow-blocks.jpg",
-                            version: "r179",
-                            url: "examples/visualization-glow-blocks"
-                        },
-                        {
-                            id: "visualization-glow-blocks-outline",
-                            title: "泛光轮廓3D区块",
-                            description: "带轮廓描边和泛光效果的3D方块组合",
-                            thumbnail: "images/visualization-glow-blocks-outline.jpg",
-                            version: "r179",
-                            url: "examples/visualization-glow-blocks-outline"
-                        },
-                        {
-                            id: "visualization-framebuffer",
-                            title: "帧缓存基础",
-                            description: "演示帧缓冲区和后处理技术，包括雾气、暗角、色差、扫描线效果",
-                            thumbnail: "images/visualization-framebuffer.jpg",
-                            version: "r179",
-                            url: "examples/visualization-framebuffer"
-                        },
-                        {
-                            id: "visualization-rain-snow",
-                            title: "雨雪雾天气",
-                            description: "使用粒子系统实现雨雪天气效果，支持雨、雪、雾三种天气切换",
-                            thumbnail: "images/visualization-rain-snow.jpg",
-                            version: "r179",
-                            url: "examples/visualization-rain-snow"
-                        },
-                        {
-                            id: "visualization-light-beam",
-                            title: "基础光束流动",
-                            description: "沿直线流动的光束效果，使用TubeGeometry和着色器实现光效动画",
-                            thumbnail: "images/visualization-light-beam.jpg",
-                            version: "r179",
-                            url: "examples/visualization-light-beam"
-                        },
-                        {
-                            id: "visualization-path-beam",
-                            title: "波浪路径光束",
-                            description: "沿波浪路径流动的光束效果，带有地面波动效果",
-                            thumbnail: "images/visualization-path-beam.jpg",
-                            version: "r179",
-                            url: "examples/visualization-path-beam"
-                        },
-                        {
-                            id: "visualization-heart-beam",
-                            title: "心形流动光束",
-                            description: "心形路径的流动光效果，带有双色调光效",
-                            thumbnail: "images/visualization-heart-beam.jpg",
-                            version: "r179",
-                            url: "examples/visualization-heart-beam"
-                        }
-                    ]
-                }
-            ]
-        }
-    ]
+            {
+              id: "visualization-heatmap-3d-hill",
+              title: "3D热力山丘图",
+              description: "3D热力图山丘可视化，带光照和颜色渐变",
+              thumbnail: "images/visualization-heatmap-3d-hill.jpg",
+              version: "r179",
+              url: "examples/visualization-heatmap-3d-hill",
+            },
+            {
+              id: "visualization-contour-line-3d",
+              title: "纯色3D等高线图",
+              description: "基于热力图数据的3D等高线可视化，纯色线条",
+              thumbnail: "images/visualization-contour-line-3d.jpg",
+              version: "r179",
+              url: "examples/visualization-contour-line-3d",
+            },
+            {
+              id: "visualization-contour-line-3d-colored",
+              title: "彩色3D等高线图",
+              description: "基于热力图数据的3D彩色等高线可视化",
+              thumbnail: "images/visualization-contour-line-3d-colored.jpg",
+              version: "r179",
+              url: "examples/visualization-contour-line-3d-colored",
+            },
+            {
+              id: "visualization-contour-heatmap-3d",
+              title: "3D等高线图+热力图",
+              description: "同时显示等高线和热力渐变效果的3D可视化",
+              thumbnail: "images/visualization-contour-heatmap-3d.jpg",
+              version: "r179",
+              url: "examples/visualization-contour-heatmap-3d",
+            },
+            {
+              id: "visualization-stepped-contour-heatmap-3d",
+              title: "3D断层阶梯热力图",
+              description: "阶梯状热力图可视化，形成断层效果",
+              thumbnail: "images/visualization-stepped-contour-heatmap-3d.jpg",
+              version: "r179",
+              url: "examples/visualization-stepped-contour-heatmap-3d",
+            },
+            {
+              id: "visualization-glow-blocks",
+              title: "泛光3D区块",
+              description: "带泛光效果的发光方块组合",
+              thumbnail: "images/visualization-glow-blocks.jpg",
+              version: "r179",
+              url: "examples/visualization-glow-blocks",
+            },
+            {
+              id: "visualization-glow-blocks-outline",
+              title: "泛光轮廓3D区块",
+              description: "带轮廓描边和泛光效果的3D方块组合",
+              thumbnail: "images/visualization-glow-blocks-outline.jpg",
+              version: "r179",
+              url: "examples/visualization-glow-blocks-outline",
+            },
+            {
+              id: "visualization-framebuffer",
+              title: "帧缓存基础",
+              description:
+                "演示帧缓冲区和后处理技术，包括雾气、暗角、色差、扫描线效果",
+              thumbnail: "images/visualization-framebuffer.jpg",
+              version: "r179",
+              url: "examples/visualization-framebuffer",
+            },
+            {
+              id: "visualization-rain-snow",
+              title: "雨雪雾天气",
+              description:
+                "使用粒子系统实现雨雪天气效果，支持雨、雪、雾三种天气切换",
+              thumbnail: "images/visualization-rain-snow.jpg",
+              version: "r179",
+              url: "examples/visualization-rain-snow",
+            },
+            {
+              id: "visualization-light-beam",
+              title: "基础光束流动",
+              description:
+                "沿直线流动的光束效果，使用TubeGeometry和着色器实现光效动画",
+              thumbnail: "images/visualization-light-beam.jpg",
+              version: "r179",
+              url: "examples/visualization-light-beam",
+            },
+            {
+              id: "visualization-path-beam",
+              title: "波浪路径光束",
+              description: "沿波浪路径流动的光束效果，带有地面波动效果",
+              thumbnail: "images/visualization-path-beam.jpg",
+              version: "r179",
+              url: "examples/visualization-path-beam",
+            },
+            {
+              id: "visualization-heart-beam",
+              title: "心形流动光束",
+              description: "心形路径的流动光效果，带有双色调光效",
+              thumbnail: "images/visualization-heart-beam.jpg",
+              version: "r179",
+              url: "examples/visualization-heart-beam",
+            },
+          ],
+        },
+      ],
+    },
+  ],
 };
