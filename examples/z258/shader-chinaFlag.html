@@ -55,16 +55,16 @@
         const bigStarRadius = flagHeight * 0.3 / 2;
         const smallStarRadius = flagHeight * 0.1 / 2;
 
-        const bigStarCenterX = flagWidth / 3;
-        const bigStarCenterY = flagHeight / 4;
+        const bigStarCenterX = (5 / 15) * flagWidth;
+        const bigStarCenterY = (5 / 10) * flagHeight;
 
         drawStar(ctx, bigStarCenterX, bigStarCenterY, bigStarRadius, 0);
 
         const smallStarPositions = [
             { x: (10 / 15) * flagWidth, y: (2 / 10) * flagHeight },
             { x: (12 / 15) * flagWidth, y: (4 / 10) * flagHeight },
-            { x: (12 / 15) * flagWidth, y: (7 / 10) * flagHeight },
-            { x: (10 / 15) * flagWidth, y: (9 / 10) * flagHeight }
+            { x: (11 / 15) * flagWidth, y: (7 / 10) * flagHeight },
+            { x: (9 / 15) * flagWidth, y: (8 / 10) * flagHeight }
         ];
 
         smallStarPositions.forEach(pos => {
