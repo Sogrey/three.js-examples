@@ -284,7 +284,6 @@
             material.uniforms.time.value = elapsed;
             material.uniforms.camera.value.pos.copy(camera.position);
             material.uniforms.camera.value.world.copy(camera.matrixWorld);
-            camera.projectionMatrixInverse.getInverse(camera.projectionMatrix);
             material.uniforms.camera.value.proj_inv.copy(camera.projectionMatrixInverse);
         };
 
