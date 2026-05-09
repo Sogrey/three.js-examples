@@ -41,107 +41,118 @@
 
         const params = {
             earthRadius: 1,
-            particleCount: 5000,
-            particleSize: 0.012,
+            particleCount: 8000,
+            particleSize: 0.008,
             rotationSpeed: 0.5,
             glowIntensity: 0.6,
             atmosphereColor: '#4fc3f7',
             showAtmosphere: true,
             showGlow: true,
-            useTexture: true
+            showEarth: true
         };
 
         let earth, atmosphere, glow;
-        let worldTexture;
+        let worldTexture = null;
+        let isTextureLoaded = false;
 
-        const textureLoader = new THREE.TextureLoader();
+        const loader = new THREE.TextureLoader();
         
-        function loadTexture() {
-            return new Promise((resolve) => {
-                textureLoader.load('../../images/textures/world.jpg', (texture) => {
-                    texture.colorSpace = THREE.SRGBColorSpace;
-                    resolve(texture);
-                }, undefined, () => {
-                    resolve(null);
-                });
-            });
+        loader.load('../../images/textures/world.jpg', function(texture) {
+            worldTexture = texture;
+            worldTexture.colorSpace = THREE.SRGBColorSpace;
+            isTextureLoaded = true;
+            initScene();
+        }, undefined, function() {
+            console.log('纹理加载失败，使用默认颜色');
+            isTextureLoaded = true;
+            initScene();
+        });
+
+        function initScene() {
+            createEarth();
+            createAtmosphere();
+            createGlow();
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+            window.scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(5, 3, 5);
+            window.scene.add(directionalLight);
+
+            window.addEventListener('resize', onWindowResize);
+            window.renderer.setAnimationLoop(animate);
         }
 
-        function latLngToUV(lat, lng) {
-            const u = (lng + 180) / 360;
-            const v = (90 - lat) / 180;
-            return { u, v };
+        function onWindowResize() {
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
         }
 
-        function sphericalToCartesian(radius, theta, phi) {
-            return {
-                x: radius * Math.sin(phi) * Math.cos(theta),
-                y: radius * Math.sin(phi) * Math.sin(theta),
-                z: radius * Math.cos(phi)
-            };
-        }
-
-        async function createEarth() {
+        function createEarth() {
             if (earth) {
                 window.scene.remove(earth);
                 earth.geometry.dispose();
                 earth.material.dispose();
             }
 
-            if (!worldTexture && params.useTexture) {
-                worldTexture = await loadTexture();
-            }
-
             const positions = new Float32Array(params.particleCount * 3);
             const colors = new Float32Array(params.particleCount * 3);
             const sizes = new Float32Array(params.particleCount);
 
-            const canvas = document.createElement('canvas');
-            canvas.width = 1024;
-            canvas.height = 512;
-            const ctx = canvas.getContext('2d');
-
-            if (worldTexture) {
-                ctx.drawImage(worldTexture.image, 0, 0, 1024, 512);
-            } else {
-                ctx.fillStyle = '#1976d2';
-                ctx.fillRect(0, 0, 1024, 512);
-                ctx.fillStyle = '#4caf50';
-                ctx.fillRect(100, 100, 200, 100);
-                ctx.fillRect(400, 80, 150, 120);
-                ctx.fillRect(600, 150, 250, 150);
-                ctx.fillRect(850, 200, 120, 100);
+            let imageData = null;
+            
+            if (worldTexture && worldTexture.image) {
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = worldTexture.image.width;
+                tempCanvas.height = worldTexture.image.height;
+                const ctx = tempCanvas.getContext('2d');
+                ctx.drawImage(worldTexture.image, 0, 0);
+                imageData = ctx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
             }
 
-            const imageData = ctx.getImageData(0, 0, 1024, 512);
-            const data = imageData.data;
-
             for (let i = 0; i < params.particleCount; i++) {
-                const theta = Math.random() * Math.PI * 2;
-                const phi = Math.acos(2 * Math.random() - 1);
+                const u = Math.random();
+                const v = Math.random();
+                
+                const theta = u * Math.PI * 2;
+                const phi = Math.acos(2 * v - 1);
 
-                const pos = sphericalToCartesian(params.earthRadius, theta, phi);
+                const x = params.earthRadius * Math.sin(phi) * Math.cos(theta);
+                const y = params.earthRadius * Math.sin(phi) * Math.sin(theta);
+                const z = params.earthRadius * Math.cos(phi);
 
-                positions[i * 3] = pos.x;
-                positions[i * 3 + 1] = pos.y;
-                positions[i * 3 + 2] = pos.z;
+                positions[i * 3] = x;
+                positions[i * 3 + 1] = y;
+                positions[i * 3 + 2] = z;
 
-                const lat = (Math.PI / 2 - phi) * 180 / Math.PI;
-                const lng = theta * 180 / Math.PI;
-                const uv = latLngToUV(lat, lng);
+                let r, g, b;
+                
+                if (imageData) {
+                    const texX = Math.floor(u * imageData.width);
+                    const texY = Math.floor(v * imageData.height);
+                    const idx = (texY * imageData.width + texX) * 4;
+                    
+                    r = imageData.data[idx] / 255;
+                    g = imageData.data[idx + 1] / 255;
+                    b = imageData.data[idx + 2] / 255;
+                } else {
+                    const isLand = Math.random() > 0.6;
+                    if (isLand) {
+                        r = 0.3 + Math.random() * 0.3;
+                        g = 0.5 + Math.random() * 0.3;
+                        b = 0.2 + Math.random() * 0.2;
+                    } else {
+                        r = 0.1 + Math.random() * 0.2;
+                        g = 0.3 + Math.random() * 0.3;
+                        b = 0.6 + Math.random() * 0.3;
+                    }
+                }
 
-                const x = Math.floor(uv.u * 1024);
-                const y = Math.floor(uv.v * 512);
-                const idx = (y * 1024 + x) * 4;
-
-                const r = data[idx] / 255;
-                const g = data[idx + 1] / 255;
-                const b = data[idx + 2] / 255;
-
-                const brightness = 0.8 + Math.random() * 0.2;
-                colors[i * 3] = r * brightness;
-                colors[i * 3 + 1] = g * brightness;
-                colors[i * 3 + 2] = b * brightness;
+                colors[i * 3] = r;
+                colors[i * 3 + 1] = g;
+                colors[i * 3 + 2] = b;
 
                 sizes[i] = params.particleSize * (0.5 + Math.random() * 0.5);
             }
@@ -151,42 +162,14 @@
             geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
             geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
 
-            const material = new THREE.ShaderMaterial({
-                vertexShader: `
-                    attribute float size;
-                    varying vec3 vColor;
-                    varying vec3 vNormal;
-                    
-                    void main() {
-                        vColor = color;
-                        vNormal = normalize(position);
-                        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-                        gl_PointSize = size * (300.0 / -mvPosition.z);
-                        gl_Position = projectionMatrix * mvPosition;
-                    }
-                `,
-                fragmentShader: `
-                    varying vec3 vColor;
-                    varying vec3 vNormal;
-                    
-                    void main() {
-                        float dist = length(gl_PointCoord - vec2(0.5));
-                        if (dist > 0.5) discard;
-                        
-                        float alpha = 1.0 - dist * 2.0;
-                        alpha = pow(alpha, 1.5);
-                        
-                        vec3 lightDir = normalize(vec3(1.0, 0.5, 1.0));
-                        float diff = max(dot(vNormal, lightDir), 0.0);
-                        diff = diff * 0.7 + 0.3;
-                        
-                        gl_FragColor = vec4(vColor * diff, alpha);
-                    }
-                `,
+            const material = new THREE.PointsMaterial({
+                size: params.particleSize,
+                vertexColors: true,
                 transparent: true,
+                opacity: 0.9,
+                sizeAttenuation: true,
                 blending: THREE.AdditiveBlending,
-                depthWrite: false,
-                vertexColors: true
+                depthWrite: false
             });
 
             earth = new THREE.Points(geometry, material);
@@ -222,8 +205,8 @@
                     void main() {
                         vec3 viewDir = normalize(cameraPosition - vPosition);
                         float rim = 1.0 - max(dot(viewDir, vNormal), 0.0);
-                        rim = pow(rim, 3.5);
-                        gl_FragColor = vec4(uColor, rim * 0.5);
+                        rim = pow(rim, 4.0);
+                        gl_FragColor = vec4(uColor, rim * 0.4);
                     }
                 `,
                 uniforms: {
@@ -280,50 +263,36 @@
             window.scene.add(glow);
         }
 
-        createEarth().then(() => {
-            createAtmosphere();
-            createGlow();
-        });
-
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
-        window.scene.add(ambientLight);
-
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        directionalLight.position.set(5, 3, 5);
-        window.scene.add(directionalLight);
-
-        window.addEventListener('resize', () => {
-            window.renderer.setSize(window.innerWidth, window.innerHeight);
-            window.camera.aspect = window.innerWidth / window.innerHeight;
-            window.camera.updateProjectionMatrix();
-        });
-
         function animate() {
-            if (earth) {
+            if (earth && params.showEarth) {
                 earth.rotation.y += 0.002 * params.rotationSpeed;
             }
             controls.update();
             window.renderer.render(window.scene, window.camera);
         }
 
-        window.renderer.setAnimationLoop(animate);
-
         const gui = new GUI();
         gui.title('粒子地球参数');
-        gui.add(params, 'earthRadius', 0.5, 2, 0.1).name('地球半径').onChange(() => {
-            createEarth().then(() => {
-                createAtmosphere();
-                createGlow();
-            });
+        gui.add(params, 'particleCount', 1000, 15000, 1000).name('粒子数量').onChange(() => {
+            if (isTextureLoaded) createEarth();
         });
-        gui.add(params, 'particleCount', 1000, 10000, 500).name('粒子数量').onChange(() => createEarth());
-        gui.add(params, 'particleSize', 0.005, 0.05, 0.005).name('粒子大小').onChange(() => createEarth());
+        gui.add(params, 'particleSize', 0.002, 0.02, 0.001).name('粒子大小').onChange(() => {
+            if (earth) earth.material.size = params.particleSize;
+        });
         gui.add(params, 'rotationSpeed', 0, 3, 0.1).name('旋转速度');
-        gui.add(params, 'glowIntensity', 0.1, 2, 0.1).name('光晕强度').onChange(() => createGlow());
-        gui.addColor(params, 'atmosphereColor').name('大气颜色').onChange(() => createAtmosphere());
-        gui.add(params, 'showAtmosphere').name('显示大气层').onChange(() => createAtmosphere());
-        gui.add(params, 'showGlow').name('显示光晕').onChange(() => createGlow());
-        gui.add(params, 'useTexture').name('使用纹理').onChange(() => createEarth());
+        gui.add(params, 'glowIntensity', 0.1, 2, 0.1).name('光晕强度').onChange(() => {
+            if (isTextureLoaded) createGlow();
+        });
+        gui.addColor(params, 'atmosphereColor').name('大气颜色').onChange(() => {
+            if (isTextureLoaded) createAtmosphere();
+        });
+        gui.add(params, 'showAtmosphere').name('显示大气层').onChange(() => {
+            if (isTextureLoaded) createAtmosphere();
+        });
+        gui.add(params, 'showGlow').name('显示光晕').onChange(() => {
+            if (isTextureLoaded) createGlow();
+        });
+        gui.add(params, 'showEarth').name('显示地球');
     </script>
 
     <script>
