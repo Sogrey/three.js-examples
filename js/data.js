@@ -1540,6 +1540,14 @@ const threejsData = {
               version: "r179",
               url: "examples/z258/particle-realFire",
             },
+            {
+              id: "particle-globeParticle",
+              title: "地球粒子",
+              description: "地球粒子效果，带有Bloom后处理和脉冲动画",
+              thumbnail: "images/particle-globeParticle.jpg",
+              version: "r179",
+              url: "examples/z258/particle-globeParticle",
+            },
           ],
         },
         {
