@@ -1674,6 +1674,14 @@ const threejsData = {
               version: "r179",
               url: "examples/z258/pipeFlow",
             },
+            {
+              id: "buildingLine",
+              title: "建筑线条",
+              description: "使用LineSegments2实现建筑轮廓线条效果",
+              thumbnail: "images/buildingLine.jpg",
+              version: "r179",
+              url: "examples/z258/buildingLine",
+            },
           ],
         },
         {
