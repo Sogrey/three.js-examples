@@ -1484,6 +1484,14 @@ const threejsData = {
               version: "r179",
               url: "examples/z258/particle-starrySky",
             },
+            {
+              id: "particle-snow",
+              title: "雪花",
+              description: "雪花粒子效果，模拟下雪场景",
+              thumbnail: "images/particle-snow.jpg",
+              version: "r179",
+              url: "examples/z258/particle-snow",
+            },
           ],
         },
         {
