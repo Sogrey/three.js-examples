@@ -115,10 +115,6 @@
             map1.offset.x -= 0.015;
             map2.offset.x -= 0.015;
 
-            flowLines.forEach((line, index) => {
-                line.rotation.y += 0.005 + index * 0.001;
-            });
-
             controls.update();
             window.renderer.render(window.scene, window.camera);
         }
