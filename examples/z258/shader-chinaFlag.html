@@ -49,26 +49,25 @@
         ctx.fillRect(0, 0, 300, 200);
         ctx.fillStyle = '#ffde00';
 
-        const flagHeight = 200;
-        const flagWidth = 300;
+        const scale = 10;
+        const bigStarCenterX = 5 * scale;
+        const bigStarCenterY = 5 * scale;
+        const bigStarRadius = 3 * scale;
 
-        const bigStarRadius = flagHeight * 0.3 / 2;
-        const smallStarRadius = flagHeight * 0.1 / 2;
-
-        const bigStarCenterX = (5 / 15) * flagWidth;
-        const bigStarCenterY = (5 / 10) * flagHeight;
+        const smallStarRadius = 1 * scale;
+        const smallStarPositions = [
+            { x: 10 * scale, y: 2 * scale },
+            { x: 12 * scale, y: 4 * scale },
+            { x: 12 * scale, y: 7 * scale },
+            { x: 10 * scale, y: 9 * scale }
+        ];
 
         drawStar(ctx, bigStarCenterX, bigStarCenterY, bigStarRadius, 0);
 
-        const smallStarPositions = [
-            { x: (10 / 15) * flagWidth, y: (2 / 10) * flagHeight },
-            { x: (12 / 15) * flagWidth, y: (4 / 10) * flagHeight },
-            { x: (11 / 15) * flagWidth, y: (7 / 10) * flagHeight },
-            { x: (9 / 15) * flagWidth, y: (8 / 10) * flagHeight }
-        ];
-
         smallStarPositions.forEach(pos => {
-            const angle = Math.atan2(bigStarCenterY - pos.y, bigStarCenterX - pos.x);
+            const dx = bigStarCenterX - pos.x;
+            const dy = bigStarCenterY - pos.y;
+            const angle = Math.atan2(dy, dx);
             drawStar(ctx, pos.x, pos.y, smallStarRadius, angle);
         });
 
