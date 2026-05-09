@@ -31,7 +31,7 @@
         const text = `Thanks for your star`;
 
         const loader = new FontLoader();
-        loader.load('../../libs/three/r179/examples/fonts/helvetiker_regular.typeface.json', font => init(font));
+        loader.load('../../libs/three/r179/fonts/helvetiker_regular.typeface.json', font => init(font));
 
         function init(font) {
             camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 10000);
