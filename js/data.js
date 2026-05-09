@@ -1548,6 +1548,14 @@ const threejsData = {
               version: "r179",
               url: "examples/z258/particle-globeParticle",
             },
+            {
+              id: "particle-waterLeakage",
+              title: "水流粒子",
+              description: "水流粒子效果，带有水花飞溅物理模拟",
+              thumbnail: "images/particle-waterLeakage.jpg",
+              version: "r179",
+              url: "examples/z258/particle-waterLeakage",
+            },
           ],
         },
         {
