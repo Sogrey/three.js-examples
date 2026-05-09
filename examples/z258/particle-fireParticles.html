@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="火焰粒子效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 火焰粒子</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        const container = document.getElementById('threeContainer');
+
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x000000);
+
+        window.camera = new THREE.PerspectiveCamera(20, window.innerWidth / window.innerHeight, 0.1, 1000);
+        window.camera.position.set(0, 0, 50);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(window.renderer.domElement);
+
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+
+        let mouse = [window.innerWidth / 2, window.innerHeight / 2];
+
+        function randomFloat(a, b) {
+            return Math.random() * (b - a) + a;
+        }
+
+        function partToHex(part) {
+            const h = part.toString(16);
+            return h.length === 1 ? "0" + h : h;
+        }
+
+        let baseParticle = new THREE.BoxGeometry(0.4, 0.4, 0.4);
+        baseParticle.rotateZ(Math.PI / 4);
+        baseParticle = new THREE.Mesh(
+            baseParticle,
+            new THREE.MeshBasicMaterial({ color: 0xffffff })
+        );
+
+        function FireParticle() {
+            this.direction;
+            this.scaleSpeed;
+            this.curAge;
+            this.parent;
+            this.obj;
+            this.colorRamp = [[255, 255, 0], [255, 136, 34], [255, 17, 68], [153, 136, 136]];
+
+            this.update = function () {
+                if (Math.abs(this.parent.pos.x - this.obj.position.x) > 10 ||
+                    Math.abs(-this.parent.pos.y - this.obj.position.y) > 10) {
+                    this.obj.scale.x *= 0.8;
+                    this.obj.scale.y *= 0.8;
+                    this.obj.scale.z *= 0.8;
+                }
+
+                let point = (this.curAge / 40);
+                let pointRem = point % 1;
+                let color;
+
+                if (Math.round(point) >= this.colorRamp.length - 1) {
+                    color = this.colorRamp[this.colorRamp.length - 1];
+                } else {
+                    color = [
+                        Math.floor(this.colorRamp[Math.floor(point)][0] * (1 - pointRem) + this.colorRamp[Math.floor(point) + 1][0] * pointRem),
+                        Math.floor(this.colorRamp[Math.floor(point)][1] * (1 - pointRem) + this.colorRamp[Math.floor(point) + 1][1] * pointRem),
+                        Math.floor(this.colorRamp[Math.floor(point)][2] * (1 - pointRem) + this.colorRamp[Math.floor(point) + 1][2] * pointRem)
+                    ];
+                }
+
+                let hexColor = partToHex(color[0]) + partToHex(color[1]) + partToHex(color[2]);
+                hexColor = parseInt(hexColor, 16);
+                this.obj.material.color.setHex(hexColor);
+
+                this.curAge++;
+
+                if (this.obj.scale.x < 0.01) {
+                    this.init();
+                }
+
+                this.obj.position.x += this.direction.x;
+                this.obj.position.y += this.direction.y;
+                this.obj.position.z += this.direction.z;
+
+                this.obj.scale.x *= this.scaleSpeed;
+                this.obj.scale.y *= this.scaleSpeed;
+                this.obj.scale.z *= this.scaleSpeed;
+            };
+
+            this.init = function () {
+                this.direction = new THREE.Vector3(
+                    randomFloat(-0.01, 0.01) * params.spreadX,
+                    randomFloat(0.01, 0.1) * params.flameSpeed,
+                    randomFloat(-0.01, 0.01) * params.spreadX
+                );
+                this.scaleSpeed = randomFloat(0.8, 0.99);
+                this.curAge = 0;
+
+                if (this.obj !== undefined) {
+                    window.scene.remove(this.obj);
+                }
+
+                this.obj = baseParticle.clone();
+                this.obj.position.set(
+                    this.parent.obj.position.x + randomFloat(-0.2, 0.2),
+                    this.parent.obj.position.y,
+                    this.parent.obj.position.z + randomFloat(-0.2, 0.2)
+                );
+                this.obj.scale.set(1, 2, 1);
+                this.obj.material = this.obj.material.clone();
+
+                for (let i = 0; i < randomFloat(0, 100); i++) {
+                    this.update();
+                }
+
+                window.scene.add(this.obj);
+            };
+        }
+
+        function ParticleSystem(size) {
+            this.particles = [];
+            this.obj = new THREE.Group();
+            this.p = new THREE.Vector3();
+            this.d;
+            this.dis;
+            this.pos = new THREE.Vector3(0, 0, 0);
+
+            this.init = function () {
+                for (let i = 0; i < size; i++) {
+                    this.particles.push(new FireParticle());
+                    this.particles[i].parent = this;
+                    this.particles[i].init();
+                }
+                window.scene.add(this.obj);
+            };
+
+            this.init();
+
+            this.update = function () {
+                this.p.set(
+                    (mouse[0] / window.innerWidth) * 2 - 1,
+                    (mouse[1] / window.innerHeight) * 2 - 1,
+                    0.5
+                );
+                this.p.unproject(window.camera);
+                this.d = this.p.sub(window.camera.position).normalize();
+                this.dis = -window.camera.position.z / this.d.z;
+                this.pos = window.camera.position.clone().add(this.d.multiplyScalar(this.dis));
+
+                this.obj.position.x = this.pos.x;
+                this.obj.position.y = -this.pos.y;
+
+                for (let i = 0; i < this.particles.length; i++) {
+                    this.particles[i].update();
+                }
+
+                this.obj.rotation.y += params.rotationSpeed;
+            };
+        }
+
+        const params = {
+            particleCount: 99,
+            flameSpeed: 1,
+            spreadX: 1,
+            rotationSpeed: 0.03
+        };
+
+        let particleSystem;
+
+        function initParticleSystem() {
+            if (particleSystem) {
+                for (const p of particleSystem.particles) {
+                    window.scene.remove(p.obj);
+                }
+            }
+            particleSystem = new ParticleSystem(params.particleCount);
+        }
+
+        initParticleSystem();
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+        window.scene.add(ambientLight);
+
+        function render() {
+            requestAnimationFrame(render);
+            window.renderer.render(window.scene, window.camera);
+            particleSystem.update();
+            controls.update();
+        }
+
+        render();
+
+        window.addEventListener('resize', () => {
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+        });
+
+        window.addEventListener('mousemove', (event) => {
+            mouse = [event.clientX, event.clientY];
+        });
+
+        window.addEventListener('touchmove', (event) => {
+            if (event.touches.length > 0) {
+                mouse = [event.touches[0].clientX, event.touches[0].clientY];
+            }
+        });
+
+        const gui = new GUI();
+        gui.domElement.style.top = '50px';
+        gui.title('火焰粒子参数调节');
+        gui.add(params, 'particleCount', 10, 200, 1).name('粒子数量').onChange(() => {
+            initParticleSystem();
+        });
+        gui.add(params, 'flameSpeed', 0.1, 3, 0.1).name('火焰速度');
+        gui.add(params, 'spreadX', 0.1, 3, 0.1).name('扩散范围');
+        gui.add(params, 'rotationSpeed', 0, 0.1, 0.005).name('旋转速度');
+
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1524,6 +1524,14 @@ const threejsData = {
               version: "r179",
               url: "examples/z258/particle-blendShader",
             },
+            {
+              id: "particle-fireParticles",
+              title: "火焰粒子",
+              description: "火焰粒子效果，带有颜色渐变和粒子更新动画",
+              thumbnail: "images/particle-fireParticles.jpg",
+              version: "r179",
+              url: "examples/z258/particle-fireParticles",
+            },
           ],
         },
         {
