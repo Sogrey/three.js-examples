@@ -1557,6 +1557,14 @@ const threejsData = {
               url: "examples/z258/particle-waterLeakage",
             },
             {
+              id: "particle-waterFlow",
+              title: "喷泉水流",
+              description: "喷泉水流粒子效果，带有抛物线运动轨迹",
+              thumbnail: "images/particle-waterFlow.jpg",
+              version: "r179",
+              url: "examples/z258/particle-waterFlow",
+            },
+            {
               id: "particle-steamParticle",
               title: "蒸汽粒子",
               description: "蒸汽粒子效果，带有上升、湍流和浓度控制",
