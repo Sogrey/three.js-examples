@@ -241,6 +241,10 @@
         });
 
         const gui = new GUI();
+        gui.domElement.style.position = 'absolute';
+        gui.domElement.style.top = '50px';
+        gui.domElement.style.right = '10px';
+        gui.domElement.style.zIndex = '1000';
         const particleFolder = gui.addFolder('粒子设置');
         particleFolder.add(params, 'particlesSum', 1000, 50000, 1000).name('粒子数量').onChange(() => {
             location.reload();
