@@ -1131,6 +1131,22 @@ const threejsData = {
                             url: "examples/z258/shader-dissolveAnimate"
                         },
                         {
+                            id: "shader-threeLogo",
+                            title: "Three.js Logo",
+                            description: "展示three.js标志的3D渲染效果，具有动态渐变和边缘发光效果",
+                            thumbnail: "images/shader-threeLogo.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-threeLogo"
+                        },
+                        {
+                            id: "shader-loveShader",
+                            title: "爱心",
+                            description: "粒子组成的心形动画效果，支持多种配色方案切换",
+                            thumbnail: "images/shader-loveShader.jpg",
+                            version: "r179",
+                            url: "examples/z258/shader-loveShader"
+                        },
+                        {
                             id: "shader-blackhole",
                             title: "黑洞效果",
                             description: "展示黑洞效果的着色器实现，使用光线追踪模拟引力透镜效应和吸积盘",
