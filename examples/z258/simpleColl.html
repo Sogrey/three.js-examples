@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="简单碰撞检测">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 简单碰撞检测</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        const container = document.getElementById('threeContainer');
+
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x1a1a2e);
+
+        window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        window.camera.position.set(15, 15, 15);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(window.camera, renderer.domElement);
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        window.scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+        directionalLight.position.set(10, 20, 10);
+        window.scene.add(directionalLight);
+
+        window.scene.add(new THREE.AxesHelper(20));
+
+        const gridHelper = new THREE.GridHelper(40, 40, 0x4a4a6e, 0x3a3a5e);
+        gridHelper.position.y = -5;
+        window.scene.add(gridHelper);
+
+        const objects = [];
+        const originalColors = [];
+        const velocities = [];
+
+        const colors = [0xff6b6b, 0x4ecdc4, 0x45b7d1, 0xf9ca24, 0x6c5ce7, 0xa29bfe, 0xfd79a8, 0x00b894];
+
+        for (let i = 0; i < 8; i++) {
+            const geometry = new THREE.SphereGeometry(1.5, 32, 32);
+            const material = new THREE.MeshPhongMaterial({ 
+                color: colors[i],
+                transparent: true,
+                opacity: 0.8
+            });
+            const sphere = new THREE.Mesh(geometry, material);
+            
+            sphere.position.set(
+                (Math.random() - 0.5) * 20,
+                Math.random() * 8 + 2,
+                (Math.random() - 0.5) * 20
+            );
+
+            objects.push(sphere);
+            originalColors.push(colors[i]);
+            velocities.push({
+                x: (Math.random() - 0.5) * 0.3,
+                y: (Math.random() - 0.5) * 0.3 - 0.1,
+                z: (Math.random() - 0.5) * 0.3
+            });
+
+            window.scene.add(sphere);
+        }
+
+        function checkCollision(obj1, obj2) {
+            const distance = obj1.position.distanceTo(obj2.position);
+            return distance < 3;
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            objects.forEach((obj, index) => {
+                obj.position.x += velocities[index].x;
+                obj.position.y += velocities[index].y;
+                obj.position.z += velocities[index].z;
+
+                if (obj.position.y < -4) {
+                    obj.position.y = -4;
+                    velocities[index].y *= -0.8;
+                }
+
+                if (Math.abs(obj.position.x) > 18) {
+                    velocities[index].x *= -1;
+                }
+                if (Math.abs(obj.position.z) > 18) {
+                    velocities[index].z *= -1;
+                }
+
+                velocities[index].y -= 0.01;
+
+                obj.material.color.setHex(originalColors[index]);
+                obj.material.emissive.setHex(0x000000);
+            });
+
+            for (let i = 0; i < objects.length; i++) {
+                for (let j = i + 1; j < objects.length; j++) {
+                    if (checkCollision(objects[i], objects[j])) {
+                        objects[i].material.color.setHex(0xffffff);
+                        objects[i].material.emissive.setHex(0xffffff);
+                        objects[j].material.color.setHex(0xffffff);
+                        objects[j].material.emissive.setHex(0xffffff);
+
+                        const tempX = velocities[i].x;
+                        const tempY = velocities[i].y;
+                        const tempZ = velocities[i].z;
+                        velocities[i].x = velocities[j].x;
+                        velocities[i].y = velocities[j].y;
+                        velocities[i].z = velocities[j].z;
+                        velocities[j].x = tempX;
+                        velocities[j].y = tempY;
+                        velocities[j].z = tempZ;
+
+                        objects[i].position.x += velocities[i].x * 2;
+                        objects[i].position.y += velocities[i].y * 2;
+                        objects[i].position.z += velocities[i].z * 2;
+                        objects[j].position.x += velocities[j].x * 2;
+                        objects[j].position.y += velocities[j].y * 2;
+                        objects[j].position.z += velocities[j].z * 2;
+                    }
+                }
+            }
+
+            controls.update();
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        animate();
+
+        window.addEventListener('resize', () => {
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+        });
+
+        window.scene = window.scene;
+        window.camera = window.camera;
+        window.renderer = window.renderer;
+
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
