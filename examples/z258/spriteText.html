@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="精灵文字效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 精灵文字</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        const container = document.getElementById('threeContainer');
+
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x1a1a2e);
+
+        window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        window.camera.position.set(0, 10, 10);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(window.renderer.domElement);
+
+        const controls = new OrbitControls(window.camera, renderer.domElement);
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 3);
+        window.scene.add(ambientLight);
+
+        window.scene.add(new THREE.AxesHelper(100));
+
+        const citys = {
+            '北京': { lat: 39.9042, lng: 116.4074 },
+            '上海': { lat: 31.2304, lng: 121.4737 },
+            '广州': { lat: 23.1291, lng: 113.2644 },
+            '深圳': { lat: 22.5431, lng: 114.0579 },
+            '杭州': { lat: 30.2741, lng: 120.1552 },
+            '南京': { lat: 32.0603, lng: 118.7969 },
+            '成都': { lat: 30.5728, lng: 104.0668 },
+            '重庆': { lat: 29.4316, lng: 106.9123 },
+            '武汉': { lat: 30.5928, lng: 114.3055 },
+            '西安': { lat: 34.3416, lng: 108.9398 },
+            '天津': { lat: 39.3434, lng: 117.3616 },
+            '苏州': { lat: 31.3251, lng: 120.6196 },
+            '郑州': { lat: 34.7466, lng: 113.6253 },
+            '长沙': { lat: 28.2280, lng: 112.9388 },
+            '沈阳': { lat: 41.8045, lng: 123.4328 },
+            '青岛': { lat: 36.0671, lng: 120.3826 },
+            '大连': { lat: 38.9140, lng: 121.6147 },
+            '宁波': { lat: 29.8738, lng: 121.5469 },
+            '厦门': { lat: 24.4798, lng: 118.0894 },
+            '昆明': { lat: 25.0389, lng: 102.7183 }
+        };
+
+        const updateCanvasText = createCanvasText({ dpr: 1.4 });
+
+        const getColor = () => '#' + Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0');
+
+        for (const key in citys) {
+            const canvas = updateCanvasText({ text: key, color: getColor() });
+            const texture = new THREE.CanvasTexture(canvas);
+            const material = new THREE.SpriteMaterial({ map: texture });
+            const sprite = new THREE.Sprite(material);
+
+            sprite.scale.set(canvas.width / canvas.height * 0.8, 0.8, 1);
+
+            sprite.position.set(
+                Math.random() * 20 - 10,
+                Math.random() * 10 + 2,
+                Math.random() * 20 - 10
+            );
+
+            window.scene.add(sprite);
+        }
+
+        function createCanvasText(params) {
+            const defaultParams = {
+                dpr: 1,
+                maxWidth: 100,
+                fontSize: 20,
+                color: 'white',
+                fontFamily: 'Microsoft YaHei, sans-serif',
+                align: 'center',
+                border: false,
+                ...params
+            };
+
+            const { dpr, border, maxWidth, fontSize, align } = defaultParams;
+            const devicePixelRatio = window.devicePixelRatio * dpr;
+
+            const canvas = document.createElement('canvas');
+            canvas.width = maxWidth * devicePixelRatio;
+            canvas.height = fontSize * devicePixelRatio;
+
+            const ctx = canvas.getContext('2d');
+            ctx.imageSmoothingQuality = 'high';
+            ctx.scale(devicePixelRatio, devicePixelRatio);
+
+            function createBorder() {
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 1 * devicePixelRatio;
+                ctx.strokeRect(
+                    ctx.lineWidth / 2,
+                    ctx.lineWidth / 2,
+                    canvas.width / devicePixelRatio - ctx.lineWidth,
+                    canvas.height / devicePixelRatio - ctx.lineWidth
+                );
+            }
+
+            const createText = ({ text, color, fontSize, fontFamily }) => {
+                ctx.fillStyle = color || defaultParams.color;
+                ctx.font = (fontSize || defaultParams.fontSize) + 'px ' + (fontFamily || defaultParams.fontFamily);
+
+                let textMaxNum = 0;
+                let totalWidth = 0;
+
+                for (let i = 0; i < text.length; i++) {
+                    const metrics = ctx.measureText(text[i]);
+                    totalWidth += metrics.width;
+                    if (totalWidth > maxWidth) break;
+                    textMaxNum++;
+                }
+
+                text = text.slice(0, textMaxNum);
+
+                const metrics = ctx.measureText(text);
+                const actualHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
+                const textFillHeight = (canvas.height / devicePixelRatio - actualHeight) / 2 + metrics.actualBoundingBoxAscent;
+
+                let textLeftOffset = 0;
+                if (align === 'center') {
+                    textLeftOffset = (canvas.width / devicePixelRatio - metrics.width) / 2;
+                }
+
+                ctx.fillText(text, textLeftOffset, textFillHeight, canvas.width / devicePixelRatio);
+            };
+
+            return (parameters) => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                if (border) createBorder();
+                createText(parameters);
+                return canvas;
+            };
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        animate();
+
+        window.addEventListener('resize', () => {
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+        });
+
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

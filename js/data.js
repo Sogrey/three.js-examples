@@ -1690,6 +1690,14 @@ const threejsData = {
               version: "r179",
               url: "examples/z258/videoModel",
             },
+            {
+              id: "spriteText",
+              title: "精灵文字",
+              description: "使用Sprite和Canvas实现3D空间文字标签",
+              thumbnail: "images/spriteText.jpg",
+              version: "r179",
+              url: "examples/z258/spriteText",
+            },
           ],
         },
         {
