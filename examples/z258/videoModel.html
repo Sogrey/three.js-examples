@@ -23,154 +23,79 @@
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-        window.scene = new THREE.Scene();
-        window.scene.background = new THREE.Color(0x1a1a2e);
+        const container = document.getElementById('threeContainer');
 
-        window.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-        window.camera.position.set(0, 8, 30);
+        const scene = new THREE.Scene();
 
-        window.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        window.renderer.setSize(window.innerWidth, window.innerHeight);
-        document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+        const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 8, 30);
 
-        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
 
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-        window.scene.add(ambientLight);
+        const urls = [
+            '../../images/textures/sky/skybox0/1.png',
+            '../../images/textures/sky/skybox0/2.png',
+            '../../images/textures/sky/skybox0/3.png',
+            '../../images/textures/sky/skybox0/4.png',
+            '../../images/textures/sky/skybox0/5.png',
+            '../../images/textures/sky/skybox0/6.png'
+        ];
 
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-        directionalLight.position.set(10, 20, 10);
-        window.scene.add(directionalLight);
+        const textureCube = new THREE.CubeTextureLoader().load(urls);
+        scene.background = textureCube;
 
-        function createVideoTexture() {
-            const canvas = document.createElement('canvas');
-            canvas.width = 512;
-            canvas.height = 512;
-            const ctx = canvas.getContext('2d');
+        const video = document.createElement('video');
+        video.crossOrigin = 'anonymous';
+        video.src = '../../images/textures/test.mp4';
+        video.loop = true;
+        video.muted = true;
+        video.play();
 
-            let time = 0;
-            function drawFrame() {
-                time += 0.02;
-                ctx.fillStyle = '#000520';
-                ctx.fillRect(0, 0, 512, 512);
+        const texture = await new Promise(r => video.onloadeddata = () => r(new THREE.VideoTexture(video)));
 
-                const gradient = ctx.createRadialGradient(256, 256, 0, 256, 256, 256);
-                gradient.addColorStop(0, `hsl(${(time * 50) % 360}, 100%, 50%)`);
-                gradient.addColorStop(0.5, `hsl(${(time * 50 + 60) % 360}, 100%, 40%)`);
-                gradient.addColorStop(1, 'rgba(0, 20, 50, 0)');
-                ctx.fillStyle = gradient;
-                ctx.fillRect(0, 0, 512, 512);
-
-                for (let i = 0; i < 20; i++) {
-                    const x = Math.sin(time + i * 0.5) * 150 + 256;
-                    const y = Math.cos(time + i * 0.3) * 150 + 256;
-                    const r = Math.sin(time * 2 + i) * 10 + 20;
-                    ctx.beginPath();
-                    ctx.arc(x, y, r, 0, Math.PI * 2);
-                    ctx.fillStyle = `hsla(${(time * 100 + i * 30) % 360}, 100%, 70%, 0.6)`;
-                    ctx.fill();
+        new GLTFLoader().load('../../models/gltf/zhanguan.glb', (gltf) => {
+            gltf.scene.traverse((child) => {
+                if (child.isMesh) {
+                    child.material.map = texture;
+                    child.material.envMap = textureCube;
                 }
-
-                ctx.font = 'bold 48px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillStyle = '#ffffff';
-                ctx.fillText('VIDEO', 256, 256);
-            }
-
-            drawFrame();
-
-            const texture = new THREE.CanvasTexture(canvas);
-            texture.minFilter = THREE.LinearFilter;
-            texture.magFilter = THREE.LinearFilter;
-
-            function updateTexture() {
-                drawFrame();
-                texture.needsUpdate = true;
-                requestAnimationFrame(updateTexture);
-            }
-            updateTexture();
-
-            return texture;
-        }
-
-        const videoTexture = createVideoTexture();
-
-        function createModel() {
-            const group = new THREE.Group();
-
-            const baseGeometry = new THREE.CylinderGeometry(3, 4, 2, 32);
-            const baseMaterial = new THREE.MeshPhongMaterial({
-                color: 0x333355,
-                map: videoTexture
             });
-            const base = new THREE.Mesh(baseGeometry, baseMaterial);
-            base.position.y = 1;
-            group.add(base);
-
-            const midGeometry = new THREE.CylinderGeometry(2, 3, 4, 32);
-            const midMaterial = new THREE.MeshPhongMaterial({
-                color: 0x444466,
-                map: videoTexture
-            });
-            const mid = new THREE.Mesh(midGeometry, midMaterial);
-            mid.position.y = 4;
-            group.add(mid);
-
-            const topGeometry = new THREE.SphereGeometry(2.5, 32, 32);
-            const topMaterial = new THREE.MeshPhongMaterial({
-                color: 0x555577,
-                map: videoTexture
-            });
-            const top = new THREE.Mesh(topGeometry, topMaterial);
-            top.position.y = 7;
-            group.add(top);
-
-            const antennaGeometry = new THREE.CylinderGeometry(0.2, 0.2, 3, 16);
-            const antennaMaterial = new THREE.MeshPhongMaterial({ color: 0x666688 });
-            const antenna = new THREE.Mesh(antennaGeometry, antennaMaterial);
-            antenna.position.y = 9.5;
-            group.add(antenna);
-
-            const sphereGeometry = new THREE.SphereGeometry(0.5, 16, 16);
-            const sphereMaterial = new THREE.MeshPhongMaterial({
-                color: 0xff6600,
-                emissive: 0xff4400,
-                emissiveIntensity: 0.5
-            });
-            const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-            sphere.position.y = 11;
-            group.add(sphere);
-
-            window.scene.add(group);
-            return group;
-        }
-
-        const model = createModel();
-
-        window.addEventListener('resize', () => {
-            window.renderer.setSize(window.innerWidth, window.innerHeight);
-            window.camera.aspect = window.innerWidth / window.innerHeight;
-            window.camera.updateProjectionMatrix();
+            scene.add(gltf.scene);
         });
 
         function animate() {
             requestAnimationFrame(animate);
             controls.update();
-            window.renderer.render(window.scene, window.camera);
+            renderer.render(scene, camera);
         }
 
         animate();
 
+        window.addEventListener('resize', () => {
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+        });
+
+        window.scene = scene;
+        window.camera = camera;
+        window.renderer = renderer;
+
         window.addEventListener('message', function(event) {
             if (event.data && event.data.type === 'take-screenshot') {
                 try {
-                    if (window.scene && window.camera && window.renderer) {
-                        window.renderer.render(window.scene, window.camera);
+                    if (scene && camera && renderer) {
+                        renderer.render(scene, camera);
                     }
                     const quality = event.data.quality || 0.8;
-                    const canvas = window.renderer.domElement;
+                    const canvas = renderer.domElement;
                     const tempCanvas = document.createElement('canvas');
                     const maxSize = 600;
                     const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
