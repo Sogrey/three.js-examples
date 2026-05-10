@@ -1682,6 +1682,14 @@ const threejsData = {
               version: "r179",
               url: "examples/z258/buildingLine",
             },
+            {
+              id: "videoModel",
+              title: "模型视频材质",
+              description: "使用CanvasTexture实现视频纹理贴图效果",
+              thumbnail: "images/videoModel.jpg",
+              version: "r179",
+              url: "examples/z258/videoModel",
+            },
           ],
         },
         {
