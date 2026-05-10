@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="灯罩效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 灯罩</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        const container = document.getElementById('threeContainer');
+
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x1a1a2e);
+
+        window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        window.camera.position.set(5, 8, 12);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(window.camera, renderer.domElement);
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+        window.scene.add(ambientLight);
+
+        const pointLight1 = new THREE.PointLight(0xffffcc, 1, 50);
+        pointLight1.position.set(0, 5, 5);
+        window.scene.add(pointLight1);
+
+        const pointLight2 = new THREE.PointLight(0xffffee, 0.5, 30);
+        pointLight2.position.set(5, 3, 0);
+        window.scene.add(pointLight2);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        directionalLight.position.set(10, 10, 10);
+        window.scene.add(directionalLight);
+
+        const spotlight = new THREE.SpotLight(0xffffcc, 1.5, 30, Math.PI / 4, 0.5, 2);
+        spotlight.position.set(0, 8, 0);
+        spotlight.target.position.set(0, 0, 0);
+        window.scene.add(spotlight);
+
+        window.scene.add(new THREE.AxesHelper(10));
+
+        const gridHelper = new THREE.GridHelper(20, 20, 0x4a4a6e, 0x3a3a5e);
+        gridHelper.position.y = 0;
+        window.scene.add(gridHelper);
+
+        const lampBaseGeometry = new THREE.CylinderGeometry(1.5, 2, 0.3, 32);
+        const lampBaseMaterial = new THREE.MeshPhongMaterial({
+            color: 0x8B4513,
+            shininess: 30
+        });
+        const lampBase = new THREE.Mesh(lampBaseGeometry, lampBaseMaterial);
+        lampBase.position.y = 0.15;
+        window.scene.add(lampBase);
+
+        const lampPoleGeometry = new THREE.CylinderGeometry(0.15, 0.15, 3, 16);
+        const lampPoleMaterial = new THREE.MeshPhongMaterial({
+            color: 0xDAA520,
+            shininess: 60
+        });
+        const lampPole = new THREE.Mesh(lampPoleGeometry, lampPoleMaterial);
+        lampPole.position.y = 1.8;
+        window.scene.add(lampPole);
+
+        const lampHolderGeometry = new THREE.CylinderGeometry(0.5, 0.3, 0.4, 16);
+        const lampHolderMaterial = new THREE.MeshPhongMaterial({
+            color: 0xCD853F,
+            shininess: 40
+        });
+        const lampHolder = new THREE.Mesh(lampHolderGeometry, lampHolderMaterial);
+        lampHolder.position.y = 3.9;
+        window.scene.add(lampHolder);
+
+        const lathePoints = [];
+        for (let i = 0; i <= 30; i++) {
+            const angle = (i / 30) * Math.PI / 2;
+            const radius = 1.5 + Math.sin(angle) * 0.5;
+            lathePoints.push(new THREE.Vector2(radius, 3 - (i / 30) * 2));
+        }
+
+        const lampshadeGeometry = new THREE.LatheGeometry(lathePoints, 32);
+        const lampshadeMaterial = new THREE.MeshPhongMaterial({
+            color: 0xFFE4B5,
+            emissive: 0xFFAA55,
+            emissiveIntensity: 0.3,
+            transparent: true,
+            opacity: 0.5,
+            side: THREE.DoubleSide,
+            shininess: 80
+        });
+        const lampshade = new THREE.Mesh(lampshadeGeometry, lampshadeMaterial);
+        lampshade.position.y = 5;
+        window.scene.add(lampshade);
+
+        const bulbGeometry = new THREE.SphereGeometry(0.4, 32, 32);
+        const bulbMaterial = new THREE.MeshPhongMaterial({
+            color: 0xffffcc,
+            emissive: 0xffffcc,
+            emissiveIntensity: 0.5,
+            transparent: true,
+            opacity: 0.9
+        });
+        const bulb = new THREE.Mesh(bulbGeometry, bulbMaterial);
+        bulb.position.y = 4.5;
+        window.scene.add(bulb);
+
+        const innerLightGeometry = new THREE.SphereGeometry(0.35, 32, 32);
+        const innerLightMaterial = new THREE.MeshBasicMaterial({
+            color: 0xffffee,
+            transparent: true,
+            opacity: 0.8
+        });
+        const innerLight = new THREE.Mesh(innerLightGeometry, innerLightMaterial);
+        innerLight.position.y = 4.5;
+        window.scene.add(innerLight);
+
+        const lightGlowGeometry = new THREE.SphereGeometry(0.6, 32, 32);
+        const lightGlowMaterial = new THREE.MeshBasicMaterial({
+            color: 0xffffaa,
+            transparent: true,
+            opacity: 0.3
+        });
+        const lightGlow = new THREE.Mesh(lightGlowGeometry, lightGlowMaterial);
+        lightGlow.position.y = 4.5;
+        window.scene.add(lightGlow);
+
+        let time = 0;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            time += 0.016;
+
+            innerLight.scale.setScalar(1 + Math.sin(time * 2) * 0.1);
+            lightGlow.scale.setScalar(1 + Math.sin(time * 2) * 0.15);
+            lightGlow.material.opacity = 0.2 + Math.sin(time * 3) * 0.1;
+
+            controls.update();
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        animate();
+
+        window.addEventListener('resize', () => {
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+        });
+
+        window.scene = window.scene;
+        window.camera = window.camera;
+        window.renderer = window.renderer;
+
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

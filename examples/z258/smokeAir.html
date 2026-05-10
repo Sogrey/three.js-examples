@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="烟雾效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 烟雾效果</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        const container = document.getElementById('threeContainer');
+
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x1a1a2e);
+
+        window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        window.camera.position.set(0, 15, 30);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(window.renderer.domElement);
+
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        window.scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(10, 20, 10);
+        window.scene.add(directionalLight);
+
+        window.scene.add(new THREE.AxesHelper(20));
+
+        const gridHelper = new THREE.GridHelper(40, 40, 0x4a4a6e, 0x3a3a5e);
+        window.scene.add(gridHelper);
+
+        const smokeSources = [
+            { x: -8, z: -8 },
+            { x: 8, z: -8 },
+            { x: -8, z: 8 },
+            { x: 8, z: 8 },
+            { x: 0, z: 0 }
+        ];
+
+        const particlesPerSource = 100;
+        const totalParticles = smokeSources.length * particlesPerSource;
+
+        const positions = new Float32Array(totalParticles * 3);
+        const colors = new Float32Array(totalParticles * 3);
+        const sizes = new Float32Array(totalParticles);
+        const alphas = new Float32Array(totalParticles);
+        const velocities = [];
+        const ages = [];
+        const maxAges = [];
+
+        const smokeGeometry = new THREE.BufferGeometry();
+
+        for (let i = 0; i < smokeSources.length; i++) {
+            for (let j = 0; j < particlesPerSource; j++) {
+                const idx = i * particlesPerSource + j;
+                const angle = Math.random() * Math.PI * 2;
+                const radius = Math.random() * 0.5;
+
+                positions[idx * 3] = smokeSources[i].x + Math.cos(angle) * radius;
+                positions[idx * 3 + 1] = Math.random() * 0.1;
+                positions[idx * 3 + 2] = smokeSources[i].z + Math.sin(angle) * radius;
+
+                colors[idx * 3] = 0.9;
+                colors[idx * 3 + 1] = 0.9;
+                colors[idx * 3 + 2] = 0.95;
+
+                sizes[idx] = 2 + Math.random() * 3;
+                alphas[idx] = 0;
+
+                velocities.push({
+                    x: (Math.random() - 0.5) * 0.05,
+                    y: 0.05 + Math.random() * 0.08,
+                    z: (Math.random() - 0.5) * 0.05
+                });
+
+                ages.push(Math.random() * 200);
+                maxAges.push(150 + Math.random() * 100);
+            }
+        }
+
+        smokeGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        smokeGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        smokeGeometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+
+        const smokeVertexShader = `
+            attribute float size;
+            attribute float alpha;
+            varying float vAlpha;
+            void main() {
+                vAlpha = alpha;
+                vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                gl_PointSize = size * (200.0 / -mvPosition.z);
+                gl_Position = projectionMatrix * mvPosition;
+            }
+        `;
+
+        const smokeFragmentShader = `
+            varying float vAlpha;
+            void main() {
+                float dist = length(gl_PointCoord - vec2(0.5));
+                if (dist > 0.5) discard;
+                float alpha = vAlpha * (1.0 - dist * 2.0);
+                gl_FragColor = vec4(0.9, 0.9, 0.95, alpha * 0.4);
+            }
+        `;
+
+        const smokeMaterial = new THREE.ShaderMaterial({
+            uniforms: {},
+            vertexShader: smokeVertexShader,
+            fragmentShader: smokeFragmentShader,
+            transparent: true,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending
+        });
+
+        const smokeParticles = new THREE.Points(smokeGeometry, smokeMaterial);
+        window.scene.add(smokeParticles);
+
+        const alphaAttribute = new Float32Array(totalParticles);
+        smokeGeometry.setAttribute('alpha', new THREE.BufferAttribute(alphaAttribute, 1));
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            for (let i = 0; i < totalParticles; i++) {
+                ages[i]++;
+
+                if (ages[i] > maxAges[i]) {
+                    const sourceIdx = Math.floor(i / particlesPerSource);
+                    const angle = Math.random() * Math.PI * 2;
+                    const radius = Math.random() * 0.5;
+
+                    positions[i * 3] = smokeSources[sourceIdx].x + Math.cos(angle) * radius;
+                    positions[i * 3 + 1] = 0;
+                    positions[i * 3 + 2] = smokeSources[sourceIdx].z + Math.sin(angle) * radius;
+
+                    velocities[i].x = (Math.random() - 0.5) * 0.05;
+                    velocities[i].y = 0.05 + Math.random() * 0.08;
+                    velocities[i].z = (Math.random() - 0.5) * 0.05;
+
+                    ages[i] = 0;
+                    maxAges[i] = 150 + Math.random() * 100;
+                }
+
+                positions[i * 3] += velocities[i].x;
+                positions[i * 3 + 1] += velocities[i].y;
+                positions[i * 3 + 2] += velocities[i].z;
+
+                const lifeRatio = ages[i] / maxAges[i];
+
+                if (lifeRatio < 0.2) {
+                    alphaAttribute[i] = lifeRatio / 0.2;
+                } else if (lifeRatio > 0.7) {
+                    alphaAttribute[i] = (1.0 - lifeRatio) / 0.3;
+                } else {
+                    alphaAttribute[i] = 1.0;
+                }
+
+                const sizeBoost = 1.0 + lifeRatio * 2.0;
+                sizes[i] = (2 + Math.random() * 3) * sizeBoost;
+            }
+
+            smokeGeometry.attributes.position.needsUpdate = true;
+            smokeGeometry.attributes.alpha.needsUpdate = true;
+            smokeGeometry.attributes.size.needsUpdate = true;
+
+            controls.update();
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        animate();
+
+        window.addEventListener('resize', () => {
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+        });
+
+        window.scene = window.scene;
+        window.camera = window.camera;
+        window.renderer = window.renderer;
+
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
