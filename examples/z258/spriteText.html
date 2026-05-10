@@ -45,12 +45,10 @@
 
         const citys = await fetch('../../models/json/city.json').then(res => res.json());
 
-        const updateCanvasText = createCanvasText({ dpr: 1.4 });
-
         const getColor = () => '#' + Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0');
 
         for (const key in citys) {
-            const canvas = updateCanvasText({ text: key, color: getColor() });
+            const canvas = createCanvasText({ dpr: 1.4 })({ text: key, color: getColor() });
             const texture = new THREE.CanvasTexture(canvas);
             const material = new THREE.SpriteMaterial({ map: texture });
             const sprite = new THREE.Sprite(material);
@@ -72,7 +70,7 @@
                 maxWidth: 100,
                 fontSize: 20,
                 color: 'white',
-                fontFamily: 'Microsoft YaHei, sans-serif',
+                fontFamily: 'serif',
                 align: 'center',
                 border: false,
                 ...params
@@ -81,28 +79,29 @@
             const { dpr, border, maxWidth, fontSize, align } = defaultParams;
             const devicePixelRatio = window.devicePixelRatio * dpr;
 
-            const canvas = document.createElement('canvas');
-            canvas.width = maxWidth * devicePixelRatio;
-            canvas.height = fontSize * devicePixelRatio;
+            return (parameters) => {
+                const canvas = document.createElement('canvas');
+                canvas.width = maxWidth * devicePixelRatio;
+                canvas.height = fontSize * devicePixelRatio;
 
-            const ctx = canvas.getContext('2d');
-            ctx.imageSmoothingQuality = 'high';
-            ctx.scale(devicePixelRatio, devicePixelRatio);
+                const ctx = canvas.getContext('2d');
+                ctx.imageSmoothingQuality = 'high';
+                ctx.scale(devicePixelRatio, devicePixelRatio);
 
-            function createBorder() {
-                ctx.strokeStyle = '#fff';
-                ctx.lineWidth = 1 * devicePixelRatio;
-                ctx.strokeRect(
-                    ctx.lineWidth / 2,
-                    ctx.lineWidth / 2,
-                    canvas.width / devicePixelRatio - ctx.lineWidth,
-                    canvas.height / devicePixelRatio - ctx.lineWidth
-                );
-            }
+                if (border) {
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 1 * devicePixelRatio;
+                    ctx.strokeRect(
+                        ctx.lineWidth / 2,
+                        ctx.lineWidth / 2,
+                        canvas.width / devicePixelRatio - ctx.lineWidth,
+                        canvas.height / devicePixelRatio - ctx.lineWidth
+                    );
+                }
 
-            const createText = ({ text, color, fontSize, fontFamily }) => {
+                const { text, color, fontSize: paramFontSize, fontFamily: paramFontFamily } = parameters;
                 ctx.fillStyle = color || defaultParams.color;
-                ctx.font = (fontSize || defaultParams.fontSize) + 'px ' + (fontFamily || defaultParams.fontFamily);
+                ctx.font = (paramFontSize || defaultParams.fontSize) + 'px ' + (paramFontFamily || defaultParams.fontFamily);
 
                 let textMaxNum = 0;
                 let totalWidth = 0;
@@ -114,9 +113,9 @@
                     textMaxNum++;
                 }
 
-                text = text.slice(0, textMaxNum);
+                const displayText = text.slice(0, textMaxNum);
 
-                const metrics = ctx.measureText(text);
+                const metrics = ctx.measureText(displayText);
                 const actualHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
                 const textFillHeight = (canvas.height / devicePixelRatio - actualHeight) / 2 + metrics.actualBoundingBoxAscent;
 
@@ -125,13 +124,8 @@
                     textLeftOffset = (canvas.width / devicePixelRatio - metrics.width) / 2;
                 }
 
-                ctx.fillText(text, textLeftOffset, textFillHeight, canvas.width / devicePixelRatio);
-            };
+                ctx.fillText(displayText, textLeftOffset, textFillHeight, canvas.width / devicePixelRatio);
 
-            return (parameters) => {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                if (border) createBorder();
-                createText(parameters);
                 return canvas;
             };
         }
