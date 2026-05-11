@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="gsap使用 - 使用GSAP库实现Three.js高级动画效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - gsap使用</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/",
+            "gsap": "../../libs/gsap/index.js"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+        import gsap from 'gsap';
+
+        const container = document.getElementById('threeContainer');
+
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x1a1a2e);
+
+        window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100000);
+        window.camera.position.set(0, 10, 40);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, logarithmicDepthBuffer: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        window.renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(window.renderer.domElement);
+
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.enableDamping = true;
+
+        window.scene.add(new THREE.GridHelper(100, 20));
+        const gridHelper = new THREE.GridHelper(100, 20);
+        gridHelper.rotation.x = Math.PI / 2;
+        window.scene.add(gridHelper);
+
+        function animateLoop() {
+            requestAnimationFrame(animateLoop);
+            controls.update();
+            window.renderer.render(window.scene, window.camera);
+        }
+        window.render = animateLoop;
+
+        window.addEventListener('resize', () => {
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+        });
+
+        function createMesh(color = 0xffffff, p, size = 1) {
+            const geometry = new THREE.BoxGeometry(size, size, size);
+            const material = new THREE.MeshBasicMaterial({ color });
+            const mesh = new THREE.Mesh(geometry, material);
+            if (p) mesh.position.set(...p);
+            window.scene.add(mesh);
+            return mesh;
+        }
+
+        const mesh = createMesh();
+
+        gsap.defaults({ ease: "none", duration: 2 });
+
+        let tween = gsap.to(
+            mesh.position, { z: 30, delay: 0.5 }
+        ).repeat(1);
+
+        tween.pause();
+
+        const gui = new GUI();
+        gui.domElement.style.top = '50px';
+
+        const folder = gui.addFolder('动画类型');
+        folder.add({ fn: () => gsap.from(mesh.position, { y: 30, duration: 2 }) }, 'fn').name('from从指定值到当前值');
+        folder.add({ fn: () => gsap.fromTo(mesh.position, { y: 25 }, { y: 15, duration: 2 }) }, 'fn').name('fromTo从指定值到指定值');
+
+        const folder1 = gui.addFolder('基础动画控制');
+
+        folder1.add({ play: () => tween.play() }, 'play').name('播放动画');
+        folder1.add({ pause: () => tween.pause() }, 'pause').name('停止动画');
+        folder1.add({ restart: () => tween.restart() }, 'restart').name('重新开始动画');
+        folder1.add({ reverse: () => tween.reverse() }, 'reverse').name('反向播放动画');
+        folder1.add({ resume: () => tween.resume() }, 'resume').name('继续动画');
+        folder1.add({ revert: () => tween.revert() }, 'revert').name('回退并终止动画');
+        folder1.add({ kill: () => tween.kill() }, 'kill').name('终止动画');
+        folder1.add({ seek: 0 }, 'seek').step(0.01).onChange(value => tween.seek(value, false)).name('跳转到指定时间');
+
+        folder1.add({
+            fn: () => {
+                gsap.to(mesh.position, {
+                    y: 30,
+                    duration: 0.5,
+                    repeat: 1
+                }, 2);
+            }
+        }, 'fn').name('第三个参数');
+
+        const mesh2 = createMesh(0xff0000, [5, 0, 0]);
+        const mesh3 = createMesh(0x00ff00, [10, 0, 0]);
+
+        folder1.add({
+            fn: () => {
+                gsap.to([mesh.position, mesh2.position, mesh3.position], {
+                    y: 30,
+                    duration: 0.5,
+                    repeat: 1,
+                    stagger: 0.2
+                });
+            }
+        }, 'fn').name('多个目标-间隔错开');
+
+        const mesh4 = createMesh(0x0000ff, [5, 0, 5]);
+        folder1.add({
+            fn: () =>
+                gsap.to(mesh4.position, {
+                    y: '+=5',
+                    duration: 1,
+                    repeat: 1,
+                    repeatDelay: 0.5,
+                    repeatRefresh: true
+                })
+        }, 'fn').name('相对-延迟-刷新重复');
+
+        folder1.add({
+            fn: () => {
+                gsap.to(mesh4.position, {
+                    y: 'random(-5, 10)',
+                    duration: 1
+                });
+            }
+        }, 'fn').name('随机值');
+
+        const mesh5 = createMesh(0xffff00, [10, 0, 5]);
+        folder1.add({
+            fn: () =>
+                gsap.to(mesh5.position, {
+                    y: '18',
+                    snap: { y: 2 },
+                    duration: 1
+                })
+        }, 'fn').name('snap吸附值');
+
+        const mesh7 = createMesh(0x00ffff, [15, 0, 5]);
+        folder1.add({
+            fn: () => {
+                gsap.to(mesh7.position, {
+                    keyframes: [
+                        { y: 10, duration: 0.5 },
+                        { x: 20, duration: 0.3 },
+                        { y: 0, duration: 0.4 },
+                        { x: 30, duration: 0.3 }
+                    ],
+                    ease: "none"
+                });
+            }
+        }, 'fn').name('keyframes关键帧');
+
+        const folder2 = gui.addFolder('时间线');
+        folder2.open();
+
+        folder2.addFn = (fn) => {
+            const obj = { fn };
+            return folder2.add(obj, 'fn');
+        };
+
+        const mesh6 = createMesh(0xff00ff, [0, 0, 15]);
+
+        folder2.addFn(() => {
+            const tl = gsap.timeline({ defaults: { duration: 0.8, ease: 'none' } });
+            tl.to(mesh6.position, { y: 10 })
+              .to(mesh6.position, { x: 10 })
+              .to(mesh6.position, { z: 25 })
+              .to(mesh6.position, { y: 0 });
+        }).name('1-连续动画');
+
+        const mesh8 = createMesh(0xffa500, [5, 0, 15]);
+        const mesh9 = createMesh(0x888888, [10, 0, 15]);
+
+        folder2.addFn(() => {
+            const tl = gsap.timeline({ defaults: { duration: 2, ease: 'none' } });
+            tl.to(mesh6.position, { y: 10 })
+              .to(mesh8.position, { y: 10 }, "<")
+              .to(mesh9.position, { y: 10 }, "<1");
+        }).name('2-同时开始 <');
+
+        folder2.addFn(() => {
+            const tl = gsap.timeline({ defaults: { duration: 1, ease: 'none' } });
+            tl.to(mesh6.position, { y: 10 })
+              .to(mesh8.position, { y: 10 }, ">")
+              .to(mesh9.position, { y: 10 }, ">1");
+        }).name('3-结束后 >');
+
+        folder2.addFn(() => {
+            const tl = gsap.timeline({ defaults: { duration: 2, ease: 'none' } });
+            tl.to(mesh6.position, { y: 10 })
+              .to(mesh8.position, { y: 10 }, 0.5)
+              .to(mesh9.position, { y: 10 }, 1);
+        }).name('4-绝对时间');
+
+        folder2.addFn(() => {
+            const tl = gsap.timeline({ defaults: { ease: 'none' } });
+            tl.to(mesh6.position, { y: 10, duration: 2 })
+              .to(mesh8.position, { y: 10, duration: 1 }, "<")
+              .to(mesh9.position, { y: 10 }, "+=0.5");
+        }).name('5-相对偏移 +=/-=');
+
+        let mainTl = gsap.timeline({
+            defaults: { duration: 0.6, ease: 'power2.inOut' },
+            paused: true,
+            repeat: 1,
+            yoyo: true
+        });
+        mainTl.to(mesh6.position, { y: 15 })
+            .to(mesh8.position, { y: 15 }, "<")
+            .to(mesh9.position, { y: 15 }, "<0.2")
+            .to(mesh6.position, { x: 10 })
+            .to(mesh8.position, { x: 15 }, "<");
+
+        folder2.addFn(() => mainTl.play()).name('6-tl.play()');
+        folder2.addFn(() => mainTl.pause()).name('6-tl.pause()');
+        folder2.addFn(() => mainTl.reverse()).name('6-tl.reverse()');
+        folder2.addFn(() => mainTl.restart()).name('6-tl.restart()');
+        folder2.add({ progress: 0 }, 'progress', 0, 1).step(0.01).onChange(v => {
+            mainTl.progress(v);
+        }).name('6-tl.progress滑块');
+
+        folder2.addFn(() => {
+            const tl = gsap.timeline({ defaults: { duration: 0.6, ease: 'bounce.out' } });
+            tl.to(mesh6.position, { y: 10 })
+              .addLabel("middle")
+              .to(mesh8.position, { y: 10 }, "middle")
+              .to(mesh9.position, { y: 10 }, "middle+=0.2")
+              .addLabel("end");
+        }).name('7-label标签');
+
+        function bounceUp(target) {
+            const tl = gsap.timeline();
+            tl.to(target.position, { y: 12, duration: 0.3, ease: 'none' })
+              .to(target.position, { y: 0, duration: 0.3, ease: 'bounce.out' });
+            return tl;
+        }
+
+        function slideRight(target, distance = 10) {
+            const tl = gsap.timeline();
+            tl.to(target.position, { x: `+=${distance}`, duration: 0.5, ease: 'power1.inOut' });
+            return tl;
+        }
+
+        folder2.addFn(() => {
+            const masterTl = gsap.timeline();
+            masterTl.add(bounceUp(mesh6))
+                    .add(bounceUp(mesh8), "-=0.1")
+                    .add(bounceUp(mesh9), "-=0.1")
+                    .add(slideRight(mesh6))
+                    .add(slideRight(mesh8), "<");
+        }).name('8-嵌套时间线');
+
+        folder2.addFn(() => {
+            gsap.set(mesh6.position, { x: 0, y: 0, z: 15 });
+            gsap.set(mesh8.position, { x: 5, y: 0, z: 15 });
+            gsap.set(mesh9.position, { x: 10, y: 0, z: 15 });
+
+            const tl = gsap.timeline({
+                defaults: { ease: 'power2.inOut' },
+                onStart: () => console.log('表演开始'),
+                onComplete: () => console.log('表演结束')
+            });
+
+            tl.to(mesh6.position, { y: 5, duration: 0.5 })
+              .to(mesh8.position, { y: 10, duration: 0.5 }, "<")
+              .to(mesh9.position, { y: 15, duration: 0.5 }, "<")
+              .addLabel("risen")
+              .to(mesh6.rotation, { y: Math.PI * 2, duration: 1 }, "risen")
+              .to(mesh8.rotation, { y: Math.PI * 2, duration: 1 }, "risen+=0.1")
+              .to(mesh9.rotation, { y: Math.PI * 2, duration: 1 }, "risen+=0.2")
+              .addLabel("spun")
+              .to(mesh6.position, { x: 5, duration: 0.6 }, "spun")
+              .to(mesh9.position, { x: 5, duration: 0.6 }, "spun")
+              .to([mesh6.position, mesh8.position, mesh9.position], {
+                  y: 0,
+                  duration: 0.4,
+                  ease: 'bounce.out',
+                  stagger: 0.1
+              })
+              .to(mesh6.position, { x: 0, duration: 0.5 })
+              .to(mesh9.position, { x: 10, duration: 0.5 }, "<");
+        }).name('9-综合实战表演');
+
+        animateLoop();
+    </script>
+
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera) {
+                        if (window.composer) window.composer.render();
+                        else window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.composer ? window.composer.renderer.domElement : window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
