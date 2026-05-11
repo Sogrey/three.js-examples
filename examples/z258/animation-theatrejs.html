@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Theatrejs - 使用Theatre.js实现交互式动画编辑"
+    />
+    <meta name="three-version" content="r179" />
+    <title>Three.js 示例 - Theatrejs</title>
+    <link rel="stylesheet" href="../../css/example-common.css" />
+    <style>
+      #theatrejs-studio-root {
+        position: fixed !important;
+        top: 200px !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "../../libs/three/r179/build/three.module.js",
+          "three/addons/": "../../libs/three/r179/jsm/",
+          "@theatre/core": "https://cdn.jsdelivr.net/npm/@theatre/core/+esm",
+          "@theatre/studio": "https://cdn.jsdelivr.net/npm/@theatre/studio/+esm"
+        }
+      }
+    </script>
+
+    <script type="module">
+      import * as THREE from "three";
+      import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+      import theatrecore from "@theatre/core";
+      import theatrestudio from "@theatre/studio";
+
+      const core = theatrecore.default || theatrecore;
+      const studio = theatrestudio.default || theatrestudio;
+      const { getProject, types } = core;
+
+      const container = document.getElementById("threeContainer");
+
+      window.scene = new THREE.Scene();
+      window.scene.background = new THREE.Color(0x1f1f1f);
+
+      window.camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        100000,
+      );
+      window.camera.position.set(30, 25, 30);
+
+      window.renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        alpha: true,
+        logarithmicDepthBuffer: true,
+      });
+      window.renderer.setSize(window.innerWidth, window.innerHeight);
+      window.renderer.setPixelRatio(window.devicePixelRatio);
+      window.renderer.shadowMap.enabled = true;
+      container.appendChild(window.renderer.domElement);
+
+      const controls = new OrbitControls(
+        window.camera,
+        window.renderer.domElement,
+      );
+      controls.enableDamping = true;
+
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+      directionalLight.position.set(20, 40, 20);
+      directionalLight.castShadow = true;
+      window.scene.add(ambientLight, directionalLight);
+
+      const ground = new THREE.Mesh(
+        new THREE.PlaneGeometry(80, 80),
+        new THREE.MeshStandardMaterial({ color: 0x333333 }),
+      );
+      ground.rotation.x = -Math.PI / 2;
+      ground.receiveShadow = true;
+      window.scene.add(
+        ground,
+        new THREE.GridHelper(80, 16, 0x555555, 0x444444),
+      );
+
+      const cube = new THREE.Mesh(
+        new THREE.BoxGeometry(4, 4, 4),
+        new THREE.MeshStandardMaterial({ color: 0x049ef4 }),
+      );
+      cube.position.set(-12, 2, 0);
+      cube.castShadow = true;
+      window.scene.add(cube);
+
+      const sphere = new THREE.Mesh(
+        new THREE.SphereGeometry(2.5, 32, 32),
+        new THREE.MeshStandardMaterial({ color: 0xe91e63 }),
+      );
+      sphere.position.set(0, 2.5, 0);
+      sphere.castShadow = true;
+      window.scene.add(sphere);
+
+      const torus = new THREE.Mesh(
+        new THREE.TorusGeometry(2.5, 0.8, 16, 50),
+        new THREE.MeshStandardMaterial({ color: 0x4caf50 }),
+      );
+      torus.position.set(12, 3, 0);
+      torus.castShadow = true;
+      window.scene.add(torus);
+
+      studio.initialize();
+
+      const studioStyle = document.createElement("style");
+      studioStyle.textContent = `
+            #theatrejs-studio-root {
+                opacity: 0.92;
+            }
+        `;
+      document.head.appendChild(studioStyle);
+
+      const project = getProject("ThreeJS Tutorial");
+      const sheet = project.sheet("Animation Sheet");
+
+      const cubeObj = sheet.object("Cube", {
+        position: types.compound({
+          x: types.number(cube.position.x, { range: [-30, 30] }),
+          y: types.number(cube.position.y, { range: [0, 30] }),
+          z: types.number(cube.position.z, { range: [-30, 30] }),
+        }),
+        rotation: types.compound({
+          x: types.number(0, { range: [-Math.PI, Math.PI] }),
+          y: types.number(0, { range: [-Math.PI, Math.PI] }),
+          z: types.number(0, { range: [-Math.PI, Math.PI] }),
+        }),
+        scale: types.number(1, { range: [0.1, 3] }),
+        color: types.rgba({ r: 0.016, g: 0.624, b: 0.957, a: 1 }),
+      });
+
+      cubeObj.onValuesChange((values) => {
+        const { position, rotation, scale, color } = values;
+        cube.position.set(position.x, position.y, position.z);
+        cube.rotation.set(rotation.x, rotation.y, rotation.z);
+        cube.scale.setScalar(scale);
+        cube.material.color.setRGB(color.r, color.g, color.b);
+        cube.material.opacity = color.a;
+      });
+
+      const sphereObj = sheet.object("Sphere", {
+        position: types.compound({
+          x: types.number(sphere.position.x, { range: [-30, 30] }),
+          y: types.number(sphere.position.y, { range: [0, 30] }),
+          z: types.number(sphere.position.z, { range: [-30, 30] }),
+        }),
+        scale: types.number(1, { range: [0.1, 3] }),
+        color: types.rgba({ r: 0.914, g: 0.118, b: 0.388, a: 1 }),
+      });
+
+      sphereObj.onValuesChange((values) => {
+        const { position, scale, color } = values;
+        sphere.position.set(position.x, position.y, position.z);
+        sphere.scale.setScalar(scale);
+        sphere.material.color.setRGB(color.r, color.g, color.b);
+      });
+
+      const torusObj = sheet.object("Torus", {
+        position: types.compound({
+          x: types.number(torus.position.x, { range: [-30, 30] }),
+          y: types.number(torus.position.y, { range: [0, 30] }),
+          z: types.number(torus.position.z, { range: [-30, 30] }),
+        }),
+        rotation: types.compound({
+          x: types.number(0, { range: [-Math.PI * 2, Math.PI * 2] }),
+          y: types.number(0, { range: [-Math.PI * 2, Math.PI * 2] }),
+        }),
+        scale: types.number(1, { range: [0.1, 3] }),
+        color: types.rgba({ r: 0.298, g: 0.686, b: 0.314, a: 1 }),
+      });
+
+      torusObj.onValuesChange((values) => {
+        const { position, rotation, scale, color } = values;
+        torus.position.set(position.x, position.y, position.z);
+        torus.rotation.set(rotation.x, rotation.y, 0);
+        torus.scale.setScalar(scale);
+        torus.material.color.setRGB(color.r, color.g, color.b);
+      });
+
+      const lightObj = sheet.object("Light", {
+        position: types.compound({
+          x: types.number(20, { range: [-50, 50] }),
+          y: types.number(40, { range: [0, 80] }),
+          z: types.number(20, { range: [-50, 50] }),
+        }),
+        intensity: types.number(1, { range: [0, 3] }),
+      });
+
+      lightObj.onValuesChange((values) => {
+        directionalLight.position.set(
+          values.position.x,
+          values.position.y,
+          values.position.z,
+        );
+        directionalLight.intensity = values.intensity;
+      });
+
+      const btnContainer = document.createElement("div");
+      Object.assign(btnContainer.style, {
+        position: "fixed",
+        bottom: "120px",
+        left: "50%",
+        transform: "translateX(-50%)",
+        display: "flex",
+        gap: "10px",
+        zIndex: "9999",
+      });
+
+      const createBtn = (text, onClick) => {
+        const btn = document.createElement("button");
+        btn.textContent = text;
+        Object.assign(btn.style, {
+          padding: "8px 18px",
+          border: "none",
+          borderRadius: "6px",
+          cursor: "pointer",
+          background: "#049ef4",
+          color: "#fff",
+          fontSize: "14px",
+          fontWeight: "bold",
+        });
+        btn.addEventListener("click", onClick);
+        btnContainer.appendChild(btn);
+        return btn;
+      };
+
+      createBtn("▶ 播放", () => {
+        sheet.sequence.play({ iterationCount: Infinity, range: [0, 6] });
+      });
+
+      createBtn("⏸ 暂停", () => {
+        sheet.sequence.pause();
+      });
+
+      createBtn("⏩ 跳到 3s", () => {
+        sheet.sequence.position = 3;
+      });
+
+      createBtn("▶ 单次播放", () => {
+        sheet.sequence.play({ iterationCount: 1, range: [0, 6] });
+      });
+
+      container.appendChild(btnContainer);
+
+      const info = document.createElement("div");
+      Object.assign(info.style, {
+        position: "fixed",
+        bottom: "10px",
+        left: "10px",
+        zIndex: "0",
+        background: "rgba(0,0,0,0.75)",
+        color: "#fff",
+        padding: "16px 20px",
+        borderRadius: "10px",
+        fontSize: "13px",
+        lineHeight: "1.8",
+        maxWidth: "340px",
+        pointerEvents: "none",
+      });
+
+      info.innerHTML = `
+<div style="font-size:16px;font-weight:bold;margin-bottom:8px;color:#049ef4">🎬 Theatre.js 教程</div>
+<div><b>核心概念：</b></div>
+<div>• <b>Project</b> — 一个动画场景项目</div>
+<div>• <b>Sheet</b> — 一条独立时间轴</div>
+<div>• <b>Object</b> — 可动画化的属性组</div>
+<div>• <b>Sequence</b> — 时间轴上的动画序列</div>
+<hr style="border-color:#555;margin:8px 0"/>
+<div><b>使用步骤：</b></div>
+<div>1. 点击底部面板中的物体名称</div>
+<div>2. 右键属性 → "Sequence" 添加到时间轴</div>
+<div>3. 在时间轴上添加关键帧</div>
+<div>4. 拖动关键帧调整数值和时间</div>
+<div>5. 点击播放按钮预览动画</div>
+`;
+
+      container.appendChild(info);
+
+      function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        window.renderer.render(window.scene, window.camera);
+      }
+      animate();
+
+      window.addEventListener("resize", () => {
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        window.camera.aspect = window.innerWidth / window.innerHeight;
+        window.camera.updateProjectionMatrix();
+      });
+    </script>
+
+    <script>
+      window.addEventListener("message", function (event) {
+        if (event.data && event.data.type === "take-screenshot") {
+          try {
+            if (window.scene && window.camera) {
+              if (window.composer) window.composer.render();
+              else window.renderer.render(window.scene, window.camera);
+            }
+            const quality = event.data.quality || 0.8;
+            const canvas = window.composer
+              ? window.composer.renderer.domElement
+              : window.renderer.domElement;
+            const tempCanvas = document.createElement("canvas");
+            const maxSize = 600;
+            const scale = Math.min(
+              maxSize / canvas.width,
+              maxSize / canvas.height,
+            );
+            tempCanvas.width = Math.floor(canvas.width * scale);
+            tempCanvas.height = Math.floor(canvas.height * scale);
+            const ctx = tempCanvas.getContext("2d");
+            ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+            const dataUrl = tempCanvas.toDataURL("image/jpeg", quality);
+            window.parent.postMessage(
+              { type: "screenshot-data", dataUrl: dataUrl },
+              "*",
+            );
+          } catch (error) {
+            console.error("截图失败:", error);
+            window.parent.postMessage(
+              { type: "screenshot-error", error: error.message },
+              "*",
+            );
+          }
+        }
+      });
+    </script>
+  </body>
+</html>
