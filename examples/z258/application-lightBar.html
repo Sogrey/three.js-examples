@@ -144,16 +144,16 @@
         return group;
       }
 
-      // 随机创建光柱
+      // 随机创建光柱（减少数量避免颜色过度重叠）
       const lightBars = [];
-      for (let i = 0; i < 12; i++) {
-        const hue = Math.random();
-        const color = new THREE.Color().setHSL(hue, 0.8, 0.6);
+      for (let i = 0; i < 6; i++) {
+        const hue = i / 6; // 均匀分布色相
+        const color = new THREE.Color().setHSL(hue, 0.9, 0.5);
         const lightBar = createLightBar(color);
 
-        // 随机位置
-        const angle = (i / 12) * Math.PI * 2;
-        const radius = 3 + Math.random() * 4;
+        // 均匀分布位置，增加间距
+        const angle = (i / 6) * Math.PI * 2;
+        const radius = 5 + Math.random() * 2;
         lightBar.position.set(
           Math.cos(angle) * radius,
           0,
