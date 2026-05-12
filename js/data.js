@@ -1891,6 +1891,14 @@ const threejsData = {
               version: "r179",
               url: "examples/z258/application-measureArea",
             },
+            {
+              id: "application-textSphere",
+              title: "球体文字",
+              description: "在球体表面分布3D文字标签，展示WebGL相关技术词汇",
+              thumbnail: "images/application-textSphere.jpg",
+              version: "r179",
+              url: "examples/z258/application-textSphere",
+            },
           ],
         },
         {

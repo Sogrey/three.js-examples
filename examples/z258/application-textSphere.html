@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="球体文字 - 在球体表面分布3D文字标签"
+    />
+    <meta name="three-version" content="r179" />
+    <title>Three.js 示例 - 球体文字</title>
+    <link rel="stylesheet" href="../../css/example-common.css" />
+  </head>
+  <body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "../../libs/three/r179/build/three.module.js",
+          "three/addons/": "../../libs/three/r179/jsm/"
+        }
+      }
+    </script>
+
+    <script type="module">
+      import * as THREE from "three";
+      import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+      import { FontLoader } from "three/addons/loaders/FontLoader.js";
+      import { TextGeometry } from "three/addons/geometries/TextGeometry.js";
+
+      const container = document.getElementById("threeContainer");
+
+      window.scene = new THREE.Scene();
+      window.scene.background = new THREE.Color(0x1a1a2e);
+
+      window.camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+      );
+      window.camera.position.set(1, 2, 5);
+
+      window.renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        alpha: true,
+        logarithmicDepthBuffer: true,
+      });
+      window.renderer.setSize(window.innerWidth, window.innerHeight);
+      window.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      container.appendChild(window.renderer.domElement);
+
+      const controls = new OrbitControls(
+        window.camera,
+        window.renderer.domElement
+      );
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.01;
+      controls.autoRotate = true;
+      controls.autoRotateSpeed = 0.5;
+
+      // 灯光
+      const ambientLight = new THREE.AmbientLight(0x404040, 5);
+      window.scene.add(ambientLight);
+
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+      directionalLight.position.set(0, 50, 0);
+      window.scene.add(directionalLight);
+
+      // 文字列表
+      const TEXT = [
+        "three.js",
+        "tres.js",
+        "react-three-fiber",
+        "cesium",
+        "javascript",
+        "html",
+        "babylon",
+        "webgl",
+        "glsl",
+        "shader",
+        "css",
+        "vue",
+        "vite",
+      ];
+
+      // 球体参数
+      const radius = 2;
+      const widthSegments = 32;
+      const heightSegments = 32;
+
+      // 创建球体（不可见，用于计算位置）
+      const sphereGeometry = new THREE.SphereGeometry(
+        radius,
+        widthSegments,
+        heightSegments
+      );
+      const sphereMaterial = new THREE.MeshBasicMaterial({
+        color: 0x00ff00,
+        transparent: true,
+        opacity: 0,
+      });
+      const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+      window.scene.add(sphere);
+
+      // 生成球体顶点位置
+      const positions = [];
+      for (let phiIndex = 0; phiIndex <= heightSegments; phiIndex++) {
+        const phi = (phiIndex * Math.PI) / heightSegments;
+        for (let thetaIndex = 0; thetaIndex <= widthSegments; thetaIndex++) {
+          const theta = (thetaIndex * 2 * Math.PI) / widthSegments;
+          const x = radius * Math.sin(phi) * Math.cos(theta);
+          const y = radius * Math.sin(phi) * Math.sin(theta);
+          const z = radius * Math.cos(phi);
+          positions.push(x, y, z);
+        }
+      }
+
+      // 加载字体并创建文字
+      new FontLoader().load(
+        "https://z2586300277.github.io/three-editor/dist/files/font/cn1.json",
+        (font) => {
+          const savePos = [];
+          const textMeshes = [];
+
+          for (let i = 0; i < positions.length; i += 3) {
+            const x = positions[i];
+            const y = positions[i + 1];
+            const z = positions[i + 2];
+            const pos = new THREE.Vector3(x, y, z);
+
+            // 随机选择文字
+            const index = THREE.MathUtils.randInt(0, TEXT.length - 1);
+            const textGeometry = new TextGeometry(TEXT[index], {
+              font: font,
+              size: 0.1,
+              depth: 0.001,
+              curveSegments: 1,
+              bevelEnabled: true,
+              bevelThickness: 0.001,
+              bevelSize: 0.001,
+              bevelSegments: 1,
+              bevelOffset: 0,
+            });
+
+            textGeometry.computeBoundingBox();
+
+            if (textGeometry.boundingBox) {
+              // 居中文字
+              const textWidth =
+                textGeometry.boundingBox.max.x - textGeometry.boundingBox.min.x;
+              const textHeight =
+                textGeometry.boundingBox.max.y - textGeometry.boundingBox.min.y;
+              const textCenterX = -textWidth / 2;
+              const textCenterY = -textHeight / 2;
+              textGeometry.translate(textCenterX, textCenterY, 0);
+
+              // 创建文字材质
+              const hue = Math.random();
+              const textMaterial = new THREE.MeshBasicMaterial({
+                color: new THREE.Color().setHSL(hue, 0.8, 0.6),
+              });
+              const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+
+              // 计算法线并放置到球体表面
+              const normal = new THREE.Vector3(pos.x, pos.y, pos.z).normalize();
+              textMesh.position.copy(normal.multiplyScalar(radius));
+
+              // 让文字朝向球心外侧
+              textMesh.lookAt(
+                new THREE.Vector3(pos.x * 2, pos.y * 2, pos.z * 2)
+              );
+
+              // 检查距离，避免过于密集
+              const isClose = savePos.some(
+                (p) => p.distanceTo(textMesh.position) <= 0.8
+              );
+
+              if (!isClose) {
+                sphere.add(textMesh);
+                textMeshes.push(textMesh);
+                savePos.push(textMesh.position);
+              }
+            }
+          }
+        }
+      );
+
+      window.addEventListener("resize", () => {
+        window.camera.aspect = window.innerWidth / window.innerHeight;
+        window.camera.updateProjectionMatrix();
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        window.renderer.render(window.scene, window.camera);
+      }
+      animate();
+    </script>
+
+    <script>
+      window.addEventListener("message", function (event) {
+        if (event.data && event.data.type === "take-screenshot") {
+          try {
+            if (window.scene && window.camera) {
+              window.renderer.render(window.scene, window.camera);
+            }
+            const quality = event.data.quality || 0.8;
+            const canvas = window.renderer.domElement;
+            const tempCanvas = document.createElement("canvas");
+            const maxSize = 600;
+            const scale = Math.min(
+              maxSize / canvas.width,
+              maxSize / canvas.height
+            );
+            tempCanvas.width = Math.floor(canvas.width * scale);
+            tempCanvas.height = Math.floor(canvas.height * scale);
+            const ctx = tempCanvas.getContext("2d");
+            ctx.drawImage(
+              canvas,
+              0,
+              0,
+              tempCanvas.width,
+              tempCanvas.height
+            );
+            const dataUrl = tempCanvas.toDataURL("image/jpeg", quality);
+            window.parent.postMessage(
+              { type: "screenshot-data", dataUrl: dataUrl },
+              "*"
+            );
+          } catch (error) {
+            console.error("截图失败:", error);
+            window.parent.postMessage(
+              { type: "screenshot-error", error: error.message },
+              "*"
+            );
+          }
+        }
+      });
+    </script>
+  </body>
+</html>
