@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="截图 - 展示Three.js场景截图功能，支持辉光效果"
+    />
+    <meta name="three-version" content="r179" />
+    <title>Three.js 示例 - 截图</title>
+    <link rel="stylesheet" href="../../css/example-common.css" />
+  </head>
+  <body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "../../libs/three/r179/build/three.module.js",
+          "three/addons/": "../../libs/three/r179/jsm/"
+        }
+      }
+    </script>
+
+    <script type="module">
+      import * as THREE from "three";
+      import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+      import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+      import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+      import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
+      import { GUI } from "three/addons/libs/lil-gui.module.min.js";
+
+      const container = document.getElementById("threeContainer");
+
+      window.scene = new THREE.Scene();
+      window.scene.background = new THREE.Color(0x0a0a1a);
+
+      window.camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000,
+      );
+      window.camera.position.set(0, 10, 10);
+
+      window.renderer = new THREE.WebGLRenderer({ antialias: true });
+      window.renderer.setSize(window.innerWidth, window.innerHeight);
+      window.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      container.appendChild(window.renderer.domElement);
+
+      const controls = new OrbitControls(
+        window.camera,
+        window.renderer.domElement,
+      );
+      controls.enableDamping = true;
+
+      window.composer = new EffectComposer(window.renderer);
+      const renderPass = new RenderPass(window.scene, window.camera);
+      window.composer.addPass(renderPass);
+
+      const bloomPass = new UnrealBloomPass(
+        new THREE.Vector2(window.innerWidth, window.innerHeight),
+        1.5,
+        0,
+        0,
+      );
+      window.composer.addPass(bloomPass);
+
+      const geometry = new THREE.BoxGeometry(2, 2, 2);
+      const material = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+      const cube = new THREE.Mesh(geometry, material);
+      window.scene.add(cube);
+
+      const geometry2 = new THREE.SphereGeometry(1, 32, 32);
+      const material2 = new THREE.MeshBasicMaterial({ color: 0x00ffff });
+      const sphere = new THREE.Mesh(geometry2, material2);
+      sphere.position.set(3, 0, 0);
+      window.scene.add(sphere);
+
+      const geometry3 = new THREE.ConeGeometry(1, 2, 32);
+      const material3 = new THREE.MeshBasicMaterial({ color: 0xff00ff });
+      const cone = new THREE.Mesh(geometry3, material3);
+      cone.position.set(-3, 0, 0);
+      window.scene.add(cone);
+
+      const gui = new GUI();
+      gui.domElement.style.marginTop = "50px";
+      gui.add({ 截图: screenShot }, "截图");
+      gui.add(bloomPass, "strength", 0, 3).name("辉光强度");
+      gui.add(bloomPass, "radius", 0, 1).name("辉光半径");
+      gui.add(bloomPass, "threshold", 0, 1).name("辉光阈值");
+
+      function screenShot() {
+        window.renderer.render(window.scene, window.camera);
+        window.composer.render();
+        const base64 = window.renderer.domElement.toDataURL("image/png");
+        const link = document.createElement("a");
+        link.href = base64;
+        link.download = "threejs-screenshot.png";
+        link.click();
+      }
+
+      function animate() {
+        requestAnimationFrame(animate);
+        cube.rotation.x += 0.01;
+        cube.rotation.y += 0.01;
+        sphere.rotation.y += 0.01;
+        cone.rotation.x += 0.01;
+        controls.update();
+        window.composer.render();
+      }
+      animate();
+
+      window.addEventListener("resize", () => {
+        window.camera.aspect = window.innerWidth / window.innerHeight;
+        window.camera.updateProjectionMatrix();
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        window.composer.setSize(window.innerWidth, window.innerHeight);
+      });
+    </script>
+
+    <script>
+      window.addEventListener("message", function (event) {
+        if (event.data && event.data.type === "take-screenshot") {
+          try {
+            if (window.scene && window.camera) {
+              window.composer.render();
+            }
+            const quality = event.data.quality || 0.8;
+            const canvas = window.renderer.domElement;
+            const tempCanvas = document.createElement("canvas");
+            const maxSize = 600;
+            const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+            tempCanvas.width = Math.floor(canvas.width * scale);
+            tempCanvas.height = Math.floor(canvas.height * scale);
+            const ctx = tempCanvas.getContext("2d");
+            ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+            const dataUrl = tempCanvas.toDataURL("image/jpeg", quality);
+            window.parent.postMessage(
+              { type: "screenshot-data", dataUrl: dataUrl },
+              "*",
+            );
+          } catch (error) {
+            console.error("截图失败:", error);
+            window.parent.postMessage(
+              { type: "screenshot-error", error: error.message },
+              "*",
+            );
+          }
+        }
+      });
+    </script>
+  </body>
+</html>
