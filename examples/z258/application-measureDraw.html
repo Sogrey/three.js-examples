@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="画线测量 - 交互式画线测量距离，支持拖拽节点"
+    />
+    <meta name="three-version" content="r179" />
+    <title>Three.js 示例 - 画线测量</title>
+    <link rel="stylesheet" href="../../css/example-common.css" />
+    <style>
+      #distanceLabel {
+        position: absolute;
+        color: #ff5555;
+        font-size: 14px;
+        font-weight: bold;
+        pointer-events: none;
+        background: rgba(0, 0, 0, 0.5);
+        padding: 4px 8px;
+        border-radius: 4px;
+      }
+      #instructions {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        color: #ffffff;
+        background: rgba(0, 0, 0, 0.6);
+        padding: 10px 15px;
+        border-radius: 8px;
+        font-size: 12px;
+        line-height: 1.6;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="three-container" id="threeContainer"></div>
+    <div id="distanceLabel" style="display: none">0.00m</div>
+    <div id="instructions">
+      <div>🖱️ 左键点击：添加测量点</div>
+      <div>🖱️ 右键点击：结束测量</div>
+      <div>✋ 拖拽节点：调整位置</div>
+    </div>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "../../libs/three/r179/build/three.module.js",
+          "three/addons/": "../../libs/three/r179/jsm/"
+        }
+      }
+    </script>
+
+    <script type="module">
+      import * as THREE from "three";
+      import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+      import { TransformControls } from "three/addons/controls/TransformControls.js";
+
+      const container = document.getElementById("threeContainer");
+      const distanceLabel = document.getElementById("distanceLabel");
+
+      window.scene = new THREE.Scene();
+      window.scene.background = new THREE.Color(0x1a1a2e);
+
+      window.camera = new THREE.PerspectiveCamera(
+        40,
+        window.innerWidth / window.innerHeight,
+        1,
+        1000
+      );
+      window.camera.position.set(10, 10, 10);
+
+      window.renderer = new THREE.WebGLRenderer({ antialias: true });
+      window.renderer.setSize(window.innerWidth, window.innerHeight);
+      window.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      container.appendChild(window.renderer.domElement);
+
+      const orbitControls = new OrbitControls(
+        window.camera,
+        window.renderer.domElement
+      );
+      orbitControls.target.set(0, 0.5, 0);
+      orbitControls.enableDamping = true;
+
+      const transformControls = new TransformControls(
+        window.camera,
+        window.renderer.domElement
+      );
+      transformControls.addEventListener("dragging-changed", (event) => {
+        orbitControls.enabled = !event.value;
+      });
+      transformControls.addEventListener("change", onDragChanging);
+      window.scene.add(transformControls);
+
+      const plane = new THREE.Mesh(
+        new THREE.PlaneGeometry(40, 40),
+        new THREE.MeshBasicMaterial({ color: 0x333333, visible: false })
+      );
+      plane.rotation.x = -Math.PI / 2;
+      window.scene.add(plane);
+
+      const gridHelper = new THREE.GridHelper(40, 40, 0x444444, 0x222222);
+      window.scene.add(gridHelper);
+
+      const markersGroup = new THREE.Group();
+      window.scene.add(markersGroup);
+
+      let points = [];
+      let markers = [];
+      let line = null;
+      let dashLine = null;
+      let canDrawLine = true;
+      let totalDistance = 0;
+      let currentDistance = 0;
+      let nextPoint = null;
+      let selectedMesh = null;
+
+      const raycaster = new THREE.Raycaster();
+      const mouse = new THREE.Vector2();
+
+      function worldToScreenPosition(pos) {
+        const worldVector = new THREE.Vector3(pos.x, pos.y, pos.z);
+        const standardVector = worldVector.project(window.camera);
+        const widthHalf = window.innerWidth / 2;
+        const heightHalf = window.innerHeight / 2;
+        return {
+          x: Math.round(standardVector.x * widthHalf + widthHalf),
+          y: Math.round(-standardVector.y * heightHalf + heightHalf),
+        };
+      }
+
+      function onMouseMove(event) {
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+        if (!canDrawLine || points.length === 0) return;
+
+        raycaster.setFromCamera(mouse, window.camera);
+        const intersects = raycaster.intersectObject(plane);
+        if (!intersects.length) return;
+
+        nextPoint = intersects[0].point;
+        const prePoint = points[points.length - 1];
+        currentDistance = prePoint.distanceTo(nextPoint);
+
+        if (dashLine) {
+          const positions = dashLine.geometry.attributes.position.array;
+          positions[3] = nextPoint.x;
+          positions[4] = nextPoint.y;
+          positions[5] = nextPoint.z;
+          dashLine.geometry.attributes.position.needsUpdate = true;
+        }
+
+        updateDistanceLabel();
+      }
+
+      function onMouseDown(event) {
+        if (event.button === 2) {
+          canDrawLine = false;
+          distanceLabel.style.display = "none";
+          if (dashLine) {
+            window.scene.remove(dashLine);
+            dashLine = null;
+          }
+          return;
+        }
+
+        if (!canDrawLine) {
+          raycaster.setFromCamera(mouse, window.camera);
+          const intersects = raycaster.intersectObjects(markersGroup.children);
+          if (intersects.length > 0) {
+            selectedMesh = intersects[0].object;
+            transformControls.attach(selectedMesh);
+          }
+          return;
+        }
+
+        raycaster.setFromCamera(mouse, window.camera);
+        const intersects = raycaster.intersectObject(plane);
+        if (!intersects.length) return;
+
+        const point = intersects[0].point.clone();
+
+        if (points.length > 0) {
+          totalDistance += currentDistance;
+          points.push(point.clone(), point.clone());
+        } else {
+          points.push(point.clone());
+        }
+
+        const marker = new THREE.Mesh(
+          new THREE.SphereGeometry(0.15, 16, 16),
+          new THREE.MeshBasicMaterial({ color: 0xff5fff })
+        );
+        marker.position.copy(point);
+        marker.userData.index = markers.length;
+        markersGroup.add(marker);
+        markers.push(marker);
+
+        createOrUpdateLine();
+
+        if (!dashLine) {
+          const geometry = new THREE.BufferGeometry().setFromPoints([
+            point,
+            point,
+          ]);
+          dashLine = new THREE.Line(
+            geometry,
+            new THREE.LineDashedMaterial({
+              color: 0xff5555,
+              dashSize: 0.2,
+              gapSize: 0.1,
+            })
+          );
+          dashLine.computeLineDistances();
+          window.scene.add(dashLine);
+        }
+      }
+
+      function createOrUpdateLine() {
+        if (line) window.scene.remove(line);
+        if (points.length < 2) return;
+
+        const geometry = new THREE.BufferGeometry().setFromPoints(points);
+        line = new THREE.Line(
+          geometry,
+          new THREE.LineBasicMaterial({
+            color: 0xfff000,
+            linewidth: 2,
+          })
+        );
+        window.scene.add(line);
+      }
+
+      function onDragChanging() {
+        if (!selectedMesh || points.length < 2) return;
+
+        const index = selectedMesh.userData.index;
+        const newPos = selectedMesh.position.clone();
+
+        if (index === 0) {
+          points[0].copy(newPos);
+          points[1].copy(newPos);
+        } else if (index === markers.length - 1) {
+          points[points.length - 1].copy(newPos);
+          points[points.length - 2].copy(newPos);
+          nextPoint = newPos;
+        } else {
+          const pointIndex = index * 2;
+          points[pointIndex - 1].copy(newPos);
+          points[pointIndex].copy(newPos);
+        }
+
+        if (line) {
+          line.geometry.setFromPoints(points);
+          line.geometry.attributes.position.needsUpdate = true;
+        }
+
+        recalculateTotalDistance();
+        updateDistanceLabel();
+      }
+
+      function recalculateTotalDistance() {
+        totalDistance = 0;
+        for (let i = 0; i < markers.length - 1; i++) {
+          const startIdx = i === 0 ? 0 : i * 2;
+          const endIdx = i === 0 ? 2 : i * 2 + 2;
+          if (endIdx < points.length) {
+            totalDistance += points[startIdx].distanceTo(points[endIdx]);
+          }
+        }
+      }
+
+      function updateDistanceLabel() {
+        if (!nextPoint) return;
+        const screenPos = worldToScreenPosition(nextPoint);
+        distanceLabel.style.left = screenPos.x + 15 + "px";
+        distanceLabel.style.top = screenPos.y - 15 + "px";
+        distanceLabel.style.display = "block";
+        distanceLabel.textContent =
+          (totalDistance + currentDistance).toFixed(2) + "m";
+      }
+
+      container.addEventListener("mousemove", onMouseMove);
+      container.addEventListener("mousedown", onMouseDown);
+      container.addEventListener("contextmenu", (e) => e.preventDefault());
+
+      window.addEventListener("resize", () => {
+        window.camera.aspect = window.innerWidth / window.innerHeight;
+        window.camera.updateProjectionMatrix();
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      function animate() {
+        requestAnimationFrame(animate);
+        orbitControls.update();
+        window.renderer.render(window.scene, window.camera);
+      }
+      animate();
+    </script>
+
+    <script>
+      window.addEventListener("message", function (event) {
+        if (event.data && event.data.type === "take-screenshot") {
+          try {
+            if (window.scene && window.camera) {
+              window.renderer.render(window.scene, window.camera);
+            }
+            const quality = event.data.quality || 0.8;
+            const canvas = window.renderer.domElement;
+            const tempCanvas = document.createElement("canvas");
+            const maxSize = 600;
+            const scale = Math.min(
+              maxSize / canvas.width,
+              maxSize / canvas.height
+            );
+            tempCanvas.width = Math.floor(canvas.width * scale);
+            tempCanvas.height = Math.floor(canvas.height * scale);
+            const ctx = tempCanvas.getContext("2d");
+            ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+            const dataUrl = tempCanvas.toDataURL("image/jpeg", quality);
+            window.parent.postMessage(
+              { type: "screenshot-data", dataUrl: dataUrl },
+              "*"
+            );
+          } catch (error) {
+            console.error("截图失败:", error);
+            window.parent.postMessage(
+              { type: "screenshot-error", error: error.message },
+              "*"
+            );
+          }
+        }
+      });
+    </script>
+  </body>
+</html>
