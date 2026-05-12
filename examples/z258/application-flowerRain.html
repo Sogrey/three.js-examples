@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="花瓣雨 - 使用精灵粒子创建飘落的花瓣效果"
+    />
+    <meta name="three-version" content="r179" />
+    <title>Three.js 示例 - 花瓣雨</title>
+    <link rel="stylesheet" href="../../css/example-common.css" />
+  </head>
+  <body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "../../libs/three/r179/build/three.module.js",
+          "three/addons/": "../../libs/three/r179/jsm/"
+        }
+      }
+    </script>
+
+    <script type="module">
+      import * as THREE from "three";
+      import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+      const container = document.getElementById("threeContainer");
+
+      window.scene = new THREE.Scene();
+      window.scene.background = new THREE.Color(0x1a1a2e);
+      window.scene.fog = new THREE.Fog(0x1a1a2e, 50, 200);
+
+      // 使用透视相机
+      window.camera = new THREE.PerspectiveCamera(
+        60,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+      );
+      window.camera.position.set(0, 30, 80);
+
+      window.renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        alpha: true,
+      });
+      window.renderer.setSize(window.innerWidth, window.innerHeight);
+      window.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      container.appendChild(window.renderer.domElement);
+
+      const controls = new OrbitControls(
+        window.camera,
+        window.renderer.domElement
+      );
+      controls.enableDamping = true;
+      controls.autoRotate = true;
+      controls.autoRotateSpeed = 0.5;
+
+      // 花瓣分组
+      const petalGroup = new THREE.Group();
+      window.scene.add(petalGroup);
+
+      // 创建花瓣纹理
+      function createPetalTexture(color) {
+        const canvas = document.createElement("canvas");
+        canvas.width = 64;
+        canvas.height = 64;
+        const ctx = canvas.getContext("2d");
+
+        // 清除画布
+        ctx.clearRect(0, 0, 64, 64);
+
+        // 绘制花瓣形状
+        ctx.save();
+        ctx.translate(32, 32);
+
+        // 花瓣渐变
+        const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, 30);
+        gradient.addColorStop(0, color);
+        gradient.addColorStop(0.5, color);
+        gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
+
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 15, 25, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 花瓣纹理线条
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, -20);
+        ctx.lineTo(0, 20);
+        ctx.stroke();
+
+        ctx.restore();
+
+        const texture = new THREE.CanvasTexture(canvas);
+        return texture;
+      }
+
+      // 花瓣颜色
+      const petalColors = [
+        "rgba(255, 182, 193, 0.8)", // 粉色
+        "rgba(255, 192, 203, 0.8)", // 浅粉
+        "rgba(255, 218, 185, 0.8)", // 桃色
+        "rgba(255, 240, 245, 0.8)", // 薰衣草粉
+        "rgba(255, 160, 122, 0.8)", // 浅珊瑚
+      ];
+
+      // 创建花瓣纹理数组
+      const petalTextures = petalColors.map((color) => createPetalTexture(color));
+
+      // 创建花瓣精灵
+      const petalCount = 300;
+      const petalData = []; // 存储每个花瓣的数据
+
+      for (let i = 0; i < petalCount; i++) {
+        const texture = petalTextures[Math.floor(Math.random() * petalTextures.length)];
+        const material = new THREE.SpriteMaterial({
+          map: texture,
+          transparent: true,
+          opacity: 0.8,
+        });
+        const sprite = new THREE.Sprite(material);
+
+        // 随机位置
+        sprite.position.set(
+          (Math.random() - 0.5) * 100,
+          Math.random() * 60 + 10,
+          (Math.random() - 0.5) * 100
+        );
+
+        // 随机大小
+        const scale = 0.5 + Math.random() * 0.8;
+        sprite.scale.set(scale, scale * 1.2, 1);
+
+        // 存储花瓣运动数据
+        petalData.push({
+          sprite: sprite,
+          speedY: 0.05 + Math.random() * 0.1,
+          speedX: (Math.random() - 0.5) * 0.02,
+          speedZ: (Math.random() - 0.5) * 0.02,
+          rotationSpeed: (Math.random() - 0.5) * 0.02,
+          wobble: Math.random() * Math.PI * 2,
+          wobbleSpeed: 0.5 + Math.random() * 1,
+        });
+
+        petalGroup.add(sprite);
+      }
+
+      // 添加地面
+      const groundGeometry = new THREE.PlaneGeometry(200, 200);
+      const groundMaterial = new THREE.MeshStandardMaterial({
+        color: 0x2a2a4a,
+        roughness: 0.8,
+      });
+      const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+      ground.rotation.x = -Math.PI / 2;
+      ground.position.y = -5;
+      window.scene.add(ground);
+
+      // 添加一些树木（简化版）
+      const treeGroup = new THREE.Group();
+      for (let i = 0; i < 5; i++) {
+        const angle = (i / 5) * Math.PI * 2;
+        const radius = 30 + Math.random() * 10;
+        const x = Math.cos(angle) * radius;
+        const z = Math.sin(angle) * radius;
+
+        // 树干
+        const trunkGeometry = new THREE.CylinderGeometry(0.5, 0.8, 8, 8);
+        const trunkMaterial = new THREE.MeshStandardMaterial({ color: 0x8b4513 });
+        const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
+        trunk.position.set(x, 4, z);
+
+        // 树冠
+        const crownGeometry = new THREE.SphereGeometry(4, 16, 16);
+        const crownMaterial = new THREE.MeshStandardMaterial({
+          color: 0xff69b4,
+          transparent: true,
+          opacity: 0.8,
+        });
+        const crown = new THREE.Mesh(crownGeometry, crownMaterial);
+        crown.position.set(x, 10, z);
+
+        treeGroup.add(trunk);
+        treeGroup.add(crown);
+      }
+      window.scene.add(treeGroup);
+
+      // 灯光
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+      window.scene.add(ambientLight);
+
+      const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+      dirLight.position.set(50, 100, 50);
+      window.scene.add(dirLight);
+
+      window.addEventListener("resize", () => {
+        window.camera.aspect = window.innerWidth / window.innerHeight;
+        window.camera.updateProjectionMatrix();
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      function animate() {
+        requestAnimationFrame(animate);
+
+        // 更新花瓣位置
+        petalData.forEach((data) => {
+          // 下落
+          data.sprite.position.y -= data.speedY;
+
+          // 左右飘动
+          data.wobble += data.wobbleSpeed * 0.01;
+          data.sprite.position.x += Math.sin(data.wobble) * 0.02 + data.speedX;
+          data.sprite.position.z += Math.cos(data.wobble) * 0.02 + data.speedZ;
+
+          // 旋转
+          data.sprite.material.rotation += data.rotationSpeed;
+
+          // 重置位置
+          if (data.sprite.position.y < -5) {
+            data.sprite.position.y = 60;
+            data.sprite.position.x = (Math.random() - 0.5) * 100;
+            data.sprite.position.z = (Math.random() - 0.5) * 100;
+          }
+        });
+
+        controls.update();
+        window.renderer.render(window.scene, window.camera);
+      }
+      animate();
+    </script>
+
+    <script>
+      window.addEventListener("message", function (event) {
+        if (event.data && event.data.type === "take-screenshot") {
+          try {
+            if (window.scene && window.camera) {
+              window.renderer.render(window.scene, window.camera);
+            }
+            const quality = event.data.quality || 0.8;
+            const canvas = window.renderer.domElement;
+            const tempCanvas = document.createElement("canvas");
+            const maxSize = 600;
+            const scale = Math.min(
+              maxSize / canvas.width,
+              maxSize / canvas.height
+            );
+            tempCanvas.width = Math.floor(canvas.width * scale);
+            tempCanvas.height = Math.floor(canvas.height * scale);
+            const ctx = tempCanvas.getContext("2d");
+            ctx.drawImage(
+              canvas,
+              0,
+              0,
+              tempCanvas.width,
+              tempCanvas.height
+            );
+            const dataUrl = tempCanvas.toDataURL("image/jpeg", quality);
+            window.parent.postMessage(
+              { type: "screenshot-data", dataUrl: dataUrl },
+              "*"
+            );
+          } catch (error) {
+            console.error("截图失败:", error);
+            window.parent.postMessage(
+              { type: "screenshot-error", error: error.message },
+              "*"
+            );
+          }
+        }
+      });
+    </script>
+  </body>
+</html>

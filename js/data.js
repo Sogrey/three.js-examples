@@ -1915,6 +1915,14 @@ const threejsData = {
               version: "r179",
               url: "examples/z258/application-gridFloor",
             },
+            {
+              id: "application-flowerRain",
+              title: "花瓣雨",
+              description: "使用精灵粒子创建飘落的花瓣效果，带飘动动画",
+              thumbnail: "images/application-flowerRain.jpg",
+              version: "r179",
+              url: "examples/z258/application-flowerRain",
+            },
           ],
         },
         {
