@@ -5,21 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="画线测量 - 交互式画线测量距离，支持连续测量"
+      content="测量面积 - 交互式绘制多边形测量面积，支持连续测量"
     />
     <meta name="three-version" content="r179" />
-    <title>Three.js 示例 - 画线测量</title>
+    <title>Three.js 示例 - 测量面积</title>
     <link rel="stylesheet" href="../../css/example-common.css" />
     <style>
-      .distance-label {
+      .area-label {
         position: absolute;
-        color: #ff5555;
+        color: #00ff88;
         font-size: 14px;
         font-weight: bold;
         pointer-events: none;
-        background: rgba(0, 0, 0, 0.5);
-        padding: 4px 8px;
-        border-radius: 4px;
+        background: rgba(0, 0, 0, 0.6);
+        padding: 6px 12px;
+        border-radius: 6px;
+        border: 1px solid #00ff88;
+        transform: translate(-50%, -50%);
       }
       #instructions {
         position: absolute;
@@ -52,10 +54,10 @@
   <body>
     <div class="three-container" id="threeContainer"></div>
     <div id="instructions">
-      <div>🖱️ 左键点击：添加测量点</div>
+      <div>🖱️ 左键点击：添加多边形顶点</div>
       <div>🖱️ 右键点击：结束当前测量</div>
       <div>🖱️ 再次点击：开始新测量</div>
-      <div>✋ 拖拽节点：调整位置</div>
+      <div>✋ 拖拽节点：调整多边形形状</div>
     </div>
     <button id="clearBtn">清除所有</button>
 
@@ -85,7 +87,7 @@
         1,
         1000
       );
-      window.camera.position.set(10, 10, 10);
+      window.camera.position.set(10, 15, 10);
 
       window.renderer = new THREE.WebGLRenderer({ antialias: true });
       window.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -96,7 +98,7 @@
         window.camera,
         window.renderer.domElement
       );
-      orbitControls.target.set(0, 0.5, 0);
+      orbitControls.target.set(0, 0, 0);
       orbitControls.enableDamping = true;
 
       const transformControls = new TransformControls(
@@ -120,7 +122,7 @@
       window.scene.add(gridHelper);
 
       // 存储所有测量
-      let measurements = []; // { pathPoints, points, markers, line, dashLine, label, totalDistance }
+      let measurements = []; // { vertices, line, fillMesh, dashLines, label, isClosed }
       let currentMeasurement = null;
       let canDraw = true;
       let mousePoint = null;
@@ -141,10 +143,10 @@
         };
       }
 
-      function createDistanceLabel() {
+      function createAreaLabel() {
         const label = document.createElement("div");
-        label.className = "distance-label";
-        label.id = "distance-label-" + labelIdCounter++;
+        label.className = "area-label";
+        label.id = "area-label-" + labelIdCounter++;
         label.style.display = "none";
         document.body.appendChild(label);
         return label;
@@ -152,75 +154,166 @@
 
       function startNewMeasurement() {
         currentMeasurement = {
-          pathPoints: [],
-          points: [],
+          vertices: [],
           markers: [],
           line: null,
-          dashLine: null,
-          label: createDistanceLabel(),
-          totalDistance: 0,
+          fillMesh: null,
+          dashLines: [],
+          label: createAreaLabel(),
+          isClosed: false,
         };
         measurements.push(currentMeasurement);
         canDraw = true;
       }
 
-      function updateCurrentDistanceLabel() {
-        if (!currentMeasurement) return;
-        const m = currentMeasurement;
-        
-        if (m.pathPoints.length === 0) {
-          m.label.style.display = "none";
-          return;
+      function calculatePolygonArea(points) {
+        if (points.length < 3) return 0;
+        let area = 0;
+        const n = points.length;
+        for (let i = 0; i < n; i++) {
+          const j = (i + 1) % n;
+          area += points[i].x * points[j].z;
+          area -= points[j].x * points[i].z;
         }
+        return Math.abs(area) / 2;
+      }
 
-        const endPoint = mousePoint || m.pathPoints[m.pathPoints.length - 1];
-        const screenPos = worldToScreenPosition(endPoint);
+      function calculateCentroid(points) {
+        if (points.length === 0) return new THREE.Vector3();
+        let cx = 0, cz = 0;
+        for (const p of points) {
+          cx += p.x;
+          cz += p.z;
+        }
+        return new THREE.Vector3(cx / points.length, 0.05, cz / points.length);
+      }
 
-        m.label.style.left = screenPos.x + 15 + "px";
-        m.label.style.top = screenPos.y - 15 + "px";
-        m.label.style.display = "block";
+      function createOrUpdateFill(measurement) {
+        if (measurement.fillMesh) window.scene.remove(measurement.fillMesh);
         
-        const currentDist = mousePoint && m.pathPoints.length > 0 
-          ? m.pathPoints[m.pathPoints.length - 1].distanceTo(mousePoint) 
-          : 0;
-        m.label.textContent = (m.totalDistance + currentDist).toFixed(2) + "m";
+        let points = measurement.vertices;
+        // 如果正在绘制，包含鼠标位置形成预览
+        if (canDraw && mousePoint && points.length >= 2) {
+          points = [...points, mousePoint];
+        }
+        
+        if (points.length < 3) return;
+
+        // 使用 ShapeGeometry 创建填充面，正确处理凹多边形
+        const shape = new THREE.Shape();
+        shape.moveTo(points[0].x, points[0].z);
+        for (let i = 1; i < points.length; i++) {
+          shape.lineTo(points[i].x, points[i].z);
+        }
+        shape.closePath();
+
+        const shapeGeometry = new THREE.ShapeGeometry(shape);
+        
+        // 将 ShapeGeometry (XY平面) 的顶点转换到 XZ 平面
+        const positions = shapeGeometry.attributes.position.array;
+        const newPositions = [];
+        for (let i = 0; i < positions.length; i += 3) {
+          const x = positions[i];
+          const y = positions[i + 1];
+          // ShapeGeometry 在 XY 平面: x->x, y->z
+          newPositions.push(x, 0.02, y);
+        }
+        
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(newPositions, 3));
+        geometry.setIndex(Array.from(shapeGeometry.index.array));
+        geometry.computeVertexNormals();
+
+        measurement.fillMesh = new THREE.Mesh(
+          geometry,
+          new THREE.MeshBasicMaterial({
+            color: 0x00ff88,
+            transparent: true,
+            opacity: measurement.isClosed ? 0.4 : 0.2,
+            side: THREE.DoubleSide,
+          })
+        );
+        window.scene.add(measurement.fillMesh);
       }
 
       function createOrUpdateLine(measurement) {
         if (measurement.line) window.scene.remove(measurement.line);
-        if (measurement.points.length < 2) return;
+        if (measurement.vertices.length < 2) return;
 
-        const geometry = new THREE.BufferGeometry().setFromPoints(measurement.points);
-        measurement.line = new THREE.Line(
+        const linePoints = [];
+        for (let i = 0; i < measurement.vertices.length; i++) {
+          const next = (i + 1) % measurement.vertices.length;
+          if (!measurement.isClosed && i === measurement.vertices.length - 1) break;
+          linePoints.push(measurement.vertices[i].clone());
+          linePoints.push(measurement.vertices[next].clone());
+        }
+
+        const geometry = new THREE.BufferGeometry().setFromPoints(linePoints);
+        measurement.line = new THREE.LineSegments(
           geometry,
           new THREE.LineBasicMaterial({ color: 0xfff000, linewidth: 2 })
         );
         window.scene.add(measurement.line);
       }
 
-      function updateDashLine(measurement) {
-        if (!mousePoint || measurement.pathPoints.length === 0) return;
+      function updateDashLines(measurement) {
+        // 清除旧虚线
+        measurement.dashLines.forEach((dl) => window.scene.remove(dl));
+        measurement.dashLines = [];
 
-        const lastPoint = measurement.pathPoints[measurement.pathPoints.length - 1];
+        if (!canDraw || !mousePoint || measurement.vertices.length < 1) return;
 
-        if (measurement.dashLine) {
-          const positions = measurement.dashLine.geometry.attributes.position.array;
-          positions[0] = lastPoint.x;
-          positions[1] = lastPoint.y;
-          positions[2] = lastPoint.z;
-          positions[3] = mousePoint.x;
-          positions[4] = mousePoint.y;
-          positions[5] = mousePoint.z;
-          measurement.dashLine.geometry.attributes.position.needsUpdate = true;
-        } else {
-          const geometry = new THREE.BufferGeometry().setFromPoints([lastPoint, mousePoint]);
-          measurement.dashLine = new THREE.Line(
-            geometry,
-            new THREE.LineDashedMaterial({ color: 0xff5555, dashSize: 0.2, gapSize: 0.1 })
+        const firstPoint = measurement.vertices[0];
+        const lastPoint = measurement.vertices[measurement.vertices.length - 1];
+
+        // 虚线1：鼠标位置连接到第一个点
+        const dashLine1 = new THREE.Line(
+          new THREE.BufferGeometry().setFromPoints([mousePoint, firstPoint]),
+          new THREE.LineDashedMaterial({
+            color: 0xff5555,
+            dashSize: 0.2,
+            gapSize: 0.1,
+          })
+        );
+        dashLine1.computeLineDistances();
+        window.scene.add(dashLine1);
+        measurement.dashLines.push(dashLine1);
+
+        // 虚线2：鼠标位置连接到最后一个点
+        if (measurement.vertices.length >= 1) {
+          const dashLine2 = new THREE.Line(
+            new THREE.BufferGeometry().setFromPoints([mousePoint, lastPoint]),
+            new THREE.LineDashedMaterial({
+              color: 0xff5555,
+              dashSize: 0.2,
+              gapSize: 0.1,
+            })
           );
-          measurement.dashLine.computeLineDistances();
-          window.scene.add(measurement.dashLine);
+          dashLine2.computeLineDistances();
+          window.scene.add(dashLine2);
+          measurement.dashLines.push(dashLine2);
         }
+      }
+
+      function updateAreaDisplay(measurement) {
+        let points = measurement.vertices;
+        if (canDraw && mousePoint && points.length >= 2) {
+          points = [...points, mousePoint];
+        }
+
+        if (points.length < 3) {
+          measurement.label.style.display = "none";
+          return;
+        }
+
+        const area = calculatePolygonArea(points);
+        const centroid = calculateCentroid(points);
+        const screenPos = worldToScreenPosition(centroid);
+
+        measurement.label.style.left = screenPos.x + "px";
+        measurement.label.style.top = screenPos.y + "px";
+        measurement.label.style.display = "block";
+        measurement.label.textContent = "面积: " + area.toFixed(2) + " m²";
       }
 
       function onMouseMove(event) {
@@ -234,49 +327,43 @@
         mousePoint = intersects[0].point;
 
         if (canDraw && currentMeasurement) {
-          updateDashLine(currentMeasurement);
-          updateCurrentDistanceLabel();
+          updateDashLines(currentMeasurement);
+          createOrUpdateFill(currentMeasurement);
+          updateAreaDisplay(currentMeasurement);
         }
       }
 
       function onMouseDown(event) {
-        // 右键结束当前测量
         if (event.button === 2) {
-          if (canDraw && currentMeasurement) {
+          // 右键结束当前测量
+          if (canDraw && currentMeasurement && currentMeasurement.vertices.length >= 3) {
             canDraw = false;
-            if (currentMeasurement.dashLine) {
-              window.scene.remove(currentMeasurement.dashLine);
-              currentMeasurement.dashLine = null;
-            }
-            // 固定标签位置在终点
-            if (currentMeasurement.pathPoints.length > 0) {
-              const endPoint = currentMeasurement.pathPoints[currentMeasurement.pathPoints.length - 1];
-              const screenPos = worldToScreenPosition(endPoint);
-              currentMeasurement.label.style.left = screenPos.x + 15 + "px";
-              currentMeasurement.label.style.top = screenPos.y - 15 + "px";
-            }
-          } else {
-            // 已经开始新测量
+            currentMeasurement.isClosed = true;
+            currentMeasurement.dashLines.forEach((dl) => window.scene.remove(dl));
+            currentMeasurement.dashLines = [];
+            createOrUpdateLine(currentMeasurement);
+            createOrUpdateFill(currentMeasurement);
+            updateAreaDisplay(currentMeasurement);
+          } else if (!canDraw) {
+            // 开始新测量
             startNewMeasurement();
           }
           return;
         }
 
-        // 如果不是绘制模式，检查是否点击了节点进行拖拽
+        // 如果不是绘制模式
         if (!canDraw) {
           raycaster.setFromCamera(mouse, window.camera);
           const allMarkers = measurements.flatMap(m => m.markers);
           const intersects = raycaster.intersectObjects(allMarkers);
           if (intersects.length > 0) {
             selectedMesh = intersects[0].object;
-            // 找到对应的测量
             currentMeasurement = measurements.find(m => m.markers.includes(selectedMesh));
             transformControls.attach(selectedMesh);
           } else {
             // 点击空白处开始新测量
             startNewMeasurement();
             canDraw = true;
-            // 继续执行添加点的逻辑
           }
         }
 
@@ -287,34 +374,22 @@
         if (!intersects.length) return;
 
         const point = intersects[0].point.clone();
-        const m = currentMeasurement;
+        currentMeasurement.vertices.push(point);
 
-        // 添加到路径节点
-        m.pathPoints.push(point.clone());
-
-        // 构建连续的点数组用于画线
-        if (m.pathPoints.length >= 2) {
-          const prevPoint = m.pathPoints[m.pathPoints.length - 2];
-          m.points.push(prevPoint.clone(), point.clone());
-          m.totalDistance += prevPoint.distanceTo(point);
-        } else {
-          m.points.push(point.clone());
-        }
-
-        // 创建标记
         const marker = new THREE.Mesh(
           new THREE.SphereGeometry(0.15, 16, 16),
           new THREE.MeshBasicMaterial({ color: 0xff5fff })
         );
         marker.position.copy(point);
-        marker.userData.index = m.markers.length;
-        marker.userData.measurement = m;
+        marker.userData.index = currentMeasurement.markers.length;
+        marker.userData.measurement = currentMeasurement;
         window.scene.add(marker);
-        m.markers.push(marker);
+        currentMeasurement.markers.push(marker);
 
-        createOrUpdateLine(m);
-        updateDashLine(m);
-        updateCurrentDistanceLabel();
+        createOrUpdateLine(currentMeasurement);
+        updateDashLines(currentMeasurement);
+        createOrUpdateFill(currentMeasurement);
+        updateAreaDisplay(currentMeasurement);
       }
 
       function onDragChanging() {
@@ -326,51 +401,18 @@
         const index = selectedMesh.userData.index;
         const newPos = selectedMesh.position.clone();
 
-        // 更新路径节点位置
-        m.pathPoints[index].copy(newPos);
+        m.vertices[index].copy(newPos);
 
-        // 更新points数组中对应的线段端点
-        if (index === 0) {
-          m.points[0].copy(newPos);
-          if (m.points.length > 1) {
-            m.points[1].copy(newPos);
-          }
-        } else {
-          const lineEndIndex = index * 2 - 1;
-          const lineStartIndex = index * 2;
-
-          if (lineEndIndex < m.points.length) {
-            m.points[lineEndIndex].copy(newPos);
-          }
-          if (lineStartIndex < m.points.length) {
-            m.points[lineStartIndex].copy(newPos);
-          }
-        }
-
-        if (m.line) {
-          m.line.geometry.setFromPoints(m.points);
-          m.line.geometry.attributes.position.needsUpdate = true;
-        }
-
-        // 重新计算总距离
-        m.totalDistance = 0;
-        for (let i = 0; i < m.pathPoints.length - 1; i++) {
-          m.totalDistance += m.pathPoints[i].distanceTo(m.pathPoints[i + 1]);
-        }
-
-        // 更新标签位置
-        const endPoint = m.pathPoints[m.pathPoints.length - 1];
-        const screenPos = worldToScreenPosition(endPoint);
-        m.label.style.left = screenPos.x + 15 + "px";
-        m.label.style.top = screenPos.y - 15 + "px";
-        m.label.textContent = m.totalDistance.toFixed(2) + "m";
+        createOrUpdateLine(m);
+        createOrUpdateFill(m);
+        updateAreaDisplay(m);
       }
 
       function clearAll() {
-        // 清除所有测量
         measurements.forEach(m => {
           if (m.line) window.scene.remove(m.line);
-          if (m.dashLine) window.scene.remove(m.dashLine);
+          if (m.fillMesh) window.scene.remove(m.fillMesh);
+          m.dashLines.forEach(dl => window.scene.remove(dl));
           m.markers.forEach(marker => window.scene.remove(marker));
           m.label.remove();
         });

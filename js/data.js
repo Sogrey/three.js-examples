@@ -1883,6 +1883,14 @@ const threejsData = {
               version: "r179",
               url: "examples/z258/application-measureDraw",
             },
+            {
+              id: "application-measureArea",
+              title: "测量面积",
+              description: "交互式绘制多边形测量面积，实时显示面积结果在面中心",
+              thumbnail: "images/application-measureArea.jpg",
+              version: "r179",
+              url: "examples/z258/application-measureArea",
+            },
           ],
         },
         {
