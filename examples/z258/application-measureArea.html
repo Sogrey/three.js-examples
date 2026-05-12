@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="测量面积 - 交互式绘制多边形测量面积，支持连续测量"
+    />
+    <meta name="three-version" content="r179" />
+    <title>Three.js 示例 - 测量面积</title>
+    <link rel="stylesheet" href="../../css/example-common.css" />
+    <style>
+      .area-label {
+        position: absolute;
+        color: #00ff88;
+        font-size: 14px;
+        font-weight: bold;
+        pointer-events: none;
+        background: rgba(0, 0, 0, 0.6);
+        padding: 6px 12px;
+        border-radius: 6px;
+        border: 1px solid #00ff88;
+        transform: translate(-50%, -50%);
+      }
+      #instructions {
+        position: absolute;
+        top: 100px;
+        right: 10px;
+        color: #ffffff;
+        background: rgba(0, 0, 0, 0.6);
+        padding: 10px 15px;
+        border-radius: 8px;
+        font-size: 12px;
+        line-height: 1.6;
+      }
+      #clearBtn {
+        position: absolute;
+        top: 50px;
+        right: 10px;
+        padding: 8px 16px;
+        background: #ff5555;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+      #clearBtn:hover {
+        background: #ff3333;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="three-container" id="threeContainer"></div>
+    <div id="instructions">
+      <div>🖱️ 左键点击：添加多边形顶点</div>
+      <div>🖱️ 右键点击：结束当前测量</div>
+      <div>🖱️ 再次点击：开始新测量</div>
+      <div>✋ 拖拽节点：调整多边形形状</div>
+    </div>
+    <button id="clearBtn">清除所有</button>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "../../libs/three/r179/build/three.module.js",
+          "three/addons/": "../../libs/three/r179/jsm/"
+        }
+      }
+    </script>
+
+    <script type="module">
+      import * as THREE from "three";
+      import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+      import { TransformControls } from "three/addons/controls/TransformControls.js";
+
+      const container = document.getElementById("threeContainer");
+      const clearBtn = document.getElementById("clearBtn");
+
+      window.scene = new THREE.Scene();
+      window.scene.background = new THREE.Color(0x1a1a2e);
+
+      window.camera = new THREE.PerspectiveCamera(
+        40,
+        window.innerWidth / window.innerHeight,
+        1,
+        1000
+      );
+      window.camera.position.set(10, 15, 10);
+
+      window.renderer = new THREE.WebGLRenderer({ antialias: true });
+      window.renderer.setSize(window.innerWidth, window.innerHeight);
+      window.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      container.appendChild(window.renderer.domElement);
+
+      const orbitControls = new OrbitControls(
+        window.camera,
+        window.renderer.domElement
+      );
+      orbitControls.target.set(0, 0, 0);
+      orbitControls.enableDamping = true;
+
+      const transformControls = new TransformControls(
+        window.camera,
+        window.renderer.domElement
+      );
+      transformControls.addEventListener("dragging-changed", (event) => {
+        orbitControls.enabled = !event.value;
+      });
+      transformControls.addEventListener("change", onDragChanging);
+      window.scene.add(transformControls);
+
+      const plane = new THREE.Mesh(
+        new THREE.PlaneGeometry(40, 40),
+        new THREE.MeshBasicMaterial({ color: 0x333333, visible: false })
+      );
+      plane.rotation.x = -Math.PI / 2;
+      window.scene.add(plane);
+
+      const gridHelper = new THREE.GridHelper(40, 40, 0x444444, 0x222222);
+      window.scene.add(gridHelper);
+
+      // 存储所有测量
+      let measurements = []; // { vertices, line, fillMesh, dashLines, label, isClosed }
+      let currentMeasurement = null;
+      let canDraw = true;
+      let mousePoint = null;
+      let selectedMesh = null;
+      let labelIdCounter = 0;
+
+      const raycaster = new THREE.Raycaster();
+      const mouse = new THREE.Vector2();
+
+      function worldToScreenPosition(pos) {
+        const worldVector = new THREE.Vector3(pos.x, pos.y, pos.z);
+        const standardVector = worldVector.project(window.camera);
+        const widthHalf = window.innerWidth / 2;
+        const heightHalf = window.innerHeight / 2;
+        return {
+          x: Math.round(standardVector.x * widthHalf + widthHalf),
+          y: Math.round(-standardVector.y * heightHalf + heightHalf),
+        };
+      }
+
+      function createAreaLabel() {
+        const label = document.createElement("div");
+        label.className = "area-label";
+        label.id = "area-label-" + labelIdCounter++;
+        label.style.display = "none";
+        document.body.appendChild(label);
+        return label;
+      }
+
+      function startNewMeasurement() {
+        currentMeasurement = {
+          vertices: [],
+          markers: [],
+          line: null,
+          fillMesh: null,
+          dashLines: [],
+          label: createAreaLabel(),
+          isClosed: false,
+        };
+        measurements.push(currentMeasurement);
+        canDraw = true;
+      }
+
+      function calculatePolygonArea(points) {
+        if (points.length < 3) return 0;
+        let area = 0;
+        const n = points.length;
+        for (let i = 0; i < n; i++) {
+          const j = (i + 1) % n;
+          area += points[i].x * points[j].z;
+          area -= points[j].x * points[i].z;
+        }
+        return Math.abs(area) / 2;
+      }
+
+      function calculateCentroid(points) {
+        if (points.length === 0) return new THREE.Vector3();
+        let cx = 0, cz = 0;
+        for (const p of points) {
+          cx += p.x;
+          cz += p.z;
+        }
+        return new THREE.Vector3(cx / points.length, 0.05, cz / points.length);
+      }
+
+      function createOrUpdateFill(measurement) {
+        if (measurement.fillMesh) window.scene.remove(measurement.fillMesh);
+        
+        let points = measurement.vertices;
+        // 如果正在绘制，包含鼠标位置形成预览
+        if (canDraw && mousePoint && points.length >= 2) {
+          points = [...points, mousePoint];
+        }
+        
+        if (points.length < 3) return;
+
+        // 使用 ShapeGeometry 创建填充面，正确处理凹多边形
+        const shape = new THREE.Shape();
+        shape.moveTo(points[0].x, points[0].z);
+        for (let i = 1; i < points.length; i++) {
+          shape.lineTo(points[i].x, points[i].z);
+        }
+        shape.closePath();
+
+        const shapeGeometry = new THREE.ShapeGeometry(shape);
+        
+        // 将 ShapeGeometry (XY平面) 的顶点转换到 XZ 平面
+        const positions = shapeGeometry.attributes.position.array;
+        const newPositions = [];
+        for (let i = 0; i < positions.length; i += 3) {
+          const x = positions[i];
+          const y = positions[i + 1];
+          // ShapeGeometry 在 XY 平面: x->x, y->z
+          newPositions.push(x, 0.02, y);
+        }
+        
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(newPositions, 3));
+        geometry.setIndex(Array.from(shapeGeometry.index.array));
+        geometry.computeVertexNormals();
+
+        measurement.fillMesh = new THREE.Mesh(
+          geometry,
+          new THREE.MeshBasicMaterial({
+            color: 0x00ff88,
+            transparent: true,
+            opacity: measurement.isClosed ? 0.4 : 0.2,
+            side: THREE.DoubleSide,
+          })
+        );
+        window.scene.add(measurement.fillMesh);
+      }
+
+      function createOrUpdateLine(measurement) {
+        if (measurement.line) window.scene.remove(measurement.line);
+        if (measurement.vertices.length < 2) return;
+
+        const linePoints = [];
+        for (let i = 0; i < measurement.vertices.length; i++) {
+          const next = (i + 1) % measurement.vertices.length;
+          if (!measurement.isClosed && i === measurement.vertices.length - 1) break;
+          linePoints.push(measurement.vertices[i].clone());
+          linePoints.push(measurement.vertices[next].clone());
+        }
+
+        const geometry = new THREE.BufferGeometry().setFromPoints(linePoints);
+        measurement.line = new THREE.LineSegments(
+          geometry,
+          new THREE.LineBasicMaterial({ color: 0xfff000, linewidth: 2 })
+        );
+        window.scene.add(measurement.line);
+      }
+
+      function updateDashLines(measurement) {
+        // 清除旧虚线
+        measurement.dashLines.forEach((dl) => window.scene.remove(dl));
+        measurement.dashLines = [];
+
+        if (!canDraw || !mousePoint || measurement.vertices.length < 1) return;
+
+        const firstPoint = measurement.vertices[0];
+        const lastPoint = measurement.vertices[measurement.vertices.length - 1];
+
+        // 虚线1：鼠标位置连接到第一个点
+        const dashLine1 = new THREE.Line(
+          new THREE.BufferGeometry().setFromPoints([mousePoint, firstPoint]),
+          new THREE.LineDashedMaterial({
+            color: 0xff5555,
+            dashSize: 0.2,
+            gapSize: 0.1,
+          })
+        );
+        dashLine1.computeLineDistances();
+        window.scene.add(dashLine1);
+        measurement.dashLines.push(dashLine1);
+
+        // 虚线2：鼠标位置连接到最后一个点
+        if (measurement.vertices.length >= 1) {
+          const dashLine2 = new THREE.Line(
+            new THREE.BufferGeometry().setFromPoints([mousePoint, lastPoint]),
+            new THREE.LineDashedMaterial({
+              color: 0xff5555,
+              dashSize: 0.2,
+              gapSize: 0.1,
+            })
+          );
+          dashLine2.computeLineDistances();
+          window.scene.add(dashLine2);
+          measurement.dashLines.push(dashLine2);
+        }
+      }
+
+      function updateAreaDisplay(measurement) {
+        let points = measurement.vertices;
+        if (canDraw && mousePoint && points.length >= 2) {
+          points = [...points, mousePoint];
+        }
+
+        if (points.length < 3) {
+          measurement.label.style.display = "none";
+          return;
+        }
+
+        const area = calculatePolygonArea(points);
+        const centroid = calculateCentroid(points);
+        const screenPos = worldToScreenPosition(centroid);
+
+        measurement.label.style.left = screenPos.x + "px";
+        measurement.label.style.top = screenPos.y + "px";
+        measurement.label.style.display = "block";
+        measurement.label.textContent = "面积: " + area.toFixed(2) + " m²";
+      }
+
+      function onMouseMove(event) {
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+        raycaster.setFromCamera(mouse, window.camera);
+        const intersects = raycaster.intersectObject(plane);
+        if (!intersects.length) return;
+
+        mousePoint = intersects[0].point;
+
+        if (canDraw && currentMeasurement) {
+          updateDashLines(currentMeasurement);
+          createOrUpdateFill(currentMeasurement);
+          updateAreaDisplay(currentMeasurement);
+        }
+      }
+
+      function onMouseDown(event) {
+        if (event.button === 2) {
+          // 右键结束当前测量
+          if (canDraw && currentMeasurement && currentMeasurement.vertices.length >= 3) {
+            canDraw = false;
+            currentMeasurement.isClosed = true;
+            currentMeasurement.dashLines.forEach((dl) => window.scene.remove(dl));
+            currentMeasurement.dashLines = [];
+            createOrUpdateLine(currentMeasurement);
+            createOrUpdateFill(currentMeasurement);
+            updateAreaDisplay(currentMeasurement);
+          } else if (!canDraw) {
+            // 开始新测量
+            startNewMeasurement();
+          }
+          return;
+        }
+
+        // 如果不是绘制模式
+        if (!canDraw) {
+          raycaster.setFromCamera(mouse, window.camera);
+          const allMarkers = measurements.flatMap(m => m.markers);
+          const intersects = raycaster.intersectObjects(allMarkers);
+          if (intersects.length > 0) {
+            selectedMesh = intersects[0].object;
+            currentMeasurement = measurements.find(m => m.markers.includes(selectedMesh));
+            transformControls.attach(selectedMesh);
+          } else {
+            // 点击空白处开始新测量
+            startNewMeasurement();
+            canDraw = true;
+          }
+        }
+
+        if (!canDraw || !currentMeasurement) return;
+
+        raycaster.setFromCamera(mouse, window.camera);
+        const intersects = raycaster.intersectObject(plane);
+        if (!intersects.length) return;
+
+        const point = intersects[0].point.clone();
+        currentMeasurement.vertices.push(point);
+
+        const marker = new THREE.Mesh(
+          new THREE.SphereGeometry(0.15, 16, 16),
+          new THREE.MeshBasicMaterial({ color: 0xff5fff })
+        );
+        marker.position.copy(point);
+        marker.userData.index = currentMeasurement.markers.length;
+        marker.userData.measurement = currentMeasurement;
+        window.scene.add(marker);
+        currentMeasurement.markers.push(marker);
+
+        createOrUpdateLine(currentMeasurement);
+        updateDashLines(currentMeasurement);
+        createOrUpdateFill(currentMeasurement);
+        updateAreaDisplay(currentMeasurement);
+      }
+
+      function onDragChanging() {
+        if (!selectedMesh) return;
+
+        const m = selectedMesh.userData.measurement;
+        if (!m) return;
+
+        const index = selectedMesh.userData.index;
+        const newPos = selectedMesh.position.clone();
+
+        m.vertices[index].copy(newPos);
+
+        createOrUpdateLine(m);
+        createOrUpdateFill(m);
+        updateAreaDisplay(m);
+      }
+
+      function clearAll() {
+        measurements.forEach(m => {
+          if (m.line) window.scene.remove(m.line);
+          if (m.fillMesh) window.scene.remove(m.fillMesh);
+          m.dashLines.forEach(dl => window.scene.remove(dl));
+          m.markers.forEach(marker => window.scene.remove(marker));
+          m.label.remove();
+        });
+        measurements = [];
+        currentMeasurement = null;
+        canDraw = true;
+        selectedMesh = null;
+        transformControls.detach();
+        
+        // 清除后自动开始新测量
+        startNewMeasurement();
+      }
+
+      clearBtn.addEventListener("click", clearAll);
+
+      container.addEventListener("mousemove", onMouseMove);
+      container.addEventListener("mousedown", onMouseDown);
+      container.addEventListener("contextmenu", (e) => e.preventDefault());
+
+      window.addEventListener("resize", () => {
+        window.camera.aspect = window.innerWidth / window.innerHeight;
+        window.camera.updateProjectionMatrix();
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      // 初始化第一个测量
+      startNewMeasurement();
+
+      function animate() {
+        requestAnimationFrame(animate);
+        orbitControls.update();
+        window.renderer.render(window.scene, window.camera);
+      }
+      animate();
+    </script>
+
+    <script>
+      window.addEventListener("message", function (event) {
+        if (event.data && event.data.type === "take-screenshot") {
+          try {
+            if (window.scene && window.camera) {
+              window.renderer.render(window.scene, window.camera);
+            }
+            const quality = event.data.quality || 0.8;
+            const canvas = window.renderer.domElement;
+            const tempCanvas = document.createElement("canvas");
+            const maxSize = 600;
+            const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+            tempCanvas.width = Math.floor(canvas.width * scale);
+            tempCanvas.height = Math.floor(canvas.height * scale);
+            const ctx = tempCanvas.getContext("2d");
+            ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+            const dataUrl = tempCanvas.toDataURL("image/jpeg", quality);
+            window.parent.postMessage({ type: "screenshot-data", dataUrl: dataUrl }, "*");
+          } catch (error) {
+            console.error("截图失败:", error);
+            window.parent.postMessage({ type: "screenshot-error", error: error.message }, "*");
+          }
+        }
+      });
+    </script>
+  </body>
+</html>

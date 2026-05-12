@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="巡检 - 相机沿路径自动巡检场景动画">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 巡检</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        const container = document.getElementById('threeContainer');
+
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x0a0a1a);
+        window.scene.fog = new THREE.Fog(0x0a0a1a, 50, 150);
+
+        window.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 500);
+        window.camera.position.set(0, 10, 50);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        window.renderer.setPixelRatio(window.devicePixelRatio);
+        window.renderer.shadowMap.enabled = true;
+        container.appendChild(window.renderer.domElement);
+
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.enableDamping = true;
+
+        const ambientLight = new THREE.AmbientLight(0x404060, 0.5);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(30, 50, 30);
+        directionalLight.castShadow = true;
+        window.scene.add(ambientLight, directionalLight);
+
+        const pointLights = [];
+        const pointLightColors = [0xff4444, 0x44ff44, 0x4444ff, 0xffff44, 0xff44ff];
+        for (let i = 0; i < 5; i++) {
+            const light = new THREE.PointLight(pointLightColors[i], 2, 30);
+            light.position.set(
+                (Math.random() - 0.5) * 60,
+                5 + Math.random() * 10,
+                (Math.random() - 0.5) * 60
+            );
+            pointLights.push(light);
+            window.scene.add(light);
+
+            const sphere = new THREE.Mesh(
+                new THREE.SphereGeometry(0.3, 16, 16),
+                new THREE.MeshBasicMaterial({ color: pointLightColors[i] })
+            );
+            sphere.position.copy(light.position);
+            window.scene.add(sphere);
+        }
+
+        const ground = new THREE.Mesh(
+            new THREE.PlaneGeometry(200, 200),
+            new THREE.MeshStandardMaterial({ color: 0x1a1a2a })
+        );
+        ground.rotation.x = -Math.PI / 2;
+        ground.receiveShadow = true;
+        window.scene.add(ground);
+
+        const gridHelper = new THREE.GridHelper(200, 40, 0x333355, 0x222244);
+        window.scene.add(gridHelper);
+
+        const buildings = [];
+        for (let i = 0; i < 40; i++) {
+            const width = 2 + Math.random() * 6;
+            const height = 5 + Math.random() * 25;
+            const depth = 2 + Math.random() * 6;
+
+            const building = new THREE.Mesh(
+                new THREE.BoxGeometry(width, height, depth),
+                new THREE.MeshStandardMaterial({
+                    color: new THREE.Color().setHSL(Math.random() * 0.2 + 0.55, 0.3, 0.2 + Math.random() * 0.2),
+                    metalness: 0.8,
+                    roughness: 0.3
+                })
+            );
+
+            building.position.set(
+                (Math.random() - 0.5) * 100,
+                height / 2,
+                (Math.random() - 0.5) * 100
+            );
+            building.castShadow = true;
+            building.receiveShadow = true;
+            buildings.push(building);
+            window.scene.add(building);
+        }
+
+        const inspectionPath = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(-40, 8, -40),
+            new THREE.Vector3(-40, 8, 40),
+            new THREE.Vector3(40, 12, 40),
+            new THREE.Vector3(40, 6, -40),
+            new THREE.Vector3(0, 15, 0),
+            new THREE.Vector3(-40, 8, -40)
+        ], true);
+
+        const pathPoints = inspectionPath.getPoints(100);
+        const pathGeometry = new THREE.BufferGeometry().setFromPoints(pathPoints);
+        const pathLine = new THREE.Line(
+            pathGeometry,
+            new THREE.LineBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.3 })
+        );
+        window.scene.add(pathLine);
+
+        let isInspecting = false;
+        let inspectionProgress = 0;
+        const inspectionSpeed = 0.02;
+
+        function toggleInspection() {
+            isInspecting = !isInspecting;
+            controls.enabled = !isInspecting;
+            btnContainer.children[0].textContent = isInspecting ? '⏹ 停止巡检' : '▶ 开始巡检';
+        }
+
+        function resetCamera() {
+            isInspecting = false;
+            inspectionProgress = 0;
+            controls.enabled = true;
+            window.camera.position.set(0, 10, 50);
+            window.camera.lookAt(0, 0, 0);
+            controls.target.set(0, 0, 0);
+            btnContainer.children[0].textContent = '▶ 开始巡检';
+        }
+
+        const btnContainer = document.createElement('div');
+        Object.assign(btnContainer.style, {
+            position: 'fixed',
+            bottom: '20px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            display: 'flex',
+            gap: '10px',
+            zIndex: '9999'
+        });
+
+        const createBtn = (text, onClick, bgColor = '#049ef4') => {
+            const btn = document.createElement('button');
+            btn.textContent = text;
+            Object.assign(btn.style, {
+                padding: '10px 20px',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                background: bgColor,
+                color: '#fff',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
+            });
+            btn.addEventListener('click', onClick);
+            btnContainer.appendChild(btn);
+            return btn;
+        };
+
+        createBtn('▶ 开始巡检', toggleInspection, '#e91e63');
+        createBtn('🔄 重置', resetCamera, '#4caf50');
+
+        container.appendChild(btnContainer);
+
+        const info = document.createElement('div');
+        Object.assign(info.style, {
+            position: 'fixed',
+            top: '50px',
+            right: '20px',
+            background: 'rgba(0,0,0,0.75)',
+            color: '#fff',
+            padding: '16px 20px',
+            borderRadius: '10px',
+            fontSize: '13px',
+            lineHeight: '1.8',
+            maxWidth: '280px',
+            zIndex: '1'
+        });
+
+        info.innerHTML = `
+<div style="font-size:16px;font-weight:bold;margin-bottom:8px;color:#00ffff">🔍 巡检动画</div>
+<div><b>功能说明：</b></div>
+<div>相机沿预设路径自动巡检</div>
+<div>展示城市夜景建筑群</div>
+<div>多彩点光源营造氛围</div>
+<hr style="border-color:#555;margin:8px 0"/>
+<div><b>操作：</b></div>
+<div>点击"开始巡检"启动动画</div>
+<div>点击"重置"恢复手动控制</div>
+`;
+
+        container.appendChild(info);
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (isInspecting) {
+                inspectionProgress += inspectionSpeed * 0.01;
+                if (inspectionProgress > 1) inspectionProgress = 0;
+
+                const point = inspectionPath.getPointAt(inspectionProgress);
+                const lookAtPoint = inspectionPath.getPointAt((inspectionProgress + 0.02) % 1);
+
+                window.camera.position.copy(point);
+                window.camera.lookAt(lookAtPoint);
+            }
+
+            pointLights.forEach((light, i) => {
+                light.intensity = 1.5 + Math.sin(Date.now() * 0.002 + i) * 0.5;
+            });
+
+            controls.update();
+            window.renderer.render(window.scene, window.camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+        });
+    </script>
+
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera) {
+                        if (window.composer) window.composer.render();
+                        else window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.composer ? window.composer.renderer.domElement : window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

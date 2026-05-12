@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="音乐舞动 - 音频可视化随着音乐节奏舞动的柱状图效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 音乐舞动</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        const container = document.getElementById('threeContainer');
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        window.renderer = renderer;
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        container.appendChild(renderer.domElement);
+
+        const scene = new THREE.Scene();
+        window.scene = scene;
+        scene.background = new THREE.Color(0x000000);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1000);
+        camera.position.set(0, 20, 60);
+        camera.lookAt(0, 0, 0);
+        window.camera = camera;
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        window.controls = controls;
+        controls.enableDamping = true;
+
+        const colors = [
+            new THREE.Color(0.5, 0.0, 1.0),
+            new THREE.Color(0.0, 0.0, 1.0),
+            new THREE.Color(0.0, 1.0, 1.0),
+            new THREE.Color(0.0, 1.0, 0.0),
+            new THREE.Color(1.0, 1.0, 0.0),
+            new THREE.Color(1.0, 0.0, 0.0),
+        ];
+
+        const vertexShader = `
+            varying vec4 vPosition;
+            void main() {
+                vPosition = modelMatrix * vec4(position, 1.0);
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `;
+
+        const fragmentShader = `
+            varying vec4 vPosition;
+            uniform float uScale;
+            uniform vec3 colors[6];
+            void main() {
+                float intensity = clamp((vPosition.y + 13.0) * uScale / 255.0, 0.0, 1.0);
+
+                float segment = intensity * 5.0;
+                int index = int(segment);
+                float t = fract(segment);
+
+                vec3 outputColor = mix(colors[index], colors[index + 1], t);
+                gl_FragColor = vec4(outputColor, 1.0);
+            }
+        `;
+
+        const bars = [];
+        const barCount = 64;
+        const geometry = new THREE.BoxGeometry(0.5, 1, 0.5);
+        const material = new THREE.ShaderMaterial({
+            uniforms: {
+                colors: { value: colors },
+                uScale: { value: 1.0 },
+            },
+            vertexShader: vertexShader,
+            fragmentShader: fragmentShader,
+        });
+
+        for (let i = 0, offset = 0; i < barCount; i++, offset = i - barCount / 2) {
+            const bar = new THREE.Mesh(geometry, material.clone());
+            bar.position.x = offset;
+            bar.castShadow = true;
+            bar.receiveShadow = true;
+            scene.add(bar);
+            bars.push(bar);
+
+            const mirrorBar = new THREE.Mesh(geometry, material.clone());
+            mirrorBar.position.x = -offset;
+            mirrorBar.castShadow = true;
+            mirrorBar.receiveShadow = true;
+            scene.add(mirrorBar);
+            bars.push(mirrorBar);
+
+            bar.position.y = mirrorBar.position.y = -12.5;
+        }
+
+        const groundGeometry = new THREE.PlaneGeometry(100, 100);
+        const groundMaterial = new THREE.MeshStandardMaterial({
+            color: 0x111111,
+            roughness: 0.8,
+            metalness: 0.2
+        });
+        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+        ground.rotation.x = -Math.PI / 2;
+        ground.position.y = -13;
+        ground.receiveShadow = true;
+        scene.add(ground);
+
+        const light = new THREE.DirectionalLight(0xffffff, 1);
+        light.position.set(10, 20, 10);
+        light.castShadow = true;
+        scene.add(light);
+
+        scene.add(new THREE.AmbientLight(0x404040));
+
+        const audio = new Audio();
+        audio.crossOrigin = 'anonymous';
+        audio.src = '../../mp3/桥边姑娘.mp3';
+
+        const audioContext = new AudioContext();
+        const analyser = audioContext.createAnalyser();
+
+        const source = audioContext.createMediaElementSource(audio);
+        source.connect(analyser);
+        source.connect(audioContext.destination);
+
+        analyser.fftSize = barCount * 2;
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+
+        const length = bars.length - 1;
+
+        function update() {
+            analyser.getByteFrequencyData(dataArray);
+            for (let i = 0, j = length; i < barCount; i++, j = length - i) {
+                const scale = dataArray[barCount - i] / 10;
+                const height = scale < 1 ? 1 : scale;
+                const y = -13 + height / 2;
+                bars[i].scale.y = height;
+                bars[j].scale.y = height;
+                bars[i].position.y = bars[j].position.y = y;
+                bars[i].material.uniforms.uScale.value = scale;
+                bars[j].material.uniforms.uScale.value = scale;
+            }
+        }
+
+        function render() {
+            requestAnimationFrame(render);
+            controls.update();
+            update();
+            renderer.render(scene, camera);
+        }
+        window.render = render;
+
+        const controls2 = {
+            play: function() {
+                audioContext.resume().then(() => {
+                    audio.play();
+                });
+            },
+            pause: function() {
+                audio.pause();
+            },
+            volume: 1.0
+        };
+
+        const gui = new GUI();        
+        gui.domElement.style.top = '50px';
+        gui.add(controls2, 'play').name('播放');
+        gui.add(controls2, 'pause').name('暂停');
+        gui.add(controls2, 'volume', 0, 1).name('音量').onChange(v => {
+            audio.volume = v;
+        });
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        render();
+    </script>
+
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera) {
+                        if (window.composer) window.composer.render();
+                        else window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.composer ? window.composer.renderer.domElement : window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

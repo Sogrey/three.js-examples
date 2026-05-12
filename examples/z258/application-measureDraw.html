@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="画线测量 - 交互式画线测量距离，支持连续测量"
+    />
+    <meta name="three-version" content="r179" />
+    <title>Three.js 示例 - 画线测量</title>
+    <link rel="stylesheet" href="../../css/example-common.css" />
+    <style>
+      .distance-label {
+        position: absolute;
+        color: #ff5555;
+        font-size: 14px;
+        font-weight: bold;
+        pointer-events: none;
+        background: rgba(0, 0, 0, 0.5);
+        padding: 4px 8px;
+        border-radius: 4px;
+      }
+      #instructions {
+        position: absolute;
+        top: 100px;
+        right: 10px;
+        color: #ffffff;
+        background: rgba(0, 0, 0, 0.6);
+        padding: 10px 15px;
+        border-radius: 8px;
+        font-size: 12px;
+        line-height: 1.6;
+      }
+      #clearBtn {
+        position: absolute;
+        top: 50px;
+        right: 10px;
+        padding: 8px 16px;
+        background: #ff5555;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+      #clearBtn:hover {
+        background: #ff3333;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="three-container" id="threeContainer"></div>
+    <div id="instructions">
+      <div>🖱️ 左键点击：添加测量点</div>
+      <div>🖱️ 右键点击：结束当前测量</div>
+      <div>🖱️ 再次点击：开始新测量</div>
+      <div>✋ 拖拽节点：调整位置</div>
+    </div>
+    <button id="clearBtn">清除所有</button>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "../../libs/three/r179/build/three.module.js",
+          "three/addons/": "../../libs/three/r179/jsm/"
+        }
+      }
+    </script>
+
+    <script type="module">
+      import * as THREE from "three";
+      import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+      import { TransformControls } from "three/addons/controls/TransformControls.js";
+
+      const container = document.getElementById("threeContainer");
+      const clearBtn = document.getElementById("clearBtn");
+
+      window.scene = new THREE.Scene();
+      window.scene.background = new THREE.Color(0x1a1a2e);
+
+      window.camera = new THREE.PerspectiveCamera(
+        40,
+        window.innerWidth / window.innerHeight,
+        1,
+        1000
+      );
+      window.camera.position.set(10, 10, 10);
+
+      window.renderer = new THREE.WebGLRenderer({ antialias: true });
+      window.renderer.setSize(window.innerWidth, window.innerHeight);
+      window.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      container.appendChild(window.renderer.domElement);
+
+      const orbitControls = new OrbitControls(
+        window.camera,
+        window.renderer.domElement
+      );
+      orbitControls.target.set(0, 0.5, 0);
+      orbitControls.enableDamping = true;
+
+      const transformControls = new TransformControls(
+        window.camera,
+        window.renderer.domElement
+      );
+      transformControls.addEventListener("dragging-changed", (event) => {
+        orbitControls.enabled = !event.value;
+      });
+      transformControls.addEventListener("change", onDragChanging);
+      window.scene.add(transformControls);
+
+      const plane = new THREE.Mesh(
+        new THREE.PlaneGeometry(40, 40),
+        new THREE.MeshBasicMaterial({ color: 0x333333, visible: false })
+      );
+      plane.rotation.x = -Math.PI / 2;
+      window.scene.add(plane);
+
+      const gridHelper = new THREE.GridHelper(40, 40, 0x444444, 0x222222);
+      window.scene.add(gridHelper);
+
+      // 存储所有测量
+      let measurements = []; // { pathPoints, points, markers, line, dashLine, label, totalDistance }
+      let currentMeasurement = null;
+      let canDraw = true;
+      let mousePoint = null;
+      let selectedMesh = null;
+      let labelIdCounter = 0;
+
+      const raycaster = new THREE.Raycaster();
+      const mouse = new THREE.Vector2();
+
+      function worldToScreenPosition(pos) {
+        const worldVector = new THREE.Vector3(pos.x, pos.y, pos.z);
+        const standardVector = worldVector.project(window.camera);
+        const widthHalf = window.innerWidth / 2;
+        const heightHalf = window.innerHeight / 2;
+        return {
+          x: Math.round(standardVector.x * widthHalf + widthHalf),
+          y: Math.round(-standardVector.y * heightHalf + heightHalf),
+        };
+      }
+
+      function createDistanceLabel() {
+        const label = document.createElement("div");
+        label.className = "distance-label";
+        label.id = "distance-label-" + labelIdCounter++;
+        label.style.display = "none";
+        document.body.appendChild(label);
+        return label;
+      }
+
+      function startNewMeasurement() {
+        currentMeasurement = {
+          pathPoints: [],
+          points: [],
+          markers: [],
+          line: null,
+          dashLine: null,
+          label: createDistanceLabel(),
+          totalDistance: 0,
+        };
+        measurements.push(currentMeasurement);
+        canDraw = true;
+      }
+
+      function updateCurrentDistanceLabel() {
+        if (!currentMeasurement) return;
+        const m = currentMeasurement;
+        
+        if (m.pathPoints.length === 0) {
+          m.label.style.display = "none";
+          return;
+        }
+
+        const endPoint = mousePoint || m.pathPoints[m.pathPoints.length - 1];
+        const screenPos = worldToScreenPosition(endPoint);
+
+        m.label.style.left = screenPos.x + 15 + "px";
+        m.label.style.top = screenPos.y - 15 + "px";
+        m.label.style.display = "block";
+        
+        const currentDist = mousePoint && m.pathPoints.length > 0 
+          ? m.pathPoints[m.pathPoints.length - 1].distanceTo(mousePoint) 
+          : 0;
+        m.label.textContent = (m.totalDistance + currentDist).toFixed(2) + "m";
+      }
+
+      function createOrUpdateLine(measurement) {
+        if (measurement.line) window.scene.remove(measurement.line);
+        if (measurement.points.length < 2) return;
+
+        const geometry = new THREE.BufferGeometry().setFromPoints(measurement.points);
+        measurement.line = new THREE.Line(
+          geometry,
+          new THREE.LineBasicMaterial({ color: 0xfff000, linewidth: 2 })
+        );
+        window.scene.add(measurement.line);
+      }
+
+      function updateDashLine(measurement) {
+        if (!mousePoint || measurement.pathPoints.length === 0) return;
+
+        const lastPoint = measurement.pathPoints[measurement.pathPoints.length - 1];
+
+        if (measurement.dashLine) {
+          const positions = measurement.dashLine.geometry.attributes.position.array;
+          positions[0] = lastPoint.x;
+          positions[1] = lastPoint.y;
+          positions[2] = lastPoint.z;
+          positions[3] = mousePoint.x;
+          positions[4] = mousePoint.y;
+          positions[5] = mousePoint.z;
+          measurement.dashLine.geometry.attributes.position.needsUpdate = true;
+        } else {
+          const geometry = new THREE.BufferGeometry().setFromPoints([lastPoint, mousePoint]);
+          measurement.dashLine = new THREE.Line(
+            geometry,
+            new THREE.LineDashedMaterial({ color: 0xff5555, dashSize: 0.2, gapSize: 0.1 })
+          );
+          measurement.dashLine.computeLineDistances();
+          window.scene.add(measurement.dashLine);
+        }
+      }
+
+      function onMouseMove(event) {
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+        raycaster.setFromCamera(mouse, window.camera);
+        const intersects = raycaster.intersectObject(plane);
+        if (!intersects.length) return;
+
+        mousePoint = intersects[0].point;
+
+        if (canDraw && currentMeasurement) {
+          updateDashLine(currentMeasurement);
+          updateCurrentDistanceLabel();
+        }
+      }
+
+      function onMouseDown(event) {
+        // 右键结束当前测量
+        if (event.button === 2) {
+          if (canDraw && currentMeasurement) {
+            canDraw = false;
+            if (currentMeasurement.dashLine) {
+              window.scene.remove(currentMeasurement.dashLine);
+              currentMeasurement.dashLine = null;
+            }
+            // 固定标签位置在终点
+            if (currentMeasurement.pathPoints.length > 0) {
+              const endPoint = currentMeasurement.pathPoints[currentMeasurement.pathPoints.length - 1];
+              const screenPos = worldToScreenPosition(endPoint);
+              currentMeasurement.label.style.left = screenPos.x + 15 + "px";
+              currentMeasurement.label.style.top = screenPos.y - 15 + "px";
+            }
+          } else {
+            // 已经开始新测量
+            startNewMeasurement();
+          }
+          return;
+        }
+
+        // 如果不是绘制模式，检查是否点击了节点进行拖拽
+        if (!canDraw) {
+          raycaster.setFromCamera(mouse, window.camera);
+          const allMarkers = measurements.flatMap(m => m.markers);
+          const intersects = raycaster.intersectObjects(allMarkers);
+          if (intersects.length > 0) {
+            selectedMesh = intersects[0].object;
+            // 找到对应的测量
+            currentMeasurement = measurements.find(m => m.markers.includes(selectedMesh));
+            transformControls.attach(selectedMesh);
+          } else {
+            // 点击空白处开始新测量
+            startNewMeasurement();
+            canDraw = true;
+            // 继续执行添加点的逻辑
+          }
+        }
+
+        if (!canDraw || !currentMeasurement) return;
+
+        raycaster.setFromCamera(mouse, window.camera);
+        const intersects = raycaster.intersectObject(plane);
+        if (!intersects.length) return;
+
+        const point = intersects[0].point.clone();
+        const m = currentMeasurement;
+
+        // 添加到路径节点
+        m.pathPoints.push(point.clone());
+
+        // 构建连续的点数组用于画线
+        if (m.pathPoints.length >= 2) {
+          const prevPoint = m.pathPoints[m.pathPoints.length - 2];
+          m.points.push(prevPoint.clone(), point.clone());
+          m.totalDistance += prevPoint.distanceTo(point);
+        } else {
+          m.points.push(point.clone());
+        }
+
+        // 创建标记
+        const marker = new THREE.Mesh(
+          new THREE.SphereGeometry(0.15, 16, 16),
+          new THREE.MeshBasicMaterial({ color: 0xff5fff })
+        );
+        marker.position.copy(point);
+        marker.userData.index = m.markers.length;
+        marker.userData.measurement = m;
+        window.scene.add(marker);
+        m.markers.push(marker);
+
+        createOrUpdateLine(m);
+        updateDashLine(m);
+        updateCurrentDistanceLabel();
+      }
+
+      function onDragChanging() {
+        if (!selectedMesh) return;
+
+        const m = selectedMesh.userData.measurement;
+        if (!m) return;
+
+        const index = selectedMesh.userData.index;
+        const newPos = selectedMesh.position.clone();
+
+        // 更新路径节点位置
+        m.pathPoints[index].copy(newPos);
+
+        // 更新points数组中对应的线段端点
+        if (index === 0) {
+          m.points[0].copy(newPos);
+          if (m.points.length > 1) {
+            m.points[1].copy(newPos);
+          }
+        } else {
+          const lineEndIndex = index * 2 - 1;
+          const lineStartIndex = index * 2;
+
+          if (lineEndIndex < m.points.length) {
+            m.points[lineEndIndex].copy(newPos);
+          }
+          if (lineStartIndex < m.points.length) {
+            m.points[lineStartIndex].copy(newPos);
+          }
+        }
+
+        if (m.line) {
+          m.line.geometry.setFromPoints(m.points);
+          m.line.geometry.attributes.position.needsUpdate = true;
+        }
+
+        // 重新计算总距离
+        m.totalDistance = 0;
+        for (let i = 0; i < m.pathPoints.length - 1; i++) {
+          m.totalDistance += m.pathPoints[i].distanceTo(m.pathPoints[i + 1]);
+        }
+
+        // 更新标签位置
+        const endPoint = m.pathPoints[m.pathPoints.length - 1];
+        const screenPos = worldToScreenPosition(endPoint);
+        m.label.style.left = screenPos.x + 15 + "px";
+        m.label.style.top = screenPos.y - 15 + "px";
+        m.label.textContent = m.totalDistance.toFixed(2) + "m";
+      }
+
+      function clearAll() {
+        // 清除所有测量
+        measurements.forEach(m => {
+          if (m.line) window.scene.remove(m.line);
+          if (m.dashLine) window.scene.remove(m.dashLine);
+          m.markers.forEach(marker => window.scene.remove(marker));
+          m.label.remove();
+        });
+        measurements = [];
+        currentMeasurement = null;
+        canDraw = true;
+        selectedMesh = null;
+        transformControls.detach();
+        
+        // 清除后自动开始新测量
+        startNewMeasurement();
+      }
+
+      clearBtn.addEventListener("click", clearAll);
+
+      container.addEventListener("mousemove", onMouseMove);
+      container.addEventListener("mousedown", onMouseDown);
+      container.addEventListener("contextmenu", (e) => e.preventDefault());
+
+      window.addEventListener("resize", () => {
+        window.camera.aspect = window.innerWidth / window.innerHeight;
+        window.camera.updateProjectionMatrix();
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      // 初始化第一个测量
+      startNewMeasurement();
+
+      function animate() {
+        requestAnimationFrame(animate);
+        orbitControls.update();
+        window.renderer.render(window.scene, window.camera);
+      }
+      animate();
+    </script>
+
+    <script>
+      window.addEventListener("message", function (event) {
+        if (event.data && event.data.type === "take-screenshot") {
+          try {
+            if (window.scene && window.camera) {
+              window.renderer.render(window.scene, window.camera);
+            }
+            const quality = event.data.quality || 0.8;
+            const canvas = window.renderer.domElement;
+            const tempCanvas = document.createElement("canvas");
+            const maxSize = 600;
+            const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+            tempCanvas.width = Math.floor(canvas.width * scale);
+            tempCanvas.height = Math.floor(canvas.height * scale);
+            const ctx = tempCanvas.getContext("2d");
+            ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+            const dataUrl = tempCanvas.toDataURL("image/jpeg", quality);
+            window.parent.postMessage({ type: "screenshot-data", dataUrl: dataUrl }, "*");
+          } catch (error) {
+            console.error("截图失败:", error);
+            window.parent.postMessage({ type: "screenshot-error", error: error.message }, "*");
+          }
+        }
+      });
+    </script>
+  </body>
+</html>
