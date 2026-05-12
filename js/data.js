@@ -1899,6 +1899,14 @@ const threejsData = {
               version: "r179",
               url: "examples/z258/application-textSphere",
             },
+            {
+              id: "application-lightBar",
+              title: "光柱",
+              description: "创建带有纹理和发光效果的3D光柱，支持动态纹理滚动",
+              thumbnail: "images/application-lightBar.jpg",
+              version: "r179",
+              url: "examples/z258/application-lightBar",
+            },
           ],
         },
         {
