@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="贴图网格地面 - 使用纹理贴图创建科技风格网格地面"
+    />
+    <meta name="three-version" content="r179" />
+    <title>Three.js 示例 - 贴图网格地面</title>
+    <link rel="stylesheet" href="../../css/example-common.css" />
+  </head>
+  <body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "../../libs/three/r179/build/three.module.js",
+          "three/addons/": "../../libs/three/r179/jsm/"
+        }
+      }
+    </script>
+
+    <script type="module">
+      import * as THREE from "three";
+      import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+      const container = document.getElementById("threeContainer");
+
+      window.scene = new THREE.Scene();
+      window.scene.background = new THREE.Color(0x0a0a1a);
+
+      window.camera = new THREE.PerspectiveCamera(
+        60,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+      );
+      window.camera.position.set(30, 30, 30);
+
+      window.renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        alpha: true,
+      });
+      window.renderer.setSize(window.innerWidth, window.innerHeight);
+      window.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      container.appendChild(window.renderer.domElement);
+
+      const controls = new OrbitControls(
+        window.camera,
+        window.renderer.domElement
+      );
+      controls.enableDamping = true;
+      controls.maxPolarAngle = Math.PI / 2 - 0.05;
+
+      // 环境光
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+      window.scene.add(ambientLight);
+
+      // 方向光
+      const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+      dirLight.position.set(50, 100, 50);
+      window.scene.add(dirLight);
+
+      // 创建网格纹理
+      function createGridTexture() {
+        const canvas = document.createElement("canvas");
+        canvas.width = 512;
+        canvas.height = 512;
+        const ctx = canvas.getContext("2d");
+
+        // 背景
+        ctx.fillStyle = "#000000";
+        ctx.fillRect(0, 0, 512, 512);
+
+        // 网格线
+        ctx.strokeStyle = "#00aaff";
+        ctx.lineWidth = 2;
+
+        // 横线
+        for (let i = 0; i <= 512; i += 64) {
+          ctx.beginPath();
+          ctx.moveTo(0, i);
+          ctx.lineTo(512, i);
+          ctx.stroke();
+        }
+
+        // 竖线
+        for (let i = 0; i <= 512; i += 64) {
+          ctx.beginPath();
+          ctx.moveTo(i, 0);
+          ctx.lineTo(i, 512);
+          ctx.stroke();
+        }
+
+        // 中心十字
+        ctx.strokeStyle = "#ff6600";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(256, 0);
+        ctx.lineTo(256, 512);
+        ctx.moveTo(0, 256);
+        ctx.lineTo(512, 256);
+        ctx.stroke();
+
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(10, 10);
+        return texture;
+      }
+
+      // 创建地面
+      const gridTexture = createGridTexture();
+      const floorMaterial = new THREE.MeshStandardMaterial({
+        map: gridTexture,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.9,
+        emissive: 0x00aaff,
+        emissiveIntensity: 0.3,
+      });
+
+      const floorGeometry = new THREE.PlaneGeometry(200, 200);
+      const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+      floor.rotation.x = -Math.PI / 2;
+      floor.position.y = -0.1;
+      window.scene.add(floor);
+
+      // 添加一些立方体作为参照物
+      const boxGeometry = new THREE.BoxGeometry(5, 5, 5);
+      for (let i = 0; i < 8; i++) {
+        const hue = i / 8;
+        const color = new THREE.Color().setHSL(hue, 0.8, 0.5);
+        const boxMaterial = new THREE.MeshStandardMaterial({
+          color: color,
+          roughness: 0.3,
+          metalness: 0.5,
+        });
+        const box = new THREE.Mesh(boxGeometry, boxMaterial);
+        const angle = (i / 8) * Math.PI * 2;
+        box.position.set(Math.cos(angle) * 30, 2.5, Math.sin(angle) * 30);
+        window.scene.add(box);
+      }
+
+      window.addEventListener("resize", () => {
+        window.camera.aspect = window.innerWidth / window.innerHeight;
+        window.camera.updateProjectionMatrix();
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        window.renderer.render(window.scene, window.camera);
+      }
+      animate();
+    </script>
+
+    <script>
+      window.addEventListener("message", function (event) {
+        if (event.data && event.data.type === "take-screenshot") {
+          try {
+            if (window.scene && window.camera) {
+              window.renderer.render(window.scene, window.camera);
+            }
+            const quality = event.data.quality || 0.8;
+            const canvas = window.renderer.domElement;
+            const tempCanvas = document.createElement("canvas");
+            const maxSize = 600;
+            const scale = Math.min(
+              maxSize / canvas.width,
+              maxSize / canvas.height
+            );
+            tempCanvas.width = Math.floor(canvas.width * scale);
+            tempCanvas.height = Math.floor(canvas.height * scale);
+            const ctx = tempCanvas.getContext("2d");
+            ctx.drawImage(
+              canvas,
+              0,
+              0,
+              tempCanvas.width,
+              tempCanvas.height
+            );
+            const dataUrl = tempCanvas.toDataURL("image/jpeg", quality);
+            window.parent.postMessage(
+              { type: "screenshot-data", dataUrl: dataUrl },
+              "*"
+            );
+          } catch (error) {
+            console.error("截图失败:", error);
+            window.parent.postMessage(
+              { type: "screenshot-error", error: error.message },
+              "*"
+            );
+          }
+        }
+      });
+    </script>
+  </body>
+</html>

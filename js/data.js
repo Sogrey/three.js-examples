@@ -1907,6 +1907,14 @@ const threejsData = {
               version: "r179",
               url: "examples/z258/application-lightBar",
             },
+            {
+              id: "application-gridFloor",
+              title: "贴图网格地面",
+              description: "使用纹理贴图创建科技风格网格地面，带自发光效果",
+              thumbnail: "images/application-gridFloor.jpg",
+              version: "r179",
+              url: "examples/z258/application-gridFloor",
+            },
           ],
         },
         {
