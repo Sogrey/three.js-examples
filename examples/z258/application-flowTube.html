@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="使用Three.js创建管道表面运动效果，通过自定义着色器实现流动的管道接头动画">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 管道表面运动</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        const container = document.getElementById('threeContainer');
+
+        // 创建场景
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x0a0a1a);
+
+        // 创建相机
+        window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        window.camera.position.set(30, 10, 10);
+
+        // 创建渲染器
+        window.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, logarithmicDepthBuffer: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        window.renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(window.renderer.domElement);
+
+        // 创建控制器
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.enableDamping = true;
+
+        // 添加灯光
+        const ambientLight = new THREE.AmbientLight(0xffffff, 1);
+        window.scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.25);
+        directionalLight.position.set(10, 20, 10);
+        window.scene.add(directionalLight);
+
+        // 参数
+        const params = {
+            pipeColor: 0xface8d,
+            fittingColor: 0xff2200,
+            speed: 5,
+            fittingWidth: 2,
+            radius: 0.5,
+            tubularSegments: 100,
+            radialSegments: 32
+        };
+
+        let pipeMesh;
+        let uniforms;
+        let clock = new THREE.Clock();
+
+        // 创建管道
+        function createPipe() {
+            if (pipeMesh) {
+                window.scene.remove(pipeMesh);
+                pipeMesh.geometry.dispose();
+                pipeMesh.material.dispose();
+            }
+
+            // 创建控制点
+            const cps = Array.from({ length: 6 }).fill(0).map((_, idx, arr) => {
+                let init = -(arr.length - 1);
+                return new THREE.Vector3(
+                    init + idx * 2,
+                    Math.random() < 0.5 ? -1 : 1,
+                    -init - idx * 2
+                );
+            });
+
+            const curve = new THREE.CatmullRomCurve3(cps);
+            const geometry = new THREE.TubeGeometry(curve, params.tubularSegments, params.radius, params.radialSegments, false);
+            
+            const material = new THREE.MeshLambertMaterial({
+                color: params.pipeColor,
+                side: THREE.DoubleSide
+            });
+
+            const length = curve.getLength();
+            uniforms = {
+                totalLength: { value: length },
+                pipeFittingAt: { value: 0 },
+                pipeFittingWidth: { value: params.fittingWidth },
+                pipeFittingColor: { value: new THREE.Color(params.fittingColor) }
+            };
+
+            material.onBeforeCompile = shader => {
+                shader.uniforms.totalLength = uniforms.totalLength;
+                shader.uniforms.pipeFittingAt = uniforms.pipeFittingAt;
+                shader.uniforms.pipeFittingWidth = uniforms.pipeFittingWidth;
+                shader.uniforms.pipeFittingColor = uniforms.pipeFittingColor;
+                
+                shader.fragmentShader = `
+                    #define S(a, b, c) smoothstep(a, b, c)
+                    uniform float totalLength;
+                    uniform float pipeFittingAt;
+                    uniform float pipeFittingWidth;
+                    uniform vec3 pipeFittingColor;
+                    ${shader.fragmentShader}
+                `.replace(
+                    `#include <color_fragment>`,
+                    `#include <color_fragment>
+                    float normAt = pipeFittingAt / totalLength;
+                    float normWidth = pipeFittingWidth / totalLength;
+                    float hWidth = normWidth * 0.5;
+                    float fw = fwidth(vUv.x);
+                    float f = S(hWidth + fw, hWidth, abs(vUv.x - normAt));
+                    diffuseColor.rgb = mix(diffuseColor.rgb, pipeFittingColor, f);
+                    `
+                );
+            };
+            
+            material.defines = { 'USE_UV': "" };
+
+            pipeMesh = new THREE.Mesh(geometry, material);
+            window.scene.add(pipeMesh);
+        }
+
+        // 初始化管道
+        createPipe();
+
+        // 创建GUI
+        const gui = new GUI();
+        gui.domElement.style.top = '50px';
+
+        const folder = gui.addFolder('管道参数');
+        folder.addColor(params, 'pipeColor').name('管道颜色').onChange((v) => {
+            if (pipeMesh) pipeMesh.material.color.setHex(v);
+        });
+        folder.addColor(params, 'fittingColor').name('接头颜色').onChange((v) => {
+            uniforms.pipeFittingColor.value.setHex(v);
+        });
+        folder.add(params, 'speed', 1, 20, 1).name('运动速度');
+        folder.add(params, 'fittingWidth', 0.5, 5, 0.1).name('接头宽度').onChange((v) => {
+            uniforms.pipeFittingWidth.value = v;
+        });
+
+        // 动画循环
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // 更新接头位置
+            if (uniforms) {
+                uniforms.pipeFittingAt.value += clock.getDelta() * params.speed;
+                if (uniforms.pipeFittingAt.value - 1 > uniforms.totalLength.value) {
+                    uniforms.pipeFittingAt.value = 0;
+                }
+            }
+            
+            controls.update();
+            window.renderer.render(window.scene, window.camera);
+        }
+        animate();
+
+        // 窗口大小调整
+        window.addEventListener('resize', () => {
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // 截图支持
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
