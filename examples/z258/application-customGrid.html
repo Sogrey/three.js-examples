@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="使用Three.js创建自定义网格，通过BufferGeometry和顶点颜色实现带主次网格线的坐标网格">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 自定义网格</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        const container = document.getElementById('threeContainer');
+
+        // 创建场景
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x0a0a1a);
+
+        // 创建相机
+        window.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+        window.camera.position.set(0, 0, 20);
+
+        // 创建渲染器
+        window.renderer = new THREE.WebGLRenderer({ antialias: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(window.renderer.domElement);
+
+        // 创建控制器
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.enableDamping = true;
+
+        // 添加灯光
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+        window.scene.add(ambientLight);
+
+        // 网格参数
+        const params = {
+            width: 20,
+            height: 20,
+            dx: 1,
+            dy: 1,
+            mainColor: 0x4a9eff,
+            subColor: 0x2a4a6e
+        };
+
+        let grid;
+
+        // 创建自定义网格函数
+        function createCustomGrid() {
+            if (grid) {
+                window.scene.remove(grid);
+                grid.geometry.dispose();
+                grid.material.dispose();
+            }
+
+            const { width, height, dx, dy, mainColor, subColor } = params;
+            const colorA = new THREE.Color(mainColor);
+            const colorB = new THREE.Color(subColor);
+            const vertices = [];
+            const colors = [];
+
+            // 生成水平线
+            for (let i = -width / 2; i <= width / 2; i += dx) {
+                vertices.push(i, -height / 2, 0, i, height / 2, 0);
+                const color = (Math.abs(i) < 0.001) ? colorA : colorB;
+                colors.push(...color.toArray(), ...color.toArray());
+            }
+
+            // 生成垂直线
+            for (let j = -height / 2; j <= height / 2; j += dy) {
+                vertices.push(-width / 2, j, 0, width / 2, j, 0);
+                const color = (Math.abs(j) < 0.001) ? colorA : colorB;
+                colors.push(...color.toArray(), ...color.toArray());
+            }
+
+            // 创建几何体和材质
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+            geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+
+            const material = new THREE.LineBasicMaterial({ 
+                vertexColors: true,
+                linewidth: 1
+            });
+
+            grid = new THREE.LineSegments(geometry, material);
+            window.scene.add(grid);
+        }
+
+        // 初始化网格
+        createCustomGrid();
+
+        // 创建GUI
+        const gui = new GUI();
+        gui.domElement.style.top = '50px';
+
+        const folder = gui.addFolder('网格参数');
+        folder.add(params, 'width', 10, 50, 2).name('宽度').onChange(createCustomGrid);
+        folder.add(params, 'height', 10, 50, 2).name('高度').onChange(createCustomGrid);
+        folder.add(params, 'dx', 0.5, 5, 0.5).name('水平间隔').onChange(createCustomGrid);
+        folder.add(params, 'dy', 0.5, 5, 0.5).name('垂直间隔').onChange(createCustomGrid);
+        folder.addColor(params, 'mainColor').name('主轴颜色').onChange(createCustomGrid);
+        folder.addColor(params, 'subColor').name('副轴颜色').onChange(createCustomGrid);
+
+        // 动画循环
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        animate();
+
+        // 窗口大小调整
+        window.addEventListener('resize', () => {
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // 截图支持
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
