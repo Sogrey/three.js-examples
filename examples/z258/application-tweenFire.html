@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="使用Three.js创建精灵火花效果，通过CanvasTexture和Tween实现粒子动画">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 精灵火花</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import TWEEN from 'three/addons/libs/tween.module.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        const container = document.getElementById('threeContainer');
+
+        // 创建场景
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x0a0a1a);
+
+        // 创建相机
+        window.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+        window.camera.position.set(0, 50, 100);
+
+        // 创建渲染器
+        window.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, logarithmicDepthBuffer: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        window.renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(window.renderer.domElement);
+
+        // 创建控制器
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.enableDamping = true;
+
+        // 颜色配置
+        const colorArr = [
+            { position: 0, color: 'rgba(255,255,255,1)' },
+            { position: 0.05, color: 'rgba(255,230,140,0.9)' },
+            { position: 0.2, color: 'rgba(255,180,40,0.6)' },
+            { position: 1, color: 'rgba(255,100,0,0)' }
+        ];
+
+        // 生成纹理
+        const canvas = document.createElement('canvas');
+        canvas.width = 256;
+        canvas.height = 256;
+        const context = canvas.getContext('2d');
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        const gradient = context.createRadialGradient(
+            canvas.width / 2, canvas.height / 2, 0,
+            canvas.width / 2, canvas.width / 2, canvas.width / 2
+        );
+        colorArr.forEach(stop => {
+            gradient.addColorStop(stop.position, stop.color);
+        });
+        context.fillStyle = gradient;
+        context.beginPath();
+        context.arc(canvas.width / 2, canvas.height / 2, canvas.width / 2, 0, Math.PI * 2);
+        context.fill();
+
+        // 内部高光
+        const innerGradient = context.createRadialGradient(
+            canvas.width / 2, canvas.height / 2, 0,
+            canvas.width / 2, canvas.height / 2, canvas.width / 4
+        );
+
+        innerGradient.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
+        innerGradient.addColorStop(0.3, 'rgba(255, 240, 220, 0.5)');
+        innerGradient.addColorStop(1, 'rgba(255, 240, 200, 0)');
+
+        context.fillStyle = innerGradient;
+        context.beginPath();
+        context.arc(canvas.width / 2, canvas.height / 2, canvas.width / 4, 0, Math.PI * 2);
+        context.fill();
+
+        const texture = new THREE.CanvasTexture(canvas);
+
+        // 创建粒子系统
+        const sprites = new THREE.Object3D();
+        const material = new THREE.SpriteMaterial({
+            map: texture,
+            blending: THREE.AdditiveBlending,
+            transparent: true,
+            depthWrite: false,
+            alphaTest: 0.01
+        });
+
+        // 参数配置
+        const params = {
+            particleCount: 300,
+            range: 20,
+            size: 32,
+            xRange: 100,
+            yRange: 200,
+            zRange: 50,
+            scaleEnd: 0.1,
+            duration: 1500,
+            delay: 4,
+            autoRotate: false
+        };
+
+        const particles = [];
+
+        // 添加粒子
+        function createParticles() {
+            // 清除旧粒子
+            particles.forEach(p => sprites.remove(p));
+            particles.length = 0;
+
+            for (let i = 0; i < params.particleCount; i++) {
+                const particle = new THREE.Sprite(material);
+                initParticle(particle, i * params.delay);
+                sprites.add(particle);
+                particles.push(particle);
+            }
+        }
+
+        createParticles();
+        window.scene.add(sprites);
+
+        // 初始化粒子
+        function initParticle(particle, delay) {
+            const r_v = v => Math.random() * v - v / 2;
+
+            // 初始化位置和大小
+            particle.position.set(r_v(params.range), r_v(params.range), r_v(params.range));
+            particle.scale.setScalar(Math.random() * params.size);
+
+            const xx = r_v(params.xRange);
+            const yy = Math.abs(r_v(params.yRange));
+            const zz = -Math.cos((Math.PI / 10) * xx) * params.zRange;
+
+            // 位置动画
+            new TWEEN.Tween(particle.position)
+                .delay(delay)
+                .to({ x: xx, y: yy, z: zz }, params.duration)
+                .easing(TWEEN.Easing.Quadratic.Out)
+                .start()
+                .onComplete(() => initParticle(particle, 0));
+
+            // 缩放动画
+            new TWEEN.Tween(particle.scale)
+                .delay(delay)
+                .to({ x: params.scaleEnd, y: params.scaleEnd }, params.duration)
+                .easing(TWEEN.Easing.Quadratic.Out)
+                .start();
+        }
+
+        // 创建GUI
+        const gui = new GUI();
+        gui.domElement.style.top = '50px';
+
+        const folder = gui.addFolder('精灵火花参数');
+        folder.add(params, 'particleCount', 50, 500, 10).name('粒子数量').onChange(createParticles);
+        folder.add(params, 'range', 0, 100).name('粒子范围').onChange(createParticles);
+        folder.add(params, 'size', 0, 64).name('粒子大小').onChange(createParticles);
+        folder.add(params, 'xRange', 0, 400).name('X轴范围').onChange(createParticles);
+        folder.add(params, 'yRange', 0, 400).name('Y轴范围').onChange(createParticles);
+        folder.add(params, 'zRange', 0, 200).name('Z轴范围').onChange(createParticles);
+        folder.add(params, 'scaleEnd', 0, 1).name('缩放比例').onChange(createParticles);
+        folder.add(params, 'duration', 500, 3000).name('动画时间').onChange(createParticles);
+        folder.add(params, 'delay', 0, 20).name('粒子间隔').onChange(createParticles);
+        folder.add(params, 'autoRotate').name('自动旋转');
+
+        // 动画循环
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (params.autoRotate) {
+                sprites.rotation.y += 0.005;
+            }
+
+            controls.update();
+            TWEEN.update();
+            window.renderer.render(window.scene, window.camera);
+        }
+        animate();
+
+        // 窗口大小调整
+        window.addEventListener('resize', () => {
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // 截图支持
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
