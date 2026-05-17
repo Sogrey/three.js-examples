@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Three.js边缘模糊效果示例 - 使用自定义ShaderMaterial实现图片边缘渐变透明效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 边缘模糊效果</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x0a0a1a);
+
+        window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        window.camera.position.set(0, 0, 5);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.enableDamping = true;
+
+        const vertexShader = `
+            precision highp float;
+            precision highp int;
+            uniform mat4 modelViewMatrix;
+            uniform mat4 projectionMatrix;
+            attribute vec3 position;
+            attribute vec2 uv;
+            varying vec2 vUv;
+            void main() {
+                vUv = uv;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `;
+
+        const fragmentShader = `
+            precision highp float;
+            precision highp int;
+
+            uniform float edge;
+            uniform float opacity;
+            uniform vec3 color;
+
+            varying vec2 vUv;
+
+            void main() {
+                float edgeMin = edge;
+                float edgeMax = 1.0 - edge;
+
+                vec4 finalColor = vec4(color, 1.0);
+
+                if (vUv.x < edgeMin) {
+                    if (vUv.y < edgeMin) {
+                        finalColor.a = min(vUv.x / edgeMin, vUv.y / edgeMin) * opacity;
+                    } else if (vUv.y >= edgeMin && vUv.y <= edgeMax) {
+                        finalColor.a = (vUv.x / edgeMin) * opacity;
+                    } else if (vUv.y > edgeMax) {
+                        finalColor.a = min(vUv.x / edgeMin, 1.0 - ((vUv.y - edgeMax) / edgeMin)) * opacity;
+                    }
+                } else if (vUv.x >= edgeMin && vUv.x <= edgeMax) {
+                    if (vUv.y < edgeMin) {
+                        finalColor.a = (vUv.y / edgeMin) * opacity;
+                    } else if (vUv.y >= edgeMin && vUv.y <= edgeMax) {
+                        finalColor.a = 1.0 * opacity;
+                    } else if (vUv.y > edgeMax) {
+                        finalColor.a = (1.0 - ((vUv.y - edgeMax) / edgeMin)) * opacity;
+                    }
+                } else if (vUv.x > edgeMax) {
+                    float xNormal = 1.0 - ((vUv.x - edgeMax) / edgeMin);
+
+                    if (vUv.y < edgeMin) {
+                        finalColor.a = min(vUv.y / edgeMin, xNormal) * opacity;
+                    } else if (vUv.y >= edgeMin && vUv.y <= edgeMax) {
+                        finalColor.a = xNormal * opacity;
+                    } else if (vUv.y > edgeMax) {
+                        finalColor.a = min(xNormal, 1.0 - ((vUv.y - edgeMax) / edgeMin)) * opacity;
+                    }
+                }
+
+                gl_FragColor = finalColor;
+            }
+        `;
+
+        const params = {
+            edge: 0.2,
+            opacity: 1.0,
+            color: '#00ff88',
+            rotate: true
+        };
+
+        const geometry = new THREE.PlaneGeometry(3, 4);
+        const material = new THREE.RawShaderMaterial({
+            uniforms: {
+                edge: { value: params.edge },
+                opacity: { value: params.opacity },
+                color: { value: new THREE.Color(params.color) }
+            },
+            transparent: true,
+            depthTest: true,
+            vertexShader: vertexShader,
+            fragmentShader: fragmentShader,
+            side: THREE.DoubleSide
+        });
+
+        const mesh = new THREE.Mesh(geometry, material);
+        window.scene.add(mesh);
+
+        const referenceGeometry = new THREE.PlaneGeometry(3, 4);
+        const referenceMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0x333333,
+            wireframe: true
+        });
+        const referenceMesh = new THREE.Mesh(referenceGeometry, referenceMaterial);
+        referenceMesh.position.z = -0.01;
+        window.scene.add(referenceMesh);
+
+        const gui = new GUI();        
+        gui.domElement.style.top = '50px';
+        gui.add(params, 'edge', 0.01, 0.5).name('边缘宽度').onChange(v => {
+            material.uniforms.edge.value = v;
+        });
+        gui.add(params, 'opacity', 0.0, 1.0).name('透明度').onChange(v => {
+            material.uniforms.opacity.value = v;
+        });
+        gui.addColor(params, 'color').name('颜色').onChange(v => {
+            material.uniforms.color.value.set(v);
+        });
+        gui.add(params, 'rotate').name('自动旋转');
+
+        window.addEventListener('resize', () => {
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            controls.update();
+
+            if (params.rotate) {
+                mesh.rotation.y += 0.005;
+                referenceMesh.rotation.y += 0.005;
+            }
+
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        animate();
+    </script>
+
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

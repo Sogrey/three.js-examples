@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="使用Three.js创建随机城市白膜效果，通过程序化生成建筑展示城市模型">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 随机城市白膜</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        const container = document.getElementById('threeContainer');
+
+        // 创建场景
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x0a0a1a);
+
+        // 创建相机
+        window.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        window.camera.position.set(-1, 0.5, 1);
+        window.camera.position.setLength(75);
+
+        // 创建渲染器
+        window.renderer = new THREE.WebGLRenderer({ antialias: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        window.renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(window.renderer.domElement);
+
+        // 创建控制器
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.target.set(0, 12, 0);
+        controls.enableDamping = true;
+        controls.autoRotate = true;
+        controls.update();
+
+        // 添加灯光
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 3);
+        directionalLight.position.set(1, 1, 1);
+        window.scene.add(directionalLight);
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        window.scene.add(ambientLight);
+
+        // 参数
+        const params = {
+            citySize: 50,
+            spacing: 10,
+            maxHeight: 35,
+            centerClearRadius: 5,
+            regenerate: generateCityModel,
+            autoRotate: true
+        };
+
+        let cityGroup = new THREE.Group();
+        window.scene.add(cityGroup);
+
+        // 建筑几何体和材质
+        const buildingGeometry = new THREE.BoxGeometry(1, 1, 1);
+        buildingGeometry.translate(0, 0.5, 0);
+
+        // 生成城市白膜
+        function generateCityModel() {
+            // 清除旧的城市
+            while (cityGroup.children.length > 0) {
+                const child = cityGroup.children[0];
+                if (child.geometry) child.geometry.dispose();
+                if (child.material) child.material.dispose();
+                cityGroup.remove(child);
+            }
+
+            const { citySize, spacing, maxHeight, centerClearRadius } = params;
+            const maxDistance = citySize * spacing;
+
+            // 添加地面
+            const planeGeometry = new THREE.PlaneGeometry(maxDistance * 2, maxDistance * 2);
+            planeGeometry.rotateX(-Math.PI / 2);
+            const planeMaterial = new THREE.MeshBasicMaterial({ color: 0x1a1a2e });
+            const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+            cityGroup.add(plane);
+
+            // 生成建筑
+            for (let z = -citySize; z < citySize; z++) {
+                for (let x = -citySize; x < citySize; x++) {
+                    // 跳过城市中心一定区域
+                    if (Math.abs(x) < centerClearRadius && Math.abs(z) < centerClearRadius) continue;
+
+                    // 计算建筑位置
+                    const positionX = x * spacing;
+                    const positionZ = z * spacing;
+                    const distanceFromCenter = Math.sqrt(positionX ** 2 + positionZ ** 2);
+
+                    // 根据距离中心的远近调整建筑高度和生成概率
+                    const distanceFactor = 1 - THREE.MathUtils.clamp(distanceFromCenter / maxDistance, 0, 1);
+                    const heightScale = Math.pow(distanceFactor, 4);
+
+                    if (Math.random() < distanceFactor) {
+                        const buildingMaterial = new THREE.MeshLambertMaterial({ color: 0xcccccc });
+                        const building = new THREE.Mesh(buildingGeometry, buildingMaterial);
+
+                        // 设置建筑位置
+                        let offset = (Math.random() * 0.5 - 1) * spacing;
+                        building.position.set(positionX + offset, 0, positionZ + offset);
+
+                        // 设置建筑缩放
+                        building.scale.set(
+                            THREE.MathUtils.randInt(1, 4),
+                            1 + Math.floor(Math.random() * heightScale * maxHeight),
+                            THREE.MathUtils.randInt(1, 4)
+                        );
+
+                        // 随机红色建筑
+                        if (Math.random() < 0.1) {
+                            building.material = building.material.clone();
+                            building.material.color = new THREE.Color(0xff4444);
+                        }
+
+                        cityGroup.add(building);
+                    }
+                }
+            }
+        }
+
+        // 初始化城市
+        generateCityModel();
+
+        // 创建GUI
+        const gui = new GUI();
+        gui.domElement.style.top = '50px';
+
+        const folder = gui.addFolder('城市参数');
+        folder.add(params, 'citySize', 20, 80, 5).name('城市大小');
+        folder.add(params, 'spacing', 5, 20, 1).name('建筑间隔');
+        folder.add(params, 'maxHeight', 10, 60, 5).name('最大高度');
+        folder.add(params, 'centerClearRadius', 0, 15, 1).name('中心空地半径');
+        folder.add(params, 'regenerate').name('重新生成');
+        folder.add(params, 'autoRotate').name('自动旋转').onChange((v) => {
+            controls.autoRotate = v;
+        });
+
+        // 动画循环
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            window.renderer.render(window.scene, window.camera);
+        }
+        animate();
+
+        // 窗口大小调整
+        window.addEventListener('resize', () => {
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // 截图支持
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

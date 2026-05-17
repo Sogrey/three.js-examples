@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="使用Three.js创建风吹动画效果，通过自定义着色器实现龙卷风螺旋运动">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 风吹动画</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        const container = document.getElementById('threeContainer');
+
+        // 创建场景
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x0a0a1a);
+
+        // 创建相机
+        window.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.01, 10000);
+        window.camera.position.set(25, 10, 30);
+
+        // 创建渲染器
+        window.renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        window.renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(window.renderer.domElement);
+
+        // 创建控制器
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.enableDamping = true;
+
+        // 添加灯光
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        window.scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+        directionalLight.position.set(10, 20, 10);
+        window.scene.add(directionalLight);
+
+        // 参数
+        const params = {
+            tornadoCount: 24,
+            windSpeed: 1.0,
+            ribbonWidth: 0.1,
+            autoRotate: false
+        };
+
+        let shaders = [];
+        let tornadoes = [];
+
+        // 创建螺旋路径点
+        function createSpiral() {
+            const points = [];
+            let r = 8;
+            let a = 0;
+            for (let i = 0; i < 120; i++) {
+                const p = 1 - i / 120;
+                r -= Math.pow(p, 2) * 0.187;
+                a += 0.3 - (r / 6) * 0.2;
+
+                points.push(new THREE.Vector3(
+                    r * Math.sin(a),
+                    Math.pow(p, 2.5) * 6,
+                    r * Math.cos(a)
+                ));
+            }
+            return points;
+        }
+
+        // 创建龙卷风几何体
+        function createTornadoGeometry() {
+            const points = createSpiral();
+            const geometry = new THREE.BufferGeometry();
+
+            // 创建两个顶点（双面）
+            geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(points.length * 3 * 2), 3));
+            geometry.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(points.length * 2 * 2), 2));
+            geometry.setIndex(new THREE.BufferAttribute(new Uint16Array(points.length * 6), 1));
+
+            points.forEach((b, i) => {
+                const o = params.ribbonWidth;
+
+                geometry.attributes.position.setXYZ(i * 2 + 0, b.x, b.y + o, b.z);
+                geometry.attributes.position.setXYZ(i * 2 + 1, b.x, b.y - o, b.z);
+
+                geometry.attributes.uv.setXY(i * 2 + 0, i / (points.length - 1), 0);
+                geometry.attributes.uv.setXY(i * 2 + 1, i / (points.length - 1), 1);
+
+                if (i < points.length - 1) {
+                    geometry.index.setX(i * 6 + 0, i * 2);
+                    geometry.index.setX(i * 6 + 1, i * 2 + 1);
+                    geometry.index.setX(i * 6 + 2, i * 2 + 2);
+
+                    geometry.index.setX(i * 6 + 3, i * 2 + 1);
+                    geometry.index.setX(i * 6 + 4, i * 2 + 3);
+                    geometry.index.setX(i * 6 + 5, i * 2 + 2);
+                }
+            });
+
+            return geometry;
+        }
+
+        // 顶点着色器
+        const vertexShader = `
+            varying vec2 vUv;
+
+            void main() {
+                vUv = uv;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `;
+
+        // 片段着色器
+        const fragmentShader = `
+            varying vec2 vUv;
+
+            uniform float uTime;
+
+            void main() {
+                float len = 0.15;
+                float falloff = 0.1;
+                float p = mod(uTime * 0.5, 1.0);
+                float alpha = smoothstep(len, len - falloff, abs(vUv.x - p));
+                float width = smoothstep(len * 2.0, 0.0, abs(vUv.x - p)) * 0.5;
+                alpha *= smoothstep(width, width - 0.3, abs(vUv.y - 0.5));
+                alpha *= smoothstep(0.5, 0.3, abs(p - 0.5) * (1.0 + len));
+
+                gl_FragColor.rgb = vec3(0.51);
+                gl_FragColor.a = alpha;
+            }
+        `;
+
+        // 创建龙卷风
+        function createTornado(geometry) {
+            const uniforms = {
+                uTime: { value: Math.random() * 3 }
+            };
+
+            const shader = new THREE.ShaderMaterial({
+                uniforms: uniforms,
+                vertexShader: vertexShader,
+                fragmentShader: fragmentShader,
+                side: THREE.DoubleSide,
+                transparent: true,
+                depthTest: false
+            });
+            shader.speed = Math.random() * 0.4 + 0.6;
+            shaders.push(shader);
+
+            const mesh = new THREE.Mesh(geometry, shader);
+            mesh.rotation.y = Math.random() * 10;
+            mesh.scale.setScalar(0.5 + Math.random());
+            mesh.scale.y = Math.random() * 0.4 + 0.9;
+            mesh.position.y = Math.random();
+            mesh.position.x = (Math.random() - 0.5) * 30;
+            mesh.position.z = (Math.random() - 0.5) * 40;
+            mesh.isTornado = true;
+
+            window.scene.add(mesh);
+            tornadoes.push(mesh);
+        }
+
+        // 初始化龙卷风
+        function initTornadoes() {
+            // 清除旧的
+            tornadoes.forEach(t => {
+                window.scene.remove(t);
+                t.geometry.dispose();
+                t.material.dispose();
+            });
+            tornadoes = [];
+            shaders = [];
+
+            const geometry = createTornadoGeometry();
+            for (let i = 0; i < params.tornadoCount; i++) {
+                createTornado(geometry);
+            }
+        }
+
+        initTornadoes();
+
+        // 创建地面网格
+        const grid = new THREE.GridHelper(100, 20, 0x444444, 0x222222);
+        window.scene.add(grid);
+
+        // 创建中心立方体
+        const box = new THREE.Mesh(
+            new THREE.BoxGeometry(1, 1, 1),
+            new THREE.MeshLambertMaterial({ color: 0xff6600 })
+        );
+        box.position.set(0, 0.5, -10);
+        window.scene.add(box);
+
+        // 创建GUI
+        const gui = new GUI();
+        gui.domElement.style.top = '50px';
+
+        const folder = gui.addFolder('风吹动画参数');
+        folder.add(params, 'tornadoCount', 1, 50, 1).name('龙卷风数量').onChange(initTornadoes);
+        folder.add(params, 'windSpeed', 0.1, 3.0, 0.1).name('风速');
+        folder.add(params, 'ribbonWidth', 0.01, 0.5, 0.01).name('丝带宽度').onChange(initTornadoes);
+        folder.add(params, 'autoRotate').name('自动旋转');
+
+        // 动画循环
+        let lastTime = 0;
+        function animate(time) {
+            requestAnimationFrame(animate);
+
+            const delta = time - lastTime;
+
+            // 更新着色器时间
+            shaders.forEach(shader => {
+                shader.uniforms.uTime.value += delta * 0.001 * shader.speed * params.windSpeed;
+            });
+
+            // 更新龙卷风位置和旋转
+            tornadoes.forEach(tornado => {
+                tornado.rotation.y += delta * 0.001;
+                tornado.position.z -= delta * 0.01 * params.windSpeed;
+
+                // 循环位置
+                if (tornado.position.z < -40) {
+                    tornado.position.z = 20;
+                    tornado.position.x = (Math.random() - 0.5) * 30;
+                }
+
+                // 影响中心立方体
+                if (tornado.position.distanceTo(box.position) < 3) {
+                    box.position.y = Math.min(box.position.y + 0.01, 5);
+                } else {
+                    if (box.position.y > 0.5) {
+                        box.position.y -= 0.01;
+                    }
+                }
+            });
+
+            if (params.autoRotate) {
+                window.scene.rotation.y += delta * 0.0005;
+            }
+
+            controls.update();
+            window.renderer.render(window.scene, window.camera);
+            lastTime = time;
+        }
+        animate(0);
+
+        // 窗口大小调整
+        window.addEventListener('resize', () => {
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // 截图支持
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
