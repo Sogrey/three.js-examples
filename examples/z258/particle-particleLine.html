@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="展示粒子线条效果，粒子间根据距离连线，支持鼠标交互和后处理效果">
+    <meta name="description" content="Three.js粒子连线示例 - 使用BufferGeometry和后期处理实现粒子连线效果">
     <meta name="three-version" content="r179">
-    <title>Three.js 示例 - 粒子线条</title>
+    <title>Three.js 示例 - 粒子连线</title>
     <link rel="stylesheet" href="../../css/example-common.css">
 </head>
 <body>
@@ -25,74 +25,89 @@
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
         import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-        import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
         import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
-        import { DotScreenPass } from 'three/addons/postprocessing/DotScreenPass.js';
-        import { GlitchPass } from 'three/addons/postprocessing/GlitchPass.js';
+        import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
         import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 
-        const container = document.getElementById('threeContainer');
-
-        const params = {
-            particleCount: 1000,
-            lineDistance: 1000,
-            repulsionStrength: 5,
-            bloomStrength: 1.5,
-            bloomThreshold: 0,
-            bloomRadius: 0,
-            pixelSize: 1.0,
-            activateGlitch: false,
-            dotScale: 0.5,
-            activateDotScreen: false
-        };
-
+        // 场景设置
         window.scene = new THREE.Scene();
-        window.scene.background = new THREE.Color(0x000000);
-        window.scene.fog = new THREE.Fog(0x000000, 10, 2000);
+        window.scene.background = new THREE.Color(0x0a0a1a);
+        window.scene.fog = new THREE.Fog(0x0a0a1a, 10, 2000);
 
-        window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        window.camera.position.z = 1200;
+        window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
+        window.camera.position.z = 800;
 
         window.renderer = new THREE.WebGLRenderer({ antialias: true });
         window.renderer.setSize(window.innerWidth, window.innerHeight);
-        container.appendChild(window.renderer.domElement);
+        window.renderer.setPixelRatio(window.devicePixelRatio);
+        document.getElementById('threeContainer').appendChild(window.renderer.domElement);
 
         const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.enableDamping = true;
 
+        // 参数
+        const params = {
+            particleCount: 800,
+            lineDistance: 150,
+            repulsionStrength: 5,
+            bloomStrength: 1.5,
+            bloomThreshold: 0,
+            bloomRadius: 0.4,
+            pixelSize: 1.0,
+            rotationSpeed: 0.005
+        };
+
+        // 创建粒子
         const geometry = new THREE.BufferGeometry();
         const positions = new Float32Array(params.particleCount * 3);
-        for (let i = 0; i < positions.length; i++) {
-            positions[i] = (Math.random() * 2 - 1) * 500;
+        const colors = new Float32Array(params.particleCount * 3);
+
+        for (let i = 0; i < params.particleCount; i++) {
+            positions[i * 3] = (Math.random() - 0.5) * 1000;
+            positions[i * 3 + 1] = (Math.random() - 0.5) * 1000;
+            positions[i * 3 + 2] = (Math.random() - 0.5) * 1000;
+
+            const color = new THREE.Color();
+            color.setHSL(Math.random(), 1.0, 0.7);
+            colors[i * 3] = color.r;
+            colors[i * 3 + 1] = color.g;
+            colors[i * 3 + 2] = color.b;
         }
+
         geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
-        function getRandomColor() {
-            return `hsl(${Math.random() * 360}, 100%, 80%)`;
-        }
+        const material = new THREE.PointsMaterial({ 
+            size: 8, 
+            vertexColors: true,
+            fog: true,
+            transparent: true,
+            opacity: 0.8
+        });
 
-        const material = new THREE.PointsMaterial({ color: getRandomColor(), size: 10, fog: true });
         const particles = new THREE.Points(geometry, material);
         window.scene.add(particles);
 
-        const lineMaterial = new THREE.LineBasicMaterial({ color: getRandomColor(), linewidth: 0.25, fog: true });
+        // 创建连线
+        const lineMaterial = new THREE.LineBasicMaterial({ 
+            color: 0x4488ff, 
+            linewidth: 1,
+            transparent: true,
+            opacity: 0.3,
+            fog: true 
+        });
+
         const lines = new THREE.LineSegments(new THREE.BufferGeometry(), lineMaterial);
         window.scene.add(lines);
 
+        // 鼠标位置
         const mouse = new THREE.Vector2();
+        const raycaster = new THREE.Raycaster();
 
-        window.addEventListener('mousemove', (event) => {
-            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-        });
-
-        window.addEventListener('dblclick', () => {
-            material.color.set(getRandomColor());
-            lineMaterial.color.set(getRandomColor());
-        });
-
-        const renderScene = new RenderPass(window.scene, window.camera);
-        window.composer = new EffectComposer(window.renderer);
-        window.composer.addPass(renderScene);
+        // 后期处理
+        const composer = new EffectComposer(window.renderer);
+        const renderPass = new RenderPass(window.scene, window.camera);
+        composer.addPass(renderPass);
 
         const bloomPass = new UnrealBloomPass(
             new THREE.Vector2(window.innerWidth, window.innerHeight),
@@ -100,13 +115,14 @@
             params.bloomRadius,
             params.bloomThreshold
         );
-        window.composer.addPass(bloomPass);
+        composer.addPass(bloomPass);
 
+        // 像素化效果
         const pixelationShader = {
             uniforms: {
-                'tDiffuse': { value: null },
-                'resolution': { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
-                'pixelSize': { value: 1.0 }
+                tDiffuse: { value: null },
+                resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+                pixelSize: { value: params.pixelSize }
             },
             vertexShader: `
                 varying vec2 vUv;
@@ -129,126 +145,154 @@
         };
 
         const pixelPass = new ShaderPass(pixelationShader);
-        window.composer.addPass(pixelPass);
+        pixelPass.enabled = false;
+        composer.addPass(pixelPass);
 
-        const glitchPass = new GlitchPass();
-        glitchPass.enabled = false;
-        window.composer.addPass(glitchPass);
-
-        const dotScreenPass = new DotScreenPass(new THREE.Vector2(0.5, 0.5), 0.5, 0.8);
-        dotScreenPass.enabled = false;
-        window.composer.addPass(dotScreenPass);
-
+        // GUI 控制
         const gui = new GUI();
-        gui.domElement.style.position = 'absolute';
-        gui.domElement.style.top = '50px';
-        gui.domElement.style.right = '10px';
-        gui.domElement.style.zIndex = '1000';
+        gui.domElement.style.marginTop = '50px';
 
-        gui.add(params, 'lineDistance', 500, 1000);
-        gui.add(params, 'repulsionStrength', 1, 10);
-        gui.add(params, 'bloomStrength', 0, 3).name('Bloom Strength').onChange(updateBloom);
-        gui.add(params, 'bloomRadius', 0, 1).name('Bloom Radius').onChange(updateBloom);
-        gui.add(params, 'bloomThreshold', 0, 1).name('Bloom Threshold').onChange(updateBloom);
-        gui.add(params, 'pixelSize', 1.0, 30.0).name('Pixel Size').onChange((value) => {
+        gui.add(params, 'lineDistance', 50, 300).name('连线距离');
+        gui.add(params, 'repulsionStrength', 1, 20).name('排斥强度');
+        gui.add(params, 'rotationSpeed', 0, 0.02).name('旋转速度');
+
+        const bloomFolder = gui.addFolder('辉光效果');
+        bloomFolder.add(params, 'bloomStrength', 0, 3).name('强度').onChange(value => {
+            bloomPass.strength = value;
+        });
+        bloomFolder.add(params, 'bloomRadius', 0, 1).name('半径').onChange(value => {
+            bloomPass.radius = value;
+        });
+        bloomFolder.add(params, 'bloomThreshold', 0, 1).name('阈值').onChange(value => {
+            bloomPass.threshold = value;
+        });
+
+        const pixelFolder = gui.addFolder('像素化');
+        pixelFolder.add(pixelPass, 'enabled').name('启用');
+        pixelFolder.add(params, 'pixelSize', 1, 30).name('像素大小').onChange(value => {
             pixelPass.uniforms.pixelSize.value = value;
         });
-        gui.add(params, 'activateDotScreen').name('Activate Dot Screen').onChange((value) => {
-            dotScreenPass.enabled = value;
-        });
-        gui.add(params, 'dotScale', 0.1, 1.5).name('Dot Scale').onChange((value) => {
-            if (dotScreenPass) {
-                dotScreenPass.uniforms['scale'].value = value;
-            }
-        });
-        gui.add(params, 'activateGlitch').name('Activate Glitch').onChange((value) => {
-            glitchPass.enabled = value;
-        });
 
-        function updateBloom() {
-            bloomPass.strength = params.bloomStrength;
-            bloomPass.threshold = params.bloomThreshold;
-            bloomPass.radius = params.bloomRadius;
+        // 双击切换颜色
+        function changeColor() {
+            const newColors = new Float32Array(params.particleCount * 3);
+            for (let i = 0; i < params.particleCount; i++) {
+                const color = new THREE.Color();
+                color.setHSL(Math.random(), 1.0, 0.7);
+                newColors[i * 3] = color.r;
+                newColors[i * 3 + 1] = color.g;
+                newColors[i * 3 + 2] = color.b;
+            }
+            geometry.attributes.color.array = newColors;
+            geometry.attributes.color.needsUpdate = true;
+            
+            const lineHue = Math.random();
+            lineMaterial.color.setHSL(lineHue, 1.0, 0.6);
         }
 
+        window.addEventListener('dblclick', changeColor);
+
+        // 鼠标移动
+        function onMouseMove(event) {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        }
+
+        window.addEventListener('mousemove', onMouseMove);
+
+        // 窗口大小变化
         window.addEventListener('resize', () => {
-            const w = window.innerWidth;
-            const h = window.innerHeight;
-            window.camera.aspect = w / h;
+            window.camera.aspect = window.innerWidth / window.innerHeight;
             window.camera.updateProjectionMatrix();
-            window.renderer.setSize(w, h);
-            window.composer.setSize(w, h);
-            pixelPass.uniforms.resolution.value.set(w, h);
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+            pixelPass.uniforms.resolution.value.set(window.innerWidth, window.innerHeight);
         });
 
+        // 动画循环
         function animate() {
+            requestAnimationFrame(animate);
+
             const positions = particles.geometry.attributes.position.array;
             const linePositions = [];
-            for (let i = 0; i < positions.length; i += 3) {
-                const dx = positions[i] - mouse.x * 500;
-                const dy = positions[i + 1] - mouse.y * 500;
-                const dz = positions[i + 2];
+
+            // 计算鼠标在3D空间中的位置
+            raycaster.setFromCamera(mouse, window.camera);
+            const mousePoint = new THREE.Vector3();
+            const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+            raycaster.ray.intersectPlane(plane, mousePoint);
+
+            // 将鼠标点转换到粒子系统的局部坐标系（考虑旋转）
+            const inverseRotation = new THREE.Matrix4();
+            inverseRotation.makeRotationY(-particles.rotation.y);
+            const localMousePoint = mousePoint.clone().applyMatrix4(inverseRotation);
+
+            for (let i = 0; i < params.particleCount; i++) {
+                const px = positions[i * 3];
+                const py = positions[i * 3 + 1];
+                const pz = positions[i * 3 + 2];
+
+                // 使用局部坐标系的鼠标点计算距离
+                const dx = px - localMousePoint.x;
+                const dy = py - localMousePoint.y;
+                const dz = pz - localMousePoint.z;
                 const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+                // 创建连线（使用世界坐标的鼠标点）
                 if (distance < params.lineDistance) {
-                    linePositions.push(positions[i], positions[i + 1], positions[i + 2]);
-                    linePositions.push(mouse.x * 500, mouse.y * 500, 0);
+                    linePositions.push(px, py, pz);
+                    linePositions.push(localMousePoint.x, localMousePoint.y, localMousePoint.z);
                 }
-                if (distance < 50) {
-                    positions[i] += dx / distance * params.repulsionStrength;
-                    positions[i + 1] += dy / distance * params.repulsionStrength;
+
+                // 排斥效果
+                if (distance < 80 && distance > 0) {
+                    positions[i * 3] += dx / distance * params.repulsionStrength * 0.1;
+                    positions[i * 3 + 1] += dy / distance * params.repulsionStrength * 0.1;
                 }
+
+                // 边界限制
+                const limit = 600;
+                if (Math.abs(positions[i * 3]) > limit) positions[i * 3] *= 0.9;
+                if (Math.abs(positions[i * 3 + 1]) > limit) positions[i * 3 + 1] *= 0.9;
+                if (Math.abs(positions[i * 3 + 2]) > limit) positions[i * 3 + 2] *= 0.9;
             }
+
             lines.geometry.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
-            lines.geometry.computeBoundingSphere();
+            lines.geometry.attributes.position.needsUpdate = true;
             particles.geometry.attributes.position.needsUpdate = true;
 
-            particles.rotation.x += 0.01;
-            lines.rotation.x += 0.01;
+            // 旋转
+            particles.rotation.y += params.rotationSpeed;
+            lines.rotation.y = particles.rotation.y;
 
             controls.update();
-            window.composer.render();
+            composer.render();
         }
 
-        window.renderer.setAnimationLoop(animate);
+        animate();
     </script>
 
     <script>
         window.addEventListener('message', function(event) {
             if (event.data && event.data.type === 'take-screenshot') {
                 try {
-                    if (window.scene && window.camera) {
-                        if (window.composer) {
-                            window.composer.render();
-                        } else if (window.renderer) {
-                            window.renderer.render(window.scene, window.camera);
-                        }
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
                     }
-
                     const quality = event.data.quality || 0.8;
-                    const canvas = window.composer ? window.composer.renderer.domElement : window.renderer.domElement;
-
+                    const canvas = window.renderer.domElement;
                     const tempCanvas = document.createElement('canvas');
                     const maxSize = 600;
-
                     const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
                     tempCanvas.width = Math.floor(canvas.width * scale);
                     tempCanvas.height = Math.floor(canvas.height * scale);
-
                     const ctx = tempCanvas.getContext('2d');
                     ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
-
                     const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
-
-                    window.parent.postMessage({
-                        type: 'screenshot-data',
-                        dataUrl: dataUrl
-                    }, '*');
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
                 } catch (error) {
                     console.error('截图失败:', error);
-                    window.parent.postMessage({
-                        type: 'screenshot-error',
-                        error: error.message
-                    }, '*');
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
                 }
             }
         });
