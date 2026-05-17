@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="使用Three.js创建朋克风城市效果，通过CanvasTexture创建环绕文字和程序化生成建筑">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 朋克风</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        const container = document.getElementById('threeContainer');
+
+        // 创建场景
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x0a0a1a);
+
+        // 创建相机
+        window.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        window.camera.position.set(-1, 0.5, 1);
+        window.camera.position.setLength(75);
+
+        // 创建渲染器
+        window.renderer = new THREE.WebGLRenderer({ antialias: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        window.renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(window.renderer.domElement);
+
+        // 创建控制器
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.target.set(0, 12, 0);
+        controls.enableDamping = true;
+        controls.autoRotate = true;
+        controls.update();
+
+        // 添加灯光
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 3);
+        directionalLight.position.set(1, 1, 1);
+        window.scene.add(directionalLight);
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        window.scene.add(ambientLight);
+
+        // 参数
+        const params = {
+            text: "Welcome to Three.js",
+            ringColor: '#ff00ff',
+            textColor: '#00ffff',
+            buildingColor: 0x7f7f7f,
+            autoRotate: true,
+            scrollSpeed: 0.125
+        };
+
+        let cnvTexture;
+        let ringMesh;
+        const clock = new THREE.Clock();
+
+        // 创建建筑
+        function createBuildings() {
+            const geometry = new THREE.BoxGeometry();
+            geometry.translate(0, 0.5, 0);
+            const material = new THREE.MeshLambertMaterial({ color: params.buildingColor });
+
+            for (let z = -5; z < 5; z++) {
+                for (let x = -5; x < 5; x++) {
+                    const mesh = new THREE.Mesh(geometry, material);
+                    mesh.position.set(x, 0, z).multiplyScalar(4);
+                    mesh.rotation.y = Math.random() * Math.PI;
+                    
+                    const posLen = mesh.position.length();
+                    let posScale = 1 - THREE.MathUtils.clamp(posLen / 50, 0, 1);
+                    posScale = Math.pow(posScale, 4);
+                    
+                    mesh.scale.set(
+                        THREE.MathUtils.randInt(1, 4),
+                        1 + Math.floor(Math.random() * posScale * 75),
+                        THREE.MathUtils.randInt(1, 4)
+                    );
+                    
+                    if (posLen <= 25) {
+                        window.scene.add(mesh);
+                    }
+                }
+            }
+        }
+
+        // 创建环绕文字环
+        function createRingLetter() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1024;
+            canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+            
+            // 填充背景色
+            ctx.fillStyle = params.ringColor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 清除中间区域
+            ctx.clearRect(0, 10, canvas.width, canvas.height - 20);
+            
+            // 绘制文字
+            ctx.textBaseline = 'middle';
+            ctx.textAlign = 'center';
+            ctx.fillStyle = params.textColor;
+            ctx.font = 'bold 80px Arial';
+            ctx.fillText(params.text, canvas.width * 0.5, canvas.height * 0.5);
+            
+            cnvTexture = new THREE.CanvasTexture(canvas);
+            cnvTexture.wrapS = THREE.RepeatWrapping;
+            cnvTexture.wrapT = THREE.RepeatWrapping;
+            cnvTexture.repeat.set(3, 1);
+            
+            const geometry = new THREE.CylinderGeometry(25, 25, 5, 72, 1, true);
+            const material = new THREE.MeshBasicMaterial({ 
+                alphaTest: 0.5, 
+                side: THREE.DoubleSide, 
+                map: cnvTexture 
+            });
+            
+            ringMesh = new THREE.Mesh(geometry, material);
+            ringMesh.position.y = 25;
+            window.scene.add(ringMesh);
+        }
+
+        // 初始化
+        createBuildings();
+        createRingLetter();
+
+        // 创建GUI
+        const gui = new GUI();
+        gui.domElement.style.top = '50px';
+
+        const folder = gui.addFolder('朋克风参数');
+        folder.add(params, 'text').name('环绕文字').onChange(updateRingText);
+        folder.addColor(params, 'ringColor').name('背景色').onChange(updateRingText);
+        folder.addColor(params, 'textColor').name('文字色').onChange(updateRingText);
+        folder.add(params, 'scrollSpeed', 0, 0.5, 0.01).name('滚动速度');
+        folder.add(params, 'autoRotate').name('自动旋转').onChange((v) => {
+            controls.autoRotate = v;
+        });
+
+        // 更新环绕文字
+        function updateRingText() {
+            if (!cnvTexture) return;
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = 1024;
+            canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+            
+            ctx.fillStyle = params.ringColor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.clearRect(0, 10, canvas.width, canvas.height - 20);
+            
+            ctx.textBaseline = 'middle';
+            ctx.textAlign = 'center';
+            ctx.fillStyle = params.textColor;
+            ctx.font = 'bold 80px Arial';
+            ctx.fillText(params.text, canvas.width * 0.5, canvas.height * 0.5);
+            
+            cnvTexture.image = canvas;
+            cnvTexture.needsUpdate = true;
+        }
+
+        // 动画循环
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            const dt = clock.getDelta();
+            
+            // 滚动文字纹理
+            if (cnvTexture) {
+                cnvTexture.offset.x += dt * params.scrollSpeed;
+            }
+            
+            controls.update();
+            window.renderer.render(window.scene, window.camera);
+        }
+        animate();
+
+        // 窗口大小调整
+        window.addEventListener('resize', () => {
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // 截图支持
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
