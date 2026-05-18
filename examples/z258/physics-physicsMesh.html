@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>物理引擎 Cannon-es - Physics Mesh</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            overflow: hidden;
+            background: #1a1a2e;
+        }
+        #threeContainer {
+            width: 100vw;
+            height: 100vh;
+        }
+        .info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            background: rgba(0,0,0,0.5);
+            padding: 10px;
+            border-radius: 5px;
+            font-family: Arial, sans-serif;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="threeContainer"></div>
+    <div class="info">Cannon-es 物理引擎演示 - 立方体下落</div>
+    
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.179.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.179.0/examples/jsm/",
+                "cannon-es": "https://unpkg.com/cannon-es@0.20.0/dist/cannon-es.js"
+            }
+        }
+    </script>
+    
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+        import * as CANNON from 'cannon-es';
+
+        const container = document.getElementById('threeContainer');
+        
+        // Scene setup
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x1a1a2e);
+
+        // Camera
+        window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        window.camera.position.set(0, 10, 10);
+
+        // Renderer
+        window.renderer = new THREE.WebGLRenderer({ antialias: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        window.renderer.shadowMap.enabled = true;
+        container.appendChild(window.renderer.domElement);
+
+        // Controls
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.enableDamping = true;
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        window.scene.add(ambientLight);
+
+        const pointLight = new THREE.PointLight(0xffffff, 3, 0);
+        pointLight.position.set(0, 10, 0);
+        pointLight.castShadow = true;
+        window.scene.add(pointLight);
+
+        // Axes helper
+        window.scene.add(new THREE.AxesHelper(10));
+
+        // Physics world
+        const world = new CANNON.World({ 
+            gravity: new CANNON.Vec3(0, -9.82, 0) 
+        });
+
+        // Physics bodies array
+        const physicsBodies = [];
+
+        // Create ground
+        const groundGeometry = new THREE.PlaneGeometry(20, 20);
+        const groundMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0x444444,
+            side: THREE.DoubleSide
+        });
+        const groundMesh = new THREE.Mesh(groundGeometry, groundMaterial);
+        groundMesh.rotation.x = -Math.PI / 2;
+        groundMesh.receiveShadow = true;
+        window.scene.add(groundMesh);
+
+        // Ground physics body (static)
+        const groundBody = new CANNON.Body({
+            mass: 0, // Static body
+            shape: new CANNON.Plane(),
+            position: new CANNON.Vec3(0, 0, 0)
+        });
+        groundBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0);
+        world.addBody(groundBody);
+
+        // Function to create physics body
+        function createPhysicsBody(mesh, mass, shape = null) {
+            const box = new THREE.Box3().setFromObject(mesh);
+            const { max, min } = box;
+            const center = new THREE.Vector3();
+            box.getCenter(center);
+
+            const physicsShape = shape || new CANNON.Box(
+                new CANNON.Vec3(
+                    (max.x - min.x) / 2,
+                    (max.y - min.y) / 2,
+                    (max.z - min.z) / 2
+                )
+            );
+
+            const body = new CANNON.Body({
+                mass: mass,
+                shape: physicsShape,
+                position: new CANNON.Vec3(center.x, center.y, center.z)
+            });
+
+            world.addBody(body);
+            
+            physicsBodies.push({
+                mesh: mesh,
+                body: body
+            });
+
+            return body;
+        }
+
+        // Create falling cube
+        function createCube(x, y, z) {
+            const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
+            const cubeMaterial = new THREE.MeshStandardMaterial({ 
+                color: Math.random() * 0xffffff 
+            });
+            const cubeMesh = new THREE.Mesh(cubeGeometry, cubeMaterial);
+            cubeMesh.position.set(x, y, z);
+            cubeMesh.castShadow = true;
+            cubeMesh.receiveShadow = true;
+            window.scene.add(cubeMesh);
+
+            createPhysicsBody(cubeMesh, 1);
+        }
+
+        // Create initial cube
+        createCube(0, 5, 0);
+
+        // GUI
+        const gui = new GUI();
+        gui.domElement.style.top='50px';
+        const settings = {
+            gravity: -9.82,
+            addCube: () => {
+                const x = (Math.random() - 0.5) * 5;
+                const z = (Math.random() - 0.5) * 5;
+                const y = 5 + Math.random() * 5;
+                createCube(x, y, z);
+            },
+            reset: () => {
+                // Remove all dynamic bodies
+                physicsBodies.forEach(({ mesh, body }) => {
+                    world.removeBody(body);
+                    window.scene.remove(mesh);
+                });
+                physicsBodies.length = 0;
+                
+                // Create new cube
+                createCube(0, 5, 0);
+            }
+        };
+
+        gui.add(settings, 'gravity', -20, 0).name('重力').onChange((value) => {
+            world.gravity.set(0, value, 0);
+        });
+        gui.add(settings, 'addCube').name('添加立方体');
+        gui.add(settings, 'reset').name('重置');
+
+        // Physics update function
+        function updatePhysics(deltaTime) {
+            world.step(1 / 60, deltaTime, 3);
+
+            // Sync mesh position with physics body
+            physicsBodies.forEach(({ mesh, body }) => {
+                mesh.position.copy(body.position);
+                mesh.quaternion.copy(body.quaternion);
+            });
+        }
+
+        // Screenshot support
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    window.renderer.render(window.scene, window.camera);
+                    const dataUrl = window.renderer.domElement.toDataURL('image/jpeg', event.data.quality || 0.8);
+                    window.parent.postMessage({
+                        type: 'screenshot-data',
+                        dataUrl: dataUrl
+                    }, '*');
+                } catch (error) {
+                    console.error('Screenshot failed:', error);
+                }
+            }
+        });
+
+        // Window resize
+        window.addEventListener('resize', onWindowResize);
+
+        function onWindowResize() {
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // Animation loop
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const deltaTime = clock.getDelta();
+            updatePhysics(deltaTime);
+
+            controls.update();
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
