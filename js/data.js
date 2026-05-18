@@ -327,6 +327,15 @@ const threejsData = {
               version: "r179",
               url: "examples/z258/basic-screenShot",
             },
+            {
+              id: "basic-modelAnimation",
+              title: "模型动画",
+              description:
+                "展示GLTF模型动画加载与混合，支持待机、行走、跑步三种动作状态切换和过渡",
+              thumbnail: "images/basic-modelAnimation.jpg",
+              version: "r179",
+              url: "examples/z258/basic-modelAnimation",
+            },
           ],
         },
       ],
@@ -591,6 +600,14 @@ const threejsData = {
               thumbnail: "images/animation-theatrejs.jpg",
               version: "r179",
               url: "examples/z258/animation-theatrejs",
+            },
+            {
+              id: "animation-personAnimation",
+              title: "点击第三人称移动",
+              description: "点击地面控制角色移动，相机自动跟随，展示第三人称角色控制",
+              thumbnail: "images/animation-personAnimation.jpg",
+              version: "r179",
+              url: "examples/z258/animation-personAnimation",
             },
             {
               id: "animation-inspectionView",
@@ -1022,6 +1039,15 @@ const threejsData = {
               thumbnail: "images/shader-audioDance.jpg",
               version: "r179",
               url: "examples/z258/shader-audioDance",
+            },
+            {
+              id: "shader-audioSolutions",
+              title: "音乐可视化",
+              description:
+                "3D球体音频可视化效果，使用Simplex噪声根据音频频率实时变形球体表面",
+              thumbnail: "images/shader-audioSolutions.jpg",
+              version: "r179",
+              url: "examples/z258/shader-audioSolutions",
             },
             {
               id: "shader-circleWave",
@@ -1795,6 +1821,14 @@ const threejsData = {
               version: "r179",
               url: "examples/z258/physics-ammoPhysics",
             },
+            {
+              id: "physics-physicsMesh",
+              title: "Cannon-es物理",
+              description: "使用Cannon-es物理引擎实现刚体动力学模拟，支持重力调节和动态添加物体",
+              thumbnail: "images/physics-physicsMesh.jpg",
+              version: "r179",
+              url: "examples/z258/physics-physicsMesh",
+            },
           ],
         },
         {
@@ -2102,6 +2136,14 @@ const threejsData = {
               thumbnail: "images/advanced-physics-ammo.jpg",
               version: "r150",
               url: "examples/advanced-physics-ammo",
+            },
+            {
+              id: "expand-heatmap3D",
+              title: "3D热力图",
+              description: "使用heatmap.js生成热力图纹理，通过着色器实现3D高度可视化",
+              thumbnail: "images/expand-heatmap3D.jpg",
+              version: "r179",
+              url: "examples/z258/expand-heatmap3D",
             },
           ],
         },

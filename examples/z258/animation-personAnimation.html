@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>点击第三人称移动 - Person Animation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            overflow: hidden;
+            background: #1a1a2e;
+        }
+        #threeContainer {
+            width: 100vw;
+            height: 100vh;
+        }
+        .info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            background: rgba(0,0,0,0.5);
+            padding: 10px;
+            border-radius: 5px;
+            font-family: Arial, sans-serif;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="threeContainer"></div>
+    <div class="info">点击地面移动角色</div>
+    
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.179.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.179.0/examples/jsm/"
+            }
+        }
+    </script>
+    
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        const container = document.getElementById('threeContainer');
+        
+        // Scene setup
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0xa0a0a0);
+        window.scene.fog = new THREE.Fog(0xa0a0a0, 10, 50);
+
+        // Camera
+        window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        window.camera.position.set(5, 5, 5);
+
+        // Renderer
+        window.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, logarithmicDepthBuffer: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        window.renderer.shadowMap.enabled = true;
+        container.appendChild(window.renderer.domElement);
+
+        // Controls
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.enableDamping = true;
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 4);
+        window.scene.add(ambientLight);
+
+        const dirLight = new THREE.DirectionalLight(0xffffff, 2);
+        dirLight.position.set(10, 20, 10);
+        dirLight.castShadow = true;
+        window.scene.add(dirLight);
+
+        // Grid
+        const gridHelper = new THREE.GridHelper(40, 20);
+        window.scene.add(gridHelper);
+
+        // Ground plane for shadows
+        const planeGeometry = new THREE.PlaneGeometry(100, 100);
+        const planeMaterial = new THREE.MeshStandardMaterial({ color: 0x888888 });
+        const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+        plane.rotation.x = -Math.PI / 2;
+        plane.receiveShadow = true;
+        window.scene.add(plane);
+
+        // Variables
+        let group = null;
+        let mixer = null;
+        let clock = new THREE.Clock();
+        let currentAction = null;
+        let mixerAnimateRender = null;
+
+        // Raycaster
+        const raycaster = new THREE.Raycaster();
+        const targetPosition = new THREE.Vector3();
+        const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+
+        // GSAP-like animation
+        let oldAnimation = null;
+
+        // Load Soldier model
+        const loader = new GLTFLoader();
+        loader.load(
+            '../../models/gltf/Soldier.glb',
+            (gltf) => {
+                group = gltf.scene;
+                window.scene.add(group);
+
+                // Enable shadows
+                group.traverse((child) => {
+                    if (child.isMesh) {
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                    }
+                });
+
+                // Setup animation
+                mixer = new THREE.AnimationMixer(group);
+                mixerAnimateRender = () => mixer.update(clock.getDelta());
+                
+                // Walk animation (index 3)
+                currentAction = mixer.clipAction(gltf.animations[3]);
+                currentAction.play();
+                currentAction.paused = true;
+            },
+            undefined,
+            (error) => {
+                console.error('Error loading model:', error);
+            }
+        );
+
+        // Click event
+        container.addEventListener('click', (event) => {
+            if (!group) return;
+
+            const mouse = new THREE.Vector2(
+                (event.offsetX / container.clientWidth) * 2 - 1,
+                -(event.offsetY / container.clientHeight) * 2 + 1
+            );
+
+            raycaster.setFromCamera(mouse, window.camera);
+            raycaster.ray.intersectPlane(groundPlane, targetPosition);
+
+            // Add target marker
+            const marker = new THREE.Mesh(
+                new THREE.BoxGeometry(0.1, 0.1, 0.1),
+                new THREE.MeshBasicMaterial({ color: 0xff0000 })
+            );
+            marker.position.copy(targetPosition);
+            window.scene.add(marker);
+
+            // Remove marker after animation
+            setTimeout(() => {
+                window.scene.remove(marker);
+            }, 2000);
+
+            goToPosition(group, targetPosition);
+        });
+
+        function goToPosition(group, targetPos) {
+            if (oldAnimation) {
+                cancelAnimationFrame(oldAnimation);
+            }
+
+            const startPos = group.position.clone();
+            const distance = startPos.distanceTo(targetPos);
+            
+            if (distance < 0.1) return;
+
+            // Calculate direction
+            const direction = new THREE.Vector3().subVectors(targetPos, startPos).normalize();
+            
+            // Rotate to face target
+            const angle = Math.atan2(direction.x, direction.z);
+            group.rotation.y = angle + Math.PI;
+
+            // Camera offset
+            const cameraOffset = window.camera.position.clone().sub(group.position);
+            
+            // Animation parameters
+            const speed = 3;
+            const duration = distance / speed;
+            let elapsed = 0;
+
+            // Start walking animation
+            currentAction.paused = false;
+            currentAction.play();
+            controls.enabled = false;
+
+            function animateMove() {
+                const delta = clock.getDelta();
+                elapsed += delta;
+
+                if (elapsed >= duration) {
+                    // Arrived
+                    group.position.copy(targetPos);
+                    currentAction.paused = true;
+                    controls.enabled = true;
+                    return;
+                }
+
+                // Update position
+                const t = elapsed / duration;
+                group.position.lerpVectors(startPos, targetPos, t);
+
+                // Update animation - 每帧更新动画
+                if (mixer) {
+                    mixer.update(delta);
+                }
+
+                // Camera follow
+                controls.target.copy(group.position);
+                const targetCamPos = group.position.clone().add(cameraOffset);
+                window.camera.position.lerp(targetCamPos, 0.1);
+
+                oldAnimation = requestAnimationFrame(animateMove);
+            }
+
+            animateMove();
+        }
+
+        // Screenshot support
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    window.renderer.render(window.scene, window.camera);
+                    const dataUrl = window.renderer.domElement.toDataURL('image/jpeg', event.data.quality || 0.8);
+                    window.parent.postMessage({
+                        type: 'screenshot-data',
+                        dataUrl: dataUrl
+                    }, '*');
+                } catch (error) {
+                    console.error('Screenshot failed:', error);
+                }
+            }
+        });
+
+        // Window resize
+        window.addEventListener('resize', onWindowResize);
+
+        function onWindowResize() {
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (mixer && group) {
+                // Update idle animation
+                if (currentAction && currentAction.paused) {
+                    mixer.update(clock.getDelta());
+                }
+            }
+
+            controls.update();
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
