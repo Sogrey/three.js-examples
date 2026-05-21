@@ -226,25 +226,29 @@
             canvas.height = 64;
             const ctx = canvas.getContext('2d');
             
-            // 渐变背景
-            const gradient = ctx.createLinearGradient(0, 0, 512, 0);
-            for (let i = 0; i <= 20; i++) {
-                const pos = i / 20;
-                const alpha = i % 2 === 0 ? 1 : 0.3;
-                gradient.addColorStop(pos, `rgba(255, 255, 255, ${alpha})`);
-            }
-            
-            ctx.fillStyle = gradient;
+            // 黑色背景
+            ctx.fillStyle = '#000000';
             ctx.fillRect(0, 0, 512, 64);
             
-            // 添加发光效果
-            ctx.shadowColor = 'rgba(0, 255, 255, 0.8)';
-            ctx.shadowBlur = 20;
+            // 创建多个发光条纹
+            for (let i = 0; i < 8; i++) {
+                const x = (i / 8) * 512;
+                const width = 30;
+                
+                // 渐变条纹
+                const gradient = ctx.createLinearGradient(x, 0, x + width, 0);
+                gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+                gradient.addColorStop(0.5, 'rgba(255, 255, 255, 1)');
+                gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                
+                ctx.fillStyle = gradient;
+                ctx.fillRect(x, 0, width, 64);
+            }
             
             const texture = new THREE.CanvasTexture(canvas);
             texture.wrapS = THREE.RepeatWrapping;
             texture.wrapT = THREE.RepeatWrapping;
-            texture.repeat.set(200, 1);
+            texture.repeat.set(100, 1);
             return texture;
         }
 
