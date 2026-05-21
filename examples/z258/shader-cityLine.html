@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Three.js城市线条示例 - EdgesGeometry边缘线效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 城市线条</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        const container = document.getElementById('threeContainer');
+
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color('#32373E');
+
+        window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000000);
+        window.camera.position.set(600, 750, -1221);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        window.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        window.renderer.setClearColor(new THREE.Color('#32373E'), 1);
+        container.appendChild(window.renderer.domElement);
+
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.enableDamping = true;
+
+        // 灯光
+        const light = new THREE.AmbientLight(0xadadad, 3);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
+        directionalLight.position.set(100, 100, 0);
+        window.scene.add(light);
+        window.scene.add(directionalLight);
+
+        // 城市类
+        class City {
+            constructor() {
+                this.fbxLoader = new FBXLoader();
+                this.group = new THREE.Group();
+                this.clock = new THREE.Clock();
+                this.surroundLineMaterial = null;
+                this.time = { value: 0 };
+                this.startTime = { value: 0 };
+                this.startLength = { value: 2 };
+                this.isStart = false;
+
+                // 材质参数
+                this.params = {
+                    buildingColor: '#9370DB',
+                    groundColor: '#040912',
+                    lineColor: '#FFFFFF'
+                };
+
+                this.fbxLoader.load('../../models/fbx/shanghai.FBX', (group) => {
+                    this.group.add(group);
+                    group.traverse((child) => {
+                        // 设置城市建筑材质
+                        if (child.name === 'CITY_UNTRIANGULATED') {
+                            const materials = Array.isArray(child.material) ? child.material : [child.material];
+                            materials.forEach((material) => {
+                                material.transparent = true;
+                                material.color.setStyle(this.params.buildingColor);
+                            });
+                        }
+
+                        // 设置城市地面材质
+                        if (child.name === 'LANDMASS') {
+                            const materials = Array.isArray(child.material) ? child.material : [child.material];
+                            materials.forEach((material) => {
+                                material.transparent = true;
+                                material.color.setStyle(this.params.groundColor);
+                            });
+                        }
+                    });
+
+                    this.init();
+                }, undefined, (error) => {
+                    console.error('模型加载失败:', error);
+                });
+            }
+
+            init() {
+                this.isStart = true;
+                this.clock.start();
+                this.surroundLine();
+                this.setupGUI();
+            }
+
+            surroundLine() {
+                let cityBuildings;
+                this.group.traverse(child => {
+                    if (child.name !== 'CITY_UNTRIANGULATED') return;
+                    cityBuildings = child;
+                });
+
+                if (!cityBuildings) return;
+
+                const geometry = new THREE.EdgesGeometry(cityBuildings.geometry);
+                this.surroundLineMaterial = new THREE.ShaderMaterial({
+                    transparent: true,
+                    uniforms: {
+                        uColor: {
+                            value: new THREE.Color(this.params.lineColor)
+                        }
+                    },
+                    vertexShader: `
+                        void main() {
+                            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                        }
+                    `,
+                    fragmentShader: `
+                        uniform vec3 uColor;
+                        void main() {
+                            gl_FragColor = vec4(uColor, 1);
+                        }
+                    `
+                });
+
+                const line = new THREE.LineSegments(geometry, this.surroundLineMaterial);
+                line.name = 'surroundLine';
+                line.applyMatrix4(cityBuildings.matrix.clone());
+                cityBuildings.parent.add(line);
+            }
+
+            setupGUI() {
+                const gui = new GUI();
+                gui.domElement.style.top = '50px';
+
+                const colorFolder = gui.addFolder('颜色设置');
+                
+                colorFolder.addColor(this.params, 'buildingColor').name('建筑颜色').onChange((v) => {
+                    this.group.traverse((child) => {
+                        if (child.name === 'CITY_UNTRIANGULATED') {
+                            const materials = Array.isArray(child.material) ? child.material : [child.material];
+                            materials.forEach((material) => {
+                                material.color.setStyle(v);
+                            });
+                        }
+                    });
+                });
+
+                colorFolder.addColor(this.params, 'groundColor').name('地面颜色').onChange((v) => {
+                    this.group.traverse((child) => {
+                        if (child.name === 'LANDMASS') {
+                            const materials = Array.isArray(child.material) ? child.material : [child.material];
+                            materials.forEach((material) => {
+                                material.color.setStyle(v);
+                            });
+                        }
+                    });
+                });
+
+                colorFolder.addColor(this.params, 'lineColor').name('线条颜色').onChange((v) => {
+                    if (this.surroundLineMaterial) {
+                        this.surroundLineMaterial.uniforms.uColor.value.set(v);
+                    }
+                });
+
+                colorFolder.open();
+            }
+
+            updateData() {
+                if (!this.isStart) return false;
+                const dt = this.clock.getDelta();
+                this.time.value += dt;
+                this.startTime.value += dt;
+                if (this.startTime.value >= this.startLength.value) {
+                    this.startTime.value = this.startLength.value;
+                }
+            }
+        }
+
+        // 实例化城市
+        const city = new City();
+        window.scene.add(city.group);
+
+        // 渲染
+        function animate() {
+            requestAnimationFrame(animate);
+            city.updateData();
+            controls.update();
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        animate();
+
+        window.addEventListener('resize', () => {
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+        });
+    </script>
+
+    <!-- 截图支持脚本 -->
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera) {
+                        if (window.composer) window.composer.render();
+                        else window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.composer ? window.composer.renderer.domElement : window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
