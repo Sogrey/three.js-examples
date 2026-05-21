@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="3D饼图示例，使用圆柱几何体创建可交互的3D饼图">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 3D饼图</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        const container = document.getElementById('threeContainer');
+
+        // 创建场景
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x1a1a2e);
+
+        // 创建相机
+        window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        window.camera.position.set(0, 15, 15);
+
+        // 创建渲染器
+        window.renderer = new THREE.WebGLRenderer({ antialias: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        window.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        window.renderer.shadowMap.enabled = true;
+        window.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        container.appendChild(window.renderer.domElement);
+
+        // 创建控制器
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.enableDamping = true;
+        controls.target.set(0, 0, 0);
+
+        // 添加光照
+        window.scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        dirLight.position.set(10, 20, 10);
+        dirLight.castShadow = true;
+        window.scene.add(dirLight);
+        
+        const fillLight = new THREE.DirectionalLight(0x8888ff, 0.4);
+        fillLight.position.set(-10, 10, -10);
+        window.scene.add(fillLight);
+
+        // 饼图数据
+        const pieData = [
+            { label: '产品A', value: 30, color: 0xFF6B6B },
+            { label: '产品B', value: 25, color: 0x4ECDC4 },
+            { label: '产品C', value: 20, color: 0x45B7D1 },
+            { label: '产品D', value: 15, color: 0xF7DC6F },
+            { label: '产品E', value: 10, color: 0xBB8FCE }
+        ];
+
+        // GUI 参数
+        const guiParams = {
+            radius: 5,
+            height: 2,
+            explode: 0.2,
+            rotationSpeed: 0.5,
+            showLabels: true,
+            autoRotate: true
+        };
+
+        // 创建GUI
+        const gui = new GUI();
+        gui.domElement.style.top = '50px';
+        gui.add(guiParams, 'radius', 2, 8).name('半径').onChange(updatePieChart);
+        gui.add(guiParams, 'height', 0.5, 4).name('高度').onChange(updatePieChart);
+        gui.add(guiParams, 'explode', 0, 1).name('分离距离').onChange(updatePieChart);
+        gui.add(guiParams, 'rotationSpeed', 0, 2).name('旋转速度');
+        gui.add(guiParams, 'showLabels').name('显示标签').onChange(updateLabels);
+        gui.add(guiParams, 'autoRotate').name('自动旋转');
+
+        let pieGroup = new THREE.Group();
+        let labelsGroup = new THREE.Group();
+        window.scene.add(pieGroup);
+        window.scene.add(labelsGroup);
+
+        // 创建饼图扇形
+        function createPieSlice(startAngle, endAngle, radius, height, color) {
+            const shape = new THREE.Shape();
+            const segments = 32;
+            
+            // 绘制扇形路径
+            shape.moveTo(0, 0);
+            for (let i = 0; i <= segments; i++) {
+                const angle = startAngle + (endAngle - startAngle) * (i / segments);
+                const x = Math.cos(angle) * radius;
+                const y = Math.sin(angle) * radius;
+                if (i === 0) {
+                    shape.lineTo(x, y);
+                } else {
+                    shape.lineTo(x, y);
+                }
+            }
+            shape.lineTo(0, 0);
+
+            const extrudeSettings = {
+                depth: height,
+                bevelEnabled: true,
+                bevelThickness: 0.05,
+                bevelSize: 0.05,
+                bevelSegments: 2
+            };
+
+            const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+            // 旋转使饼图平放
+            geometry.rotateX(-Math.PI / 2);
+            
+            const material = new THREE.MeshStandardMaterial({
+                color: color,
+                metalness: 0.3,
+                roughness: 0.4
+            });
+
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            
+            return mesh;
+        }
+
+        // 创建标签
+        function createLabel(text, position, color) {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = 256;
+            canvas.height = 64;
+            
+            context.fillStyle = 'rgba(0, 0, 0, 0.6)';
+            context.roundRect(0, 0, 256, 64, 10);
+            context.fill();
+            
+            context.font = 'bold 24px Arial';
+            context.fillStyle = '#ffffff';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.fillText(text, 128, 32);
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
+            const sprite = new THREE.Sprite(spriteMaterial);
+            sprite.position.copy(position);
+            sprite.scale.set(4, 1, 1);
+            
+            return sprite;
+        }
+
+        function updatePieChart() {
+            // 清除旧的饼图
+            while(pieGroup.children.length > 0) {
+                const child = pieGroup.children[0];
+                child.geometry.dispose();
+                child.material.dispose();
+                pieGroup.remove(child);
+            }
+            
+            // 清除旧的标签
+            while(labelsGroup.children.length > 0) {
+                labelsGroup.remove(labelsGroup.children[0]);
+            }
+
+            const total = pieData.reduce((sum, item) => sum + item.value, 0);
+            let currentAngle = 0;
+
+            pieData.forEach((item, index) => {
+                const angle = (item.value / total) * Math.PI * 2;
+                const startAngle = currentAngle;
+                const endAngle = currentAngle + angle;
+                const midAngle = startAngle + angle / 2;
+
+                // 创建扇形
+                const slice = createPieSlice(
+                    startAngle,
+                    endAngle,
+                    guiParams.radius,
+                    guiParams.height,
+                    item.color
+                );
+
+                // 计算分离位置
+                const explodeDistance = guiParams.explode;
+                const offsetX = Math.cos(midAngle) * explodeDistance;
+                const offsetZ = Math.sin(midAngle) * explodeDistance;
+                
+                slice.position.set(offsetX, 0, offsetZ);
+                slice.userData = { 
+                    originalPosition: new THREE.Vector3(offsetX, 0, offsetZ),
+                    midAngle: midAngle,
+                    data: item
+                };
+
+                pieGroup.add(slice);
+
+                // 创建标签
+                if (guiParams.showLabels) {
+                    const labelRadius = guiParams.radius + 1.5;
+                    const labelX = Math.cos(midAngle) * labelRadius;
+                    const labelZ = Math.sin(midAngle) * labelRadius;
+                    const labelY = guiParams.height / 2;
+                    
+                    const labelText = `${item.label}: ${item.value}%`;
+                    const label = createLabel(labelText, new THREE.Vector3(labelX, labelY, labelZ));
+                    labelsGroup.add(label);
+                }
+
+                currentAngle += angle;
+            });
+        }
+
+        function updateLabels() {
+            labelsGroup.visible = guiParams.showLabels;
+        }
+
+        // 初始化饼图
+        updatePieChart();
+
+        // 鼠标交互
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        let hoveredSlice = null;
+
+        function onMouseMove(event) {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        }
+
+        window.addEventListener('mousemove', onMouseMove);
+
+        // 动画循环
+        function animate() {
+            controls.update();
+
+            // 自动旋转
+            if (guiParams.autoRotate) {
+                pieGroup.rotation.y += guiParams.rotationSpeed * 0.01;
+                labelsGroup.rotation.y += guiParams.rotationSpeed * 0.01;
+            }
+
+            // 鼠标悬停效果
+            raycaster.setFromCamera(mouse, window.camera);
+            const intersects = raycaster.intersectObjects(pieGroup.children);
+
+            if (hoveredSlice && (!intersects.length || intersects[0].object !== hoveredSlice)) {
+                // 恢复原始位置
+                hoveredSlice.position.copy(hoveredSlice.userData.originalPosition);
+                hoveredSlice.material.emissive.setHex(0x000000);
+                hoveredSlice = null;
+                document.body.style.cursor = 'default';
+            }
+
+            if (intersects.length > 0) {
+                const slice = intersects[0].object;
+                if (slice !== hoveredSlice) {
+                    hoveredSlice = slice;
+                    // 抬高效果
+                    slice.position.y = 0.5;
+                    slice.material.emissive.setHex(0x333333);
+                    document.body.style.cursor = 'pointer';
+                }
+            }
+
+            // 标签始终面向相机
+            labelsGroup.children.forEach(label => {
+                label.lookAt(window.camera.position);
+            });
+
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        window.renderer.setAnimationLoop(animate);
+
+        // 窗口大小调整
+        window.addEventListener('resize', () => {
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+
+    <!-- 截图支持脚本 -->
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

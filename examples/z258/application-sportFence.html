@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="流动围栏示例，使用程序化纹理创建动态围栏效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 流动围栏</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        const container = document.getElementById('threeContainer');
+
+        // 创建场景
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x1a1a2e);
+
+        // 创建相机
+        window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100000);
+        window.camera.position.set(0, 50, 50);
+
+        // 创建渲染器
+        window.renderer = new THREE.WebGLRenderer({ antialias: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        window.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        container.appendChild(window.renderer.domElement);
+
+        // 创建控制器
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.enableDamping = true;
+
+        // 添加辅助元素
+        window.scene.add(new THREE.AxesHelper(100));
+        window.scene.add(new THREE.GridHelper(100, 10, 0x444444, 0x333333));
+
+        // GUI 参数
+        const guiParams = {
+            fenceColor: '#b9f9c3',
+            flowSpeed: 0.005,
+            fenceHeight: 20,
+            opacity: 0.8
+        };
+
+        // 创建GUI
+        const gui = new GUI();
+        gui.domElement.style.top = '50px';
+        gui.addColor(guiParams, 'fenceColor').name('围栏颜色').onChange(updateColor);
+        gui.add(guiParams, 'flowSpeed', 0, 0.02).name('流动速度');
+        gui.add(guiParams, 'fenceHeight', 5, 40).name('围栏高度').onChange(updateGeometry);
+        gui.add(guiParams, 'opacity', 0.1, 1).name('透明度').onChange(updateOpacity);
+
+        // 围栏点
+        const points = [
+            new THREE.Vector3(10, 0, 20),
+            new THREE.Vector3(25, 0, 0),
+            new THREE.Vector3(-30, 0, -20),
+            new THREE.Vector3(-20, 0, 30),
+        ];
+
+        let fence1, fence2;
+
+        // 创建围栏纹理 - 网格纹理
+        function createGridTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 64;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            
+            // 透明背景
+            ctx.fillStyle = 'rgba(0, 0, 0, 0)';
+            ctx.fillRect(0, 0, 64, 256);
+            
+            // 绘制网格线
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+            ctx.lineWidth = 2;
+            
+            // 垂直线
+            for (let i = 0; i <= 64; i += 16) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, 256);
+                ctx.stroke();
+            }
+            
+            // 水平线
+            for (let i = 0; i <= 256; i += 32) {
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(64, i);
+                ctx.stroke();
+            }
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            return texture;
+        }
+
+        // 创建流动线条纹理
+        function createLineTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 128;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            
+            // 黑色背景
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, 128, 256);
+            
+            // 绘制水平流动线条
+            for (let i = 0; i < 8; i++) {
+                const y = (i / 8) * 256;
+                const height = 8;
+                
+                const gradient = ctx.createLinearGradient(0, y, 0, y + height);
+                gradient.addColorStop(0, 'rgba(255, 255, 255, 0)');
+                gradient.addColorStop(0.5, 'rgba(255, 255, 255, 1)');
+                gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, y, 128, height);
+            }
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.x = 2;
+            return texture;
+        }
+
+        const gridTexture = createGridTexture();
+        const lineTexture = createLineTexture();
+
+        // 创建围栏几何体
+        function createFenceGeometry(points, height) {
+            const positions = [];
+            const uvs = [];
+            const indices = [];
+
+            let totalLength = 0;
+            for (let i = 0; i < points.length; i++) {
+                const current = points[i];
+                const next = points[(i + 1) % points.length];
+                totalLength += current.distanceTo(next);
+            }
+
+            let currentLength = 0;
+
+            for (let i = 0; i < points.length; i++) {
+                const current = points[i];
+                const next = points[(i + 1) % points.length];
+
+                const segmentLength = current.distanceTo(next);
+
+                positions.push(
+                    current.x, current.y, current.z,
+                    next.x, next.y, next.z
+                );
+
+                positions.push(
+                    next.x, current.y + height, next.z,
+                    current.x, current.y + height, current.z
+                );
+
+                const segmentUStart = currentLength / totalLength;
+                const segmentUEnd = (currentLength + segmentLength) / totalLength;
+                uvs.push(
+                    segmentUStart * 2, 0,
+                    segmentUEnd * 2, 0,
+                    segmentUEnd * 2, 1,
+                    segmentUStart * 2, 1
+                );
+
+                const vertexOffset = i * 4;
+                indices.push(
+                    vertexOffset, vertexOffset + 1, vertexOffset + 2,
+                    vertexOffset, vertexOffset + 2, vertexOffset + 3
+                );
+
+                currentLength += segmentLength;
+            }
+
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+            geometry.setIndex(indices);
+            geometry.computeVertexNormals();
+            return geometry;
+        }
+
+        function createFences() {
+            const fenceGeometry = createFenceGeometry(points, guiParams.fenceHeight);
+
+            // 第一层围栏 - 网格纹理
+            const material1 = new THREE.MeshBasicMaterial({
+                color: new THREE.Color(guiParams.fenceColor),
+                transparent: true,
+                side: THREE.DoubleSide,
+                map: gridTexture,
+                opacity: guiParams.opacity
+            });
+            fence1 = new THREE.Mesh(fenceGeometry, material1);
+            window.scene.add(fence1);
+
+            // 第二层围栏 - 线条纹理（流动效果）
+            const material2 = new THREE.MeshBasicMaterial({
+                color: new THREE.Color(guiParams.fenceColor),
+                map: lineTexture,
+                transparent: true,
+                side: THREE.DoubleSide,
+                opacity: guiParams.opacity,
+                depthWrite: false
+            });
+            fence2 = new THREE.Mesh(fenceGeometry.clone(), material2);
+            window.scene.add(fence2);
+        }
+
+        function updateColor() {
+            if (fence1) fence1.material.color.set(guiParams.fenceColor);
+            if (fence2) fence2.material.color.set(guiParams.fenceColor);
+        }
+
+        function updateOpacity() {
+            if (fence1) fence1.material.opacity = guiParams.opacity;
+            if (fence2) fence2.material.opacity = guiParams.opacity;
+        }
+
+        function updateGeometry() {
+            if (fence1) {
+                window.scene.remove(fence1);
+                fence1.geometry.dispose();
+            }
+            if (fence2) {
+                window.scene.remove(fence2);
+                fence2.geometry.dispose();
+            }
+            createFences();
+        }
+
+        // 初始化
+        createFences();
+
+        // 动画循环
+        function animate() {
+            controls.update();
+            
+            // 线条纹理流动
+            if (lineTexture) {
+                lineTexture.offset.y -= guiParams.flowSpeed;
+            }
+            
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        window.renderer.setAnimationLoop(animate);
+
+        // 窗口大小调整
+        window.addEventListener('resize', () => {
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+
+    <!-- 截图支持脚本 -->
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

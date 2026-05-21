@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="第三人称移动示例，使用程序化角色模型">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 第三人称移动</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+    <style>
+        .controls-info {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            background: rgba(0,0,0,0.6);
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 14px;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+    <div class="controls-info">WASD 移动，鼠标控制视角</div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        const container = document.getElementById('threeContainer');
+
+        // 创建场景
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x87CEEB);
+        window.scene.fog = new THREE.Fog(0x87CEEB, 20, 100);
+
+        // 创建相机
+        window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+        // 创建渲染器
+        window.renderer = new THREE.WebGLRenderer({ antialias: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        window.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        window.renderer.shadowMap.enabled = true;
+        container.appendChild(window.renderer.domElement);
+
+        // 添加光照
+        window.scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        dirLight.position.set(50, 100, 50);
+        dirLight.castShadow = true;
+        dirLight.shadow.camera.left = -50;
+        dirLight.shadow.camera.right = 50;
+        dirLight.shadow.camera.top = 50;
+        dirLight.shadow.camera.bottom = -50;
+        window.scene.add(dirLight);
+
+        // 创建地面
+        const groundGeometry = new THREE.PlaneGeometry(200, 200);
+        groundGeometry.rotateX(-Math.PI / 2);
+        const groundMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0x3a7a3a,
+            roughness: 0.8
+        });
+        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+        ground.receiveShadow = true;
+        window.scene.add(ground);
+
+        // 添加网格辅助
+        const gridHelper = new THREE.GridHelper(200, 40, 0x555555, 0x444444);
+        window.scene.add(gridHelper);
+
+        // 创建程序化角色
+        function createCharacter() {
+            const character = new THREE.Group();
+
+            // 身体
+            const bodyGeometry = new THREE.BoxGeometry(0.8, 1.2, 0.5);
+            const bodyMaterial = new THREE.MeshStandardMaterial({ color: 0x4488cc });
+            const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+            body.position.y = 1.4;
+            body.castShadow = true;
+            character.add(body);
+
+            // 头部
+            const headGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+            const headMaterial = new THREE.MeshStandardMaterial({ color: 0xffcc88 });
+            const head = new THREE.Mesh(headGeometry, headMaterial);
+            head.position.y = 2.3;
+            head.castShadow = true;
+            character.add(head);
+
+            // 左臂
+            const armGeometry = new THREE.BoxGeometry(0.25, 1, 0.25);
+            const armMaterial = new THREE.MeshStandardMaterial({ color: 0xffcc88 });
+            const leftArm = new THREE.Mesh(armGeometry, armMaterial);
+            leftArm.position.set(-0.6, 1.4, 0);
+            leftArm.castShadow = true;
+            character.add(leftArm);
+
+            // 右臂
+            const rightArm = new THREE.Mesh(armGeometry, armMaterial);
+            rightArm.position.set(0.6, 1.4, 0);
+            rightArm.castShadow = true;
+            character.add(rightArm);
+
+            // 左腿
+            const legGeometry = new THREE.BoxGeometry(0.3, 1, 0.3);
+            const legMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
+            const leftLeg = new THREE.Mesh(legGeometry, legMaterial);
+            leftLeg.position.set(-0.25, 0.5, 0);
+            leftLeg.castShadow = true;
+            character.add(leftLeg);
+
+            // 右腿
+            const rightLeg = new THREE.Mesh(legGeometry, legMaterial);
+            rightLeg.position.set(0.25, 0.5, 0);
+            rightLeg.castShadow = true;
+            character.add(rightLeg);
+
+            return { character, leftArm, rightArm, leftLeg, rightLeg };
+        }
+
+        const { character, leftArm, rightArm, leftLeg, rightLeg } = createCharacter();
+        window.scene.add(character);
+
+        // 相机参数
+        const cameraOffset = new THREE.Vector3(0, 5, -8);
+        const smoothFactor = 0.1;
+        const moveSpeed = 0.1;
+        const turnSpeed = 0.05;
+
+        // 移动状态
+        const keys = { w: false, s: false, a: false, d: false };
+        document.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
+        document.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+
+        // 鼠标控制
+        let mouseX = 0;
+        let mouseY = 0;
+        let isMouseDown = false;
+
+        document.addEventListener('mousedown', () => isMouseDown = true);
+        document.addEventListener('mouseup', () => isMouseDown = false);
+        document.addEventListener('mousemove', (e) => {
+            if (isMouseDown) {
+                mouseX += e.movementX * 0.002;
+                mouseY += e.movementY * 0.002;
+                mouseY = Math.max(-Math.PI / 3, Math.min(Math.PI / 3, mouseY));
+            }
+        });
+
+        // 动画时间
+        let walkTime = 0;
+        let isWalking = false;
+
+        function update() {
+            isWalking = false;
+
+            // 旋转
+            if (keys.a) {
+                character.rotation.y += turnSpeed;
+            }
+            if (keys.d) {
+                character.rotation.y -= turnSpeed;
+            }
+
+            // 移动（带碰撞检测）
+            if (keys.w || keys.s) {
+                isWalking = true;
+                const dir = new THREE.Vector3();
+                character.getWorldDirection(dir);
+                const speed = keys.w ? moveSpeed : -moveSpeed;
+                
+                // 计算新位置
+                const newPosition = character.position.clone().add(dir.multiplyScalar(speed));
+                
+                // 检测碰撞，如果没有碰撞才移动
+                if (!checkCollision(newPosition)) {
+                    character.position.copy(newPosition);
+                }
+            }
+
+            // 行走动画
+            if (isWalking) {
+                walkTime += 0.15;
+                leftArm.rotation.x = Math.sin(walkTime) * 0.5;
+                rightArm.rotation.x = Math.sin(walkTime + Math.PI) * 0.5;
+                leftLeg.rotation.x = Math.sin(walkTime + Math.PI) * 0.5;
+                rightLeg.rotation.x = Math.sin(walkTime) * 0.5;
+            } else {
+                // 重置姿势
+                leftArm.rotation.x = THREE.MathUtils.lerp(leftArm.rotation.x, 0, 0.1);
+                rightArm.rotation.x = THREE.MathUtils.lerp(rightArm.rotation.x, 0, 0.1);
+                leftLeg.rotation.x = THREE.MathUtils.lerp(leftLeg.rotation.x, 0, 0.1);
+                rightLeg.rotation.x = THREE.MathUtils.lerp(rightLeg.rotation.x, 0, 0.1);
+            }
+
+            // 相机跟随
+            const offset = cameraOffset.clone();
+            offset.applyAxisAngle(new THREE.Vector3(0, 1, 0), character.rotation.y + mouseX);
+            offset.y += mouseY * 3;
+            
+            const targetPos = character.position.clone().add(offset);
+            window.camera.position.lerp(targetPos, smoothFactor);
+            window.camera.lookAt(character.position.clone().add(new THREE.Vector3(0, 2, 0)));
+        }
+
+        // 障碍物数组
+        const obstacles = [];
+
+        // 创建一些装饰物（障碍物）
+        function createDecorations() {
+            for (let i = 0; i < 20; i++) {
+                const size = 1 + Math.random() * 2;
+                const geometry = new THREE.BoxGeometry(size, size * (1 + Math.random()), size);
+                const material = new THREE.MeshStandardMaterial({ 
+                    color: new THREE.Color().setHSL(Math.random(), 0.5, 0.5)
+                });
+                const mesh = new THREE.Mesh(geometry, material);
+                
+                mesh.position.x = (Math.random() - 0.5) * 100;
+                mesh.position.z = (Math.random() - 0.5) * 100;
+                mesh.position.y = size / 2;
+                
+                // 避免在出生点附近生成
+                if (mesh.position.distanceTo(new THREE.Vector3(0, 0, 0)) < 10) continue;
+                
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                window.scene.add(mesh);
+                
+                // 添加碰撞数据
+                obstacles.push({
+                    position: mesh.position.clone(),
+                    size: new THREE.Vector3(size, size * (1 + Math.random()), size),
+                    radius: Math.sqrt(size * size + size * size) / 2 + 0.5
+                });
+            }
+        }
+        createDecorations();
+
+        // 碰撞检测函数
+        function checkCollision(newPosition) {
+            const characterRadius = 0.5;
+            
+            for (const obstacle of obstacles) {
+                const dx = newPosition.x - obstacle.position.x;
+                const dz = newPosition.z - obstacle.position.z;
+                const distance = Math.sqrt(dx * dx + dz * dz);
+                
+                if (distance < obstacle.radius + characterRadius) {
+                    return true; // 发生碰撞
+                }
+            }
+            return false; // 没有碰撞
+        }
+
+        // 动画循环
+        function animate() {
+            update();
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        window.renderer.setAnimationLoop(animate);
+
+        // 窗口大小调整
+        window.addEventListener('resize', () => {
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+
+    <!-- 截图支持脚本 -->
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

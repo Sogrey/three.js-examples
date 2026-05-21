@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Three.js城市混合扫光示例 - FBX模型加载与混合着色特效">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 城市混合扫光</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        const container = document.getElementById('threeContainer');
+
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x0a0a1a);
+
+        window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100000);
+        window.camera.position.set(234.88, 28.89, -68.41);
+        window.camera.rotation.set(-2.16, 0.30, 2.73);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, logarithmicDepthBuffer: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        window.renderer.setClearColor(0x000000, 0);
+        window.renderer.setPixelRatio(window.devicePixelRatio * 2);
+        container.appendChild(window.renderer.domElement);
+
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.enableDamping = true;
+
+        // 灯光
+        const dirLight = new THREE.DirectionalLight(0xffffff, 3.8);
+        dirLight.position.set(83, 61, -183);
+        dirLight.target.position.set(10, -11, -194);
+        window.scene.add(dirLight);
+
+        const pointLight = new THREE.PointLight(0xffffff, 2);
+        pointLight.position.set(-60, 182, -98);
+        window.scene.add(pointLight);
+
+        let model = null;
+
+        // Shader uniforms
+        const shaderUniforms = {
+            innerCircleWidth: { value: 480 },
+            circleWidth: { value: 160 },
+            circleMax: { value: 940 },
+            circleSpeed: { value: 1.5 },
+            diff: { value: new THREE.Color(0x6edbe8) },
+            color3: { value: new THREE.Color(0x1919f9) },
+            center: { value: new THREE.Vector3(-1, 0, 0) },
+            intensity: { value: 4 },
+            isDisCard: { value: false }
+        };
+
+        // 加载模型
+        new FBXLoader().load('../../models/fbx/shanghai.FBX', (object3d) => {
+            window.scene.add(object3d);
+            object3d.scale.set(0.04, 0.04, 0.04);
+            object3d.position.set(224, -9, -49);
+            model = object3d;
+
+            modelBlendShader(object3d);
+        }, undefined, (error) => {
+            console.error('模型加载失败:', error);
+        });
+
+        // 混合着色
+        function modelBlendShader(model) {
+            let materials = [];
+            model.traverse(c => c.isMesh && materials.push(c.material));
+            materials = [...new Set(materials)];
+
+            const uniforms = shaderUniforms;
+
+            const glslProps = {
+                vertexHeader: `
+                    varying vec2 vUv;
+                    varying vec3 v_position;
+                    void main() {
+                        vUv = uv;
+                        v_position = position;
+                `,
+
+                fragHeader: Object.keys(uniforms).map(i => 'uniform ' + getUniformType(uniforms[i].value) + ' ' + i + ';').join('\n') + '\n' + 'varying vec3 v_position; varying vec2 vUv;\n',
+
+                fragBody: `
+                    float dis = length(v_position - center);
+                    vec4 diffuseColor;
+                    if(dis < (innerCircleWidth + circleWidth) && dis > innerCircleWidth) {
+                        float r = (dis - innerCircleWidth) / circleWidth;
+                        #ifdef USE_MAP
+                            vec3 textureColor = texture2D(map, vUv).rgb;
+                            if(isDisCard && textureColor.r < 0.1 && textureColor.g < 0.1  && textureColor.b < 0.1 ) discard;
+                        #endif
+                        diffuseColor = vec4( mix(diff, color3, r) * vec3(intensity, intensity, intensity)  , opacity);
+                    }
+                    else {
+                        if(isDisCard)  discard ;
+                        else diffuseColor = vec4( diffuse, opacity );
+                    }
+                `
+            };
+
+            materials.forEach(material => {
+                material.onBeforeCompile = (shader) => {
+                    Object.keys(uniforms).forEach((key) => shader.uniforms[key] = uniforms[key]);
+
+                    shader.vertexShader = shader.vertexShader.replace(`void main() {`, glslProps.vertexHeader);
+                    shader.fragmentShader = shader.fragmentShader.replace(/#include <common>/, glslProps.fragHeader + '\n#include <common>\n');
+                    shader.fragmentShader = shader.fragmentShader.replace('vec4 diffuseColor = vec4( diffuse, opacity );', glslProps.fragBody);
+                };
+                material.needsUpdate = true;
+            });
+
+            model.render = () => {
+                if (uniforms.innerCircleWidth.value < uniforms.circleMax.value) {
+                    uniforms.innerCircleWidth.value += uniforms.circleSpeed.value;
+                } else {
+                    uniforms.innerCircleWidth.value = 0;
+                }
+            };
+        }
+
+        function getUniformType(value) {
+            if (value instanceof THREE.Color) return 'vec3';
+            if (value instanceof THREE.Vector3) return 'vec3';
+            if (typeof value === 'boolean') return 'bool';
+            return 'float';
+        }
+
+        // 初始化GUI
+        function initGUI() {
+            const gui = new GUI();
+            gui.domElement.style.top = '50px';
+
+            const params = {
+                innerCircleWidth: 480,
+                circleWidth: 160,
+                circleMax: 940,
+                circleSpeed: 1.5,
+                diff: '#6edbe8',
+                color3: '#1919f9',
+                intensity: 4,
+                isDisCard: false
+            };
+
+            const circleFolder = gui.addFolder('光圈参数');
+            circleFolder.add(params, 'innerCircleWidth', 0, 1000).name('内圈宽度').onChange((v) => {
+                shaderUniforms.innerCircleWidth.value = v;
+            });
+            circleFolder.add(params, 'circleWidth', 10, 500).name('光圈宽度').onChange((v) => {
+                shaderUniforms.circleWidth.value = v;
+            });
+            circleFolder.add(params, 'circleMax', 500, 2000).name('最大范围').onChange((v) => {
+                shaderUniforms.circleMax.value = v;
+            });
+            circleFolder.add(params, 'circleSpeed', 0.1, 10).name('扫描速度').onChange((v) => {
+                shaderUniforms.circleSpeed.value = v;
+            });
+
+            const colorFolder = gui.addFolder('颜色参数');
+            colorFolder.addColor(params, 'diff').name('内圈颜色').onChange((v) => {
+                shaderUniforms.diff.set(v);
+            });
+            colorFolder.addColor(params, 'color3').name('外圈颜色').onChange((v) => {
+                shaderUniforms.color3.set(v);
+            });
+            colorFolder.add(params, 'intensity', 0.1, 10).name('发光强度').onChange((v) => {
+                shaderUniforms.intensity.value = v;
+            });
+
+            const otherFolder = gui.addFolder('其他');
+            otherFolder.add(params, 'isDisCard').name('是否剔除').onChange((v) => {
+                shaderUniforms.isDisCard.value = v;
+            });
+
+            circleFolder.open();
+            colorFolder.open();
+        }
+
+        initGUI();
+
+        // 渲染
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (model && model.render) {
+                model.render();
+            }
+
+            controls.update();
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        animate();
+
+        window.addEventListener('resize', () => {
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+        });
+    </script>
+
+    <!-- 截图支持脚本 -->
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera) {
+                        if (window.composer) window.composer.render();
+                        else window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.composer ? window.composer.renderer.domElement : window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

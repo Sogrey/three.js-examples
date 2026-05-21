@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="模型边框效果，使用 EdgesGeometry 提取模型边缘线">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 模型边框</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+        import { mergeAttributes } from 'three/addons/utils/BufferGeometryUtils.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        const container = document.getElementById('threeContainer');
+
+        // 创建场景
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x222222);
+
+        // 创建相机
+        window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100000);
+        window.camera.position.set(10, 10, 12);
+
+        // 创建渲染器
+        window.renderer = new THREE.WebGLRenderer({ antialias: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        window.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        container.appendChild(window.renderer.domElement);
+
+        // 创建控制器
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.enableDamping = true;
+
+        // 添加光照
+        window.scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+        dirLight.position.set(10, 10, 10);
+        window.scene.add(dirLight);
+
+        // GUI 参数
+        const guiParams = {
+            edgeColor: '#ff69b4',
+            edgeThreshold: 1,
+            showModel: true,
+            showEdges: true,
+            lineWidth: 1
+        };
+
+        // 创建GUI
+        const gui = new GUI();
+        gui.domElement.style.top = '50px';
+        gui.addColor(guiParams, 'edgeColor').name('边框颜色').onChange(updateEdgeColor);
+        gui.add(guiParams, 'edgeThreshold', 0, 90).name('边缘阈值').onChange(updateEdges);
+        gui.add(guiParams, 'showModel').name('显示模型').onChange(updateVisibility);
+        gui.add(guiParams, 'showEdges').name('显示边框').onChange(updateVisibility);
+        gui.add(guiParams, 'lineWidth', 1, 5).name('线宽');
+
+        let modelMesh = null;
+        let edgesMesh = null;
+        let loadedModel = null;
+
+        // 自定义 MeshEdgesGeometry 类
+        class MeshEdgesGeometry extends THREE.BufferGeometry {
+            constructor(object, thresholdAngle = 1) {
+                super();
+                object.updateWorldMatrix(true, true);
+                const position = this.extractEdges(object, thresholdAngle);
+                this.setAttribute('position', position);
+            }
+
+            extractEdges(object, thresholdAngle) {
+                const attributes = [];
+                
+                object.traverse(child => {
+                    if (child.geometry) {
+                        const geo = new THREE.EdgesGeometry(child.geometry, thresholdAngle);
+                        const pos = geo.getAttribute('position');
+                        if (pos) {
+                            attributes.push(pos.clone().applyMatrix4(child.matrixWorld));
+                        }
+                    }
+                });
+
+                if (attributes.length === 0) {
+                    throw new Error('MeshEdgesGeometry: No edges found');
+                }
+
+                return mergeAttributes(attributes);
+            }
+        }
+
+        function updateEdgeColor() {
+            if (edgesMesh) {
+                edgesMesh.material.color.set(guiParams.edgeColor);
+            }
+        }
+
+        function updateVisibility() {
+            if (modelMesh) modelMesh.visible = guiParams.showModel;
+            if (edgesMesh) edgesMesh.visible = guiParams.showEdges;
+        }
+
+        function updateEdges() {
+            if (!loadedModel) return;
+            
+            // 移除旧的边框
+            if (edgesMesh) {
+                window.scene.remove(edgesMesh);
+                edgesMesh.geometry.dispose();
+            }
+            
+            // 创建新的边框
+            try {
+                const edgesGeometry = new MeshEdgesGeometry(loadedModel, guiParams.edgeThreshold);
+                edgesMesh = new THREE.LineSegments(
+                    edgesGeometry,
+                    new THREE.LineBasicMaterial({ 
+                        color: guiParams.edgeColor,
+                        linewidth: guiParams.lineWidth
+                    })
+                );
+                window.scene.add(edgesMesh);
+            } catch (error) {
+                console.warn('无法生成边框:', error);
+            }
+        }
+
+        // 加载模型
+        const loader = new GLTFLoader();
+        const dracoLoader = new DRACOLoader();
+        dracoLoader.setDecoderPath('../../libs/three/r179/jsm/libs/draco/');
+        loader.setDRACOLoader(dracoLoader);
+
+        loader.load(
+            '../../models/gltf/elegant.glb',
+            (gltf) => {
+                loadedModel = gltf.scene;
+                
+                // 添加原始模型
+                modelMesh = gltf.scene.clone();
+                modelMesh.traverse(child => {
+                    if (child.isMesh) {
+                        child.material = child.material.clone();
+                        child.material.transparent = true;
+                        child.material.opacity = 0.8;
+                    }
+                });
+                window.scene.add(modelMesh);
+                
+                // 创建边框
+                updateEdges();
+                
+                // 调整相机视角
+                const box = new THREE.Box3().setFromObject(gltf.scene);
+                const size = box.getSize(new THREE.Vector3()).length();
+                const center = box.getCenter(new THREE.Vector3());
+                
+                window.camera.near = size * 0.01;
+                window.camera.far = size * 100;
+                window.camera.position.set(center.x + size * 0.5, center.y + size * 0.5, center.z + size * 0.8);
+                window.camera.lookAt(center);
+                controls.target.copy(center);
+                window.camera.updateProjectionMatrix();
+            },
+            undefined,
+            (error) => {
+                console.error('模型加载失败:', error);
+            }
+        );
+
+        // 动画循环
+        function animate() {
+            controls.update();
+            window.renderer.render(window.scene, window.camera);
+        }
+        
+        window.renderer.setAnimationLoop(animate);
+
+        // 窗口大小调整
+        window.addEventListener('resize', () => {
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+
+    <!-- 截图支持脚本 -->
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

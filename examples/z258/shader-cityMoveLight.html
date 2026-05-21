@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Three.js智慧城市扫光示例 - 自定义ShaderMaterial实现扫光效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 智慧城市扫光</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        const container = document.getElementById('threeContainer');
+
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x0a0a1a);
+
+        window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        window.camera.position.set(10, 10, 10);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true });
+        window.renderer.setPixelRatio(window.devicePixelRatio * 1.5);
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(window.renderer.domElement);
+
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.enableDamping = true;
+
+        // 坐标轴
+        // scene.add(new THREE.AxesHelper(100000));
+
+        // Shader uniforms
+        const shaderUniforms = {
+            innerCircleWidth: { value: 0 },
+            circleWidth: { value: 300 },
+            diff: { value: new THREE.Color(1., 1., 1.) },
+            color: { value: new THREE.Color('#8f95ff') },
+            opacity: { value: 0.6 },
+            center: { value: new THREE.Vector3(0, 0, 0) }
+        };
+
+        // 自定义ShaderMaterial
+        const material = new THREE.ShaderMaterial({
+            uniforms: shaderUniforms,
+            transparent: true,
+            vertexShader: `
+                varying vec2 vUv;
+                varying vec3 v_position;
+                void main() {
+                    vUv = uv;
+                    v_position = position;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                varying vec2 vUv;
+                varying vec3 v_position;
+
+                uniform float innerCircleWidth;
+                uniform float circleWidth;
+                uniform float opacity;
+                uniform vec3 center;
+                
+                uniform vec3 color;
+                uniform vec3 diff;
+
+                void main() {
+                    float dis = length(v_position - center);
+                    if(dis < (innerCircleWidth + circleWidth) && dis > innerCircleWidth) {
+                        float r = (dis - innerCircleWidth) / circleWidth;
+                        gl_FragColor = mix(vec4(diff, opacity), vec4(color, opacity), r);
+                    } else {
+                        gl_FragColor = vec4(diff, opacity);
+                    }
+                }
+            `
+        });
+
+        // 加载模型
+        new FBXLoader().load('../../models/fbx/shanghai.FBX', (object3d) => {
+            window.scene.add(object3d);
+            object3d.scale.set(0.001, 0.001, 0.001);
+            object3d.traverse((child) => {
+                if (child.isMesh) child.material = material;
+            });
+        }, undefined, (error) => {
+            console.error('模型加载失败:', error);
+        });
+
+        // 初始化GUI
+        function initGUI() {
+            const gui = new GUI();
+            gui.domElement.style.top = '50px';
+
+            const params = {
+                innerCircleWidth: 0,
+                circleWidth: 300,
+                diff: '#ffffff',
+                color: '#8f95ff',
+                opacity: 0.6,
+                speed: 3,
+                maxWidth: 1000
+            };
+
+            const circleFolder = gui.addFolder('光圈参数');
+            circleFolder.add(params, 'innerCircleWidth', 0, 2000).name('内圈宽度').onChange((v) => {
+                shaderUniforms.innerCircleWidth.value = v;
+            });
+            circleFolder.add(params, 'circleWidth', 10, 1000).name('光圈宽度').onChange((v) => {
+                shaderUniforms.circleWidth.value = v;
+            });
+            circleFolder.add(params, 'maxWidth', 500, 3000).name('最大范围');
+            circleFolder.add(params, 'speed', 0.5, 20).name('扫描速度');
+
+            const colorFolder = gui.addFolder('颜色参数');
+            colorFolder.addColor(params, 'diff').name('基础颜色').onChange((v) => {
+                shaderUniforms.diff.set(v);
+            });
+            colorFolder.addColor(params, 'color').name('扫光颜色').onChange((v) => {
+                shaderUniforms.color.set(v);
+            });
+            colorFolder.add(params, 'opacity', 0.1, 1).name('透明度').onChange((v) => {
+                shaderUniforms.opacity.value = v;
+            });
+
+            circleFolder.open();
+            colorFolder.open();
+
+            return params;
+        }
+
+        const guiParams = initGUI();
+
+        // 渲染
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // 扫光动画
+            if (shaderUniforms.innerCircleWidth.value < guiParams.maxWidth) {
+                shaderUniforms.innerCircleWidth.value += guiParams.speed;
+            } else {
+                shaderUniforms.innerCircleWidth.value = 0;
+            }
+
+            controls.update();
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        animate();
+
+        window.addEventListener('resize', () => {
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+        });
+    </script>
+
+    <!-- 截图支持脚本 -->
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera) {
+                        if (window.composer) window.composer.render();
+                        else window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.composer ? window.composer.renderer.domElement : window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
