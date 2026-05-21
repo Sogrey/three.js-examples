@@ -51,11 +51,16 @@
         controls.enableDamping = true;
 
         // 添加光照
-        window.scene.add(new THREE.AmbientLight(0xffffff, 0.5));
-        const dirLight = new THREE.DirectionalLight(0xffffff, 1);
-        dirLight.position.set(10, 10, 10);
+        window.scene.add(new THREE.AmbientLight(0xffffff, 1.5));
+        const dirLight = new THREE.DirectionalLight(0xffffff, 3);
+        dirLight.position.set(10, 20, 10);
         dirLight.castShadow = true;
         window.scene.add(dirLight);
+        
+        // 添加补光
+        const fillLight = new THREE.DirectionalLight(0x8888ff, 1);
+        fillLight.position.set(-10, 10, -10);
+        window.scene.add(fillLight);
 
         // GUI 参数
         const guiParams = {
