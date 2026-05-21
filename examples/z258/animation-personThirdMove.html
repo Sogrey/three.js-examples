@@ -177,13 +177,20 @@
                 character.rotation.y -= turnSpeed;
             }
 
-            // 移动
+            // 移动（带碰撞检测）
             if (keys.w || keys.s) {
                 isWalking = true;
                 const dir = new THREE.Vector3();
                 character.getWorldDirection(dir);
                 const speed = keys.w ? moveSpeed : -moveSpeed;
-                character.position.add(dir.multiplyScalar(speed));
+                
+                // 计算新位置
+                const newPosition = character.position.clone().add(dir.multiplyScalar(speed));
+                
+                // 检测碰撞，如果没有碰撞才移动
+                if (!checkCollision(newPosition)) {
+                    character.position.copy(newPosition);
+                }
             }
 
             // 行走动画
@@ -211,7 +218,10 @@
             window.camera.lookAt(character.position.clone().add(new THREE.Vector3(0, 2, 0)));
         }
 
-        // 创建一些装饰物
+        // 障碍物数组
+        const obstacles = [];
+
+        // 创建一些装饰物（障碍物）
         function createDecorations() {
             for (let i = 0; i < 20; i++) {
                 const size = 1 + Math.random() * 2;
@@ -231,9 +241,32 @@
                 mesh.castShadow = true;
                 mesh.receiveShadow = true;
                 window.scene.add(mesh);
+                
+                // 添加碰撞数据
+                obstacles.push({
+                    position: mesh.position.clone(),
+                    size: new THREE.Vector3(size, size * (1 + Math.random()), size),
+                    radius: Math.sqrt(size * size + size * size) / 2 + 0.5
+                });
             }
         }
         createDecorations();
+
+        // 碰撞检测函数
+        function checkCollision(newPosition) {
+            const characterRadius = 0.5;
+            
+            for (const obstacle of obstacles) {
+                const dx = newPosition.x - obstacle.position.x;
+                const dz = newPosition.z - obstacle.position.z;
+                const distance = Math.sqrt(dx * dx + dz * dz);
+                
+                if (distance < obstacle.radius + characterRadius) {
+                    return true; // 发生碰撞
+                }
+            }
+            return false; // 没有碰撞
+        }
 
         // 动画循环
         function animate() {
