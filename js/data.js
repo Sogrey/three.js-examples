@@ -2019,6 +2019,14 @@ const threejsData = {
               url: "examples/z258/jumpAnimate",
             },
             {
+              id: "animation-personThirdMove",
+              title: "第三人称移动",
+              description: "程序化角色模型，WASD移动和鼠标控制视角",
+              thumbnail: "images/animation-personThirdMove.jpg",
+              version: "r179",
+              url: "examples/z258/animation-personThirdMove",
+            },
+            {
               id: "application-gsapTimeLine",
               title: "时间轴动画",
               description: "使用GSAP时间线创建花园动画场景，展示花朵生长和蝴蝶飞舞",
