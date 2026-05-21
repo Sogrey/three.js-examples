@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="交互式绘制围栏示例，点击地面绘制围栏">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 绘制围栏</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+    <div style="position: absolute; top: 10px; left: 10px; color: white; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px;">
+        点击地面绘制围栏，右键清除
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        const container = document.getElementById('threeContainer');
+
+        // 创建场景
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x1a1a2e);
+
+        // 创建相机
+        window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        window.camera.position.set(0, 5, 8);
+
+        // 创建渲染器
+        window.renderer = new THREE.WebGLRenderer({ antialias: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        window.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        container.appendChild(window.renderer.domElement);
+
+        // 创建控制器
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.enableDamping = true;
+        controls.target.set(0, 0, 0);
+
+        // 添加光照
+        window.scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        dirLight.position.set(10, 20, 10);
+        dirLight.castShadow = true;
+        window.scene.add(dirLight);
+
+        // 创建地面
+        const planeGeometry = new THREE.PlaneGeometry(20, 20);
+        planeGeometry.rotateX(-Math.PI / 2);
+        const planeMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0x333333,
+            roughness: 0.8,
+            metalness: 0.2
+        });
+        const planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
+        planeMesh.receiveShadow = true;
+        window.scene.add(planeMesh);
+
+        // 添加网格辅助
+        const gridHelper = new THREE.GridHelper(20, 20, 0x555555, 0x444444);
+        window.scene.add(gridHelper);
+
+        // GUI 参数
+        const guiParams = {
+            fenceHeight: 2,
+            fenceColor: '#00ff88',
+            opacity: 0.8,
+            clear: () => clearFence()
+        };
+
+        // 创建GUI
+        const gui = new GUI();
+        gui.domElement.style.top = '50px';
+        gui.add(guiParams, 'fenceHeight', 0.5, 5).name('围栏高度');
+        gui.addColor(guiParams, 'fenceColor').name('围栏颜色');
+        gui.add(guiParams, 'opacity', 0.1, 1).name('透明度');
+        gui.add(guiParams, 'clear').name('清除围栏');
+
+        // 创建围栏纹理
+        function createFenceTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 64;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            
+            // 透明背景
+            ctx.fillStyle = 'rgba(0, 0, 0, 0)';
+            ctx.fillRect(0, 0, 64, 256);
+            
+            // 绘制网格线
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.lineWidth = 3;
+            
+            // 垂直线
+            for (let i = 0; i <= 64; i += 16) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, 256);
+                ctx.stroke();
+            }
+            
+            // 水平线
+            for (let i = 0; i <= 256; i += 32) {
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(64, i);
+                ctx.stroke();
+            }
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.y = 5;
+            return texture;
+        }
+
+        const fenceTexture = createFenceTexture();
+
+        // 围栏数据
+        const pointList = [];
+        let drawMesh = null;
+        let pointMarkers = [];
+
+        // 射线检测获取点击点
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+
+        function getPoint(event) {
+            const rect = container.getBoundingClientRect();
+            mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+            
+            raycaster.setFromCamera(mouse, window.camera);
+            const intersects = raycaster.intersectObject(planeMesh);
+            
+            if (intersects.length > 0) {
+                return intersects[0].point;
+            }
+            return null;
+        }
+
+        // 添加点标记
+        function addPointMarker(point) {
+            const geometry = new THREE.SphereGeometry(0.1, 16, 16);
+            const material = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+            const marker = new THREE.Mesh(geometry, material);
+            marker.position.copy(point);
+            marker.position.y += 0.1;
+            window.scene.add(marker);
+            pointMarkers.push(marker);
+        }
+
+        // 清除围栏
+        function clearFence() {
+            pointList.length = 0;
+            
+            if (drawMesh) {
+                window.scene.remove(drawMesh);
+                drawMesh.geometry.dispose();
+                drawMesh.material.dispose();
+                drawMesh = null;
+            }
+            
+            pointMarkers.forEach(marker => {
+                window.scene.remove(marker);
+                marker.geometry.dispose();
+                marker.material.dispose();
+            });
+            pointMarkers.length = 0;
+        }
+
+        // 创建围栏几何体
+        function createFenceGeometry(points, height) {
+            if (points.length < 2) return null;
+
+            const vertices = [];
+            const indices = [];
+            const uvs = [];
+
+            for (let i = 0; i < points.length; i++) {
+                const point = points[i];
+                
+                // 底部顶点
+                vertices.push(point.x, point.y + 0.01, point.z);
+                // 顶部顶点
+                vertices.push(point.x, point.y + height, point.z);
+                
+                // UV坐标
+                uvs.push(i / points.length, 0);
+                uvs.push(i / points.length, 1);
+            }
+
+            // 生成索引
+            for (let i = 0; i < points.length - 1; i++) {
+                const a = i * 2;
+                const b = i * 2 + 1;
+                const c = (i + 1) * 2;
+                const d = (i + 1) * 2 + 1;
+
+                // 两个三角形组成一个矩形面
+                indices.push(a, c, b);
+                indices.push(b, c, d);
+            }
+
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+            geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+            geometry.setIndex(indices);
+            geometry.computeVertexNormals();
+
+            return geometry;
+        }
+
+        // 点击事件
+        container.addEventListener('click', (event) => {
+            if (event.button !== 0) return; // 只响应左键
+            
+            const point = getPoint(event);
+            if (!point) return;
+
+            pointList.push(point);
+            addPointMarker(point);
+
+            if (pointList.length >= 2) {
+                const geometry = createFenceGeometry(pointList, guiParams.fenceHeight);
+                
+                if (!drawMesh) {
+                    const material = new THREE.MeshBasicMaterial({
+                        side: THREE.DoubleSide,
+                        map: fenceTexture,
+                        transparent: true,
+                        opacity: guiParams.opacity,
+                        color: new THREE.Color(guiParams.fenceColor),
+                        depthWrite: false
+                    });
+                    
+                    drawMesh = new THREE.Mesh(geometry, material);
+                    window.scene.add(drawMesh);
+                } else {
+                    drawMesh.geometry.dispose();
+                    drawMesh.geometry = geometry;
+                    drawMesh.material.color.set(guiParams.fenceColor);
+                    drawMesh.material.opacity = guiParams.opacity;
+                }
+            }
+        });
+
+        // 右键清除
+        container.addEventListener('contextmenu', (event) => {
+            event.preventDefault();
+            clearFence();
+        });
+
+        // 动画循环
+        function animate() {
+            controls.update();
+            
+            // 纹理动画
+            if (fenceTexture) {
+                fenceTexture.offset.y -= 0.005;
+            }
+            
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        window.renderer.setAnimationLoop(animate);
+
+        // 窗口大小调整
+        window.addEventListener('resize', () => {
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+
+    <!-- 截图支持脚本 -->
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

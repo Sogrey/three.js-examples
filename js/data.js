@@ -2098,6 +2098,14 @@ const threejsData = {
               version: "r179",
               url: "examples/z258/application-coneMesh",
             },
+            {
+              id: "application-drawFence",
+              title: "绘制围栏",
+              description: "交互式点击地面绘制围栏，支持高度和颜色调节",
+              thumbnail: "images/application-drawFence.jpg",
+              version: "r179",
+              url: "examples/z258/application-drawFence",
+            },
 
             {
               id: "application-measureDraw",
