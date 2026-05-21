@@ -2035,6 +2035,14 @@ const threejsData = {
               url: "examples/z258/application-measurement",
             },
             {
+              id: "application-coffeeMug",
+              title: "咖啡蒸汽",
+              description: "GLTF咖啡杯模型加载，展示蒸汽粒子Shader效果",
+              thumbnail: "images/application-coffeeMug.jpg",
+              version: "r179",
+              url: "examples/z258/application-coffeeMug",
+            },
+            {
               id: "application-measureDraw",
               title: "画线测量",
               description: "交互式画线测量距离，支持点击添加节点、拖拽调整位置",
