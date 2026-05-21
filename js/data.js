@@ -2114,6 +2114,14 @@ const threejsData = {
               version: "r179",
               url: "examples/z258/application-dynamicTube",
             },
+            {
+              id: "application-sportFence",
+              title: "流动围栏",
+              description: "使用程序化纹理创建动态围栏效果，带网格和流动线条",
+              thumbnail: "images/application-sportFence.jpg",
+              version: "r179",
+              url: "examples/z258/application-sportFence",
+            },
 
             {
               id: "application-measureDraw",
