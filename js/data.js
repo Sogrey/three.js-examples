@@ -2058,6 +2058,14 @@ const threejsData = {
               version: "r179",
               url: "examples/z258/application-driving",
             },
+            {
+              id: "application-modelBorder",
+              title: "模型边框",
+              description: "使用 EdgesGeometry 提取模型边缘线，展示模型边框效果",
+              thumbnail: "images/application-modelBorder.jpg",
+              version: "r179",
+              url: "examples/z258/application-modelBorder",
+            },
 
             {
               id: "application-measureDraw",
