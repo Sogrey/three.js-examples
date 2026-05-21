@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="程序化地形生成示例，使用噪声函数生成起伏地形">
+    <meta name="description" content="程序化地形生成示例，使用GLSL着色器在GPU上生成噪声地形">
     <meta name="three-version" content="r179">
     <title>Three.js 示例 - 程序化地形生成</title>
     <link rel="stylesheet" href="../../css/example-common.css">
@@ -33,208 +33,258 @@
         window.scene.fog = new THREE.Fog(0x87CEEB, 20, 100);
 
         // 创建相机
-        window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        window.camera.position.set(0, 30, 50);
+        window.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1000);
+        window.camera.position.set(0, 15, 30);
 
         // 创建渲染器
         window.renderer = new THREE.WebGLRenderer({ antialias: true });
         window.renderer.setSize(window.innerWidth, window.innerHeight);
         window.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        window.renderer.shadowMap.enabled = true;
-        window.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         container.appendChild(window.renderer.domElement);
 
         // 创建控制器
         const controls = new OrbitControls(window.camera, window.renderer.domElement);
         controls.enableDamping = true;
-        controls.maxPolarAngle = Math.PI / 2 - 0.1;
+        controls.target.set(0, 3, 0);
+        controls.minPolarAngle = Math.PI * 0.4;
+        controls.maxPolarAngle = Math.PI * 0.5;
+        controls.minDistance = 10;
+        controls.maxDistance = 50;
+        controls.enablePan = false;
 
         // 添加光照
-        window.scene.add(new THREE.AmbientLight(0xffffff, 0.4));
-        const dirLight = new THREE.DirectionalLight(0xffffff, 1);
-        dirLight.position.set(50, 100, 50);
-        dirLight.castShadow = true;
-        dirLight.shadow.camera.left = -50;
-        dirLight.shadow.camera.right = 50;
-        dirLight.shadow.camera.top = 50;
-        dirLight.shadow.camera.bottom = -50;
-        dirLight.shadow.camera.near = 0.1;
-        dirLight.shadow.camera.far = 200;
-        dirLight.shadow.mapSize.width = 2048;
-        dirLight.shadow.mapSize.height = 2048;
-        window.scene.add(dirLight);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        dirLight.position.set(1, 1, 1);
+        window.scene.add(dirLight, new THREE.AmbientLight(0xffffff, 0.75));
+
+        // 添加网格辅助
+        const grid = new THREE.GridHelper(50, 50);
+        window.scene.add(grid);
 
         // GUI 参数
         const guiParams = {
-            seed: 12345,
-            scale: 30,
-            height: 10,
-            octaves: 4,
-            persistence: 0.5,
-            lacunarity: 2,
+            heightScale: 35,
+            maxHeight: 15,
+            power: 3,
+            speed: 0.001,
             wireframe: false,
-            regenerate: () => regenerateTerrain()
+            color1: '#1a5276',
+            color2: '#2874a6',
+            color3: '#f9e79f',
+            color4: '#58d68d',
+            color5: '#7f8c8d',
+            color6: '#ecf0f1'
         };
 
         // 创建GUI
         const gui = new GUI();
         gui.domElement.style.top = '50px';
-        gui.add(guiParams, 'seed', 1, 99999).name('随机种子');
-        gui.add(guiParams, 'scale', 10, 100).name('噪声缩放');
-        gui.add(guiParams, 'height', 1, 30).name('高度倍数');
-        gui.add(guiParams, 'octaves', 1, 8, 1).name('八度数');
-        gui.add(guiParams, 'persistence', 0.1, 1).name('持续度');
-        gui.add(guiParams, 'lacunarity', 1, 4).name('隙度');
-        gui.add(guiParams, 'wireframe').name('线框模式').onChange(updateWireframe);
-        gui.add(guiParams, 'regenerate').name('重新生成');
+        const terrainFolder = gui.addFolder('地形参数');
+        terrainFolder.add(guiParams, 'heightScale', 10, 100).name('高度缩放').onChange(updateUniforms);
+        terrainFolder.add(guiParams, 'maxHeight', 5, 50).name('最大高度').onChange(updateUniforms);
+        terrainFolder.add(guiParams, 'power', 1, 5).name('幂次').onChange(updateUniforms);
+        terrainFolder.add(guiParams, 'speed', 0, 0.01).name('旋转速度');
+        terrainFolder.add(guiParams, 'wireframe').name('线框模式').onChange(updateWireframe);
+        
+        const colorFolder = gui.addFolder('颜色');
+        colorFolder.addColor(guiParams, 'color1').name('深海').onChange(updateUniforms);
+        colorFolder.addColor(guiParams, 'color2').name('浅海').onChange(updateUniforms);
+        colorFolder.addColor(guiParams, 'color3').name('沙滩').onChange(updateUniforms);
+        colorFolder.addColor(guiParams, 'color4').name('草地').onChange(updateUniforms);
+        colorFolder.addColor(guiParams, 'color5').name('岩石').onChange(updateUniforms);
+        colorFolder.addColor(guiParams, 'color6').name('雪地').onChange(updateUniforms);
 
         let terrainMesh = null;
 
-        // 简单的伪随机数生成器
-        function seededRandom(seed) {
-            const x = Math.sin(seed) * 10000;
-            return x - Math.floor(x);
-        }
-
-        // 2D 噪声函数
-        function noise2D(x, y, seed) {
-            const n = Math.floor(x) + Math.floor(y) * 57 + seed;
-            return seededRandom(n);
-        }
-
-        // 平滑噪声
-        function smoothNoise(x, y, seed) {
-            const corners = (noise2D(x - 1, y - 1, seed) + noise2D(x + 1, y - 1, seed) +
-                           noise2D(x - 1, y + 1, seed) + noise2D(x + 1, y + 1, seed)) / 16;
-            const sides = (noise2D(x - 1, y, seed) + noise2D(x + 1, y, seed) +
-                          noise2D(x, y - 1, seed) + noise2D(x, y + 1, seed)) / 8;
-            const center = noise2D(x, y, seed) / 4;
-            return corners + sides + center;
-        }
-
-        // 余弦插值
-        function cosineInterpolate(a, b, x) {
-            const ft = x * Math.PI;
-            const f = (1 - Math.cos(ft)) * 0.5;
-            return a * (1 - f) + b * f;
-        }
-
-        // 插值噪声
-        function interpolatedNoise(x, y, seed) {
-            const integerX = Math.floor(x);
-            const fractionalX = x - integerX;
-            const integerY = Math.floor(y);
-            const fractionalY = y - integerY;
-
-            const v1 = smoothNoise(integerX, integerY, seed);
-            const v2 = smoothNoise(integerX + 1, integerY, seed);
-            const v3 = smoothNoise(integerX, integerY + 1, seed);
-            const v4 = smoothNoise(integerX + 1, integerY + 1, seed);
-
-            const i1 = cosineInterpolate(v1, v2, fractionalX);
-            const i2 = cosineInterpolate(v3, v4, fractionalX);
-
-            return cosineInterpolate(i1, i2, fractionalY);
-        }
-
-        // 分形布朗运动
-        function fbm(x, y, seed, octaves, persistence, lacunarity) {
-            let total = 0;
-            let frequency = 1;
-            let amplitude = 1;
-            let maxValue = 0;
-
-            for (let i = 0; i < octaves; i++) {
-                total += interpolatedNoise(x * frequency, y * frequency, seed + i) * amplitude;
-                maxValue += amplitude;
-                amplitude *= persistence;
-                frequency *= lacunarity;
-            }
-
-            return total / maxValue;
-        }
-
-        // 根据高度获取颜色
-        function getColorForHeight(height, maxHeight) {
-            const normalizedHeight = height / maxHeight;
+        // 顶点着色器
+        const vertexShader = `
+            uniform float uTime;
+            uniform float uHeightScale;
+            uniform float uMaxHeight;
+            uniform float uPower;
             
-            if (normalizedHeight < 0.2) {
-                // 深海蓝色
-                return new THREE.Color(0x1a5276);
-            } else if (normalizedHeight < 0.3) {
-                // 浅海蓝色
-                return new THREE.Color(0x2874a6);
-            } else if (normalizedHeight < 0.35) {
-                // 沙滩黄色
-                return new THREE.Color(0xf9e79f);
-            } else if (normalizedHeight < 0.6) {
-                // 草地绿色
-                const t = (normalizedHeight - 0.35) / 0.25;
-                return new THREE.Color(0x58d68d).lerp(new THREE.Color(0x27ae60), t);
-            } else if (normalizedHeight < 0.8) {
-                // 岩石灰色
-                const t = (normalizedHeight - 0.6) / 0.2;
-                return new THREE.Color(0x7f8c8d).lerp(new THREE.Color(0x5d6d7e), t);
-            } else {
-                // 雪白色
-                const t = (normalizedHeight - 0.8) / 0.2;
-                return new THREE.Color(0xecf0f1).lerp(new THREE.Color(0xffffff), t);
+            varying vec2 vUv;
+            varying float vHeight;
+            
+            // 哈希函数
+            vec3 hash(vec3 p) {
+                p = vec3(
+                    dot(p, vec3(127.1, 311.7, 74.7)),
+                    dot(p, vec3(269.5, 183.3, 246.1)),
+                    dot(p, vec3(113.5, 271.9, 124.6))
+                );
+                return fract(sin(p) * 43758.5453123);
             }
+            
+            // 3D值噪声
+            float noise(vec3 x) {
+                vec3 p = floor(x);
+                vec3 w = fract(x);
+                
+                // 五次插值
+                vec3 u = w * w * w * (w * (w * 6.0 - 15.0) + 10.0);
+                
+                // 梯度
+                vec3 ga = hash(p + vec3(0.0, 0.0, 0.0));
+                vec3 gb = hash(p + vec3(1.0, 0.0, 0.0));
+                vec3 gc = hash(p + vec3(0.0, 1.0, 0.0));
+                vec3 gd = hash(p + vec3(1.0, 1.0, 0.0));
+                vec3 ge = hash(p + vec3(0.0, 0.0, 1.0));
+                vec3 gf = hash(p + vec3(1.0, 0.0, 1.0));
+                vec3 gg = hash(p + vec3(0.0, 1.0, 1.0));
+                vec3 gh = hash(p + vec3(1.0, 1.0, 1.0));
+                
+                // 投影
+                float va = dot(ga, w - vec3(0.0, 0.0, 0.0));
+                float vb = dot(gb, w - vec3(1.0, 0.0, 0.0));
+                float vc = dot(gc, w - vec3(0.0, 1.0, 0.0));
+                float vd = dot(gd, w - vec3(1.0, 1.0, 0.0));
+                float ve = dot(ge, w - vec3(0.0, 0.0, 1.0));
+                float vf = dot(gf, w - vec3(1.0, 0.0, 1.0));
+                float vg = dot(gg, w - vec3(0.0, 1.0, 1.0));
+                float vh = dot(gh, w - vec3(1.0, 1.0, 1.0));
+                
+                // 插值
+                return va +
+                    u.x * (vb - va) +
+                    u.y * (vc - va) +
+                    u.z * (ve - va) +
+                    u.x * u.y * (va - vb - vc + vd) +
+                    u.y * u.z * (va - vc - ve + vg) +
+                    u.z * u.x * (va - vb - ve + vf) +
+                    u.x * u.y * u.z * (-va + vb + vc - vd + ve - vf - vg + vh);
+            }
+            
+            void main() {
+                vUv = uv;
+                
+                vec3 pos = position;
+                
+                // 计算噪声
+                float noiseValue = noise(pos * 0.1);
+                float y = abs(noiseValue);
+                y = pow(y, uPower);
+                
+                // 限制最大高度
+                pos.y = min(y * uHeightScale, uMaxHeight);
+                vHeight = pos.y / uMaxHeight;
+                
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+            }
+        `;
+
+        // 片段着色器
+        const fragmentShader = `
+            uniform vec3 uColor1;
+            uniform vec3 uColor2;
+            uniform vec3 uColor3;
+            uniform vec3 uColor4;
+            uniform vec3 uColor5;
+            uniform vec3 uColor6;
+            
+            varying vec2 vUv;
+            varying float vHeight;
+            
+            void main() {
+                vec3 color;
+                
+                // 根据高度选择颜色
+                if (vHeight < 0.15) {
+                    color = uColor1;
+                } else if (vHeight < 0.25) {
+                    color = mix(uColor1, uColor2, (vHeight - 0.15) / 0.1);
+                } else if (vHeight < 0.35) {
+                    color = mix(uColor2, uColor3, (vHeight - 0.25) / 0.1);
+                } else if (vHeight < 0.55) {
+                    color = mix(uColor3, uColor4, (vHeight - 0.35) / 0.2);
+                } else if (vHeight < 0.75) {
+                    color = mix(uColor4, uColor5, (vHeight - 0.55) / 0.2);
+                } else if (vHeight < 0.9) {
+                    color = mix(uColor5, uColor6, (vHeight - 0.75) / 0.15);
+                } else {
+                    color = uColor6;
+                }
+                
+                // 添加简单的光照效果
+                vec3 lightDir = normalize(vec3(1.0, 1.0, 1.0));
+                vec3 normal = normalize(cross(dFdx(vec3(vUv, vHeight)), dFdy(vec3(vUv, vHeight))));
+                float diff = max(dot(normal, lightDir), 0.0);
+                
+                color = color * (0.6 + 0.4 * diff);
+                
+                gl_FragColor = vec4(color, 1.0);
+            }
+        `;
+
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16) / 255,
+                g: parseInt(result[2], 16) / 255,
+                b: parseInt(result[3], 16) / 255
+            } : { r: 0, g: 0, b: 0 };
         }
 
-        function regenerateTerrain() {
+        function generateTerrain() {
             if (terrainMesh) {
                 window.scene.remove(terrainMesh);
                 terrainMesh.geometry.dispose();
                 terrainMesh.material.dispose();
             }
 
-            const size = 100;
-            const segments = 128;
-            const geometry = new THREE.PlaneGeometry(size, size, segments, segments);
-            geometry.rotateX(-Math.PI / 2);
+            const planeGeo = new THREE.PlaneGeometry(50, 50, 500, 500);
+            planeGeo.rotateX(-Math.PI / 2);
 
-            const positions = geometry.attributes.position;
-            const colors = [];
-            const seed = guiParams.seed;
-            const scale = guiParams.scale;
-            const heightMultiplier = guiParams.height;
+            const c1 = hexToRgb(guiParams.color1);
+            const c2 = hexToRgb(guiParams.color2);
+            const c3 = hexToRgb(guiParams.color3);
+            const c4 = hexToRgb(guiParams.color4);
+            const c5 = hexToRgb(guiParams.color5);
+            const c6 = hexToRgb(guiParams.color6);
 
-            for (let i = 0; i < positions.count; i++) {
-                const x = positions.getX(i);
-                const z = positions.getZ(i);
-                
-                const noiseValue = fbm(
-                    x / scale, 
-                    z / scale, 
-                    seed, 
-                    guiParams.octaves, 
-                    guiParams.persistence, 
-                    guiParams.lacunarity
-                );
-                
-                const height = Math.max(0, noiseValue * heightMultiplier);
-                positions.setY(i, height);
-
-                const color = getColorForHeight(height, heightMultiplier);
-                colors.push(color.r, color.g, color.b);
-            }
-
-            geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-            geometry.computeVertexNormals();
-
-            const material = new THREE.MeshStandardMaterial({
-                vertexColors: true,
-                roughness: 0.8,
-                metalness: 0.1,
-                wireframe: guiParams.wireframe,
-                side: THREE.DoubleSide
+            const material = new THREE.ShaderMaterial({
+                vertexShader,
+                fragmentShader,
+                side: THREE.DoubleSide,
+                uniforms: {
+                    uTime: { value: 0 },
+                    uHeightScale: { value: guiParams.heightScale },
+                    uMaxHeight: { value: guiParams.maxHeight },
+                    uPower: { value: guiParams.power },
+                    uColor1: { value: new THREE.Vector3(c1.r, c1.g, c1.b) },
+                    uColor2: { value: new THREE.Vector3(c2.r, c2.g, c2.b) },
+                    uColor3: { value: new THREE.Vector3(c3.r, c3.g, c3.b) },
+                    uColor4: { value: new THREE.Vector3(c4.r, c4.g, c4.b) },
+                    uColor5: { value: new THREE.Vector3(c5.r, c5.g, c5.b) },
+                    uColor6: { value: new THREE.Vector3(c6.r, c6.g, c6.b) }
+                },
+                wireframe: guiParams.wireframe
             });
 
-            terrainMesh = new THREE.Mesh(geometry, material);
-            terrainMesh.receiveShadow = true;
-            terrainMesh.castShadow = true;
+            terrainMesh = new THREE.Mesh(planeGeo, material);
             window.scene.add(terrainMesh);
+        }
+
+        function updateUniforms() {
+            if (terrainMesh) {
+                terrainMesh.material.uniforms.uHeightScale.value = guiParams.heightScale;
+                terrainMesh.material.uniforms.uMaxHeight.value = guiParams.maxHeight;
+                terrainMesh.material.uniforms.uPower.value = guiParams.power;
+                
+                const c1 = hexToRgb(guiParams.color1);
+                const c2 = hexToRgb(guiParams.color2);
+                const c3 = hexToRgb(guiParams.color3);
+                const c4 = hexToRgb(guiParams.color4);
+                const c5 = hexToRgb(guiParams.color5);
+                const c6 = hexToRgb(guiParams.color6);
+                
+                terrainMesh.material.uniforms.uColor1.value.set(c1.r, c1.g, c1.b);
+                terrainMesh.material.uniforms.uColor2.value.set(c2.r, c2.g, c2.b);
+                terrainMesh.material.uniforms.uColor3.value.set(c3.r, c3.g, c3.b);
+                terrainMesh.material.uniforms.uColor4.value.set(c4.r, c4.g, c4.b);
+                terrainMesh.material.uniforms.uColor5.value.set(c5.r, c5.g, c5.b);
+                terrainMesh.material.uniforms.uColor6.value.set(c6.r, c6.g, c6.b);
+            }
         }
 
         function updateWireframe() {
@@ -244,25 +294,17 @@
         }
 
         // 初始化地形
-        regenerateTerrain();
-
-        // 添加水面
-        const waterGeometry = new THREE.PlaneGeometry(200, 200);
-        waterGeometry.rotateX(-Math.PI / 2);
-        const waterMaterial = new THREE.MeshStandardMaterial({
-            color: 0x2874a6,
-            transparent: true,
-            opacity: 0.6,
-            roughness: 0.1,
-            metalness: 0.8
-        });
-        const water = new THREE.Mesh(waterGeometry, waterMaterial);
-        water.position.y = guiParams.height * 0.25;
-        window.scene.add(water);
+        generateTerrain();
 
         // 动画循环
         function animate() {
             controls.update();
+            
+            if (terrainMesh) {
+                terrainMesh.rotation.y += guiParams.speed;
+                terrainMesh.material.uniforms.uTime.value += 0.01;
+            }
+            
             window.renderer.render(window.scene, window.camera);
         }
 
