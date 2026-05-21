@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Three.js模型混合着色器示例 - GLTF模型加载与Shader特效">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 模型混合着色器</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        const container = document.getElementById('threeContainer');
+
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x1a1a2e);
+
+        window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        window.camera.position.set(3, 3, 3);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, logarithmicDepthBuffer: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(window.renderer.domElement);
+
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.enableDamping = true;
+
+        // 灯光
+        window.scene.add(new THREE.AmbientLight(0xffffff, 3));
+        // window.scene.add(new THREE.AxesHelper(1000));
+
+        let car = null;
+
+        // Shader uniforms
+        const shaderUniforms = {
+            iResolution: {
+                value: new THREE.Vector2(window.innerWidth, window.innerHeight)
+            },
+            iTime: {
+                value: 1.0
+            },
+            intensity: {
+                value: 20.0
+            },
+            speed: {
+                value: 0.02
+            }
+        };
+
+        // 加载模型
+        const loader = new GLTFLoader();
+        loader.load(
+            '../../models/gltf/car.glb',
+            gltf => {
+                car = gltf.scene;
+                window.scene.add(car);
+                modelBlendShader(car);
+            },
+            undefined,
+            error => {
+                console.error('模型加载失败:', error);
+            }
+        );
+
+        /* 混合着色 */
+        function modelBlendShader(model) {
+            let materials = [];
+            model.traverse(c => c.isMesh && materials.push(c.material));
+            materials = [...new Set(materials)];
+
+            const uniforms = shaderUniforms;
+
+            materials.forEach(material => {
+                material.onBeforeCompile = shader => {
+                    shader.uniforms.iResolution = uniforms.iResolution;
+                    shader.uniforms.iTime = uniforms.iTime;
+                    shader.uniforms.intensity = uniforms.intensity;
+
+                    shader.fragmentShader = shader.fragmentShader.replace(/#include <common>/, `
+                        uniform vec2 iResolution;
+                        uniform float iTime;
+                        uniform float intensity;
+                        #include <common> 
+                    `);
+
+                    shader.fragmentShader = shader.fragmentShader.replace('vec4 diffuseColor = vec4( diffuse, opacity );', `
+                        vec3 c;
+                        float l, z = iTime;
+                        for(int i = 0; i < 3; i++) {
+                            vec2 uv, p = gl_FragCoord.xy / iResolution / 2.0;
+                            uv = p + 2.0;
+                            p -= 0.5;
+                            p.x *= iResolution.x / iResolution.y;
+                            z += 0.07;
+                            l = length(p);
+                            uv += p / l * (sin(z) + 1.0) * abs(sin(l * 9.0 - z - z));
+                            c[i] = 0.01 / length(mod(uv, 1.0) - 0.5);
+                        }
+                        vec4 diffuseColor = vec4(diffuse * c * vec3(intensity, intensity, intensity), opacity);
+                    `);
+                };
+
+                material.needsUpdate = true;
+            });
+
+            model.render = () => {
+                uniforms.iTime.value += uniforms.speed.value;
+            };
+        }
+
+        // 初始化GUI
+        function initGUI() {
+            const gui = new GUI();
+            gui.domElement.style.top = '50px';
+
+            const params = {
+                intensity: 20.0,
+                speed: 0.02
+            };
+
+            const shaderFolder = gui.addFolder('着色器参数');
+            shaderFolder.add(params, 'intensity', 1.0, 100.0).name('发光强度').onChange((v) => {
+                shaderUniforms.intensity.value = v;
+            });
+            shaderFolder.add(params, 'speed', 0.001, 0.1).name('动画速度').onChange((v) => {
+                shaderUniforms.speed.value = v;
+            });
+
+            shaderFolder.open();
+        }
+
+        initGUI();
+
+        // 渲染
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (car && car.render) {
+                car.render();
+            }
+
+            controls.update();
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        animate();
+
+        window.addEventListener('resize', () => {
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+            shaderUniforms.iResolution.value.set(window.innerWidth, window.innerHeight);
+        });
+    </script>
+
+    <!-- 截图支持脚本 -->
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera) {
+                        if (window.composer) window.composer.render();
+                        else window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.composer ? window.composer.renderer.domElement : window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

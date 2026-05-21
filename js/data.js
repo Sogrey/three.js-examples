@@ -1641,6 +1641,15 @@ const threejsData = {
               url: "examples/z258/shader-cityLight",
             },
             {
+              id: "shader-modelBlendShader",
+              title: "模型混合着色器",
+              description:
+                "GLTF汽车模型加载，展示混合着色器特效",
+              thumbnail: "images/shader-modelBlendShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-modelBlendShader",
+            },
+            {
               id: "particle-waveParticleShader",
               title: "波浪粒子",
               description: "展示波浪粒子效果，使用着色器实现动态波浪粒子动画",
