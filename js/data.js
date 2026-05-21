@@ -2130,6 +2130,14 @@ const threejsData = {
               version: "r179",
               url: "examples/z258/application-modelHeatmap",
             },
+            {
+              id: "application-faceMesh",
+              title: "表情",
+              description: "使用程序化生成面部纹理，展示在球体表面",
+              thumbnail: "images/application-faceMesh.jpg",
+              version: "r179",
+              url: "examples/z258/application-faceMesh",
+            },
 
             {
               id: "application-measureDraw",

@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="表情示例，使用程序化生成面部纹理">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 表情</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        const container = document.getElementById('threeContainer');
+
+        // 创建场景
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x2a2a4a);
+
+        // 创建相机
+        window.camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 1, 1000);
+        window.camera.position.set(0, 0, 15);
+
+        // 创建渲染器
+        window.renderer = new THREE.WebGLRenderer({ antialias: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        window.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        container.appendChild(window.renderer.domElement);
+
+        // 创建控制器
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.enableDamping = true;
+
+        // 添加光照
+        window.scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+        dirLight.position.set(5, 10, 7);
+        window.scene.add(dirLight);
+
+        // GUI 参数
+        const guiParams = {
+            regenerate: () => regenerateFaces(),
+            metalness: 0.3,
+            roughness: 0.4,
+            emissiveIntensity: 0.05
+        };
+
+        // 创建GUI
+        const gui = new GUI();
+        gui.domElement.style.top = '50px';
+        gui.add(guiParams, 'regenerate').name('重新生成表情');
+        gui.add(guiParams, 'metalness', 0, 1).name('金属度').onChange(updateMaterial);
+        gui.add(guiParams, 'roughness', 0, 1).name('粗糙度').onChange(updateMaterial);
+        gui.add(guiParams, 'emissiveIntensity', 0, 0.5).name('自发光强度').onChange(updateMaterial);
+
+        // 图集尺寸
+        const atlasSize = new THREE.Vector2(2, 2);
+        const tileSize = 256;
+
+        // 创建面部纹理图集
+        function createFaceAtlas() {
+            const canvas = document.createElement('canvas');
+            canvas.width = tileSize * atlasSize.x;
+            canvas.height = tileSize * atlasSize.y;
+            const ctx = canvas.getContext('2d');
+
+            // 白色背景
+            ctx.fillStyle = 'rgba(255, 255, 255, 1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            for (let y = 0; y < atlasSize.y; y++) {
+                for (let x = 0; x < atlasSize.x; x++) {
+                    generateFace(ctx, x, y);
+                }
+            }
+
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.colorSpace = THREE.SRGBColorSpace;
+            tex.anisotropy = window.renderer.capabilities.getMaxAnisotropy();
+            return tex;
+        }
+
+        function generateFace(ctx, x, y) {
+            const u = (val) => tileSize * 0.01 * val;
+            
+            ctx.save();
+            ctx.translate((x + 0.5) * tileSize, (y + 0.5) * tileSize);
+            
+            // 绘制眼睛
+            ctx.lineWidth = u(5);
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = 'rgba(80, 80, 80, 1)';
+            drawEyes(ctx, u, 25, -25, 15);
+            
+            // 绘制鼻子
+            drawNose(ctx, u);
+            
+            // 绘制嘴巴
+            drawMouth(ctx, u);
+            
+            ctx.restore();
+        }
+
+        function drawEyes(ctx, u, x, y, radius) {
+            const eyeSymmX = Math.sign(Math.random() - 0.5);
+            const eyeSymmY = Math.sign(Math.random() - 0.5);
+            
+            // 左眼
+            ctx.fillStyle = 'rgba(255, 255, 255, 1)';
+            ctx.beginPath();
+            ctx.arc(-u(x), u(y), u(radius), 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            
+            // 瞳孔方向
+            const dir = [Math.random() - 0.5, Math.random() - 0.5];
+            const dirL = Math.hypot(dir[0], dir[1]);
+            const dirN = [dir[0] / dirL, dir[1] / dirL];
+            const pupilShift = Math.random() * 5;
+            const finalDir = { x: dirN[0] * pupilShift, y: dirN[1] * pupilShift };
+            const pupilR = 7;
+            const pupilColor = `hsla(${Math.random() * 360}, 100%, 25%, 1)`;
+            
+            ctx.fillStyle = pupilColor;
+            ctx.beginPath();
+            ctx.arc(-u(x + finalDir.x), u(y + finalDir.y), u(pupilR), 0, Math.PI * 2);
+            ctx.fill();
+
+            // 右眼
+            ctx.fillStyle = 'rgba(255, 255, 255, 1)';
+            ctx.beginPath();
+            ctx.arc(u(x), u(y), u(radius), 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            
+            ctx.fillStyle = pupilColor;
+            ctx.beginPath();
+            ctx.arc(u(x + finalDir.x * eyeSymmX), u(y + finalDir.y * eyeSymmY), u(pupilR), 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawNose(ctx, u) {
+            ctx.beginPath();
+            const arcStart = Math.random() * Math.PI * 2;
+            const arcEnd = arcStart + (Math.random() * 0.75 + 0.25) * Math.PI * 2;
+            ctx.arc(0, 0, u(Math.random() * 10 + 5), arcStart, arcEnd);
+            ctx.stroke();
+        }
+
+        function drawMouth(ctx, u) {
+            const p1 = [-25, Math.random() * 25];
+            const p2 = [-10 + Math.random() * 20, Math.random() * 25];
+            const p3 = [25, Math.random() * 25];
+            const yShift = 20;
+            
+            ctx.beginPath();
+            ctx.moveTo(u(p1[0]), u(yShift + p1[1]));
+            ctx.quadraticCurveTo(u(p2[0]), u(yShift + p2[1]), u(p3[0]), u(yShift + p3[1]));
+            ctx.stroke();
+        }
+
+        let faceMeshes = [];
+        let atlasTexture = null;
+
+        function regenerateFaces() {
+            // 清除旧的网格
+            faceMeshes.forEach(mesh => {
+                window.scene.remove(mesh);
+                mesh.geometry.dispose();
+                mesh.material.dispose();
+            });
+            faceMeshes = [];
+
+            // 重新生成纹理
+            if (atlasTexture) {
+                atlasTexture.dispose();
+            }
+            atlasTexture = createFaceAtlas();
+
+            // 创建新的面部网格
+            for (let y = 0; y < atlasSize.y; y++) {
+                for (let x = 0; x < atlasSize.x; x++) {
+                    const mesh = createFaceMesh(x, y);
+                    mesh.position.set(
+                        (-(atlasSize.x - 1) * 0.5 + x) * 2,
+                        (-(atlasSize.y - 1) * 0.5 + y) * 2,
+                        0
+                    );
+                    window.scene.add(mesh);
+                    faceMeshes.push(mesh);
+                }
+            }
+        }
+
+        function createFaceMesh(x, y) {
+            const geometry = new THREE.SphereGeometry(0.9, 64, 32);
+            const material = new THREE.MeshStandardMaterial({
+                metalness: guiParams.metalness,
+                roughness: guiParams.roughness,
+                emissive: 0xffffff,
+                emissiveIntensity: guiParams.emissiveIntensity,
+                color: 0xffffff * Math.random(),
+                blending: THREE.AdditiveBlending,
+                map: atlasTexture,
+                onBeforeCompile: shader => {
+                    shader.uniforms.atlasSize = { value: atlasSize };
+                    shader.uniforms.tile = { value: new THREE.Vector2(x, y) };
+                    
+                    shader.fragmentShader = `
+                        uniform vec2 atlasSize;
+                        uniform vec2 tile;
+                        ${shader.fragmentShader}
+                    `.replace(
+                        `#include <map_fragment>`,
+                        `
+                        vec2 mUV = vMapUv;
+                        vec2 centerUV = ((mUV - 0.5) * vec2(2., 1.) + vec2(0.5, 0.)) * 3.14159;
+                        mUV = centerUV + 0.5;
+                        vec2 atlasTile = 1.0 / atlasSize;
+                        
+                        mUV = clamp((mUV + tile) * atlasTile, vec2(0.0), vec2(1.0));
+                        
+                        #ifdef USE_MAP
+                        vec4 sampledDiffuseColor = texture2D(map, mUV);
+                        
+                        vec2 absUV = abs(centerUV);
+                        diffuseColor *= mix(sampledDiffuseColor, vec4(1.0), step(0.5, max(absUV.x, absUV.y)));
+                        #endif
+                        `
+                    );
+                }
+            });
+
+            return new THREE.Mesh(geometry, material);
+        }
+
+        function updateMaterial() {
+            faceMeshes.forEach(mesh => {
+                mesh.material.metalness = guiParams.metalness;
+                mesh.material.roughness = guiParams.roughness;
+                mesh.material.emissiveIntensity = guiParams.emissiveIntensity;
+                mesh.material.needsUpdate = true;
+            });
+        }
+
+        // 初始化
+        regenerateFaces();
+
+        // 动画循环
+        function animate() {
+            controls.update();
+            
+            // 轻微旋转
+            faceMeshes.forEach((mesh, i) => {
+                mesh.rotation.y = Math.sin(Date.now() * 0.001 + i) * 0.1;
+            });
+            
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        window.renderer.setAnimationLoop(animate);
+
+        // 窗口大小调整
+        window.addEventListener('resize', () => {
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+
+    <!-- 截图支持脚本 -->
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
