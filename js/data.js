@@ -2066,6 +2066,14 @@ const threejsData = {
               version: "r179",
               url: "examples/z258/application-modelBorder",
             },
+            {
+              id: "application-geometryMerge",
+              title: "几何体合并",
+              description: "将模型所有网格合并为单一几何体，优化渲染性能",
+              thumbnail: "images/application-geometryMerge.jpg",
+              version: "r179",
+              url: "examples/z258/application-geometryMerge",
+            },
 
             {
               id: "application-measureDraw",
