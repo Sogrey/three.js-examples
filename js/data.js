@@ -1632,6 +1632,15 @@ const threejsData = {
               url: "examples/z258/shader-cityLine",
             },
             {
+              id: "shader-cityLight",
+              title: "城市光影",
+              description:
+                "GLB和FBX双模型加载，展示渐变颜色、扩散波、光线条、上升线等多种光影效果",
+              thumbnail: "images/shader-cityLight.jpg",
+              version: "r179",
+              url: "examples/z258/shader-cityLight",
+            },
+            {
               id: "particle-waveParticleShader",
               title: "波浪粒子",
               description: "展示波浪粒子效果，使用着色器实现动态波浪粒子动画",

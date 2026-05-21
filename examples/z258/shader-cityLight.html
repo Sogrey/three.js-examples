@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Three.js城市光影示例 - 多种光影效果组合">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 城市光影</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        const container = document.getElementById('threeContainer');
+
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x0a0a1a);
+
+        window.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        window.camera.position.set(5, 5, 5);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        window.renderer.setPixelRatio(window.devicePixelRatio * 1.5);
+        container.appendChild(window.renderer.domElement);
+
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.enableDamping = true;
+
+        // 动画参数
+        const animParams = {
+            spreadTime: { value: -2000 },
+            lightLineTime: { value: -1500 },
+            toTopTime: { value: 0 }
+        };
+
+        // 混合着色
+        function modifyMaterial() {
+            const material = new THREE.MeshBasicMaterial({
+                color: '#28A1CC',
+                opacity: 0.2,
+                transparent: true,
+                side: THREE.DoubleSide
+            });
+
+            material.onBeforeCompile = (shader) => {
+                shader.fragmentShader = shader.fragmentShader.replace(/#include <dithering_fragment>/, `#include <dithering_fragment> //替换标记`);
+                addColor(shader);
+                addWave(shader);
+                addLightLine(shader);
+                addToTopLine(shader);
+            };
+            return material;
+        }
+
+        // 添加渐变颜色
+        function addColor(shader) {
+            const uHeight = 1200;
+
+            shader.uniforms.uTopColor = { value: new THREE.Color('#e9eaef') };
+            shader.uniforms.uHeight = { value: uHeight };
+
+            shader.vertexShader = shader.vertexShader.replace(
+                '#include <common>',
+                `
+                #include <common>
+                varying vec3 vPosition;
+                `
+            );
+
+            shader.vertexShader = shader.vertexShader.replace(
+                '#include <begin_vertex>',
+                `
+                #include <begin_vertex>
+                vPosition = position;
+                `
+            );
+
+            shader.fragmentShader = shader.fragmentShader.replace(
+                '#include <common>',
+                `
+                #include <common>
+                uniform vec3 uTopColor;
+                uniform float uHeight;
+                varying vec3 vPosition;
+                `
+            );
+
+            shader.fragmentShader = shader.fragmentShader.replace(
+                '//替换标记',
+                `
+                vec4 distGradColor = gl_FragColor;
+                float gradMix = vPosition.y / uHeight;
+                vec3 gradMixColor = mix(distGradColor.xyz, uTopColor, gradMix);
+                gl_FragColor = vec4(gradMixColor, 1);
+                //替换标记
+                `
+            );
+        }
+
+        // 添加扩散波
+        function addWave(shader) {
+            shader.uniforms.uSpreadCenter = { value: new THREE.Vector2(0, 0) };
+            shader.uniforms.uSpreadTime = animParams.spreadTime;
+            shader.uniforms.uSpreadWidth = { value: 40 };
+
+            shader.fragmentShader = shader.fragmentShader.replace(
+                '#include <common>',
+                `
+                #include <common>
+                uniform vec2 uSpreadCenter;
+                uniform float uSpreadTime;
+                uniform float uSpreadWidth;
+                `
+            );
+
+            shader.fragmentShader = shader.fragmentShader.replace(
+                '//替换标记',
+                `
+                float spreadRadius = distance(vPosition.xz, uSpreadCenter);
+                float spreadIndex = -(spreadRadius - uSpreadTime) * (spreadRadius - uSpreadTime) + uSpreadWidth;
+                if (spreadIndex > 0.0) {
+                    gl_FragColor = mix(gl_FragColor, vec4(1, 1, 1, 1), spreadIndex / uSpreadWidth);
+                }
+                //替换标记
+                `
+            );
+        }
+
+        // 添加光线条
+        function addLightLine(shader) {
+            shader.uniforms.uLightLineTime = animParams.lightLineTime;
+            shader.uniforms.uLightLineWidth = { value: 200 };
+
+            shader.fragmentShader = shader.fragmentShader.replace(
+                '#include <common>',
+                `
+                #include <common>
+                uniform float uLightLineTime;
+                uniform float uLightLineWidth;
+                `
+            );
+
+            shader.fragmentShader = shader.fragmentShader.replace(
+                '//替换标记',
+                `
+                float LightLineMix = -(vPosition.x + vPosition.z - uLightLineTime) * (vPosition.x + vPosition.z - uLightLineTime) + uLightLineWidth;
+                if (LightLineMix > 0.0) {
+                    gl_FragColor = mix(gl_FragColor, vec4(0.8, 1.0, 1.0, 1), LightLineMix / uLightLineWidth);
+                }
+                //替换标记
+                `
+            );
+        }
+
+        // 添加上升线
+        function addToTopLine(shader) {
+            shader.uniforms.uToTopTime = animParams.toTopTime;
+            shader.uniforms.uToTopWidth = { value: 40 };
+
+            shader.fragmentShader = shader.fragmentShader.replace(
+                '#include <common>',
+                `
+                #include <common>
+                uniform float uToTopTime;
+                uniform float uToTopWidth;
+                `
+            );
+
+            shader.fragmentShader = shader.fragmentShader.replace(
+                '//替换标记',
+                `
+                float ToTopMix = -(vPosition.y - uToTopTime) * (vPosition.y - uToTopTime) + uToTopWidth;
+                if (ToTopMix > 0.0) {
+                    gl_FragColor = mix(gl_FragColor, vec4(0.8, 0.8, 1, 1), ToTopMix / uToTopWidth);
+                }
+                //替换标记
+                `
+            );
+        }
+
+        // 加载GLTF模型
+        const loader = new GLTFLoader();
+        loader.load('../../models/gltf/build.glb', (gltf) => {
+            const model = gltf.scene;
+            model.scale.set(0.01, 0.01, 0.01);
+            window.scene.add(model);
+            model.traverse((child) => {
+                if (child instanceof THREE.Mesh) {
+                    child.material.dispose();
+                    child.material = modifyMaterial();
+                }
+            });
+        }, undefined, (error) => {
+            console.error('GLTF模型加载失败:', error);
+        });
+
+        // 加载FBX模型
+        new FBXLoader().load('../../models/fbx/shanghai.FBX', (object3d) => {
+            window.scene.add(object3d);
+            object3d.scale.set(0.001, 0.001, 0.001);
+            object3d.traverse((child) => {
+                if (child instanceof THREE.Mesh) {
+                    child.material.dispose();
+                    child.material = modifyMaterial();
+                }
+            });
+        }, undefined, (error) => {
+            console.error('FBX模型加载失败:', error);
+        });
+
+        // 初始化GUI
+        function initGUI() {
+            const gui = new GUI();
+            gui.domElement.style.top = '50px';
+
+            const params = {
+                baseColor: '#28A1CC',
+                topColor: '#e9eaef',
+                spreadSpeed: 1.0,
+                lightLineSpeed: 1.0,
+                toTopSpeed: 1.0
+            };
+
+            const colorFolder = gui.addFolder('颜色设置');
+            colorFolder.addColor(params, 'baseColor').name('基础颜色');
+            colorFolder.addColor(params, 'topColor').name('顶部颜色');
+
+            const speedFolder = gui.addFolder('动画速度');
+            speedFolder.add(params, 'spreadSpeed', 0.1, 3.0).name('扩散波速度');
+            speedFolder.add(params, 'lightLineSpeed', 0.1, 3.0).name('光线条速度');
+            speedFolder.add(params, 'toTopSpeed', 0.1, 3.0).name('上升线速度');
+
+            colorFolder.open();
+            speedFolder.open();
+
+            return params;
+        }
+
+        const guiParams = initGUI();
+
+        // 渲染
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // 扩散波动画 (3秒周期，范围 -2000 到 800)
+            animParams.spreadTime.value += 9.33 * guiParams.spreadSpeed; // (800 - (-2000)) / 3 / 60
+            if (animParams.spreadTime.value > 800) {
+                animParams.spreadTime.value = -2000;
+            }
+
+            // 光线条动画 (5秒周期，范围 -1500 到 1500)
+            animParams.lightLineTime.value += 10 * guiParams.lightLineSpeed; // (1500 - (-1500)) / 5 / 60
+            if (animParams.lightLineTime.value > 1500) {
+                animParams.lightLineTime.value = -1500;
+            }
+
+            // 上升线动画 (3秒周期，范围 0 到 500)
+            animParams.toTopTime.value += 2.78 * guiParams.toTopSpeed; // 500 / 3 / 60
+            if (animParams.toTopTime.value > 500) {
+                animParams.toTopTime.value = 0;
+            }
+
+            controls.update();
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        animate();
+
+        window.addEventListener('resize', () => {
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+        });
+    </script>
+
+    <!-- 截图支持脚本 -->
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera) {
+                        if (window.composer) window.composer.render();
+                        else window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.composer ? window.composer.renderer.domElement : window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
