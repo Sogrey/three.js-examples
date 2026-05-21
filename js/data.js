@@ -1587,6 +1587,15 @@ const threejsData = {
               url: "examples/z258/shader-redRose",
             },
             {
+              id: "shader-cityEffect",
+              title: "城市光效",
+              description:
+                "FBX城市模型加载，展示建筑生长、流动上升、扩散波、扫光等Shader特效",
+              thumbnail: "images/shader-cityEffect.jpg",
+              version: "r179",
+              url: "examples/z258/shader-cityEffect",
+            },
+            {
               id: "particle-waveParticleShader",
               title: "波浪粒子",
               description: "展示波浪粒子效果，使用着色器实现动态波浪粒子动画",

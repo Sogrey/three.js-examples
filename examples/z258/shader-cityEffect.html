@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Three.js城市光效示例 - FBX模型加载与Shader特效">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 城市光效</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        const container = document.getElementById('threeContainer');
+
+        window.scene = new THREE.Scene();
+
+        window.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100000);
+        window.camera.position.set(0, 400, 1000);
+
+        window.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, logarithmicDepthBuffer: true });
+        window.renderer.setPixelRatio(window.devicePixelRatio * 1.3);
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(window.renderer.domElement);
+
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.enableDamping = true;
+
+        // 天空盒
+        const urls = [
+            '../../images/textures/sky/skybox0/1.png',
+            '../../images/textures/sky/skybox0/2.png',
+            '../../images/textures/sky/skybox0/3.png',
+            '../../images/textures/sky/skybox0/4.png',
+            '../../images/textures/sky/skybox0/5.png',
+            '../../images/textures/sky/skybox0/6.png'
+        ];
+        const textureCube = new THREE.CubeTextureLoader().load(urls);
+        window.scene.background = textureCube;
+
+        const renderList = [];
+        const shaderUniforms = {
+            riseSpeed: 30.0,
+            spreadSpeed: 200.0,
+            sweepSpeed: 160.0,
+            riseColor: new THREE.Color('#87CEEB'),
+            spreadColor: new THREE.Color('#9932CC'),
+            sweepColor: new THREE.Color('#00FFFF')
+        };
+
+        // 灯光
+        const light = new THREE.AmbientLight(0xadadad);
+        window.scene.add(light);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        directionalLight.position.set(600, 600, 0);
+        window.scene.add(directionalLight);
+
+        /**
+         * 对于shader内容的修改，需要根据具体内容进行处理
+         * shader中会存在#include <begin_vertex>等语句，这些是three定义的glsl
+         * 具体脚本内容查看three源码中renderer/shaders/shaderChunk下对应脚本文件
+         * 而修改shader就是在对应的脚本语句后修改脚本或增加语句
+         */
+
+        // 生长效果Shader - 建筑从地面生长动画
+        const applyGrowShader = (shader) => {
+            shader.uniforms.uProgress = { value: 0 };
+            shader.vertexShader = `
+                uniform float uProgress;
+                ${shader.vertexShader}
+            `;
+            shader.vertexShader = shader.vertexShader.replace(
+                '#include <begin_vertex>',
+                `
+                #include <begin_vertex>
+                transformed.z = position.z * min(uProgress, 1.0);
+                `
+            );
+            renderList.push((progress) => {
+                shader.uniforms.uProgress.value = progress;
+            });
+        };
+
+        // 建筑表面流动上升效果
+        const applyRiseShader = (shader) => {
+            shader.uniforms.uRiseTime = { value: 0 };
+            shader.uniforms.uRiseColor = { value: shaderUniforms.riseColor };
+
+            shader.vertexShader = shader.vertexShader.replace(
+                '#include <common>',
+                `
+                #include <common>
+                varying vec3 vTransformedNormal;
+                varying float vHeight;
+                `
+            );
+            shader.vertexShader = shader.vertexShader.replace(
+                '#include <begin_vertex>',
+                `
+                #include <begin_vertex>
+                vTransformedNormal = normalize(normal);
+                vHeight = transformed.z;
+                `
+            );
+
+            shader.fragmentShader = shader.fragmentShader.replace(
+                '#include <common>',
+                `
+                #include <common>
+                uniform vec3 uRiseColor;
+                uniform float uRiseTime;
+                varying float vHeight;
+                varying vec3 vTransformedNormal;
+                
+                vec3 riseLine() {
+                    float smoothness = 1.8;
+                    float speed = uRiseTime;
+                    bool isTopBottom = (vTransformedNormal.z > 0.0 || vTransformedNormal.z < 0.0) && vTransformedNormal.x == 0.0 && vTransformedNormal.y == 0.0;
+                    float ratio = isTopBottom ? 0.0 : smoothstep(speed, speed + smoothness, vHeight) - smoothstep(speed + smoothness, speed + smoothness * 2.0, vHeight);
+                    return uRiseColor * ratio;
+                }
+                `
+            );
+            shader.fragmentShader = shader.fragmentShader.replace(
+                '#include <dithering_fragment>',
+                `
+                #include <dithering_fragment>
+                gl_FragColor = gl_FragColor + vec4(riseLine(), 1.0);
+                `
+            );
+            renderList.push((time) => {
+                shader.uniforms.uRiseTime.value = time * shaderUniforms.riseSpeed;
+            });
+        };
+
+        // 扩散波效果 - 从中心向外扩散的波纹
+        const applySpreadShader = (shader) => {
+            shader.uniforms.uSpreadTime = { value: 0 };
+            shader.uniforms.uSpreadColor = { value: shaderUniforms.spreadColor };
+
+            shader.vertexShader = shader.vertexShader.replace(
+                '#include <common>',
+                `
+                #include <common>
+                varying vec2 vTransformedPosition;
+                `
+            );
+            shader.vertexShader = shader.vertexShader.replace(
+                '#include <begin_vertex>',
+                `
+                #include <begin_vertex>
+                vTransformedPosition = vec2(position.x, position.y);
+                `
+            );
+            shader.fragmentShader = shader.fragmentShader.replace(
+                '#include <common>',
+                `
+                #include <common>
+                uniform vec3 uSpreadColor;
+                uniform float uSpreadTime;
+                varying vec2 vTransformedPosition;
+                
+                vec3 spread() {
+                    vec2 center = vec2(0.0);
+                    float smoothness = 60.0;
+                    float start = mod(uSpreadTime, 1800.0);
+                    float distance = length(vTransformedPosition - center);
+                    float ratio = smoothstep(start, start + smoothness, distance) - smoothstep(start + smoothness, start + smoothness * 2.0, distance);
+                    return uSpreadColor * ratio;
+                }
+                `
+            );
+            shader.fragmentShader = shader.fragmentShader.replace(
+                '#include <dithering_fragment>',
+                `
+                #include <dithering_fragment>
+                gl_FragColor = gl_FragColor + vec4(spread(), 1.0);
+                `
+            );
+            renderList.push((time) => {
+                shader.uniforms.uSpreadTime.value = time * shaderUniforms.spreadSpeed;
+            });
+        };
+
+        // 扫光效果 - 水平扫过的光效
+        const applySweepShader = (shader) => {
+            shader.uniforms.uSweepTime = { value: 0 };
+            shader.uniforms.uSweepColor = { value: shaderUniforms.sweepColor };
+
+            shader.vertexShader = shader.vertexShader.replace(
+                '#include <common>',
+                `
+                #include <common>
+                varying vec2 vSweepPosition;
+                `
+            );
+            shader.vertexShader = shader.vertexShader.replace(
+                '#include <begin_vertex>',
+                `
+                #include <begin_vertex>
+                vSweepPosition = vec2(position.x, position.y);
+                `
+            );
+            shader.fragmentShader = shader.fragmentShader.replace(
+                '#include <common>',
+                `
+                #include <common>
+                uniform vec3 uSweepColor;
+                uniform float uSweepTime;
+                varying vec2 vSweepPosition;
+                
+                vec3 sweep() {
+                    vec2 center = vec2(0.0);
+                    float smoothness = 60.0;
+                    float start = mod(uSweepTime, 1800.0) - 800.0;
+                    float ratio = smoothstep(start, start + smoothness, vSweepPosition.x) - smoothstep(start + smoothness, start + smoothness * 2.0, vSweepPosition.x);
+                    return uSweepColor * ratio;
+                }
+                `
+            );
+            shader.fragmentShader = shader.fragmentShader.replace(
+                '#include <dithering_fragment>',
+                `
+                #include <dithering_fragment>
+                gl_FragColor = gl_FragColor + vec4(sweep(), 1.0);
+                `
+            );
+            renderList.push((time) => {
+                shader.uniforms.uSweepTime.value = time * shaderUniforms.sweepSpeed;
+            });
+        };
+
+        // 模型处理器映射
+        const modelHandlerMap = {
+            CITY_UNTRIANGULATED: (model, group) => {
+                // 城市建筑
+                const { geometry, position, material } = model;
+
+                // 模型线框化
+                const lineMaterial = new THREE.LineBasicMaterial({ color: '#2685fe' });
+                const lineBox = new THREE.LineSegments(new THREE.EdgesGeometry(geometry, 1), lineMaterial);
+                lineBox.position.copy(position);
+                // 模型坐标系与WebGL坐标系不同需要处理
+                lineBox.rotateX(-Math.PI / 2);
+                group.add(lineBox);
+
+                // 在原先材质效果的基础上修改shader
+                material.onBeforeCompile = (shader) => {
+                    material.color = new THREE.Color('#0e233d');
+                    material.transparent = true;
+                    material.opacity = 0.9;
+                    // 实现生长效果
+                    applyGrowShader(shader);
+                    applyRiseShader(shader);
+                    applySpreadShader(shader);
+                    applySweepShader(shader);
+                };
+                lineMaterial.onBeforeCompile = (shader) => {
+                    applyGrowShader(shader);
+                };
+            },
+            LANDMASS: (model) => {
+                // 地面
+                const material = model.material;
+                material.color = new THREE.Color('#040912');
+                material.transparent = true;
+                material.opacity = 0.8;
+            },
+            ROADS: (model) => {
+                // 道路
+                const material = model.material;
+                material.color = new THREE.Color('#292e4c');
+            }
+        };
+
+        // 加载城市模型 - 使用 shanghai.FBX
+        new FBXLoader().load('../../models/fbx/shanghai.FBX', (cityScene) => {
+            const group = new THREE.Group();
+
+            cityScene.children.forEach((item) => {
+                const clonedData = item.clone();
+                modelHandlerMap[clonedData.name]?.(clonedData, group);
+                group.add(clonedData);
+            });
+
+            window.scene.add(group);
+        }, undefined, (error) => {
+            console.error('模型加载失败:', error);
+        });
+
+        // 初始化GUI
+        function initGUI() {
+            const gui = new GUI();
+            gui.domElement.style.top = '50px';
+
+            const params = {
+                riseSpeed: 1.0,
+                spreadSpeed: 1.0,
+                sweepSpeed: 1.0,
+                riseColor: '#87CEEB',
+                spreadColor: '#9932CC',
+                sweepColor: '#00FFFF'
+            };
+
+            const shaderFolder = gui.addFolder('Shader特效速度');
+            shaderFolder.add(params, 'riseSpeed', 0, 5).name('上升速度').onChange((v) => {
+                shaderUniforms.riseSpeed = 30.0 * v;
+            });
+            shaderFolder.add(params, 'spreadSpeed', 0, 5).name('扩散速度').onChange((v) => {
+                shaderUniforms.spreadSpeed = 200.0 * v;
+            });
+            shaderFolder.add(params, 'sweepSpeed', 0, 5).name('扫光速度').onChange((v) => {
+                shaderUniforms.sweepSpeed = 160.0 * v;
+            });
+
+            const colorFolder = gui.addFolder('特效颜色');
+            colorFolder.addColor(params, 'riseColor').name('上升颜色').onChange((v) => {
+                shaderUniforms.riseColor.set(v);
+            });
+            colorFolder.addColor(params, 'spreadColor').name('扩散颜色').onChange((v) => {
+                shaderUniforms.spreadColor.set(v);
+            });
+            colorFolder.addColor(params, 'sweepColor').name('扫光颜色').onChange((v) => {
+                shaderUniforms.sweepColor.set(v);
+            });
+
+            shaderFolder.open();
+            colorFolder.open();
+        }
+
+        initGUI();
+
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const elapsedTime = clock.getElapsedTime();
+            renderList.forEach(fn => fn(elapsedTime));
+
+            controls.update();
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        animate();
+
+        window.addEventListener('resize', () => {
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+        });
+    </script>
+
+    <!-- 截图支持脚本 -->
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera) {
+                        if (window.composer) window.composer.render();
+                        else window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.composer ? window.composer.renderer.domElement : window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
