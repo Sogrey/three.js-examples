@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="无限行驶场景，展示无限道路滚动和汽车动画">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 无限行驶</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        const container = document.getElementById('threeContainer');
+
+        // 创建场景
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x87CEEB);
+
+        // 创建相机
+        window.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        window.camera.position.set(0, 5, 10);
+
+        // 创建渲染器
+        window.renderer = new THREE.WebGLRenderer({ antialias: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        window.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        window.renderer.shadowMap.enabled = true;
+        container.appendChild(window.renderer.domElement);
+
+        // 创建控制器
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.enableDamping = true;
+
+        // 添加光照
+        window.scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        dirLight.position.set(10, 10, 10);
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 1024;
+        dirLight.shadow.mapSize.height = 1024;
+        window.scene.add(dirLight);
+
+        // GUI 参数
+        const guiParams = {
+            speed: 0.2,
+            carColor: '#ff0000',
+            cameraFollow: true
+        };
+
+        // 创建GUI
+        const gui = new GUI();
+        gui.domElement.style.top = '50px';
+        gui.add(guiParams, 'speed', 0, 1).name('行驶速度');
+        gui.addColor(guiParams, 'carColor').name('车身颜色').onChange(updateCarColor);
+        gui.add(guiParams, 'cameraFollow').name('相机跟随');
+
+        let carBodyMaterials = [];
+
+        function updateCarColor() {
+            carBodyMaterials.forEach(mat => mat.color.set(guiParams.carColor));
+        }
+
+        // 无限道路系统类
+        class InfiniteRoad {
+            constructor() {
+                this.speed = guiParams.speed;
+                this.roadLength = 200;
+                
+                // 创建纹理加载器
+                const textureLoader = new THREE.TextureLoader();
+                
+                // 创建道路
+                const roadTexture = textureLoader.load('https://threejs.org/examples/textures/roads/road1.jpg');
+                roadTexture.wrapS = roadTexture.wrapT = THREE.RepeatWrapping;
+                roadTexture.repeat.set(1, 10);
+                
+                this.road = new THREE.Mesh(
+                    new THREE.PlaneGeometry(10, this.roadLength),
+                    new THREE.MeshStandardMaterial({
+                        map: roadTexture,
+                        color: 0x444444,
+                        roughness: 0.8
+                    })
+                );
+                this.road.rotation.x = -Math.PI / 2;
+                this.road.position.y = 0.01;
+                this.road.receiveShadow = true;
+                window.scene.add(this.road);
+                
+                // 创建草地
+                const grassTexture = textureLoader.load('https://threejs.org/examples/textures/terrain/grasslight-big.jpg');
+                grassTexture.wrapS = grassTexture.wrapT = THREE.RepeatWrapping;
+                grassTexture.repeat.set(8, 40);
+                
+                this.grass = new THREE.Mesh(
+                    new THREE.PlaneGeometry(100, this.roadLength),
+                    new THREE.MeshStandardMaterial({
+                        map: grassTexture,
+                        color: 0x88aa55,
+                        roughness: 0.8
+                    })
+                );
+                this.grass.rotation.x = -Math.PI / 2;
+                this.grass.position.y = 0;
+                this.grass.receiveShadow = true;
+                window.scene.add(this.grass);
+                
+                // 创建道路标记
+                this.createRoadMarkings();
+                
+                // 创建树木
+                this.createTrees();
+            }
+            
+            createRoadMarkings() {
+                this.roadMarkings = [];
+                const markingGap = 8;
+                const totalMarkings = Math.ceil(this.roadLength / markingGap) * 2;
+                
+                for (let i = 0; i < totalMarkings; i++) {
+                    const marking = new THREE.Mesh(
+                        new THREE.PlaneGeometry(0.5, 5),
+                        new THREE.MeshBasicMaterial({ color: 0xffffff })
+                    );
+                    marking.rotation.x = -Math.PI / 2;
+                    marking.position.y = 0.02;
+                    marking.position.z = -this.roadLength / 2 + i * markingGap;
+                    this.roadMarkings.push(marking);
+                    window.scene.add(marking);
+                }
+            }
+            
+            createTrees() {
+                this.trees = [];
+                const createTree = () => {
+                    const tree = new THREE.Group();
+                    
+                    // 树干
+                    const trunk = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.5, 0.8, 5, 8),
+                        new THREE.MeshStandardMaterial({ color: 0x8B4513, roughness: 0.9 })
+                    );
+                    trunk.position.y = 2.5;
+                    trunk.castShadow = true;
+                    tree.add(trunk);
+                    
+                    // 树冠
+                    const foliage = new THREE.Mesh(
+                        new THREE.ConeGeometry(4, 8, 8),
+                        new THREE.MeshStandardMaterial({ color: 0x228B22, roughness: 0.8 })
+                    );
+                    foliage.position.y = 8;
+                    foliage.castShadow = true;
+                    tree.add(foliage);
+                    
+                    // 随机缩放和旋转
+                    const scale = 0.8 + Math.random() * 0.5;
+                    tree.scale.set(scale, scale, scale);
+                    tree.rotation.y = Math.random() * Math.PI * 2;
+                    
+                    return tree;
+                };
+                
+                // 在道路两侧放置树木
+                for (let i = 0; i < 20; i++) {
+                    // 左侧树木
+                    const leftTree = createTree();
+                    leftTree.position.set(-20 - Math.random() * 20, 0, -this.roadLength / 2 + i * 20 + Math.random() * 10);
+                    this.trees.push(leftTree);
+                    window.scene.add(leftTree);
+                    
+                    // 右侧树木
+                    const rightTree = createTree();
+                    rightTree.position.set(20 + Math.random() * 20, 0, -this.roadLength / 2 + i * 20 + Math.random() * 10);
+                    this.trees.push(rightTree);
+                    window.scene.add(rightTree);
+                }
+            }
+            
+            update() {
+                this.speed = guiParams.speed;
+                
+                // 更新纹理偏移实现无限滚动
+                if (this.road.material.map) this.road.material.map.offset.y += this.speed * 0.01;
+                if (this.grass.material.map) this.grass.material.map.offset.y += this.speed * 0.01;
+                
+                // 更新道路标记和树木位置
+                this.updateRoadElements(this.roadMarkings);
+                this.updateRoadElements(this.trees, true);
+            }
+            
+            updateRoadElements(elements, isTree = false) {
+                for (const element of elements) {
+                    element.position.z += this.speed;
+                    
+                    if (element.position.z > this.roadLength / 2) {
+                        element.position.z -= this.roadLength;
+                        
+                        if (isTree) {
+                            const side = element.position.x < 0 ? -1 : 1;
+                            element.position.x = side * (20 + Math.random() * 20);
+                        }
+                    }
+                }
+            }
+        }
+
+        // 汽车类
+        class Car {
+            constructor() {
+                this.speed = guiParams.speed;
+                this.object = new THREE.Group();
+                this.wheels = [];
+                
+                // 车身
+                const bodyMat = new THREE.MeshStandardMaterial({ 
+                    color: guiParams.carColor, 
+                    metalness: 0.6, 
+                    roughness: 0.4 
+                });
+                carBodyMaterials.push(bodyMat);
+                
+                const body = new THREE.Mesh(
+                    new THREE.BoxGeometry(2, 0.75, 4.5),
+                    bodyMat
+                );
+                body.position.y = 0.6;
+                body.castShadow = true;
+                this.object.add(body);
+                
+                // 车顶
+                const roofMat = new THREE.MeshStandardMaterial({ 
+                    color: 0xDD0000, 
+                    metalness: 0.6, 
+                    roughness: 0.4 
+                });
+                carBodyMaterials.push(roofMat);
+                
+                const roof = new THREE.Mesh(
+                    new THREE.BoxGeometry(1.8, 0.7, 2.5),
+                    roofMat
+                );
+                roof.position.set(0, 1.3, -0.2);
+                roof.castShadow = true;
+                this.object.add(roof);
+                
+                // 创建车轮
+                this.createWheels();
+                
+                // 添加车灯
+                this.addLights();
+                
+                window.scene.add(this.object);
+            }
+            
+            createWheels() {
+                const wheelGeometry = new THREE.CylinderGeometry(0.4, 0.4, 0.3, 16);
+                const wheelMaterial = new THREE.MeshStandardMaterial({ 
+                    color: 0x333333, 
+                    roughness: 0.9 
+                });
+                
+                const wheelPositions = [
+                    [-1.1, 0.4, 1.5],
+                    [1.1, 0.4, 1.5],
+                    [-1.1, 0.4, -1.5],
+                    [1.1, 0.4, -1.5]
+                ];
+                
+                wheelPositions.forEach(pos => {
+                    const wheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
+                    wheel.rotation.z = Math.PI / 2;
+                    wheel.position.set(...pos);
+                    wheel.castShadow = true;
+                    this.wheels.push(wheel);
+                    this.object.add(wheel);
+                });
+            }
+            
+            addLights() {
+                // 前大灯
+                const headlightGeo = new THREE.BoxGeometry(0.4, 0.2, 0.1);
+                const headlightMat = new THREE.MeshBasicMaterial({ color: 0xffffaa });
+                
+                const leftHeadlight = new THREE.Mesh(headlightGeo, headlightMat);
+                leftHeadlight.position.set(-0.6, 0.6, 2.26);
+                this.object.add(leftHeadlight);
+                
+                const rightHeadlight = new THREE.Mesh(headlightGeo, headlightMat);
+                rightHeadlight.position.set(0.6, 0.6, 2.26);
+                this.object.add(rightHeadlight);
+                
+                // 尾灯
+                const taillightMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+                
+                const leftTaillight = new THREE.Mesh(headlightGeo, taillightMat);
+                leftTaillight.position.set(-0.6, 0.6, -2.26);
+                this.object.add(leftTaillight);
+                
+                const rightTaillight = new THREE.Mesh(headlightGeo, taillightMat);
+                rightTaillight.position.set(0.6, 0.6, -2.26);
+                this.object.add(rightTaillight);
+            }
+            
+            update() {
+                // 车轮旋转
+                this.wheels.forEach(wheel => {
+                    wheel.rotation.x += guiParams.speed * 0.5;
+                });
+                
+                // 车身轻微晃动模拟行驶
+                this.object.position.y = Math.sin(Date.now() * 0.01) * 0.02;
+            }
+        }
+
+        // 创建道路和汽车
+        const road = new InfiniteRoad();
+        const car = new Car();
+
+        // 动画循环
+        function animate() {
+            road.update();
+            car.update();
+            
+            // 相机跟随
+            if (guiParams.cameraFollow) {
+                window.camera.position.x = car.object.position.x;
+                window.camera.position.z = car.object.position.z + 10;
+                window.camera.lookAt(car.object.position);
+            }
+            
+            controls.update();
+            window.renderer.render(window.scene, window.camera);
+        }
+        
+        window.renderer.setAnimationLoop(animate);
+
+        // 窗口大小调整
+        window.addEventListener('resize', () => {
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+
+    <!-- 截图支持脚本 -->
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

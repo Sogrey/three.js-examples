@@ -2050,6 +2050,14 @@ const threejsData = {
               version: "r179",
               url: "examples/z258/application-modelBase",
             },
+            {
+              id: "application-driving",
+              title: "无限行驶",
+              description: "无限道路滚动效果，汽车行驶动画和GUI速度控制",
+              thumbnail: "images/application-driving.jpg",
+              version: "r179",
+              url: "examples/z258/application-driving",
+            },
 
             {
               id: "application-measureDraw",
