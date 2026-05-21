@@ -55,6 +55,63 @@
         dirLight.shadow.mapSize.height = 1024;
         window.scene.add(dirLight);
 
+        // 程序生成道路纹理
+        function createRoadTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            
+            // 道路背景
+            ctx.fillStyle = '#333333';
+            ctx.fillRect(0, 0, 512, 512);
+            
+            // 道路边线
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(10, 0, 20, 512);
+            ctx.fillRect(482, 0, 20, 512);
+            
+            // 中间虚线
+            ctx.fillStyle = '#FFCC00';
+            for (let i = 0; i < 512; i += 64) {
+                ctx.fillRect(246, i, 20, 32);
+            }
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(1, 10);
+            return texture;
+        }
+
+        // 程序生成草地纹理
+        function createGrassTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            
+            // 基础草地颜色
+            ctx.fillStyle = '#4a7c4e';
+            ctx.fillRect(0, 0, 512, 512);
+            
+            // 添加噪点模拟草地
+            for (let i = 0; i < 5000; i++) {
+                const x = Math.random() * 512;
+                const y = Math.random() * 512;
+                const size = Math.random() * 3 + 1;
+                const green = Math.floor(Math.random() * 100 + 100);
+                ctx.fillStyle = `rgb(${green - 40}, ${green}, ${green - 50})`;
+                ctx.fillRect(x, y, size, size);
+            }
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(8, 40);
+            return texture;
+        }
+
         // GUI 参数
         const guiParams = {
             speed: 0.2,
@@ -81,19 +138,13 @@
                 this.speed = guiParams.speed;
                 this.roadLength = 200;
                 
-                // 创建纹理加载器
-                const textureLoader = new THREE.TextureLoader();
-                
                 // 创建道路
-                const roadTexture = textureLoader.load('https://threejs.org/examples/textures/roads/road1.jpg');
-                roadTexture.wrapS = roadTexture.wrapT = THREE.RepeatWrapping;
-                roadTexture.repeat.set(1, 10);
+                const roadTexture = createRoadTexture();
                 
                 this.road = new THREE.Mesh(
                     new THREE.PlaneGeometry(10, this.roadLength),
                     new THREE.MeshStandardMaterial({
                         map: roadTexture,
-                        color: 0x444444,
                         roughness: 0.8
                     })
                 );
@@ -103,9 +154,7 @@
                 window.scene.add(this.road);
                 
                 // 创建草地
-                const grassTexture = textureLoader.load('https://threejs.org/examples/textures/terrain/grasslight-big.jpg');
-                grassTexture.wrapS = grassTexture.wrapT = THREE.RepeatWrapping;
-                grassTexture.repeat.set(8, 40);
+                const grassTexture = createGrassTexture();
                 
                 this.grass = new THREE.Mesh(
                     new THREE.PlaneGeometry(100, this.roadLength),
