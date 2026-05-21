@@ -24,6 +24,7 @@
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
         import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 
         const container = document.getElementById('threeContainer');
@@ -65,6 +66,10 @@
 
         // 加载模型
         const loader = new GLTFLoader();
+        const dracoLoader = new DRACOLoader();
+        dracoLoader.setDecoderPath('../../libs/three/r179/jsm/libs/draco/');
+        loader.setDRACOLoader(dracoLoader);
+
         loader.load(
             '../../models/gltf/car.glb',
             gltf => {
