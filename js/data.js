@@ -2082,6 +2082,14 @@ const threejsData = {
               version: "r179",
               url: "examples/z258/application-pie3D",
             },
+            {
+              id: "application-terrain",
+              title: "程序化地形",
+              description: "使用分形布朗运动生成程序化地形，支持多种参数调节",
+              thumbnail: "images/application-terrain.jpg",
+              version: "r179",
+              url: "examples/z258/application-terrain",
+            },
 
             {
               id: "application-measureDraw",
