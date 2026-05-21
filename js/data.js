@@ -2074,6 +2074,14 @@ const threejsData = {
               version: "r179",
               url: "examples/z258/application-geometryMerge",
             },
+            {
+              id: "application-pie3D",
+              title: "3D饼图",
+              description: "使用 ExtrudeGeometry 创建可交互的3D饼图，支持分离效果和标签显示",
+              thumbnail: "images/application-pie3D.jpg",
+              version: "r179",
+              url: "examples/z258/application-pie3D",
+            },
 
             {
               id: "application-measureDraw",
