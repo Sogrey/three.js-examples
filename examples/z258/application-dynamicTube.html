@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="动态管道示例，使用变径管道和流动纹理效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 动态管道</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        const container = document.getElementById('threeContainer');
+
+        // 创建场景
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x0a0a1a);
+
+        // 创建相机
+        window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100000);
+        window.camera.position.set(0, 30, 60);
+
+        // 创建渲染器
+        window.renderer = new THREE.WebGLRenderer({ antialias: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        window.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        container.appendChild(window.renderer.domElement);
+
+        // 创建控制器
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.target.set(0, 25, 0);
+        controls.enableDamping = true;
+
+        // 后期处理 - 泛光效果
+        const effectComposer = new EffectComposer(window.renderer);
+        const renderPass = new RenderPass(window.scene, window.camera);
+        effectComposer.addPass(renderPass);
+        
+        const bloomPass = new UnrealBloomPass(
+            new THREE.Vector2(window.innerWidth, window.innerHeight),
+            0.8,  // 强度
+            0.2,  // 半径
+            0.0   // 阈值
+        );
+        effectComposer.addPass(bloomPass);
+
+        // GUI 参数
+        const guiParams = {
+            flowSpeed: 0.01,
+            bloomStrength: 0.8,
+            bloomRadius: 0.2,
+            bloomThreshold: 0.0,
+            tubeColor: '#00ffff',
+            opacity: 0.9
+        };
+
+        // 创建GUI
+        const gui = new GUI();
+        gui.domElement.style.top = '50px';
+        const animationFolder = gui.addFolder('动画');
+        animationFolder.add(guiParams, 'flowSpeed', 0, 0.05).name('流动速度');
+        
+        const bloomFolder = gui.addFolder('泛光效果');
+        bloomFolder.add(guiParams, 'bloomStrength', 0, 3).name('强度').onChange(updateBloom);
+        bloomFolder.add(guiParams, 'bloomRadius', 0, 1).name('半径').onChange(updateBloom);
+        bloomFolder.add(guiParams, 'bloomThreshold', 0, 1).name('阈值').onChange(updateBloom);
+        
+        const materialFolder = gui.addFolder('材质');
+        materialFolder.addColor(guiParams, 'tubeColor').name('管道颜色').onChange(updateMaterial);
+        materialFolder.add(guiParams, 'opacity', 0.1, 1).name('透明度').onChange(updateMaterial);
+
+        function updateBloom() {
+            bloomPass.strength = guiParams.bloomStrength;
+            bloomPass.radius = guiParams.bloomRadius;
+            bloomPass.threshold = guiParams.bloomThreshold;
+        }
+
+        function updateMaterial() {
+            if (tubeMesh) {
+                tubeMesh.material.color.set(guiParams.tubeColor);
+                tubeMesh.material.opacity = guiParams.opacity;
+            }
+        }
+
+        // 控制点（包含位置和半径）
+        const controlPoints = [
+            { point: new THREE.Vector3(0, 60, 0), radius: 3 },
+            { point: new THREE.Vector3(0, 56, 0), radius: 3 },
+            { point: new THREE.Vector3(0, 54, 0), radius: 2 },
+            { point: new THREE.Vector3(0, 40, 0), radius: 2 },
+            { point: new THREE.Vector3(0, 38, 0), radius: 1 },
+            { point: new THREE.Vector3(0, 0, 0), radius: 1 },
+            { point: new THREE.Vector3(0, 0, 0), radius: 1 },
+            { point: new THREE.Vector3(10, 0, 0), radius: 1 },
+            { point: new THREE.Vector3(12, 0, 0), radius: 2 },
+            { point: new THREE.Vector3(20, 0, 0), radius: 2 },
+            { point: new THREE.Vector3(24, 0, 0), radius: 1.5 },
+            { point: new THREE.Vector3(40, 0, 0), radius: 1.5 },
+            { point: new THREE.Vector3(40, 0, 0), radius: 1.5 },
+            { point: new THREE.Vector3(40, 5, 0), radius: 1.5 },
+            { point: new THREE.Vector3(40, 6, 0), radius: 1 },
+            { point: new THREE.Vector3(40, 36, 0), radius: 1 },
+        ];
+
+        // 提取点位创建曲线
+        const curvePoints = controlPoints.map(cp => cp.point);
+        const curve = new THREE.CatmullRomCurve3(curvePoints);
+
+        // 提取半径数组
+        const radiusArray = controlPoints.map(cp => cp.radius);
+
+        // 创建变径管道几何体
+        function createMultiRadiusTube(curve, tubularSegments, radiusArr, radialSegments, closed, controlPoints) {
+            const frames = curve.computeFrenetFrames(tubularSegments, closed);
+            const vertices = [];
+            const normals = [];
+            const uvs = [];
+            const indices = [];
+
+            // 计算每个控制点在曲线上的实际 t 值（基于弧长）
+            const numPoints = controlPoints.length;
+
+            // 计算相邻控制点之间的距离
+            const segmentLengths = [];
+            let totalLength = 0;
+            for (let i = 0; i < numPoints - 1; i++) {
+                const len = controlPoints[i].point.distanceTo(controlPoints[i + 1].point);
+                segmentLengths.push(len);
+                totalLength += len;
+            }
+
+            // 计算每个控制点的累积弧长比例作为 t 值
+            const controlPointTs = [0];
+            let accumulatedLength = 0;
+            for (let i = 0; i < segmentLengths.length; i++) {
+                accumulatedLength += segmentLengths[i];
+                controlPointTs.push(accumulatedLength / totalLength);
+            }
+
+            // 根据曲线 t 值获取对应的半径（基于控制点的 t 值进行插值）
+            function getRadiusAt(t) {
+                for (let i = 0; i < controlPointTs.length - 1; i++) {
+                    const t0 = controlPointTs[i];
+                    const t1 = controlPointTs[i + 1];
+
+                    if (t >= t0 && t <= t1) {
+                        const fraction = (t - t0) / (t1 - t0);
+                        return radiusArr[i] + (radiusArr[i + 1] - radiusArr[i]) * fraction;
+                    }
+                }
+
+                if (t <= controlPointTs[0]) return radiusArr[0];
+                return radiusArr[radiusArr.length - 1];
+            }
+
+            for (let i = 0; i <= tubularSegments; i++) {
+                const t = i / tubularSegments;
+                const position = curve.getPointAt(t);
+                const N = frames.normals[i];
+                const B = frames.binormals[i];
+
+                // 通过线性插值获取当前位置的半径
+                const radius = getRadiusAt(t);
+
+                for (let j = 0; j <= radialSegments; j++) {
+                    const v = j / radialSegments * Math.PI * 2;
+                    const sin = Math.sin(v);
+                    const cos = -Math.cos(v);
+
+                    const normal = new THREE.Vector3(
+                        cos * N.x + sin * B.x,
+                        cos * N.y + sin * B.y,
+                        cos * N.z + sin * B.z
+                    ).normalize();
+
+                    vertices.push(
+                        position.x + radius * normal.x,
+                        position.y + radius * normal.y,
+                        position.z + radius * normal.z
+                    );
+                    normals.push(normal.x, normal.y, normal.z);
+                    uvs.push(t, j / radialSegments);
+                }
+            }
+
+            for (let i = 0; i < tubularSegments; i++) {
+                for (let j = 0; j < radialSegments; j++) {
+                    const a = i * (radialSegments + 1) + j;
+                    const b = (i + 1) * (radialSegments + 1) + j;
+                    const c = (i + 1) * (radialSegments + 1) + (j + 1);
+                    const d = i * (radialSegments + 1) + (j + 1);
+                    indices.push(a, b, d, b, c, d);
+                }
+            }
+
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+            geometry.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
+            geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+            geometry.setIndex(indices);
+            return geometry;
+        }
+
+        // 创建流动纹理
+        function createFlowTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            
+            // 渐变背景
+            const gradient = ctx.createLinearGradient(0, 0, 512, 0);
+            for (let i = 0; i <= 20; i++) {
+                const pos = i / 20;
+                const alpha = i % 2 === 0 ? 1 : 0.3;
+                gradient.addColorStop(pos, `rgba(255, 255, 255, ${alpha})`);
+            }
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 512, 64);
+            
+            // 添加发光效果
+            ctx.shadowColor = 'rgba(0, 255, 255, 0.8)';
+            ctx.shadowBlur = 20;
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(200, 1);
+            return texture;
+        }
+
+        const flowTexture = createFlowTexture();
+
+        // 创建管道
+        const tubeGeometry = createMultiRadiusTube(curve, 128, radiusArray, 24, false, controlPoints);
+        const tubeMaterial = new THREE.MeshBasicMaterial({
+            transparent: true,
+            side: THREE.DoubleSide,
+            map: flowTexture,
+            color: new THREE.Color(guiParams.tubeColor),
+            opacity: guiParams.opacity,
+            depthWrite: false
+        });
+        const tubeMesh = new THREE.Mesh(tubeGeometry, tubeMaterial);
+        window.scene.add(tubeMesh);
+
+        // 动画循环
+        function animate() {
+            controls.update();
+            
+            // 纹理流动
+            flowTexture.offset.x -= guiParams.flowSpeed;
+            
+            effectComposer.render();
+        }
+
+        window.renderer.setAnimationLoop(animate);
+
+        // 窗口大小调整
+        window.addEventListener('resize', () => {
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            effectComposer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+
+    <!-- 截图支持脚本 -->
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

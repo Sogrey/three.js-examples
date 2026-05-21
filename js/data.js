@@ -2106,6 +2106,14 @@ const threejsData = {
               version: "r179",
               url: "examples/z258/application-drawFence",
             },
+            {
+              id: "application-dynamicTube",
+              title: "动态管道",
+              description: "变径管道展示，带流动纹理和泛光后处理效果",
+              thumbnail: "images/application-dynamicTube.jpg",
+              version: "r179",
+              url: "examples/z258/application-dynamicTube",
+            },
 
             {
               id: "application-measureDraw",
