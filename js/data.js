@@ -2090,6 +2090,14 @@ const threejsData = {
               version: "r179",
               url: "examples/z258/application-terrain",
             },
+            {
+              id: "application-coneMesh",
+              title: "圆锥网格",
+              description: "使用程序化渐变纹理创建发光圆锥，带泛光后处理效果",
+              thumbnail: "images/application-coneMesh.jpg",
+              version: "r179",
+              url: "examples/z258/application-coneMesh",
+            },
 
             {
               id: "application-measureDraw",

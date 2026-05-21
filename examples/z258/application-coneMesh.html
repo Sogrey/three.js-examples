@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="圆锥网格示例，使用程序化纹理创建发光圆锥效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 圆锥网格</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        const container = document.getElementById('threeContainer');
+
+        // 创建场景
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x0a0a1a);
+
+        // 创建相机
+        window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100000);
+        window.camera.position.set(0, 0, 20);
+
+        // 创建渲染器
+        window.renderer = new THREE.WebGLRenderer({ antialias: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        window.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        container.appendChild(window.renderer.domElement);
+
+        // 创建控制器
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.enableDamping = true;
+
+        // 后期处理 - 泛光效果
+        const effectComposer = new EffectComposer(window.renderer);
+        const renderPass = new RenderPass(window.scene, window.camera);
+        effectComposer.addPass(renderPass);
+        
+        const bloomPass = new UnrealBloomPass(
+            new THREE.Vector2(window.innerWidth, window.innerHeight),
+            0.8,  // 强度
+            0.4,  // 半径
+            0.0   // 阈值
+        );
+        effectComposer.addPass(bloomPass);
+
+        // GUI 参数
+        const guiParams = {
+            radius: 3.5,
+            height: 5.5,
+            segments: 4,
+            color1: '#ff0066',
+            color2: '#00ffff',
+            bloomStrength: 0.8,
+            bloomRadius: 0.4,
+            bloomThreshold: 0.0,
+            floatSpeed: 0.03,
+            rotateSpeed: 0.0314
+        };
+
+        // 创建GUI
+        const gui = new GUI();
+        gui.domElement.style.top = '50px';
+        const geometryFolder = gui.addFolder('几何体');
+        geometryFolder.add(guiParams, 'radius', 1, 10).name('半径').onChange(updateGeometry);
+        geometryFolder.add(guiParams, 'height', 1, 15).name('高度').onChange(updateGeometry);
+        geometryFolder.add(guiParams, 'segments', 3, 32, 1).name('分段数').onChange(updateGeometry);
+        
+        const materialFolder = gui.addFolder('材质');
+        materialFolder.addColor(guiParams, 'color1').name('顶部颜色').onChange(updateTexture);
+        materialFolder.addColor(guiParams, 'color2').name('底部颜色').onChange(updateTexture);
+        
+        const bloomFolder = gui.addFolder('泛光效果');
+        bloomFolder.add(guiParams, 'bloomStrength', 0, 3).name('强度').onChange(updateBloom);
+        bloomFolder.add(guiParams, 'bloomRadius', 0, 1).name('半径').onChange(updateBloom);
+        bloomFolder.add(guiParams, 'bloomThreshold', 0, 1).name('阈值').onChange(updateBloom);
+        
+        const animationFolder = gui.addFolder('动画');
+        animationFolder.add(guiParams, 'floatSpeed', 0, 0.1).name('浮动速度');
+        animationFolder.add(guiParams, 'rotateSpeed', 0, 0.1).name('旋转速度');
+
+        let cone = null;
+        let texture = null;
+        let floatDirection = 1;
+
+        // 创建渐变纹理
+        function createGradientTexture(color1, color2) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 64;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            
+            const gradient = ctx.createLinearGradient(0, 0, 0, 256);
+            gradient.addColorStop(0, color1);
+            gradient.addColorStop(1, color2);
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 64, 256);
+            
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.wrapS = THREE.RepeatWrapping;
+            tex.wrapT = THREE.RepeatWrapping;
+            return tex;
+        }
+
+        function updateGeometry() {
+            if (cone) {
+                window.scene.remove(cone);
+                cone.geometry.dispose();
+            }
+
+            const geometry = new THREE.ConeGeometry(
+                guiParams.radius,
+                guiParams.height,
+                guiParams.segments
+            );
+
+            if (!texture) {
+                texture = createGradientTexture(guiParams.color1, guiParams.color2);
+            }
+
+            const material = new THREE.MeshBasicMaterial({
+                map: texture,
+                side: THREE.DoubleSide
+            });
+
+            cone = new THREE.Mesh(geometry, material);
+            cone.rotation.x = -Math.PI;
+            window.scene.add(cone);
+        }
+
+        function updateTexture() {
+            if (texture) {
+                texture.dispose();
+            }
+            texture = createGradientTexture(guiParams.color1, guiParams.color2);
+            if (cone) {
+                cone.material.map = texture;
+                cone.material.needsUpdate = true;
+            }
+        }
+
+        function updateBloom() {
+            bloomPass.strength = guiParams.bloomStrength;
+            bloomPass.radius = guiParams.bloomRadius;
+            bloomPass.threshold = guiParams.bloomThreshold;
+        }
+
+        // 初始化
+        updateGeometry();
+
+        // 动画循环
+        function animate() {
+            controls.update();
+
+            if (cone) {
+                // 上下浮动
+                if (cone.position.y > 3 || cone.position.y < 0) {
+                    floatDirection = -floatDirection;
+                }
+                cone.position.y += guiParams.floatSpeed * floatDirection;
+                
+                // 旋转
+                cone.rotation.y += guiParams.rotateSpeed;
+            }
+
+            effectComposer.render();
+        }
+
+        window.renderer.setAnimationLoop(animate);
+
+        // 窗口大小调整
+        window.addEventListener('resize', () => {
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            effectComposer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+
+    <!-- 截图支持脚本 -->
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
