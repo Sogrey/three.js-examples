@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="模型热力图示例，使用ShaderMaterial在模型底部生成热力图">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 模型热力图</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        const container = document.getElementById('threeContainer');
+
+        // 创建场景
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x1a1a2e);
+
+        // 创建相机
+        window.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        window.camera.position.set(15, 15, 15);
+
+        // 创建渲染器
+        window.renderer = new THREE.WebGLRenderer({ antialias: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        window.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        container.appendChild(window.renderer.domElement);
+
+        // 创建控制器
+        const controls = new OrbitControls(window.camera, window.renderer.domElement);
+        controls.enableDamping = true;
+
+        // 添加光照
+        window.scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        dirLight.position.set(10, 20, 10);
+        window.scene.add(dirLight);
+
+        // 创建程序化建筑模型
+        function createBuildingModel() {
+            const group = new THREE.Group();
+            
+            // 创建多个建筑块
+            const buildingCount = 20;
+            const buildings = [];
+            
+            for (let i = 0; i < buildingCount; i++) {
+                const width = 1 + Math.random() * 2;
+                const depth = 1 + Math.random() * 2;
+                const height = 2 + Math.random() * 8;
+                
+                const geometry = new THREE.BoxGeometry(width, height, depth);
+                const material = new THREE.MeshStandardMaterial({
+                    color: 0x4488aa,
+                    transparent: true,
+                    opacity: 0.7
+                });
+                
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.position.x = (Math.random() - 0.5) * 20;
+                mesh.position.z = (Math.random() - 0.5) * 20;
+                mesh.position.y = height / 2;
+                
+                mesh.name = `building_${i}`;
+                buildings.push(mesh);
+                group.add(mesh);
+            }
+            
+            return { group, buildings };
+        }
+
+        const { group: buildingGroup, buildings } = createBuildingModel();
+        window.scene.add(buildingGroup);
+
+        // 计算包围盒
+        const box3 = new THREE.Box3().setFromObject(buildingGroup);
+        const { min, max } = box3;
+        
+        // 创建热力图平面
+        const planeSize = Math.max(max.x - min.x, max.z - min.z) * 1.2;
+        const heatmapGeometry = new THREE.PlaneGeometry(planeSize, planeSize);
+        heatmapGeometry.rotateX(-Math.PI / 2);
+        heatmapGeometry.translate((min.x + max.x) / 2, min.y + 0.1, (min.z + max.z) / 2);
+
+        // 生成热力点数据
+        const heatPoints = [];
+        const heatPointCount = 15;
+        
+        for (let i = 0; i < heatPointCount; i++) {
+            // 在建筑位置附近生成热力点
+            const building = buildings[Math.floor(Math.random() * buildings.length)];
+            const x = (building.position.x - min.x) / (max.x - min.x);
+            const z = (building.position.z - min.z) / (max.z - min.z);
+            const intensity = 3 + Math.random() * 7;
+            heatPoints.push(x, z, intensity);
+        }
+
+        // GUI 参数
+        const guiParams = {
+            heatMax: 10,
+            pointRadius: 0.15,
+            intensity: 2,
+            uvScaleX: 1,
+            uvScaleY: 1,
+            opacity: 0.8,
+            edgeFalloff: 2.0,
+            coldColor: '#00ff00',
+            hotColor: '#ff0000'
+        };
+
+        // 创建GUI
+        const gui = new GUI();
+        gui.domElement.style.top = '50px';
+        gui.add(guiParams, 'heatMax', 1, 20).name('最大热度').onChange(updateUniforms);
+        gui.add(guiParams, 'pointRadius', 0.05, 0.5).name('点半径').onChange(updateUniforms);
+        gui.add(guiParams, 'intensity', 0.5, 5).name('强度').onChange(updateUniforms);
+        gui.add(guiParams, 'uvScaleX', 0.5, 2).name('UV缩放X').onChange(updateUniforms);
+        gui.add(guiParams, 'uvScaleY', 0.5, 2).name('UV缩放Y').onChange(updateUniforms);
+        gui.add(guiParams, 'opacity', 0.1, 1).name('透明度').onChange(updateUniforms);
+        gui.add(guiParams, 'edgeFalloff', 0.1, 5).name('边缘衰减').onChange(updateUniforms);
+        gui.addColor(guiParams, 'coldColor').name('冷色').onChange(updateUniforms);
+        gui.addColor(guiParams, 'hotColor').name('热色').onChange(updateUniforms);
+
+        // 顶点着色器
+        const vertexShader = `
+            varying vec2 vUv;
+            void main() {
+                vUv = uv;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `;
+
+        // 片段着色器
+        const fragmentShader = `
+            precision highp float;
+            varying vec2 vUv;
+            
+            uniform float heatMax;
+            uniform float pointRadius;
+            uniform float intensity;
+            uniform int pointCount;
+            uniform vec3 coldColor;
+            uniform vec3 hotColor;
+            uniform float uvScaleX;
+            uniform float uvScaleY;
+            uniform float opacity;
+            uniform float edgeFalloff;
+            uniform vec3 heatPoints[15];
+            
+            vec3 gradient(float w) {
+                w = pow(clamp(w, 0.0, 1.0), 0.8);
+                return mix(coldColor, hotColor, w);
+            }
+            
+            void main() {
+                vec2 uv = vUv;
+                uv.x *= uvScaleX;
+                uv.y *= uvScaleY;
+                
+                float heat = 0.0;
+                
+                // 计算每个热力点的贡献
+                for (int i = 0; i < 15; i++) {
+                    if (i >= pointCount) break;
+                    
+                    vec3 point = heatPoints[i];
+                    float pointIntensity = point.z / heatMax;
+                    float dist = length(uv - point.xy);
+                    float contribution = (1.0 - dist / pointRadius) * pointIntensity;
+                    heat += pow(max(0.0, contribution), 1.5);
+                }
+                
+                // 边缘衰减
+                float edgeFactor = 1.0;
+                vec2 center = vec2(0.5, 0.5);
+                float distFromCenter = length(uv - center);
+                float edgeStart = 0.4;
+                
+                if (distFromCenter > edgeStart) {
+                    edgeFactor = 1.0 - pow((distFromCenter - edgeStart) / (0.5 - edgeStart), edgeFalloff);
+                }
+                edgeFactor = clamp(edgeFactor, 0.0, 1.0);
+                
+                // 应用颜色和透明度
+                vec3 heatColor = gradient(heat);
+                float alpha = min(opacity * edgeFactor, heat > 0.05 ? 1.0 : heat * 20.0);
+                
+                gl_FragColor = vec4(heatColor * intensity, alpha);
+            }
+        `;
+
+        // 创建ShaderMaterial
+        const heatmapMaterial = new THREE.ShaderMaterial({
+            vertexShader,
+            fragmentShader,
+            uniforms: {
+                heatMax: { value: guiParams.heatMax },
+                pointRadius: { value: guiParams.pointRadius },
+                intensity: { value: guiParams.intensity },
+                pointCount: { value: heatPointCount },
+                coldColor: { value: new THREE.Color(guiParams.coldColor) },
+                hotColor: { value: new THREE.Color(guiParams.hotColor) },
+                uvScaleX: { value: guiParams.uvScaleX },
+                uvScaleY: { value: guiParams.uvScaleY },
+                opacity: { value: guiParams.opacity },
+                edgeFalloff: { value: guiParams.edgeFalloff },
+                heatPoints: { value: heatPoints }
+            },
+            side: THREE.DoubleSide,
+            depthWrite: false,
+            depthTest: false,
+            transparent: true,
+            blending: THREE.AdditiveBlending
+        });
+
+        const heatmapMesh = new THREE.Mesh(heatmapGeometry, heatmapMaterial);
+        window.scene.add(heatmapMesh);
+
+        function updateUniforms() {
+            heatmapMaterial.uniforms.heatMax.value = guiParams.heatMax;
+            heatmapMaterial.uniforms.pointRadius.value = guiParams.pointRadius;
+            heatmapMaterial.uniforms.intensity.value = guiParams.intensity;
+            heatmapMaterial.uniforms.uvScaleX.value = guiParams.uvScaleX;
+            heatmapMaterial.uniforms.uvScaleY.value = guiParams.uvScaleY;
+            heatmapMaterial.uniforms.opacity.value = guiParams.opacity;
+            heatmapMaterial.uniforms.edgeFalloff.value = guiParams.edgeFalloff;
+            heatmapMaterial.uniforms.coldColor.value.set(guiParams.coldColor);
+            heatmapMaterial.uniforms.hotColor.value.set(guiParams.hotColor);
+        }
+
+        // 动画循环
+        function animate() {
+            controls.update();
+            window.renderer.render(window.scene, window.camera);
+        }
+
+        window.renderer.setAnimationLoop(animate);
+
+        // 窗口大小调整
+        window.addEventListener('resize', () => {
+            window.camera.aspect = window.innerWidth / window.innerHeight;
+            window.camera.updateProjectionMatrix();
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+
+    <!-- 截图支持脚本 -->
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

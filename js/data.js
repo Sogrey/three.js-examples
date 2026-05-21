@@ -2122,6 +2122,14 @@ const threejsData = {
               version: "r179",
               url: "examples/z258/application-sportFence",
             },
+            {
+              id: "application-modelHeatmap",
+              title: "模型热力图",
+              description: "使用ShaderMaterial在模型底部生成热力图，支持参数调节",
+              thumbnail: "images/application-modelHeatmap.jpg",
+              version: "r179",
+              url: "examples/z258/application-modelHeatmap",
+            },
 
             {
               id: "application-measureDraw",
