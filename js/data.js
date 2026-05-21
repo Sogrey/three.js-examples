@@ -2043,6 +2043,15 @@ const threejsData = {
               url: "examples/z258/application-coffeeMug",
             },
             {
+              id: "application-modelBase",
+              title: "模型底座",
+              description: "根据模型边界框自动生成圆形底座，支持颜色和透明度调整",
+              thumbnail: "images/application-modelBase.jpg",
+              version: "r179",
+              url: "examples/z258/application-modelBase",
+            },
+
+            {
               id: "application-measureDraw",
               title: "画线测量",
               description: "交互式画线测量距离，支持点击添加节点、拖拽调整位置",
