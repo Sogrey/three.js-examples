@@ -1605,6 +1605,15 @@ const threejsData = {
               url: "examples/z258/shader-cityBlendLight",
             },
             {
+              id: "shader-cityMixShader",
+              title: "城市混合Shader",
+              description:
+                "FBX城市模型加载，展示Raymarching光线行进着色器特效",
+              thumbnail: "images/shader-cityMixShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-cityMixShader",
+            },
+            {
               id: "particle-waveParticleShader",
               title: "波浪粒子",
               description: "展示波浪粒子效果，使用着色器实现动态波浪粒子动画",
