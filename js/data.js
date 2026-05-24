@@ -1049,6 +1049,14 @@ const threejsData = {
               url: "examples/z258/effect-cyberCorridor",
             },
             {
+              id: "shader-magicalSphere",
+              title: "魔法球体",
+              description: "使用Raymarching和KIFS分形算法创建的发光魔法球体",
+              thumbnail: "images/shader-magicalSphere.jpg",
+              version: "r179",
+              url: "examples/z258/shader-magicalSphere",
+            },
+            {
               id: "shader-audioSolutions",
               title: "音乐可视化",
               description:

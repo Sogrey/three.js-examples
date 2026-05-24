@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="魔法球体效果，使用Raymarching和KIFS分形算法">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 魔法球体</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        const container = document.getElementById('threeContainer');
+
+        // 顶点着色器
+        const vertexShader = `
+            varying vec2 vUv;
+            void main() {
+                vUv = uv;
+                gl_Position = vec4(position, 1.0);
+            }
+        `;
+
+        // 片段着色器
+        const fragmentShader = `
+            #ifdef GL_ES
+            precision highp float;
+            #endif
+
+            uniform vec2 uResolution;
+            uniform float uTime;
+            uniform int uMaxSteps;
+            uniform int uFoldSteps;
+            uniform float uKifsScale;
+            uniform float uKifsOffset;
+            uniform float uTextureScale;
+            uniform float uBrightness;
+            uniform float uSphereRadius;
+            uniform float uInnerRadius;
+            uniform vec3 uSphereCenter;
+            uniform vec3 uBaseColor;
+            uniform float uLightSpeed;
+            uniform float uAutoRotationSpeed;
+            uniform mat3 uInverseRotationMatrix;
+            uniform float uZoom;
+
+            varying vec2 vUv;
+
+            // 2D旋转矩阵
+            mat2 rotate2D(float angle) {
+                float s = sin(angle);
+                float c = cos(angle);
+                return mat2(c, -s, s, c);
+            }
+
+            // 射线与球体相交
+            vec2 intersectSphere(vec3 rayOrigin, vec3 rayDir, vec3 center, float radius) {
+                vec3 oc = rayOrigin - center;
+                float b = dot(oc, rayDir);
+                float c = dot(oc, oc) - radius * radius;
+                float h = b * b - c;
+                
+                if(h < 0.0) return vec2(-1.0);
+                h = sqrt(h);
+                return vec2(-b - h, -b + h);
+            }
+
+            void main() {
+                // 标准化坐标
+                vec2 uvCenter = (2.0 * gl_FragCoord.xy - uResolution.xy) / uResolution.y;
+                
+                // 1. 设置世界空间中的相机射线
+                vec3 rayOriginWorld = vec3(0.0, 0.0, 0.0);
+                vec3 rayDirectionWorld = normalize(vec3(uvCenter * uZoom, -1.0));
+                
+                // 2. 将射线转换到球体局部空间
+                vec3 localRayOrigin = rayOriginWorld - uSphereCenter;
+                localRayOrigin = uInverseRotationMatrix * localRayOrigin;
+                vec3 localRayDirection = uInverseRotationMatrix * rayDirectionWorld;
+                
+                // 3. 与球体相交（局部空间中原点）
+                vec2 hitOuter = intersectSphere(localRayOrigin, localRayDirection, vec3(0.0), uSphereRadius);
+                
+                if (hitOuter.x < 0.0) {
+                    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+                    return;
+                }
+                
+                float tStart = max(0.0, hitOuter.x);
+                float tEnd = hitOuter.y;
+                
+                // 固定步长防止摩尔纹
+                float stepSize = (tEnd - tStart) / float(uMaxSteps);
+                float currentDistance = tStart;
+                
+                vec4 accumulatedColor = vec4(0.0);
+                
+                // 体积光线步进
+                for (int i = 0; i < 250; i++) {
+                    if (i >= uMaxSteps) break;
+                    
+                    vec3 localPos = localRayOrigin + localRayDirection * currentDistance;
+                    float distFromCenter = length(localPos);
+                    
+                    // 软空心壳遮罩
+                    float wallMask = smoothstep(uInnerRadius, uInnerRadius + 1.0, distFromCenter) * 
+                                     smoothstep(uSphereRadius, uSphereRadius - 0.2, distFromCenter);
+                    
+                    if (wallMask > 0.01) {
+                        vec3 currentPos = localPos * uTextureScale;
+                        
+                        // 自动旋转
+                        currentPos.xy *= rotate2D(uTime * 0.15 * uAutoRotationSpeed);
+                        currentPos.xz *= rotate2D(uTime * 0.10 * uAutoRotationSpeed);
+                        
+                        // 镜像对称
+                        currentPos = abs(currentPos);
+                        
+                        // 反射逻辑
+                        float timeVal = 2.6 + float(i) * 0.356;
+                        vec3 reflectionAxis = normalize(tan(timeVal + vec3(2.5, 1.0, 0.0)));
+                        currentPos = reflect(-currentPos, reflectionAxis) - vec3(-2.6, -1.0, 0.2);
+                        
+                        float accumulatedScale = 0.1;
+                        
+                        // 基础对称折叠
+                        if (currentPos.x < currentPos.z) {
+                            currentPos = currentPos.zyx;
+                        }
+                        
+                        // KIFS循环
+                        for (int k = 0; k < 16; k++) {
+                            if (k >= uFoldSteps) break;
+                            currentPos *= uKifsScale;
+                            accumulatedScale *= uKifsScale;
+                            currentPos.y += uKifsOffset;
+                            
+                            if (currentPos.y > currentPos.z) currentPos = currentPos.xzy;
+                            
+                            currentPos *= uKifsScale;
+                            accumulatedScale *= uKifsScale;
+                            currentPos.y += uKifsOffset;
+                            
+                            if (currentPos.x < currentPos.y) currentPos = currentPos.yxz;
+                        }
+                        
+                        // 密度计算
+                        float currentDensity = max(length(currentPos.xz) / accumulatedScale, 0.001);
+                        
+                        // 体积颜色公式
+                        vec3 spatialPhase = currentPos.xyz;
+                        vec3 lightIntensity = exp(sin(uTime * uLightSpeed + spatialPhase)) / currentDensity;
+                        
+                        // 累积发光颜色
+                        accumulatedColor.rgb += uBaseColor * lightIntensity * stepSize * uBrightness * wallMask;
+                    }
+                    
+                    currentDistance += stepSize;
+                }
+                
+                // 色调映射
+                gl_FragColor.rgb = tanh(accumulatedColor.rgb);
+                gl_FragColor.a = 1.0;
+                
+                // 边缘高光
+                vec3 localHitPoint = localRayOrigin + localRayDirection * hitOuter.x;
+                vec3 surfaceNormalLocal = normalize(localHitPoint);
+                float edgeHighlight = 0.7 - max(dot(-localRayDirection, surfaceNormalLocal), 0.5);
+                gl_FragColor.rgb += vec3(0.05, 0.1, 0.3) * pow(edgeHighlight, 4.0);
+            }
+        `;
+
+        // 场景设置
+        const scene = new THREE.Scene();
+        const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+        const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(1.0);
+        container.appendChild(renderer.domElement);
+
+        // 配置参数
+        const config = {
+            maxSteps: 148,
+            foldSteps: 6,
+            kifsScale: 1.26,
+            kifsOffset: 8.9,
+            textureScale: 1.45,
+            brightness: 1.423,
+            coreColor: '#7780ff',
+            colorBoost: 3.0,
+            lightSpeed: 5.5,
+            sphereRadius: 15.0,
+            innerRadius: 14.0,
+            sphereCenterZ: -25.0,
+            autoRotationSpeed: 1.0,
+            dpr: 1.0
+        };
+
+        // Uniforms
+        const uniforms = {
+            uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+            uTime: { value: 0.0 },
+            uMaxSteps: { value: config.maxSteps },
+            uFoldSteps: { value: config.foldSteps },
+            uKifsScale: { value: config.kifsScale },
+            uKifsOffset: { value: config.kifsOffset },
+            uTextureScale: { value: config.textureScale },
+            uBrightness: { value: config.brightness },
+            uSphereRadius: { value: config.sphereRadius },
+            uInnerRadius: { value: config.innerRadius },
+            uSphereCenter: { value: new THREE.Vector3(0.0, 0.0, config.sphereCenterZ) },
+            uBaseColor: { value: new THREE.Vector3() },
+            uLightSpeed: { value: config.lightSpeed },
+            uAutoRotationSpeed: { value: config.autoRotationSpeed },
+            uInverseRotationMatrix: { value: new THREE.Matrix3() },
+            uZoom: { value: 1.0 }
+        };
+
+        // 更新基础颜色
+        function updateBaseColorUniform() {
+            const tempColor = new THREE.Color(config.coreColor);
+            uniforms.uBaseColor.value.set(
+                tempColor.r * config.colorBoost,
+                tempColor.g * config.colorBoost,
+                tempColor.b * config.colorBoost
+            );
+        }
+        updateBaseColorUniform();
+
+        // 渲染四边形
+        const geometry = new THREE.PlaneGeometry(2, 2);
+        const material = new THREE.ShaderMaterial({
+            vertexShader: vertexShader,
+            fragmentShader: fragmentShader,
+            uniforms: uniforms,
+            depthWrite: false,
+            depthTest: false
+        });
+        const mesh = new THREE.Mesh(geometry, material);
+        scene.add(mesh);
+
+        // 交互变量
+        let isDragging = false;
+        let previousPointerPosition = { x: 0, y: 0 };
+        let velocityX = 0, velocityY = 0;
+        let currentZoom = 1.0;
+        let targetZoom = 1.0;
+
+        // 旋转四元数
+        const targetRotation = new THREE.Quaternion();
+        const currentRotation = new THREE.Quaternion();
+        const axisX = new THREE.Vector3(1, 0, 0);
+        const axisY = new THREE.Vector3(0, 1, 0);
+
+        // 指针事件
+        window.addEventListener('pointerdown', (e) => {
+            if (e.target.closest('.lil-gui')) return;
+            isDragging = true;
+            previousPointerPosition = { x: e.clientX, y: e.clientY };
+            velocityX = 0;
+            velocityY = 0;
+        });
+
+        window.addEventListener('pointermove', (e) => {
+            if (!isDragging) return;
+            const deltaX = e.clientX - previousPointerPosition.x;
+            const deltaY = e.clientY - previousPointerPosition.y;
+
+            velocityX = deltaX * 0.0035;
+            velocityY = deltaY * 0.0035;
+
+            const qY = new THREE.Quaternion().setFromAxisAngle(axisY, velocityX);
+            const qX = new THREE.Quaternion().setFromAxisAngle(axisX, velocityY);
+            targetRotation.premultiply(qX).premultiply(qY);
+            targetRotation.normalize();
+
+            previousPointerPosition = { x: e.clientX, y: e.clientY };
+        });
+
+        window.addEventListener('pointerup', () => { isDragging = false; });
+        window.addEventListener('pointercancel', () => { isDragging = false; });
+
+        // 滚轮缩放
+        window.addEventListener('wheel', (e) => {
+            if (e.target.closest('.lil-gui')) return;
+            targetZoom += e.deltaY * 0.001;
+            targetZoom = Math.max(0.3, Math.min(4.0, targetZoom));
+        }, { passive: true });
+
+        // 双指缩放
+        let touchStartDist = 0;
+        let baseZoom = 1.0;
+
+        window.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
+                touchStartDist = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                baseZoom = targetZoom;
+            }
+        }, { passive: true });
+
+        window.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 2 && touchStartDist > 0) {
+                const dist = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                const factor = dist / touchStartDist;
+                targetZoom = Math.max(0.3, Math.min(4.0, baseZoom / factor));
+            }
+        }, { passive: true });
+
+        window.addEventListener('touchend', () => { touchStartDist = 0; });
+
+        // 更新旋转和缩放
+        const rotationMatrix4 = new THREE.Matrix4();
+        const rotationMatrix3 = new THREE.Matrix3();
+
+        function updateRotationAndZoom() {
+            if (!isDragging) {
+                velocityX *= 0.95;
+                velocityY *= 0.95;
+
+                const qY = new THREE.Quaternion().setFromAxisAngle(axisY, velocityX);
+                const qX = new THREE.Quaternion().setFromAxisAngle(axisX, velocityY);
+                targetRotation.premultiply(qX).premultiply(qY);
+                targetRotation.normalize();
+            }
+
+            currentRotation.slerp(targetRotation, 0.1);
+            currentZoom += (targetZoom - currentZoom) * 0.15;
+
+            rotationMatrix4.makeRotationFromQuaternion(currentRotation);
+            rotationMatrix4.invert();
+            rotationMatrix3.setFromMatrix4(rotationMatrix4);
+
+            uniforms.uInverseRotationMatrix.value.copy(rotationMatrix3);
+            uniforms.uZoom.value = currentZoom;
+        }
+
+        // GUI
+        const gui = new GUI({ title: "魔法球体控制" });
+        gui.domElement.style.top = '50px';
+        gui.close();
+
+        // 分形几何
+        const fGeometry = gui.addFolder("分形核心");
+        fGeometry.add(config, "foldSteps", 1, 15, 1).name("细节步数").onChange(v => uniforms.uFoldSteps.value = v);
+        fGeometry.add(config, "kifsScale", 1.0, 1.8, 0.01).name("KIFS缩放").onChange(v => uniforms.uKifsScale.value = v);
+        fGeometry.add(config, "kifsOffset", 1.0, 15.0, 0.1).name("KIFS偏移").onChange(v => uniforms.uKifsOffset.value = v);
+        fGeometry.add(config, "textureScale", 0.1, 4.0, 0.05).name("图案缩放").onChange(v => uniforms.uTextureScale.value = v);
+
+        // 光照
+        const fLight = gui.addFolder("光照与发光");
+        fLight.add(config, "brightness", 0.1, 4.0, 0.01).name("亮度").onChange(v => uniforms.uBrightness.value = v);
+        fLight.addColor(config, "coreColor").name("基础色调").onChange(updateBaseColorUniform);
+        fLight.add(config, "colorBoost", 0.5, 6.0, 0.1).name("发光强度").onChange(updateBaseColorUniform);
+        fLight.add(config, "lightSpeed", 0.0, 15.0, 0.1).name("脉冲速度").onChange(v => uniforms.uLightSpeed.value = v);
+
+        // 球体容器
+        const fSphere = gui.addFolder("外球体");
+        fSphere.add(config, "sphereRadius", 5.0, 25.0, 0.1).name("外半径").onChange(v => {
+            uniforms.uSphereRadius.value = v;
+            if (config.innerRadius >= v) {
+                config.innerRadius = v - 1.0;
+                uniforms.uInnerRadius.value = config.innerRadius;
+            }
+        });
+        fSphere.add(config, "innerRadius", 4.0, 24.0, 0.1).name("内半径").onChange(v => {
+            if (v >= config.sphereRadius) {
+                config.innerRadius = config.sphereRadius - 1.0;
+                uniforms.uInnerRadius.value = config.innerRadius;
+            } else {
+                uniforms.uInnerRadius.value = v;
+            }
+        });
+        fSphere.add(config, "maxSteps", 20, 250, 1).name("光线步进细节").onChange(v => uniforms.uMaxSteps.value = v);
+
+        // 系统配置
+        const fSystem = gui.addFolder("系统配置");
+        fSystem.add(config, "autoRotationSpeed", 0.0, 3.0, 0.05).name("自动旋转").onChange(v => uniforms.uAutoRotationSpeed.value = v);
+        fSystem.add(config, "dpr", 0.25, 2.0, 0.25).name("屏幕DPR").onChange(v => {
+            renderer.setPixelRatio(v);
+        });
+
+        // 窗口调整
+        function onWindowResize() {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            renderer.setSize(width, height);
+            uniforms.uResolution.value.set(width, height);
+        }
+        window.addEventListener('resize', onWindowResize);
+        
+        onWindowResize();
+        renderer.setPixelRatio(config.dpr);
+
+        // 暴露到 window 供截图使用
+        window.renderer = renderer;
+        window.camera = camera;
+        window.scene = scene;
+
+        // 动画循环
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            uniforms.uTime.value = clock.getElapsedTime();
+            updateRotationAndZoom();
+            renderer.render(scene, camera);
+        }
+
+        animate();
+    </script>
+
+    <!-- 截图支持脚本 -->
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
