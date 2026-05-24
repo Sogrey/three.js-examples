@@ -1041,6 +1041,14 @@ const threejsData = {
               url: "examples/z258/shader-audioDance",
             },
             {
+              id: "effect-cyberCorridor",
+              title: "赛博走廊",
+              description: "纯GLSL实现无限延伸的赛博朋克走廊，程序化纹理和Raymarching",
+              thumbnail: "images/effect-cyberCorridor.jpg",
+              version: "r179",
+              url: "examples/z258/effect-cyberCorridor",
+            },
+            {
               id: "shader-audioSolutions",
               title: "音乐可视化",
               description:
