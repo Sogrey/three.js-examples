@@ -1121,14 +1121,6 @@ const threejsData = {
               url: "examples/z258/application-fpsRoaming",
             },
             {
-              id: "application-imageGallery",
-              title: "3D图片画廊",
-              description: "使用程序化纹理创建的3D图片画廊，支持环形和墙面布局",
-              thumbnail: "images/application-imageGallery.jpg",
-              version: "r179",
-              url: "examples/z258/application-imageGallery",
-            },
-            {
               id: "shader-audioSolutions",
               title: "音乐可视化",
               description:
