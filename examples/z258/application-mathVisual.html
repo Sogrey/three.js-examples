@@ -3,16 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="3D数学函数可视化，展示各种数学曲面">
+    <meta name="description" content="3D数学函数可视化，展示各种数学函数生成的3D曲面">
     <meta name="three-version" content="r179">
     <title>Three.js 示例 - 3D数学函数可视化</title>
     <link rel="stylesheet" href="../../css/example-common.css">
     <style>
+        body {
+            background: #0a0a0a;
+            margin: 0;
+            overflow: hidden;
+        }
         #mathUI {
             position: absolute;
             top: 50px;
             right: 20px;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.85);
             color: #fff;
             padding: 15px;
             border-radius: 8px;
@@ -25,7 +30,7 @@
             color: #00ff00;
             font-size: 16px;
         }
-        #mathUI .function-btn {
+        #mathUI .btn {
             display: block;
             width: 100%;
             margin: 5px 0;
@@ -36,44 +41,44 @@
             color: #fff;
             cursor: pointer;
             transition: all 0.3s;
-            font-size: 12px;
-            text-align: left;
+            font-size: 11px;
         }
-        #mathUI .function-btn:hover {
+        #mathUI .btn:hover {
             background: #444;
             border-color: #00ff00;
         }
-        #mathUI .function-btn.active {
+        #mathUI .btn.active {
             background: #00ff00;
             color: #000;
-            border-color: #00ff00;
         }
         #mathUI .formula {
-            margin-top: 10px;
-            padding: 10px;
-            background: #1a1a1a;
+            font-size: 12px;
+            color: #ffff00;
+            margin: 10px 0;
+            padding: 8px;
+            background: rgba(255, 255, 0, 0.1);
             border-radius: 4px;
-            font-size: 14px;
-            color: #00ffff;
             text-align: center;
         }
-        #mathUI .controls {
-            margin-top: 10px;
-        }
-        #mathUI .control-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin: 5px 0;
-            font-size: 12px;
-        }
-        #mathUI input[type="range"] {
-            width: 100px;
-        }
         #mathUI .info {
+            font-size: 10px;
+            color: #aaa;
             margin-top: 10px;
-            font-size: 11px;
-            color: #888;
+        }
+        #mathInfo {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #00ff00;
+            font-size: 16px;
+            font-family: 'Courier New', monospace;
+            text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+            z-index: 100;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px 30px;
+            border-radius: 8px;
         }
     </style>
 </head>
@@ -81,34 +86,22 @@
     <div class="three-container" id="threeContainer"></div>
     
     <div id="mathUI">
-        <h3>3D数学函数可视化</h3>
-        <button class="function-btn active" data-func="sine">正弦波曲面</button>
-        <button class="function-btn" data-func="ripple">涟漪效果</button>
-        <button class="function-btn" data-func="saddle">马鞍面</button>
-        <button class="function-btn" data-func="cone">圆锥面</button>
-        <button class="function-btn" data-func="twist">扭曲曲面</button>
-        <button class="function-btn" data-func="heart">心形曲面</button>
-        
-        <div class="formula" id="formula">z = sin(x) + cos(y)</div>
-        
-        <div class="controls">
-            <div class="control-row">
-                <span>振幅:</span>
-                <input type="range" id="amplitude" min="0.1" max="3" step="0.1" value="1">
-            </div>
-            <div class="control-row">
-                <span>频率:</span>
-                <input type="range" id="frequency" min="0.1" max="2" step="0.1" value="0.5">
-            </div>
-            <div class="control-row">
-                <span>动画速度:</span>
-                <input type="range" id="speed" min="0" max="2" step="0.1" value="0.5">
-            </div>
-        </div>
-        
+        <h3>📐 数学函数可视化</h3>
+        <button class="btn active" id="btnSine">正弦波</button>
+        <button class="btn" id="btnRipple">波纹</button>
+        <button class="btn" id="btnSaddle">马鞍面</button>
+        <button class="btn" id="btnGaussian">高斯分布</button>
+        <button class="btn" id="btnSpiral">螺旋面</button>
+        <button class="btn" id="btnHeart">心形曲面</button>
+        <div class="formula" id="formula">z = sin(x) * cos(y)</div>
         <div class="info">
-            左键旋转 | 右键平移 | 滚轮缩放
+            左键拖拽旋转<br>
+            滚轮缩放
         </div>
+    </div>
+    
+    <div id="mathInfo">
+        3D数学函数可视化
     </div>
 
     <script type="importmap">
@@ -128,10 +121,10 @@
         
         // 场景设置
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x111111);
+        scene.background = new THREE.Color(0x0a0a0a);
         
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(15, 12, 15);
+        camera.position.set(8, 8, 8);
         
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -140,189 +133,192 @@
         
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
-        controls.target.set(0, 0, 0);
+        controls.dampingFactor = 0.05;
         
         // 灯光
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
         scene.add(ambientLight);
         
         const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        directionalLight.position.set(10, 20, 10);
+        directionalLight.position.set(5, 10, 5);
         directionalLight.castShadow = true;
         scene.add(directionalLight);
         
-        const pointLight = new THREE.PointLight(0x00ffff, 0.5, 50);
-        pointLight.position.set(-10, 10, -10);
-        scene.add(pointLight);
-        
-        // 网格地板
-        const gridHelper = new THREE.GridHelper(30, 30, 0x333333, 0x222222);
+        // 网格地面
+        const gridHelper = new THREE.GridHelper(20, 20, 0x444444, 0x222222);
         scene.add(gridHelper);
-        
-        // 坐标轴
-        const axesHelper = new THREE.AxesHelper(5);
-        scene.add(axesHelper);
-        
-        // 当前曲面
-        let currentMesh = null;
-        let currentFunction = 'sine';
-        
-        // 参数
-        const params = {
-            amplitude: 1,
-            frequency: 0.5,
-            speed: 0.5
-        };
         
         // 数学函数定义
         const mathFunctions = {
             sine: {
-                formula: 'z = A·sin(f·x) + A·cos(f·y)',
-                func: (x, y, t, amp, freq) => {
-                    return amp * (Math.sin(freq * x + t) + Math.cos(freq * y + t));
-                }
+                name: '正弦波',
+                formula: 'z = sin(x) * cos(y)',
+                func: (x, y, t) => Math.sin(x + t) * Math.cos(y + t) * 2
             },
             ripple: {
-                formula: 'z = A·sin(f·√(x²+y²) - t)',
-                func: (x, y, t, amp, freq) => {
+                name: '波纹',
+                formula: 'z = sin(√(x²+y²)) / √(x²+y²)',
+                func: (x, y, t) => {
                     const r = Math.sqrt(x * x + y * y);
-                    return amp * Math.sin(freq * r - t * 2) / (r * 0.3 + 1);
+                    return r === 0 ? 2 : Math.sin(r * 2 - t * 2) / r * 2;
                 }
             },
             saddle: {
-                formula: 'z = A·(x² - y²)',
-                func: (x, y, t, amp, freq) => {
-                    return amp * (x * x * 0.1 - y * y * 0.1);
-                }
+                name: '马鞍面',
+                formula: 'z = x² - y²',
+                func: (x, y, t) => (x * x - y * y) * 0.3
             },
-            cone: {
-                formula: 'z = A·√(x² + y²)',
-                func: (x, y, t, amp, freq) => {
-                    return amp * Math.sqrt(x * x + y * y) * 0.3;
-                }
+            gaussian: {
+                name: '高斯分布',
+                formula: 'z = e^(-(x²+y²)/2)',
+                func: (x, y, t) => Math.exp(-(x * x + y * y) / 4) * 4
             },
-            twist: {
-                formula: 'z = A·sin(f·θ + t)·r',
-                func: (x, y, t, amp, freq) => {
+            spiral: {
+                name: '螺旋面',
+                formula: 'z = θ * r',
+                func: (x, y, t) => {
                     const r = Math.sqrt(x * x + y * y);
                     const theta = Math.atan2(y, x);
-                    return amp * Math.sin(freq * theta + t) * r * 0.3;
+                    return (theta + t * 0.5) * r * 0.3;
                 }
             },
             heart: {
-                formula: 'z = A·(x²+2.25y²+z²-1)³ - x²z³ - 0.1125y²z³',
-                func: (x, y, t, amp, freq) => {
-                    const scale = 0.15;
-                    const x1 = x * scale;
-                    const y1 = y * scale;
-                    const a = x1 * x1 + 2.25 * y1 * y1;
-                    return amp * (a - 1) * 3;
+                name: '心形曲面',
+                formula: 'z = (x²+y²-1)³ - x²y³',
+                func: (x, y, t) => {
+                    const scale = 1.5;
+                    const x1 = x / scale;
+                    const y1 = y / scale;
+                    const val = Math.pow(x1 * x1 + y1 * y1 - 1, 3) - x1 * x1 * Math.pow(y1, 3);
+                    return val > 0 ? val * 2 : 0;
                 }
             }
         };
         
-        // 创建曲面
-        function createSurface(funcName) {
+        let currentFunction = 'sine';
+        let currentMesh = null;
+        let time = 0;
+        let isAnimating = true;
+        
+        // 创建函数曲面
+        function createFunctionSurface(funcName) {
             if (currentMesh) {
                 scene.remove(currentMesh);
                 currentMesh.geometry.dispose();
                 currentMesh.material.dispose();
             }
             
-            const geometry = new THREE.PlaneGeometry(20, 20, 100, 100);
-            geometry.rotateX(-Math.PI / 2);
+            const func = mathFunctions[funcName];
+            const segments = 100;
+            const geometry = new THREE.PlaneGeometry(10, 10, segments, segments);
             
-            const material = new THREE.MeshStandardMaterial({
-                color: 0x0088ff,
-                wireframe: false,
-                side: THREE.DoubleSide,
-                roughness: 0.3,
-                metalness: 0.6,
-                flatShading: false
-            });
+            // 计算顶点高度
+            const positions = geometry.attributes.position;
+            const colors = [];
             
-            const mesh = new THREE.Mesh(geometry, material);
-            mesh.castShadow = true;
-            mesh.receiveShadow = true;
-            
-            // 存储原始位置
-            mesh.userData.originalPositions = geometry.attributes.position.array.slice();
-            
-            scene.add(mesh);
-            currentMesh = mesh;
-            
-            // 更新公式显示
-            document.getElementById('formula').textContent = mathFunctions[funcName].formula;
-            
-            return mesh;
-        }
-        
-        // 更新曲面
-        function updateSurface(time) {
-            if (!currentMesh) return;
-            
-            const positions = currentMesh.geometry.attributes.position.array;
-            const originalPositions = currentMesh.userData.originalPositions;
-            const func = mathFunctions[currentFunction].func;
-            
-            for (let i = 0; i < positions.length; i += 3) {
-                const x = originalPositions[i];
-                const z = originalPositions[i + 2];
+            for (let i = 0; i < positions.count; i++) {
+                const x = positions.getX(i);
+                const y = positions.getY(i);
+                const z = func.func(x, y, time);
+                positions.setZ(i, z);
                 
-                const y = func(x, z, time, params.amplitude, params.frequency);
-                
-                positions[i + 1] = y;
+                // 根据高度设置颜色
+                const normalizedZ = (z + 2) / 4;
+                const color = new THREE.Color();
+                color.setHSL(0.3 + normalizedZ * 0.4, 0.8, 0.5);
+                colors.push(color.r, color.g, color.b);
             }
             
-            currentMesh.geometry.attributes.position.needsUpdate = true;
+            geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+            geometry.computeVertexNormals();
+            
+            const material = new THREE.MeshStandardMaterial({
+                vertexColors: true,
+                side: THREE.DoubleSide,
+                wireframe: false,
+                roughness: 0.3,
+                metalness: 0.7
+            });
+            
+            currentMesh = new THREE.Mesh(geometry, material);
+            currentMesh.rotation.x = -Math.PI / 2;
+            currentMesh.castShadow = true;
+            currentMesh.receiveShadow = true;
+            scene.add(currentMesh);
+            
+            // 更新UI
+            document.getElementById('formula').textContent = func.formula;
+            document.getElementById('mathInfo').textContent = func.name;
+        }
+        
+        // 更新曲面动画
+        function updateSurface() {
+            if (!currentMesh || !isAnimating) return;
+            
+            const func = mathFunctions[currentFunction];
+            const positions = currentMesh.geometry.attributes.position;
+            const colors = [];
+            
+            for (let i = 0; i < positions.count; i++) {
+                const x = positions.getX(i);
+                const y = positions.getY(i);
+                const z = func.func(x, y, time);
+                positions.setZ(i, z);
+                
+                const normalizedZ = (z + 2) / 4;
+                const color = new THREE.Color();
+                color.setHSL(0.3 + normalizedZ * 0.4, 0.8, 0.5);
+                colors.push(color.r, color.g, color.b);
+            }
+            
+            currentMesh.geometry.attributes.color.array.set(colors);
+            currentMesh.geometry.attributes.color.needsUpdate = true;
             currentMesh.geometry.computeVertexNormals();
         }
         
-        // 创建线框版本
-        let wireframeMesh = null;
-        function toggleWireframe(show) {
-            if (wireframeMesh) {
-                scene.remove(wireframeMesh);
-                wireframeMesh = null;
-            }
-            
-            if (show && currentMesh) {
-                const wireGeometry = currentMesh.geometry.clone();
-                const wireMaterial = new THREE.MeshBasicMaterial({
-                    color: 0x00ffff,
-                    wireframe: true,
-                    transparent: true,
-                    opacity: 0.3
-                });
-                wireframeMesh = new THREE.Mesh(wireGeometry, wireMaterial);
-                scene.add(wireframeMesh);
-            }
-        }
-        
-        // 初始化
-        createSurface('sine');
+        // 初始加载
+        createFunctionSurface('sine');
         
         // UI事件
-        document.querySelectorAll('.function-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.function-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                
-                currentFunction = btn.dataset.func;
-                createSurface(currentFunction);
-            });
+        function setActiveButton(id) {
+            document.querySelectorAll('#mathUI .btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+        
+        document.getElementById('btnSine').addEventListener('click', () => {
+            currentFunction = 'sine';
+            setActiveButton('btnSine');
+            createFunctionSurface('sine');
         });
         
-        document.getElementById('amplitude').addEventListener('input', (e) => {
-            params.amplitude = parseFloat(e.target.value);
+        document.getElementById('btnRipple').addEventListener('click', () => {
+            currentFunction = 'ripple';
+            setActiveButton('btnRipple');
+            createFunctionSurface('ripple');
         });
         
-        document.getElementById('frequency').addEventListener('input', (e) => {
-            params.frequency = parseFloat(e.target.value);
+        document.getElementById('btnSaddle').addEventListener('click', () => {
+            currentFunction = 'saddle';
+            setActiveButton('btnSaddle');
+            createFunctionSurface('saddle');
         });
         
-        document.getElementById('speed').addEventListener('input', (e) => {
-            params.speed = parseFloat(e.target.value);
+        document.getElementById('btnGaussian').addEventListener('click', () => {
+            currentFunction = 'gaussian';
+            setActiveButton('btnGaussian');
+            createFunctionSurface('gaussian');
+        });
+        
+        document.getElementById('btnSpiral').addEventListener('click', () => {
+            currentFunction = 'spiral';
+            setActiveButton('btnSpiral');
+            createFunctionSurface('spiral');
+        });
+        
+        document.getElementById('btnHeart').addEventListener('click', () => {
+            currentFunction = 'heart';
+            setActiveButton('btnHeart');
+            createFunctionSurface('heart');
         });
         
         // 窗口调整
@@ -338,18 +334,11 @@
         window.scene = scene;
         
         // 动画循环
-        const clock = new THREE.Clock();
-        
         function animate() {
             requestAnimationFrame(animate);
             
-            const time = clock.getElapsedTime() * params.speed;
-            updateSurface(time);
-            
-            if (wireframeMesh && currentMesh) {
-                wireframeMesh.geometry.attributes.position.array = currentMesh.geometry.attributes.position.array.slice();
-                wireframeMesh.geometry.attributes.position.needsUpdate = true;
-            }
+            time += 0.02;
+            updateSurface();
             
             controls.update();
             renderer.render(scene, camera);
