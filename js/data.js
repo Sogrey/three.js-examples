@@ -1145,6 +1145,14 @@ const threejsData = {
               url: "examples/z258/application-modelNavigator",
             },
             {
+              id: "application-measureTool",
+              title: "测量工具",
+              description: "3D测量工具，支持距离和角度测量",
+              thumbnail: "images/application-measureTool.jpg",
+              version: "r179",
+              url: "examples/z258/application-measureTool",
+            },
+            {
               id: "shader-audioSolutions",
               title: "音乐可视化",
               description:
