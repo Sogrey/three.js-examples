@@ -1065,6 +1065,14 @@ const threejsData = {
               url: "examples/z258/game-snake3D",
             },
             {
+              id: "shader-cartoonOcean",
+              title: "卡通海面",
+              description: "使用自定义着色器实现的卡通风格海面，带有多层波浪和泡沫效果",
+              thumbnail: "images/shader-cartoonOcean.jpg",
+              version: "r179",
+              url: "examples/z258/shader-cartoonOcean",
+            },
+            {
               id: "shader-audioSolutions",
               title: "音乐可视化",
               description:
