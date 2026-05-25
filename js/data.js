@@ -1137,6 +1137,14 @@ const threejsData = {
               url: "examples/z258/application-houseExplorer",
             },
             {
+              id: "application-modelNavigator",
+              title: "模型导航",
+              description: "3D模型导航系统，支持8种几何体预览和相机导航",
+              thumbnail: "images/application-modelNavigator.jpg",
+              version: "r179",
+              url: "examples/z258/application-modelNavigator",
+            },
+            {
               id: "shader-audioSolutions",
               title: "音乐可视化",
               description:
