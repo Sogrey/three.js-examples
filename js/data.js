@@ -1073,6 +1073,14 @@ const threejsData = {
               url: "examples/z258/shader-cartoonOcean",
             },
             {
+              id: "application-measure",
+              title: "3D测量工具",
+              description: "3D场景中的测量工具，支持距离和角度测量，点击物体或地面放置测量点",
+              thumbnail: "images/application-measure.jpg",
+              version: "r179",
+              url: "examples/z258/application-measure",
+            },
+            {
               id: "shader-audioSolutions",
               title: "音乐可视化",
               description:
