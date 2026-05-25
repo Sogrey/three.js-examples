@@ -1113,6 +1113,14 @@ const threejsData = {
               url: "examples/z258/application-modelViewer",
             },
             {
+              id: "application-fpsRoaming",
+              title: "第一人称漫游",
+              description: "使用Pointer Lock Controls实现的第一人称视角漫游体验",
+              thumbnail: "images/application-fpsRoaming.jpg",
+              version: "r179",
+              url: "examples/z258/application-fpsRoaming",
+            },
+            {
               id: "shader-audioSolutions",
               title: "音乐可视化",
               description:
