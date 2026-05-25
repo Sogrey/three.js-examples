@@ -339,52 +339,68 @@
             return group;
         }
         
-        // 构建房屋布局
-        // 客厅 (12x10)
-        createRoom(0, 0, 12, 10, '客厅', 0xffaa00);
-        // 客厅墙壁
-        createWallWithDoor(0, -5, 12, 4, 0.3, 0, 2, 2); // 前墙带门
-        createWall(0, 5, 12, 4, 0.3, 0); // 后墙
-        createWallWithDoor(-6, 0, 10, 4, 0.3, Math.PI/2, 0, 2); // 左墙带门
-        createWallWithDoor(6, 0, 10, 4, 0.3, Math.PI/2, -2, 2); // 右墙带门
+        // 构建房屋布局 - 大空间开放式设计
+        // 中央大厅 (30x20)
+        createRoom(0, 0, 30, 20, '中央大厅', 0xffaa00);
         
-        // 卧室1 (8x8)
-        createRoom(-10, 0, 8, 8, '主卧', 0xaa88ff);
-        createWall(0, -4, 8, 4, 0.3, 0); // 前墙
-        createWall(0, 4, 8, 4, 0.3, 0); // 后墙
-        createWall(-4, 0, 8, 4, 0.3, Math.PI/2); // 左墙
-        createWallWithDoor(4, 0, 8, 4, 0.3, Math.PI/2, 0, 2); // 右墙带门
+        // 外围墙壁
+        createWall(0, -10, 30, 4, 0.5, 0); // 前墙
+        createWall(0, 10, 30, 4, 0.5, 0); // 后墙
+        createWall(-15, 0, 20, 4, 0.5, Math.PI/2); // 左墙
+        createWall(15, 0, 20, 4, 0.5, Math.PI/2); // 右墙
         
-        // 卧室2 (8x8)
-        createRoom(10, 0, 8, 8, '次卧', 0x88ccff);
-        createWall(0, -4, 8, 4, 0.3, 0); // 前墙
-        createWall(0, 4, 8, 4, 0.3, 0); // 后墙
-        createWallWithDoor(-4, 0, 8, 4, 0.3, Math.PI/2, -2, 2); // 左墙带门
-        createWall(4, 0, 8, 4, 0.3, Math.PI/2); // 右墙
+        // 左侧区域 - 主卧 (12x15)
+        createRoom(-8, 0, 12, 15, '主卧', 0xaa88ff);
+        createWall(-8, -7.5, 12, 4, 0.5, 0); // 前墙
+        createWall(-8, 7.5, 12, 4, 0.5, 0); // 后墙
+        createWall(-14, 0, 15, 4, 0.5, Math.PI/2); // 左墙
+        // 与大厅的隔断 - 带门
+        createWallWithDoor(-2, -3, 6, 4, 0.5, Math.PI/2, 0, 3);
+        createWallWithDoor(-2, 4, 7, 4, 0.5, Math.PI/2, 0, 3);
         
-        // 厨房 (8x6)
-        createRoom(0, -8, 8, 6, '厨房', 0x88ff88);
-        createWall(0, -3, 8, 4, 0.3, 0); // 前墙
-        createWallWithDoor(0, 3, 8, 4, 0.3, 0, 2, 2); // 后墙带门
-        createWall(-4, 0, 6, 4, 0.3, Math.PI/2); // 左墙
-        createWall(4, 0, 6, 4, 0.3, Math.PI/2); // 右墙
+        // 右侧区域 - 次卧 (12x15)
+        createRoom(8, 0, 12, 15, '次卧', 0x88ccff);
+        createWall(8, -7.5, 12, 4, 0.5, 0); // 前墙
+        createWall(8, 7.5, 12, 4, 0.5, 0); // 后墙
+        createWall(14, 0, 15, 4, 0.5, Math.PI/2); // 右墙
+        // 与大厅的隔断 - 带门
+        createWallWithDoor(2, -3, 6, 4, 0.5, Math.PI/2, 0, 3);
+        createWallWithDoor(2, 4, 7, 4, 0.5, Math.PI/2, 0, 3);
+        
+        // 前方区域 - 厨房餐厅 (20x8)
+        createRoom(0, -12, 20, 8, '厨房餐厅', 0x88ff88);
+        createWall(0, -16, 20, 4, 0.5, 0); // 前墙
+        // 与大厅的隔断 - 带门
+        createWallWithDoor(-6, -8, 6, 4, 0.5, 0, 0, 3);
+        createWallWithDoor(6, -8, 6, 4, 0.5, 0, 0, 3);
         
         // 添加家具
-        createFurniture('sofa', 0, 0, 0);
-        createFurniture('table', 0, 2, 0);
-        createFurniture('bed', -10, 0, 0);
-        createFurniture('bed', 10, 0, Math.PI);
-        createFurniture('table', 0, -8, 0);
-        createFurniture('plant', -5, -4, 0);
-        createFurniture('plant', 5, -4, 0);
-        createFurniture('plant', -10, 4, 0);
-        createFurniture('plant', 10, 4, 0);
+        // 大厅家具
+        createFurniture('sofa', 0, 2, 0);
+        createFurniture('table', 0, 5, 0);
+        createFurniture('plant', -6, 0, 0);
+        createFurniture('plant', 6, 0, 0);
+        
+        // 主卧家具
+        createFurniture('bed', -8, 2, 0);
+        createFurniture('table', -10, -4, 0);
+        createFurniture('plant', -12, 5, 0);
+        
+        // 次卧家具
+        createFurniture('bed', 8, 2, Math.PI);
+        createFurniture('table', 10, -4, 0);
+        createFurniture('plant', 12, 5, 0);
+        
+        // 厨房家具
+        createFurniture('table', 0, -12, 0);
+        createFurniture('plant', -7, -14, 0);
+        createFurniture('plant', 7, -14, 0);
         
         // 控制器
         const controls = new PointerLockControls(camera, document.body);
         
-        // 初始位置（客厅入口）
-        camera.position.set(0, 1.7, 3);
+        // 初始位置（客厅中央）
+        camera.position.set(0, 1.7, 0);
         
         // 移动状态
         const moveState = {
@@ -458,15 +474,41 @@
             }
         });
         
-        // 碰撞检测
+        // 碰撞检测 - 简化为距离检测
         function checkCollision(newPosition) {
-            const playerRadius = 0.5;
+            const playerRadius = 0.4;
             
             for (const wall of walls) {
-                const box = wall.userData.boundingBox.clone();
-                box.expandByScalar(playerRadius);
+                // 获取墙壁位置
+                const wallPos = wall.position;
+                const wallSize = wall.geometry.parameters;
                 
-                if (box.containsPoint(newPosition)) {
+                // 计算墙壁的边界（考虑旋转）
+                let minX, maxX, minZ, maxZ;
+                
+                if (wall.rotation.y === 0) {
+                    // 水平墙
+                    minX = wallPos.x - wallSize.width / 2;
+                    maxX = wallPos.x + wallSize.width / 2;
+                    minZ = wallPos.z - wallSize.depth / 2;
+                    maxZ = wallPos.z + wallSize.depth / 2;
+                } else {
+                    // 垂直墙
+                    minX = wallPos.x - wallSize.depth / 2;
+                    maxX = wallPos.x + wallSize.depth / 2;
+                    minZ = wallPos.z - wallSize.width / 2;
+                    maxZ = wallPos.z + wallSize.width / 2;
+                }
+                
+                // 扩展边界
+                minX -= playerRadius;
+                maxX += playerRadius;
+                minZ -= playerRadius;
+                maxZ += playerRadius;
+                
+                // 检查碰撞
+                if (newPosition.x >= minX && newPosition.x <= maxX &&
+                    newPosition.z >= minZ && newPosition.z <= maxZ) {
                     return true;
                 }
             }
@@ -519,10 +561,10 @@
                 direction.normalize();
                 
                 if (moveState.forward || moveState.backward) {
-                    velocity.z -= direction.z * 50.0 * delta;
+                    velocity.z -= direction.z * 100.0 * delta;
                 }
                 if (moveState.left || moveState.right) {
-                    velocity.x -= direction.x * 50.0 * delta;
+                    velocity.x -= direction.x * 100.0 * delta;
                 }
                 
                 // 保存当前位置
