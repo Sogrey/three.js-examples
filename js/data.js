@@ -1121,6 +1121,14 @@ const threejsData = {
               url: "examples/z258/application-fpsRoaming",
             },
             {
+              id: "application-happyYear",
+              title: "新年快乐",
+              description: "3D新年庆祝场景，包含发光文字、灯笼和烟花粒子效果",
+              thumbnail: "images/application-happyYear.jpg",
+              version: "r179",
+              url: "examples/z258/application-happyYear",
+            },
+            {
               id: "shader-audioSolutions",
               title: "音乐可视化",
               description:
