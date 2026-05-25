@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="3D烟花庆祝效果，粒子系统实现">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 3D烟花庆祝</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #0a0a0a;
+        }
+        #fireworksUI {
+            position: absolute;
+            top: 50px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            z-index: 100;
+        }
+        #fireworksUI h3 {
+            margin: 0 0 10px 0;
+            color: #ffd700;
+            font-size: 16px;
+        }
+        #fireworksUI .btn {
+            display: block;
+            width: 100%;
+            margin: 5px 0;
+            padding: 8px 12px;
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 12px;
+        }
+        #fireworksUI .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(255, 107, 107, 0.5);
+        }
+        #fireworksUI .info {
+            margin-top: 10px;
+            font-size: 11px;
+            color: #aaa;
+        }
+        #message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ffd700;
+            font-size: 48px;
+            font-weight: bold;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.5s;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+    
+    <div id="fireworksUI">
+        <h3>🎆 3D烟花庆祝</h3>
+        <button class="btn" id="btnLaunch">发射烟花</button>
+        <button class="btn" id="btnAuto">自动模式</button>
+        <button class="btn" id="btnCelebration">🎉 庆祝模式</button>
+        <div class="info">
+            点击发射烟花<br>
+            拖拽旋转视角
+        </div>
+    </div>
+    
+    <div id="message">新年快乐!</div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        const container = document.getElementById('threeContainer');
+        
+        // 场景设置
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a0a0a);
+        scene.fog = new THREE.FogExp2(0x0a0a0a, 0.002);
+        
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 30, 80);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+        
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.maxPolarAngle = Math.PI / 2;
+        
+        // 地面
+        const groundGeometry = new THREE.PlaneGeometry(200, 200);
+        const groundMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0x001122,
+            transparent: true,
+            opacity: 0.5
+        });
+        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+        ground.rotation.x = -Math.PI / 2;
+        scene.add(ground);
+        
+        // 烟花粒子类
+        class Firework {
+            constructor(x, z, color) {
+                this.particles = [];
+                this.exploded = false;
+                this.color = color;
+                
+                // 发射轨迹
+                this.rocket = {
+                    position: new THREE.Vector3(x, 0, z),
+                    velocity: new THREE.Vector3(0, 20 + Math.random() * 10, 0),
+                    mesh: this.createRocketMesh(color)
+                };
+                scene.add(this.rocket.mesh);
+                
+                this.targetHeight = 30 + Math.random() * 20;
+            }
+            
+            createRocketMesh(color) {
+                const geometry = new THREE.SphereGeometry(0.3, 8, 8);
+                const material = new THREE.MeshBasicMaterial({ color: color });
+                return new THREE.Mesh(geometry, material);
+            }
+            
+            createParticle(position, color) {
+                const geometry = new THREE.SphereGeometry(0.2, 6, 6);
+                const material = new THREE.MeshBasicMaterial({ 
+                    color: color,
+                    transparent: true
+                });
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.position.copy(position);
+                
+                // 随机方向
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.random() * Math.PI;
+                const speed = 5 + Math.random() * 10;
+                
+                const velocity = new THREE.Vector3(
+                    Math.sin(phi) * Math.cos(theta) * speed,
+                    Math.sin(phi) * Math.sin(theta) * speed,
+                    Math.cos(phi) * speed
+                );
+                
+                scene.add(mesh);
+                
+                return {
+                    mesh: mesh,
+                    velocity: velocity,
+                    life: 1.0,
+                    decay: 0.01 + Math.random() * 0.01
+                };
+            }
+            
+            update(deltaTime) {
+                if (!this.exploded) {
+                    // 更新火箭位置
+                    this.rocket.velocity.y -= 9.8 * deltaTime; // 重力
+                    this.rocket.position.add(this.rocket.velocity.clone().multiplyScalar(deltaTime));
+                    this.rocket.mesh.position.copy(this.rocket.position);
+                    
+                    // 检查是否到达目标高度或开始下落
+                    if (this.rocket.velocity.y < 0 || this.rocket.position.y >= this.targetHeight) {
+                        this.explode();
+                    }
+                } else {
+                    // 更新粒子
+                    for (let i = this.particles.length - 1; i >= 0; i--) {
+                        const p = this.particles[i];
+                        
+                        // 物理更新
+                        p.velocity.y -= 9.8 * deltaTime * 0.5; // 重力
+                        p.velocity.multiplyScalar(0.98); // 空气阻力
+                        p.mesh.position.add(p.velocity.clone().multiplyScalar(deltaTime));
+                        
+                        // 生命周期
+                        p.life -= p.decay;
+                        p.mesh.material.opacity = p.life;
+                        p.mesh.scale.setScalar(p.life);
+                        
+                        if (p.life <= 0) {
+                            scene.remove(p.mesh);
+                            p.mesh.geometry.dispose();
+                            p.mesh.material.dispose();
+                            this.particles.splice(i, 1);
+                        }
+                    }
+                }
+            }
+            
+            explode() {
+                this.exploded = true;
+                scene.remove(this.rocket.mesh);
+                this.rocket.mesh.geometry.dispose();
+                this.rocket.mesh.material.dispose();
+                
+                // 创建爆炸粒子
+                const particleCount = 50 + Math.random() * 50;
+                for (let i = 0; i < particleCount; i++) {
+                    this.particles.push(this.createParticle(this.rocket.position, this.color));
+                }
+                
+                // 添加闪光效果
+                const flash = new THREE.PointLight(this.color, 2, 50);
+                flash.position.copy(this.rocket.position);
+                scene.add(flash);
+                
+                // 闪光渐隐
+                const fadeFlash = () => {
+                    flash.intensity *= 0.9;
+                    if (flash.intensity > 0.01) {
+                        requestAnimationFrame(fadeFlash);
+                    } else {
+                        scene.remove(flash);
+                    }
+                };
+                fadeFlash();
+            }
+            
+            isDead() {
+                return this.exploded && this.particles.length === 0;
+            }
+        }
+        
+        // 烟花管理
+        const fireworks = [];
+        let autoMode = false;
+        let celebrationMode = false;
+        let lastLaunchTime = 0;
+        
+        // 颜色池
+        const colors = [
+            0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 
+            0xff00ff, 0x00ffff, 0xff8800, 0xff0088,
+            0x88ff00, 0x00ff88, 0x8800ff, 0xffffff
+        ];
+        
+        function launchFirework(x, z, color) {
+            fireworks.push(new Firework(x, z, color));
+        }
+        
+        function launchRandomFirework() {
+            const x = (Math.random() - 0.5) * 60;
+            const z = (Math.random() - 0.5) * 40;
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            launchFirework(x, z, color);
+        }
+        
+        // 按钮事件
+        document.getElementById('btnLaunch').addEventListener('click', () => {
+            launchRandomFirework();
+        });
+        
+        document.getElementById('btnAuto').addEventListener('click', () => {
+            autoMode = !autoMode;
+            document.getElementById('btnAuto').textContent = autoMode ? '停止自动' : '自动模式';
+        });
+        
+        document.getElementById('btnCelebration').addEventListener('click', () => {
+            celebrationMode = true;
+            document.getElementById('message').style.opacity = '1';
+            
+            // 连续发射烟花
+            let count = 0;
+            const celebrationInterval = setInterval(() => {
+                for (let i = 0; i < 3; i++) {
+                    setTimeout(() => launchRandomFirework(), i * 200);
+                }
+                count++;
+                if (count > 10) {
+                    clearInterval(celebrationInterval);
+                    celebrationMode = false;
+                    setTimeout(() => {
+                        document.getElementById('message').style.opacity = '0';
+                    }, 3000);
+                }
+            }, 800);
+        });
+        
+        // 鼠标点击发射
+        window.addEventListener('click', (event) => {
+            if (event.target.closest('#fireworksUI')) return;
+            
+            // 在随机位置发射
+            launchRandomFirework();
+        });
+        
+        // 窗口调整
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // 暴露到 window 供截图使用
+        window.renderer = renderer;
+        window.camera = camera;
+        window.scene = scene;
+        
+        // 动画循环
+        const clock = new THREE.Clock();
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            const deltaTime = clock.getDelta();
+            const currentTime = clock.getElapsedTime();
+            
+            // 自动模式
+            if (autoMode && currentTime - lastLaunchTime > 1.5) {
+                launchRandomFirework();
+                lastLaunchTime = currentTime;
+            }
+            
+            // 更新烟花
+            for (let i = fireworks.length - 1; i >= 0; i--) {
+                fireworks[i].update(deltaTime);
+                if (fireworks[i].isDead()) {
+                    fireworks.splice(i, 1);
+                }
+            }
+            
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        
+        animate();
+        
+        // 初始烟花
+        setTimeout(() => launchRandomFirework(), 500);
+    </script>
+
+    <!-- 截图支持脚本 -->
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

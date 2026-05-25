@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="第一人称视角漫游，使用Pointer Lock Controls">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 第一人称漫游</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+    <style>
+        body {
+            background: #0a0a0a;
+            margin: 0;
+            overflow: hidden;
+        }
+        #blocker {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        #instructions {
+            color: #fff;
+            text-align: center;
+            cursor: pointer;
+        }
+        #instructions h1 {
+            font-size: 48px;
+            margin: 0 0 20px 0;
+            color: #00ff00;
+            text-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+        }
+        #instructions p {
+            font-size: 18px;
+            margin: 10px 0;
+            color: #aaa;
+        }
+        #instructions .key {
+            display: inline-block;
+            background: #333;
+            padding: 5px 15px;
+            border-radius: 4px;
+            margin: 0 5px;
+            color: #fff;
+            font-family: monospace;
+        }
+        #crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 50;
+            display: none;
+        }
+        #crosshair::before,
+        #crosshair::after {
+            content: '';
+            position: absolute;
+            background: #00ff00;
+        }
+        #crosshair::before {
+            width: 2px;
+            height: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        #crosshair::after {
+            width: 20px;
+            height: 2px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        #info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            z-index: 50;
+            display: none;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px 15px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div id="blocker">
+        <div id="instructions">
+            <h1>🎮 第一人称漫游</h1>
+            <p>点击屏幕开始</p>
+            <p>
+                <span class="key">W</span>
+                <span class="key">A</span>
+                <span class="key">S</span>
+                <span class="key">D</span> 移动
+            </p>
+            <p>
+                <span class="key">SPACE</span> 跳跃
+                <span class="key">ESC</span> 退出
+            </p>
+            <p>鼠标控制视角</p>
+        </div>
+    </div>
+    
+    <div id="crosshair"></div>
+    <div id="info">
+        位置: <span id="position">0, 0, 0</span><br>
+        按 ESC 退出漫游模式
+    </div>
+    
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+
+        const container = document.getElementById('threeContainer');
+        
+        // 场景设置
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a0a0a);
+        scene.fog = new THREE.Fog(0x0a0a0a, 0, 100);
+        
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        container.appendChild(renderer.domElement);
+        
+        // 灯光
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        scene.add(ambientLight);
+        
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(50, 100, 50);
+        directionalLight.castShadow = true;
+        scene.add(directionalLight);
+        
+        // 创建地板
+        const floorGeometry = new THREE.PlaneGeometry(200, 200);
+        const floorMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0x222222,
+            roughness: 0.8
+        });
+        const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+        floor.rotation.x = -Math.PI / 2;
+        floor.receiveShadow = true;
+        scene.add(floor);
+        
+        // 创建网格
+        const gridHelper = new THREE.GridHelper(200, 50, 0x444444, 0x333333);
+        scene.add(gridHelper);
+        
+        // 创建障碍物
+        const obstacles = [];
+        const obstacleMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0x0088ff,
+            roughness: 0.3,
+            metalness: 0.7
+        });
+        
+        // 随机生成不同高度的障碍物
+        for (let i = 0; i < 30; i++) {
+            const height = 3 + Math.random() * 12; // 高度范围 3-15
+            const obstacleGeometry = new THREE.BoxGeometry(4, height, 4);
+            const obstacle = new THREE.Mesh(obstacleGeometry, obstacleMaterial);
+            const x = (Math.random() - 0.5) * 180;
+            const z = (Math.random() - 0.5) * 180;
+            
+            // 避免在出生点附近生成
+            if (Math.abs(x) < 10 && Math.abs(z) < 10) continue;
+            
+            obstacle.position.set(x, height / 2, z);
+            obstacle.castShadow = true;
+            obstacle.receiveShadow = true;
+            
+            // 存储碰撞盒信息
+            obstacle.userData.boundingBox = new THREE.Box3().setFromObject(obstacle);
+            obstacle.userData.radius = 2.5; // 碰撞半径
+            
+            scene.add(obstacle);
+            obstacles.push(obstacle);
+        }
+        
+        // 创建一些装饰性物体
+        const sphereGeometry = new THREE.SphereGeometry(2, 32, 32);
+        const sphereMaterial = new THREE.MeshStandardMaterial({
+            color: 0xff8800,
+            emissive: 0xff4400,
+            emissiveIntensity: 0.5
+        });
+        
+        for (let i = 0; i < 10; i++) {
+            const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+            const x = (Math.random() - 0.5) * 150;
+            const z = (Math.random() - 0.5) * 150;
+            
+            if (Math.abs(x) < 10 && Math.abs(z) < 10) continue;
+            
+            sphere.position.set(x, 2, z);
+            scene.add(sphere);
+            
+            // 添加点光源
+            const light = new THREE.PointLight(0xff8800, 1, 20);
+            light.position.copy(sphere.position);
+            light.position.y += 3;
+            scene.add(light);
+        }
+        
+        // 控制器
+        const controls = new PointerLockControls(camera, document.body);
+        
+        // 初始位置
+        camera.position.y = 10;
+        
+        // 移动状态
+        const moveState = {
+            forward: false,
+            backward: false,
+            left: false,
+            right: false,
+            canJump: false
+        };
+        
+        // 速度
+        const velocity = new THREE.Vector3();
+        const direction = new THREE.Vector3();
+        
+        // 事件监听
+        const blocker = document.getElementById('blocker');
+        const instructions = document.getElementById('instructions');
+        const crosshair = document.getElementById('crosshair');
+        const info = document.getElementById('info');
+        const positionDisplay = document.getElementById('position');
+        
+        instructions.addEventListener('click', () => {
+            controls.lock();
+        });
+        
+        controls.addEventListener('lock', () => {
+            instructions.style.display = 'none';
+            blocker.style.display = 'none';
+            crosshair.style.display = 'block';
+            info.style.display = 'block';
+        });
+        
+        controls.addEventListener('unlock', () => {
+            blocker.style.display = 'flex';
+            instructions.style.display = 'block';
+            crosshair.style.display = 'none';
+            info.style.display = 'none';
+        });
+        
+        // 键盘事件
+        document.addEventListener('keydown', (event) => {
+            switch (event.code) {
+                case 'ArrowUp':
+                case 'KeyW':
+                    moveState.forward = true;
+                    break;
+                case 'ArrowLeft':
+                case 'KeyA':
+                    moveState.left = true;
+                    break;
+                case 'ArrowDown':
+                case 'KeyS':
+                    moveState.backward = true;
+                    break;
+                case 'ArrowRight':
+                case 'KeyD':
+                    moveState.right = true;
+                    break;
+                case 'Space':
+                    if (moveState.canJump) {
+                        velocity.y += 15;
+                        moveState.canJump = false;
+                    }
+                    break;
+            }
+        });
+        
+        document.addEventListener('keyup', (event) => {
+            switch (event.code) {
+                case 'ArrowUp':
+                case 'KeyW':
+                    moveState.forward = false;
+                    break;
+                case 'ArrowLeft':
+                case 'KeyA':
+                    moveState.left = false;
+                    break;
+                case 'ArrowDown':
+                case 'KeyS':
+                    moveState.backward = false;
+                    break;
+                case 'ArrowRight':
+                case 'KeyD':
+                    moveState.right = false;
+                    break;
+            }
+        });
+        
+        // 窗口调整
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // 暴露到 window 供截图使用
+        window.renderer = renderer;
+        window.camera = camera;
+        window.scene = scene;
+        
+        // 动画循环
+        const clock = new THREE.Clock();
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            if (controls.isLocked) {
+                const delta = clock.getDelta();
+                
+                // 摩擦力
+                velocity.x -= velocity.x * 10.0 * delta;
+                velocity.z -= velocity.z * 10.0 * delta;
+                velocity.y -= 9.8 * 10.0 * delta; // 重力
+                
+                // 移动方向
+                direction.z = Number(moveState.forward) - Number(moveState.backward);
+                direction.x = Number(moveState.right) - Number(moveState.left);
+                direction.normalize();
+                
+                if (moveState.forward || moveState.backward) {
+                    velocity.z -= direction.z * 100.0 * delta;
+                }
+                if (moveState.left || moveState.right) {
+                    velocity.x -= direction.x * 100.0 * delta;
+                }
+                
+                // 保存当前位置用于碰撞检测
+                const oldPosition = camera.position.clone();
+                
+                // 应用移动
+                controls.moveRight(-velocity.x * delta);
+                controls.moveForward(-velocity.z * delta);
+                
+                // 垂直移动
+                camera.position.y += velocity.y * delta;
+                
+                // 地面碰撞
+                if (camera.position.y < 10) {
+                    velocity.y = 0;
+                    camera.position.y = 10;
+                    moveState.canJump = true;
+                }
+                
+                // 障碍物碰撞检测
+                const playerRadius = 1.0;
+                const playerHeight = 10; // 玩家站立高度
+                const stepHeight = 5; // 可跳上的最大高度
+                
+                for (const obstacle of obstacles) {
+                    const dx = camera.position.x - obstacle.position.x;
+                    const dz = camera.position.z - obstacle.position.z;
+                    const distance = Math.sqrt(dx * dx + dz * dz);
+                    const minDistance = playerRadius + obstacle.userData.radius;
+                    const obstacleHeight = obstacle.geometry.parameters.height;
+                    
+                    if (distance < minDistance) {
+                        // 检查是否可以跳上（矮柱子且从上方落下）
+                        const canStepUp = obstacleHeight <= stepHeight && 
+                                         oldPosition.y >= obstacleHeight + playerHeight - 2 &&
+                                         camera.position.y <= obstacleHeight + playerHeight;
+                        
+                        if (canStepUp) {
+                            // 跳上柱子
+                            camera.position.y = obstacleHeight + playerHeight - 5;
+                            velocity.y = 0;
+                            moveState.canJump = true;
+                        } else if (camera.position.y < obstacleHeight + playerHeight - 5) {
+                            // 碰撞发生，恢复到之前的位置
+                            camera.position.x = oldPosition.x;
+                            camera.position.z = oldPosition.z;
+                            velocity.x = 0;
+                            velocity.z = 0;
+                        }
+                        break;
+                    }
+                }
+                
+                // 边界限制
+                camera.position.x = Math.max(-95, Math.min(95, camera.position.x));
+                camera.position.z = Math.max(-95, Math.min(95, camera.position.z));
+                
+                // 更新位置显示
+                positionDisplay.textContent = `${camera.position.x.toFixed(1)}, ${camera.position.y.toFixed(1)}, ${camera.position.z.toFixed(1)}`;
+            }
+            
+            renderer.render(scene, camera);
+        }
+        
+        animate();
+    </script>
+
+    <!-- 截图支持脚本 -->
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

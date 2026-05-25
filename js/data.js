@@ -1097,6 +1097,30 @@ const threejsData = {
               url: "examples/z258/application-matrixTransform",
             },
             {
+              id: "effect-fireworks",
+              title: "3D烟花庆祝",
+              description: "粒子系统实现的3D烟花效果，支持自动发射和庆祝模式",
+              thumbnail: "images/effect-fireworks.jpg",
+              version: "r179",
+              url: "examples/z258/effect-fireworks",
+            },
+            {
+              id: "application-modelViewer",
+              title: "3D模型查看器",
+              description: "支持多种几何体预览和材质调节的3D模型查看器",
+              thumbnail: "images/application-modelViewer.jpg",
+              version: "r179",
+              url: "examples/z258/application-modelViewer",
+            },
+            {
+              id: "application-fpsRoaming",
+              title: "第一人称漫游",
+              description: "使用Pointer Lock Controls实现的第一人称视角漫游体验",
+              thumbnail: "images/application-fpsRoaming.jpg",
+              version: "r179",
+              url: "examples/z258/application-fpsRoaming",
+            },
+            {
               id: "shader-audioSolutions",
               title: "音乐可视化",
               description:
