@@ -1097,6 +1097,14 @@ const threejsData = {
               url: "examples/z258/application-matrixTransform",
             },
             {
+              id: "effect-fireworks",
+              title: "3D烟花庆祝",
+              description: "粒子系统实现的3D烟花效果，支持自动发射和庆祝模式",
+              thumbnail: "images/effect-fireworks.jpg",
+              version: "r179",
+              url: "examples/z258/effect-fireworks",
+            },
+            {
               id: "shader-audioSolutions",
               title: "音乐可视化",
               description:
