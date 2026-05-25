@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="第一人称房屋探索，使用Pointer Lock Controls在室内漫游">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 第一人称房屋探索</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+    <style>
+        body {
+            background: #0a0a0a;
+            margin: 0;
+            overflow: hidden;
+        }
+        #blocker {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        #instructions {
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            text-align: center;
+            cursor: pointer;
+        }
+        #instructions h1 {
+            font-size: 36px;
+            color: #00ff00;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+        }
+        #instructions p {
+            font-size: 16px;
+            color: #aaa;
+            margin: 10px 0;
+        }
+        #crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 50;
+            display: none;
+        }
+        #crosshair::before,
+        #crosshair::after {
+            content: '';
+            position: absolute;
+            background: #00ff00;
+        }
+        #crosshair::before {
+            width: 2px;
+            height: 20px;
+            left: 9px;
+            top: 0;
+        }
+        #crosshair::after {
+            width: 20px;
+            height: 2px;
+            left: 0;
+            top: 9px;
+        }
+        #houseUI {
+            position: absolute;
+            top: 50px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            z-index: 100;
+            display: none;
+        }
+        #houseUI h3 {
+            margin: 0 0 10px 0;
+            color: #00ff00;
+            font-size: 16px;
+        }
+        #houseUI .info {
+            font-size: 12px;
+            color: #aaa;
+            margin: 5px 0;
+        }
+        #roomInfo {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #00ff00;
+            font-size: 18px;
+            font-family: 'Courier New', monospace;
+            text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+            z-index: 100;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+    
+    <div id="blocker">
+        <div id="instructions">
+            <h1>🏠 房屋探索</h1>
+            <p>点击屏幕开始探索</p>
+            <p>WASD - 移动 | 鼠标 - 视角 | ESC - 退出</p>
+        </div>
+    </div>
+    
+    <div id="crosshair"></div>
+    
+    <div id="houseUI">
+        <h3>探索信息</h3>
+        <div class="info" id="positionInfo">位置: 0, 0, 0</div>
+        <div class="info" id="roomName">房间: 客厅</div>
+    </div>
+    
+    <div id="roomInfo"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+
+        const container = document.getElementById('threeContainer');
+        const blocker = document.getElementById('blocker');
+        const instructions = document.getElementById('instructions');
+        const crosshair = document.getElementById('crosshair');
+        const houseUI = document.getElementById('houseUI');
+        const positionInfo = document.getElementById('positionInfo');
+        const roomName = document.getElementById('roomName');
+        const roomInfo = document.getElementById('roomInfo');
+        
+        // 场景设置
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a1a1a);
+        
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        container.appendChild(renderer.domElement);
+        
+        // 灯光
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        scene.add(ambientLight);
+        
+        // 房间定义
+        const rooms = [];
+        const walls = [];
+        const floors = [];
+        
+        // 材质
+        const wallMaterial = new THREE.MeshStandardMaterial({ color: 0xdddddd, roughness: 0.9 });
+        const floorMaterial1 = new THREE.MeshStandardMaterial({ color: 0x8b4513, roughness: 0.8 });
+        const floorMaterial2 = new THREE.MeshStandardMaterial({ color: 0x654321, roughness: 0.8 });
+        const ceilingMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9 });
+        
+        // 创建房间
+        function createRoom(x, z, width, depth, name, color) {
+            const roomGroup = new THREE.Group();
+            roomGroup.position.set(x, 0, z);
+            
+            // 地板
+            const floorGeometry = new THREE.PlaneGeometry(width, depth);
+            const floor = new THREE.Mesh(floorGeometry, floorMaterial1);
+            floor.rotation.x = -Math.PI / 2;
+            floor.receiveShadow = true;
+            roomGroup.add(floor);
+            floors.push(floor);
+            
+            // 天花板
+            const ceiling = new THREE.Mesh(floorGeometry, ceilingMaterial);
+            ceiling.rotation.x = Math.PI / 2;
+            ceiling.position.y = 4;
+            roomGroup.add(ceiling);
+            
+            // 房间光源
+            const light = new THREE.PointLight(color, 0.5, 15);
+            light.position.set(0, 3, 0);
+            light.castShadow = true;
+            roomGroup.add(light);
+            
+            // 存储房间信息
+            rooms.push({
+                name: name,
+                x: x,
+                z: z,
+                width: width,
+                depth: depth,
+                color: color,
+                group: roomGroup
+            });
+            
+            scene.add(roomGroup);
+            return roomGroup;
+        }
+        
+        // 创建墙壁
+        function createWall(x, z, width, height, depth, rotation = 0) {
+            const geometry = new THREE.BoxGeometry(width, height, depth);
+            const wall = new THREE.Mesh(geometry, wallMaterial);
+            wall.position.set(x, height / 2, z);
+            wall.rotation.y = rotation;
+            wall.castShadow = true;
+            wall.receiveShadow = true;
+            
+            // 存储碰撞信息
+            wall.userData.boundingBox = new THREE.Box3().setFromObject(wall);
+            
+            scene.add(wall);
+            walls.push(wall);
+            return wall;
+        }
+        
+        // 创建门洞
+        function createWallWithDoor(x, z, width, height, depth, rotation, doorX, doorWidth) {
+            // 左侧墙段
+            const leftWidth = (width - doorWidth) / 2 + doorX;
+            if (leftWidth > 0.1) {
+                const leftX = x - (width - leftWidth) / 2 + doorX / 2;
+                createWall(leftX, z, leftWidth, height, depth, rotation);
+            }
+            
+            // 右侧墙段
+            const rightWidth = (width - doorWidth) / 2 - doorX;
+            if (rightWidth > 0.1) {
+                const rightX = x + (width - rightWidth) / 2 + doorX / 2;
+                createWall(rightX, z, rightWidth, height, depth, rotation);
+            }
+        }
+        
+        // 创建家具
+        function createFurniture(type, x, z, rotation = 0) {
+            const group = new THREE.Group();
+            group.position.set(x, 0, z);
+            group.rotation.y = rotation;
+            
+            if (type === 'sofa') {
+                // 沙发底座
+                const base = new THREE.Mesh(
+                    new THREE.BoxGeometry(3, 0.8, 1.5),
+                    new THREE.MeshStandardMaterial({ color: 0x4169e1 })
+                );
+                base.position.y = 0.4;
+                base.castShadow = true;
+                group.add(base);
+                
+                // 靠背
+                const back = new THREE.Mesh(
+                    new THREE.BoxGeometry(3, 1.2, 0.3),
+                    new THREE.MeshStandardMaterial({ color: 0x4169e1 })
+                );
+                back.position.set(0, 1, -0.6);
+                back.castShadow = true;
+                group.add(back);
+            } else if (type === 'table') {
+                // 桌面
+                const top = new THREE.Mesh(
+                    new THREE.BoxGeometry(2, 0.1, 1.2),
+                    new THREE.MeshStandardMaterial({ color: 0x8b4513 })
+                );
+                top.position.y = 1.5;
+                top.castShadow = true;
+                group.add(top);
+                
+                // 桌腿
+                for (let i = 0; i < 4; i++) {
+                    const leg = new THREE.Mesh(
+                        new THREE.BoxGeometry(0.1, 1.5, 0.1),
+                        new THREE.MeshStandardMaterial({ color: 0x654321 })
+                    );
+                    leg.position.set(
+                        (i % 2 === 0 ? -0.9 : 0.9),
+                        0.75,
+                        (i < 2 ? -0.5 : 0.5)
+                    );
+                    leg.castShadow = true;
+                    group.add(leg);
+                }
+            } else if (type === 'bed') {
+                // 床垫
+                const mattress = new THREE.Mesh(
+                    new THREE.BoxGeometry(2, 0.5, 2.5),
+                    new THREE.MeshStandardMaterial({ color: 0xffffff })
+                );
+                mattress.position.y = 0.75;
+                mattress.castShadow = true;
+                group.add(mattress);
+                
+                // 床头
+                const headboard = new THREE.Mesh(
+                    new THREE.BoxGeometry(2, 1.5, 0.2),
+                    new THREE.MeshStandardMaterial({ color: 0x8b4513 })
+                );
+                headboard.position.set(0, 0.75, -1.35);
+                headboard.castShadow = true;
+                group.add(headboard);
+            } else if (type === 'plant') {
+                // 花盆
+                const pot = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.3, 0.2, 0.5, 16),
+                    new THREE.MeshStandardMaterial({ color: 0x8b4513 })
+                );
+                pot.position.y = 0.25;
+                pot.castShadow = true;
+                group.add(pot);
+                
+                // 植物
+                const plant = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.4, 16, 16),
+                    new THREE.MeshStandardMaterial({ color: 0x228b22 })
+                );
+                plant.position.y = 0.8;
+                plant.castShadow = true;
+                group.add(plant);
+            }
+            
+            scene.add(group);
+            return group;
+        }
+        
+        // 构建房屋布局
+        // 客厅 (12x10)
+        createRoom(0, 0, 12, 10, '客厅', 0xffaa00);
+        // 客厅墙壁
+        createWallWithDoor(0, -5, 12, 4, 0.3, 0, 2, 2); // 前墙带门
+        createWall(0, 5, 12, 4, 0.3, 0); // 后墙
+        createWallWithDoor(-6, 0, 10, 4, 0.3, Math.PI/2, 0, 2); // 左墙带门
+        createWallWithDoor(6, 0, 10, 4, 0.3, Math.PI/2, -2, 2); // 右墙带门
+        
+        // 卧室1 (8x8)
+        createRoom(-10, 0, 8, 8, '主卧', 0xaa88ff);
+        createWall(0, -4, 8, 4, 0.3, 0); // 前墙
+        createWall(0, 4, 8, 4, 0.3, 0); // 后墙
+        createWall(-4, 0, 8, 4, 0.3, Math.PI/2); // 左墙
+        createWallWithDoor(4, 0, 8, 4, 0.3, Math.PI/2, 0, 2); // 右墙带门
+        
+        // 卧室2 (8x8)
+        createRoom(10, 0, 8, 8, '次卧', 0x88ccff);
+        createWall(0, -4, 8, 4, 0.3, 0); // 前墙
+        createWall(0, 4, 8, 4, 0.3, 0); // 后墙
+        createWallWithDoor(-4, 0, 8, 4, 0.3, Math.PI/2, -2, 2); // 左墙带门
+        createWall(4, 0, 8, 4, 0.3, Math.PI/2); // 右墙
+        
+        // 厨房 (8x6)
+        createRoom(0, -8, 8, 6, '厨房', 0x88ff88);
+        createWall(0, -3, 8, 4, 0.3, 0); // 前墙
+        createWallWithDoor(0, 3, 8, 4, 0.3, 0, 2, 2); // 后墙带门
+        createWall(-4, 0, 6, 4, 0.3, Math.PI/2); // 左墙
+        createWall(4, 0, 6, 4, 0.3, Math.PI/2); // 右墙
+        
+        // 添加家具
+        createFurniture('sofa', 0, 0, 0);
+        createFurniture('table', 0, 2, 0);
+        createFurniture('bed', -10, 0, 0);
+        createFurniture('bed', 10, 0, Math.PI);
+        createFurniture('table', 0, -8, 0);
+        createFurniture('plant', -5, -4, 0);
+        createFurniture('plant', 5, -4, 0);
+        createFurniture('plant', -10, 4, 0);
+        createFurniture('plant', 10, 4, 0);
+        
+        // 控制器
+        const controls = new PointerLockControls(camera, document.body);
+        
+        // 初始位置（客厅入口）
+        camera.position.set(0, 1.7, 3);
+        
+        // 移动状态
+        const moveState = {
+            forward: false,
+            backward: false,
+            left: false,
+            right: false
+        };
+        
+        const velocity = new THREE.Vector3();
+        const direction = new THREE.Vector3();
+        
+        // 锁定/解锁事件
+        controls.addEventListener('lock', () => {
+            blocker.style.display = 'none';
+            crosshair.style.display = 'block';
+            houseUI.style.display = 'block';
+        });
+        
+        controls.addEventListener('unlock', () => {
+            blocker.style.display = 'flex';
+            instructions.style.display = 'block';
+            crosshair.style.display = 'none';
+            houseUI.style.display = 'none';
+        });
+        
+        instructions.addEventListener('click', () => {
+            controls.lock();
+        });
+        
+        // 键盘事件
+        document.addEventListener('keydown', (event) => {
+            switch (event.code) {
+                case 'ArrowUp':
+                case 'KeyW':
+                    moveState.forward = true;
+                    break;
+                case 'ArrowLeft':
+                case 'KeyA':
+                    moveState.left = true;
+                    break;
+                case 'ArrowDown':
+                case 'KeyS':
+                    moveState.backward = true;
+                    break;
+                case 'ArrowRight':
+                case 'KeyD':
+                    moveState.right = true;
+                    break;
+            }
+        });
+        
+        document.addEventListener('keyup', (event) => {
+            switch (event.code) {
+                case 'ArrowUp':
+                case 'KeyW':
+                    moveState.forward = false;
+                    break;
+                case 'ArrowLeft':
+                case 'KeyA':
+                    moveState.left = false;
+                    break;
+                case 'ArrowDown':
+                case 'KeyS':
+                    moveState.backward = false;
+                    break;
+                case 'ArrowRight':
+                case 'KeyD':
+                    moveState.right = false;
+                    break;
+            }
+        });
+        
+        // 碰撞检测
+        function checkCollision(newPosition) {
+            const playerRadius = 0.5;
+            
+            for (const wall of walls) {
+                const box = wall.userData.boundingBox.clone();
+                box.expandByScalar(playerRadius);
+                
+                if (box.containsPoint(newPosition)) {
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+        
+        // 检测当前房间
+        function getCurrentRoom(position) {
+            for (const room of rooms) {
+                const halfWidth = room.width / 2;
+                const halfDepth = room.depth / 2;
+                
+                if (position.x >= room.x - halfWidth && position.x <= room.x + halfWidth &&
+                    position.z >= room.z - halfDepth && position.z <= room.z + halfDepth) {
+                    return room;
+                }
+            }
+            return null;
+        }
+        
+        // 窗口调整
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // 暴露到 window 供截图使用
+        window.renderer = renderer;
+        window.camera = camera;
+        window.scene = scene;
+        
+        // 动画循环
+        const clock = new THREE.Clock();
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            if (controls.isLocked) {
+                const delta = clock.getDelta();
+                
+                // 摩擦力
+                velocity.x -= velocity.x * 10.0 * delta;
+                velocity.z -= velocity.z * 10.0 * delta;
+                
+                // 移动方向
+                direction.z = Number(moveState.forward) - Number(moveState.backward);
+                direction.x = Number(moveState.right) - Number(moveState.left);
+                direction.normalize();
+                
+                if (moveState.forward || moveState.backward) {
+                    velocity.z -= direction.z * 50.0 * delta;
+                }
+                if (moveState.left || moveState.right) {
+                    velocity.x -= direction.x * 50.0 * delta;
+                }
+                
+                // 保存当前位置
+                const oldPosition = camera.position.clone();
+                
+                // 应用移动
+                controls.moveRight(-velocity.x * delta);
+                controls.moveForward(-velocity.z * delta);
+                
+                // 碰撞检测
+                if (checkCollision(camera.position)) {
+                    camera.position.copy(oldPosition);
+                    velocity.x = 0;
+                    velocity.z = 0;
+                }
+                
+                // 更新UI
+                positionInfo.textContent = `位置: ${camera.position.x.toFixed(1)}, ${camera.position.y.toFixed(1)}, ${camera.position.z.toFixed(1)}`;
+                
+                const currentRoom = getCurrentRoom(camera.position);
+                if (currentRoom) {
+                    roomName.textContent = `房间: ${currentRoom.name}`;
+                    roomName.style.color = '#' + currentRoom.color.toString(16).padStart(6, '0');
+                } else {
+                    roomName.textContent = '房间: 走廊';
+                    roomName.style.color = '#aaaaaa';
+                }
+            }
+            
+            renderer.render(scene, camera);
+        }
+        
+        animate();
+    </script>
+
+    <!-- 截图支持脚本 -->
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

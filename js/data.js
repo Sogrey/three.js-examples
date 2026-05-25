@@ -1129,6 +1129,14 @@ const threejsData = {
               url: "examples/z258/application-happyYear",
             },
             {
+              id: "application-houseExplorer",
+              title: "房屋探索",
+              description: "第一人称视角房屋探索，包含多个房间和家具",
+              thumbnail: "images/application-houseExplorer.jpg",
+              version: "r179",
+              url: "examples/z258/application-houseExplorer",
+            },
+            {
               id: "shader-audioSolutions",
               title: "音乐可视化",
               description:
