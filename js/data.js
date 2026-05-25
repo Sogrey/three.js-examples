@@ -1153,14 +1153,6 @@ const threejsData = {
               url: "examples/z258/application-measureTool",
             },
             {
-              id: "application-mathVisual",
-              title: "数学函数可视化",
-              description: "3D数学函数可视化，展示6种数学函数生成的3D曲面",
-              thumbnail: "images/application-mathVisual.jpg",
-              version: "r179",
-              url: "examples/z258/application-mathVisual",
-            },
-            {
               id: "shader-audioSolutions",
               title: "音乐可视化",
               description:
