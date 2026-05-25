@@ -173,15 +173,16 @@
         
         // 创建障碍物
         const obstacles = [];
-        const obstacleGeometry = new THREE.BoxGeometry(4, 8, 4);
         const obstacleMaterial = new THREE.MeshStandardMaterial({ 
             color: 0x0088ff,
             roughness: 0.3,
             metalness: 0.7
         });
         
-        // 随机生成障碍物
+        // 随机生成不同高度的障碍物
         for (let i = 0; i < 30; i++) {
+            const height = 3 + Math.random() * 12; // 高度范围 3-15
+            const obstacleGeometry = new THREE.BoxGeometry(4, height, 4);
             const obstacle = new THREE.Mesh(obstacleGeometry, obstacleMaterial);
             const x = (Math.random() - 0.5) * 180;
             const z = (Math.random() - 0.5) * 180;
@@ -189,9 +190,14 @@
             // 避免在出生点附近生成
             if (Math.abs(x) < 10 && Math.abs(z) < 10) continue;
             
-            obstacle.position.set(x, 4, z);
+            obstacle.position.set(x, height / 2, z);
             obstacle.castShadow = true;
             obstacle.receiveShadow = true;
+            
+            // 存储碰撞盒信息
+            obstacle.userData.boundingBox = new THREE.Box3().setFromObject(obstacle);
+            obstacle.userData.radius = 2.5; // 碰撞半径
+            
             scene.add(obstacle);
             obstacles.push(obstacle);
         }
@@ -352,6 +358,9 @@
                     velocity.x -= direction.x * 100.0 * delta;
                 }
                 
+                // 保存当前位置用于碰撞检测
+                const oldPosition = camera.position.clone();
+                
                 // 应用移动
                 controls.moveRight(-velocity.x * delta);
                 controls.moveForward(-velocity.z * delta);
@@ -364,6 +373,40 @@
                     velocity.y = 0;
                     camera.position.y = 10;
                     moveState.canJump = true;
+                }
+                
+                // 障碍物碰撞检测
+                const playerRadius = 1.0;
+                const playerHeight = 10; // 玩家站立高度
+                const stepHeight = 5; // 可跳上的最大高度
+                
+                for (const obstacle of obstacles) {
+                    const dx = camera.position.x - obstacle.position.x;
+                    const dz = camera.position.z - obstacle.position.z;
+                    const distance = Math.sqrt(dx * dx + dz * dz);
+                    const minDistance = playerRadius + obstacle.userData.radius;
+                    const obstacleHeight = obstacle.geometry.parameters.height;
+                    
+                    if (distance < minDistance) {
+                        // 检查是否可以跳上（矮柱子且从上方落下）
+                        const canStepUp = obstacleHeight <= stepHeight && 
+                                         oldPosition.y >= obstacleHeight + playerHeight - 2 &&
+                                         camera.position.y <= obstacleHeight + playerHeight;
+                        
+                        if (canStepUp) {
+                            // 跳上柱子
+                            camera.position.y = obstacleHeight + playerHeight - 5;
+                            velocity.y = 0;
+                            moveState.canJump = true;
+                        } else if (camera.position.y < obstacleHeight + playerHeight - 5) {
+                            // 碰撞发生，恢复到之前的位置
+                            camera.position.x = oldPosition.x;
+                            camera.position.z = oldPosition.z;
+                            velocity.x = 0;
+                            velocity.z = 0;
+                        }
+                        break;
+                    }
                 }
                 
                 // 边界限制
