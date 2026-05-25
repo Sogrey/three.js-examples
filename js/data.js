@@ -1081,6 +1081,14 @@ const threejsData = {
               url: "examples/z258/application-measure",
             },
             {
+              id: "application-mathVisual",
+              title: "3D数学函数可视化",
+              description: "展示各种数学函数生成的3D曲面，包括正弦波、涟漪、马鞍面等",
+              thumbnail: "images/application-mathVisual.jpg",
+              version: "r179",
+              url: "examples/z258/application-mathVisual",
+            },
+            {
               id: "shader-audioSolutions",
               title: "音乐可视化",
               description:
