@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="赛博走廊效果，纯GLSL实现无限延伸的赛博朋克走廊">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 赛博走廊</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        const container = document.getElementById('threeContainer');
+
+        // 创建渲染器
+        const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        container.appendChild(renderer.domElement);
+
+        // 正交场景用于全屏渲染
+        const orthoScene = new THREE.Scene();
+        const orthoCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+        // 虚拟透视相机用于生成相机矩阵
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.updateProjectionMatrix();
+
+        // 获取最大各向异性
+        const maxAnisotropy = renderer.capabilities.getMaxAnisotropy();
+
+        // 程序化纹理生成器
+        function createProceduralTexture(drawFn, texWidth = 1024, texHeight = 1024) {
+            const canvas = document.createElement('canvas');
+            canvas.width = texWidth;
+            canvas.height = texHeight;
+            const ctx = canvas.getContext('2d');
+            
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, texWidth, texHeight);
+            
+            drawFn(ctx, texWidth, texHeight);
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.minFilter = THREE.LinearMipmapLinearFilter;
+            texture.magFilter = THREE.LinearFilter;
+            
+            if (maxAnisotropy > 0) {
+                texture.anisotropy = maxAnisotropy;
+            }
+            texture.needsUpdate = true;
+            
+            return texture;
+        }
+
+        // 纹理1: 游戏列表
+        const tList = createProceduralTexture((ctx, w, h) => {
+            ctx.font = 'bold 22px Courier New, monospace';
+            ctx.textBaseline = 'top';
+            
+            const q1 = [
+                { text: "+-- USER STATUS ----------------+", highlight: false },
+                { text: "| HERO CLASS: ROQUE / NETRUNNER |", highlight: false },
+                { text: "| LEVEL: 18  XP: 94820 / 100000 |", highlight: false },
+                { text: "| HP: [██████████████░░░░] 78%  |", highlight: true },
+                { text: "| MP: [████████░░░░░░░░░░] 45%  |", highlight: true },
+                { text: "+-- STATS ----------------------+", highlight: false },
+                { text: "| STRENGTH:  18 (+2)  DEX: 22   |", highlight: false },
+                { text: "| INTEL:     15       VIT: 14   |", highlight: false },
+                { text: "| ARMOR:     45       EVD: 18%  |", highlight: false },
+                { text: "+-- EQUIPPED -------------------+", highlight: false },
+                { text: "| [HAND] Giantslayer (+3)       |", highlight: true },
+                { text: "| [BODY] Ghost Leather Armor    |", highlight: false },
+                { text: "| [RING] Ring of Protection (+2)|", highlight: true },
+                { text: "| [NECK] Amulet of Breathing    |", highlight: true }
+            ];
+
+            const q2 = [
+                { text: "+-- INVENTORY LOGS ------------------+", highlight: false },
+                { text: "|  1 Amulet of magical breathing     |", highlight: true },
+                { text: "|  40 Orcish arrows [EQUIPPED]       |", highlight: false },
+                { text: "|     -> arrows slot active          |", highlight: true },
+                { text: "|  25 Silver arrows                  |", highlight: false },
+                { text: "|  5 Giantslayer (+3)                |", highlight: true },
+                { text: "|  1 Long sword                      |", highlight: false },
+                { text: "|  3 Ogresmasher                     |", highlight: true },
+                { text: "|  1 Trollsbane                      |", highlight: true },
+                { text: "|  2 Leather gloves                  |", highlight: false },
+                { text: "|  1 Potion of Healing (Major)       |", highlight: false },
+                { text: "|  3 Mana Restoration Cells          |", highlight: true },
+                { text: "|  1 Decryption Sub-Processor        |", highlight: false }
+            ];
+
+            const q3 = [
+                { text: "+-- SYS_DIAGNOSTICS -------------+", highlight: false },
+                { text: "| KERNEL: V.9.4.2 [STABLE]       |", highlight: false },
+                { text: "| UPTIME: 942:12:04              |", highlight: false },
+                { text: "| CPU_0: [||||||||  ] 82%        |", highlight: true },
+                { text: "| MEM:   [||||      ] 41%        |", highlight: true },
+                { text: "+-- SEC_PROTOCOLS ---------------+", highlight: false },
+                { text: "| FIREWALL:  ACTIVE (L4)         |", highlight: false },
+                { text: "| ENCRYPTION: QUANTUM-KEY        |", highlight: false },
+                { text: "| THREAT_LVL: ELEVATED           |", highlight: true },
+                { text: "+-- ACTIVE_PROCESSES ------------+", highlight: false },
+                { text: "| > daemon_sys_core.exe          |", highlight: false },
+                { text: "| > net_route_tracker.dll        |", highlight: false },
+                { text: "| > weapon_sync_module.sys       |", highlight: true },
+                { text: "| > auto_heal_trigger.bat        |", highlight: true }
+            ];
+
+            const q4 = [
+                { text: "+-- MISSION DIRECTIVE ---------------+", highlight: false },
+                { text: "| OBJ: INFILTRATE SECTOR_04          |", highlight: true },
+                { text: "| TGT: ELDER TROLL WARLORD           |", highlight: true },
+                { text: "| STATUS: IN PROGRESS...             |", highlight: false },
+                { text: "| REWARD: 50,000 GP, MYTHIC ITEM     |", highlight: true },
+                { text: "+-- LOCAL WAYPOINTS -----------------+", highlight: false },
+                { text: "| [X] ENTRY_POINT_ALPHA              |", highlight: false },
+                { text: "| [X] BYPASS_SECURITY_GATE           |", highlight: false },
+                { text: "| [ ] LOCATE_SERVER_ROOM             |", highlight: true },
+                { text: "| [ ] DEFEAT_GUARDIAN                |", highlight: true },
+                { text: "| [ ] EXTRACT_DATA_DRIVE             |", highlight: false },
+                { text: "+-- COMM_UPLINK ---------------------+", highlight: false },
+                { text: "| ORACLE: \"Watch your corners.\"      |", highlight: false },
+                { text: "| YOU: \"I see them. Engaging.\"       |", highlight: false }
+            ];
+
+            const quadrants = [
+                { data: q1, x: 20, y: 20 },
+                { data: q2, x: w/2 + 20, y: 20 },
+                { data: q3, x: 20, y: h/2 + 20 },
+                { data: q4, x: w/2 + 20, y: h/2 + 20 }
+            ];
+            
+            for (let quad of quadrants) {
+                let currentY = quad.y;
+                for (let line of quad.data) {
+                    ctx.fillStyle = line.highlight ? 'rgb(0, 255, 0)' : 'rgb(255, 0, 0)';
+                    ctx.fillText(line.text, quad.x, currentY);
+                    currentY += 30;
+                }
+            }
+        });
+
+        // 纹理2: 源代码
+        const tCode = createProceduralTexture((ctx, w, h) => {
+            ctx.font = '20px Courier New, monospace';
+            ctx.textBaseline = 'top';
+            
+            const q1 = [
+                { text: "// MODULE: INVENTORY_SYSTEM_CORE", highlight: true },
+                { text: "#include <iostream>", highlight: false },
+                { text: "using namespace std;", highlight: false },
+                { text: "struct Player { string eq; int gold; };", highlight: false },
+                { text: "void equipWeapon(Player &p, string w) {", highlight: false },
+                { text: "    if (w == \"Giantslayer\") {", highlight: true },
+                { text: "        p.attack += 15;", highlight: false },
+                { text: "        p.eq = \"Giantslayer\";", highlight: true },
+                { text: "    } else if (w == \"Trollsbane\") {", highlight: true },
+                { text: "        p.attack += 12;", highlight: false },
+                { text: "        p.eq = \"Trollsbane\";", highlight: true },
+                { text: "    }", highlight: false },
+                { text: "}", highlight: false },
+                { text: "int main() {", highlight: false },
+                { text: "    Player hero;", highlight: false },
+                { text: "    equipWeapon(hero, \"Trollsbane\");", highlight: true },
+                { text: "    return 0;", highlight: false },
+                { text: "}", highlight: false }
+            ];
+
+            const q2 = [
+                { text: "ADDR       HEX DUMP          ASM INSTRUCT", highlight: true },
+                { text: "-----------------------------------------", highlight: false },
+                { text: "0x00401A20  55               PUSH EBP", highlight: false },
+                { text: "0x00401A21  89 E5            MOV EBP, ESP", highlight: false },
+                { text: "0x00401A23  83 EC 10         SUB ESP, 10", highlight: false },
+                { text: "0x00401A30  3D D8 04 00 00   CMP EAX, 0x4D8", highlight: true },
+                { text: "0x00401A35  75 0F            JNE 0x00401A46", highlight: false },
+                { text: "0x00401A3D  01 50 08         ADD [EAX+8], EDX", highlight: true },
+                { text: "0x00401A40  E9 1B 01 00 00   JMP 0x00401B60", highlight: false },
+                { text: "0x00401A45  90               NOP", highlight: false },
+                { text: "0x00401A46  3D E0 04 00 00   CMP EAX, 0x4E0", highlight: true },
+                { text: "0x00401A4B  75 08            JNE 0x00401A55", highlight: false },
+                { text: "0x00401A4D  83 40 08 0C      ADD [EAX+8], 12", highlight: true },
+                { text: "0x00401A55  C9               LEAVE", highlight: false },
+                { text: "0x00401A56  C3               RET", highlight: false }
+            ];
+
+            const q3 = [
+                { text: "def calculate_trajectory(pos, velocity):", highlight: true },
+                { text: "    g = 9.81", highlight: false },
+                { text: "    time_of_flight = (2 * velocity.y) / g", highlight: false },
+                { text: "    if time_of_flight < 0:", highlight: true },
+                { text: "        return None", highlight: false },
+                { text: "    dist = velocity.x * time_of_flight", highlight: false },
+                { text: "    return dist", highlight: false },
+                { text: "", highlight: false },
+                { text: "target_lock = acquire_target()", highlight: true },
+                { text: "if target_lock.is_valid():", highlight: false },
+                { text: "    dist = calculate_trajectory(p, v)", highlight: true },
+                { text: "    fire_projectile(dist)", highlight: false },
+                { text: "else:", highlight: false },
+                { text: "    scan_environment()", highlight: false }
+            ];
+
+            const q4 = [
+                { text: "{", highlight: false },
+                { text: "  \"network_config\": {", highlight: false },
+                { text: "    \"node_id\": \"ALFA_77\",", highlight: true },
+                { text: "    \"latency_ms\": 12.4,", highlight: false },
+                { text: "    \"encryption\": \"RSA-4096\",", highlight: true },
+                { text: "    \"peers\": [", highlight: false },
+                { text: "      \"192.168.1.104\",", highlight: false },
+                { text: "      \"10.0.0.5\"", highlight: false },
+                { text: "    ],", highlight: false },
+                { text: "    \"status\": \"ACTIVE\"", highlight: true },
+                { text: "  },", highlight: false },
+                { text: "  \"telemetry\": {", highlight: false },
+                { text: "    \"packets_sent\": 99402,", highlight: true },
+                { text: "    \"dropped\": 0", highlight: false },
+                { text: "  }", highlight: false },
+                { text: "}", highlight: false }
+            ];
+            
+            const quadrants = [
+                { data: q1, x: 20, y: 20 },
+                { data: q2, x: w/2 + 20, y: 20 },
+                { data: q3, x: 20, y: h/2 + 20 },
+                { data: q4, x: w/2 + 20, y: h/2 + 20 }
+            ];
+
+            for (let quad of quadrants) {
+                let currentY = quad.y;
+                for (let line of quad.data) {
+                    ctx.fillStyle = line.highlight ? 'rgb(0, 255, 0)' : 'rgb(255, 0, 0)';
+                    ctx.fillText(line.text, quad.x, currentY);
+                    currentY += 28;
+                }
+            }
+        });
+
+        // 纹理3: ASCII艺术
+        const tASCII = createProceduralTexture((ctx, w, h) => {
+            ctx.font = 'bold 22px Courier New, monospace';
+            ctx.textBaseline = 'top';
+            
+            const blocks = [
+                [
+                    { text: "      .-------.      ", highlight: false },
+                    { text: "    .'  _   _  '.    ", highlight: false },
+                    { text: "   /   (o) (o)   \\   ", highlight: true },
+                    { text: "   |      _      |   ", highlight: false },
+                    { text: "   |    \\___/   |    ", highlight: true },
+                    { text: "    \\           /    ", highlight: false },
+                    { text: "     '.       .'     ", highlight: false },
+                    { text: "   === '-----' ===   ", highlight: true },
+                    { text: "   [SUBJECT_JANE]    ", highlight: false }
+                ],
+                [
+                    { text: " [SYS_CALIBRATION]  ", highlight: true },
+                    { text: "   ___   ___ ____   ", highlight: false },
+                    { text: "  / _ \\ / _ \\__  |  ", highlight: true },
+                    { text: " | | | | | | | / /  ", highlight: false },
+                    { text: " | |_| | |_| |/ /   ", highlight: false },
+                    { text: "  \\___(_)\\___//_/   ", highlight: true },
+                    { text: "  _____   ___       ", highlight: false },
+                    { text: " |___ /  / _ \\      ", highlight: true },
+                    { text: "   |_ \\ | (_) |     ", highlight: false },
+                    { text: "  ___) | > _ <      ", highlight: false },
+                    { text: " |____(_)_/ \\_\\     ", highlight: true },
+                    { text: " [NOMINAL_PARAMS]   ", highlight: false }
+                ],
+                [
+                    { text: "   +---------------+ ", highlight: false },
+                    { text: "   |               | ", highlight: false },
+                    { text: "   |  [X]     [X]  | ", highlight: true },
+                    { text: "   |       _       | ", highlight: false },
+                    { text: "   |   /_______\\   | ", highlight: true },
+                    { text: "   |               | ", highlight: false },
+                    { text: "   +---------------+ ", highlight: false },
+                    { text: "   UNIT: RBT-9000    ", highlight: true }
+                ],
+                [
+                    { text: "                     ", highlight: false },
+                    { text: "        .---.        ", highlight: false },
+                    { text: "      _/__~__\\_      ", highlight: true },
+                    { text: "    (___________)    ", highlight: false },
+                    { text: "      /   |   \\      ", highlight: true },
+                    { text: "     /    |    \\     ", highlight: false },
+                    { text: "    /   ABDUCT  \\    ", highlight: true },
+                    { text: "   /    IN PROG  \\   ", highlight: false },
+                    { text: "  [AERIAL_ANOMALY]   ", highlight: true }
+                ],
+                [
+                    { text: "      /  \\  [GIANTSLAYER]    ", highlight: true },
+                    { text: "     /    \\ ATK+15 CRIT 12%  ", highlight: false },
+                    { text: "    |      |LVL 4 REQUIREMENT", highlight: false },
+                    { text: "    |  ::  |STATUS: ATTUNED  ", highlight: true },
+                    { text: "    |======|PROPERTIES:      ", highlight: false },
+                    { text: "      |  |  - DOUBLE DMG VS  ", highlight: true },
+                    { text: "      |  |    ELDER TROLLS   ", highlight: true },
+                    { text: "     [____]                  ", highlight: false }
+                ],
+                [
+                    { text: "   =======================   ", highlight: false },
+                    { text: "       .---.        .---.     ", highlight: false },
+                    { text: "     //     \\ SYS //    \\    ", highlight: true },
+                    { text: "   () | [O] |=====| [O] | () ", highlight: true },
+                    { text: "      \\     /LNKD \\     /    ", highlight: false },
+                    { text: "       '---'       '---'     ", highlight: false },
+                    { text: "   =======================   ", highlight: false }
+                ],
+                [
+                    { text: " [LINK: SEC_04] -> PING: 1ms ", highlight: false },
+                    { text: "  |==[MAIN_BUS]======*=====| ", highlight: true },
+                    { text: "  |   +-> [FIREWALL] --[OK]  ", highlight: true },
+                    { text: "  |   +-> [DB_MIRROR]-[FAIL] ", highlight: true },
+                    { text: "  |=========*==============| ", highlight: true }
+                ],
+                [
+                    { text: " +--[CPU_CORE_01]----------+ ", highlight: false },
+                    { text: " | [|||||||||] 94% LOAD    | ", highlight: false },
+                    { text: " | TEMP: 42 C  VOLTS: 1.2V | ", highlight: true },
+                    { text: " | +-------+   +-------+   | ", highlight: false },
+                    { text: " | | ALU_0 |   | CACHE |   | ", highlight: false },
+                    { text: " | +-------+   +-------+   | ", highlight: true },
+                    { text: " | STATUS: THERMAL_NOMINAL | ", highlight: false },
+                    { text: " +-------------------------+ ", highlight: false }
+                ],
+                [
+                    { text: "          |                  ", highlight: false },
+                    { text: "         / \\    [TROLLSBANE] ", highlight: true },
+                    { text: "        | * |   ACID TOXIC   ", highlight: false },
+                    { text: "        | * |   ATK +9 SPD 2 ", highlight: false },
+                    { text: "        |===|   EFFECT:      ", highlight: false },
+                    { text: "       //   \\   STOPS REGEN  ", highlight: true },
+                    { text: "       \\___//   ON ELDERS    ", highlight: true }
+                ],
+                [
+                    { text: "      _,-'\"\"'-._      ", highlight: false },
+                    { text: "     / _  _  _  \\     ", highlight: false },
+                    { text: "    | (_)() (_) |     ", highlight: true },
+                    { text: "    |  _.-'-._  |     ", highlight: false },
+                    { text: "     \\ '-...-' /      ", highlight: true },
+                    { text: "      '-.....-'       ", highlight: false },
+                    { text: "   [AI_NEURAL_NET]    ", highlight: true },
+                    { text: "   EPOCH: 84,491      ", highlight: false },
+                    { text: "   SYNC: EVOLVING     ", highlight: true }
+                ],
+                [
+                    { text: "       .---.          ", highlight: false },
+                    { text: "      / ___ \\         ", highlight: false },
+                    { text: "     | |   | |        ", highlight: false },
+                    { text: "     | |___| |        ", highlight: true },
+                    { text: "     |_______|        ", highlight: true },
+                    { text: "     |  _ _  |        ", highlight: true },
+                    { text: "     | (_)_) |        ", highlight: true },
+                    { text: "     '-------'        ", highlight: false },
+                    { text: "  [FIREWALL_BRUTE]    ", highlight: true },
+                    { text: "  BYPASSING... 82%    ", highlight: false }
+                ],
+                [
+                    { text: "         ___          ", highlight: false },
+                    { text: "       /`   `\\        ", highlight: true },
+                    { text: "    ==|  (o)  |==     ", highlight: true },
+                    { text: "       \\___//          ", highlight: true },
+                    { text: "       /   \\          ", highlight: false },
+                    { text: "      / / \\ \\         ", highlight: false },
+                    { text: "     / /   \\ \\        ", highlight: false },
+                    { text: "   [MALWARE_DETECT]   ", highlight: true },
+                    { text: "   QUARANTINE_FAIL    ", highlight: false }
+                ],
+                [
+                    { text: "       /^^^\\          ", highlight: false },
+                    { text: "      /  _  \\         ", highlight: false },
+                    { text: "     /  / \\  \\        ", highlight: true },
+                    { text: "    /  | O |  \\       ", highlight: true },
+                    { text: "    '--\\ _ //--'       ", highlight: true },
+                    { text: "        \\ //           ", highlight: false },
+                    { text: "         V V           ", highlight: false },
+                    { text: "   [OVERSEER_AI]      ", highlight: true },
+                    { text: "   TRACKING: SEC_04   ", highlight: false }
+                ],
+                [
+                    { text: "    +---------+       ", highlight: false },
+                    { text: "    | [O] [O] |       ", highlight: true },
+                    { text: "    +---------+       ", highlight: false },
+                    { text: "    | [O] [O] |       ", highlight: true },
+                    { text: "    +---------+       ", highlight: false },
+                    { text: "    | [O] [O] |       ", highlight: true },
+                    { text: "    +---------+       ", highlight: false },
+                    { text: "  [MAINFRAME_DATA]    ", highlight: true },
+                    { text: "  ACCESS: GRANTED     ", highlight: false }
+                ],
+                [
+                    { text: "  root@sys:~#         ", highlight: false },
+                    { text: "  > ./exploit         ", highlight: true },
+                    { text: "  [+] CONNECTING...   ", highlight: false },
+                    { text: "  [+] PAYLOAD_DL      ", highlight: false },
+                    { text: "  [+] CRACKING...     ", highlight: true },
+                    { text: "  [+] UID=0 ROOT      ", highlight: true },
+                    { text: "  root@sys:~# _       ", highlight: false },
+                    { text: "   [SYSTEM_PWNED]     ", highlight: true }
+                ],
+                [
+                    { text: "       / \\ / \\        ", highlight: false },
+                    { text: "      |   |   |       ", highlight: true },
+                    { text: "     / \\ / \\ / \\      ", highlight: false },
+                    { text: "    |   |   |   |     ", highlight: true },
+                    { text: "     \\ / \\ / \\ /      ", highlight: false },
+                    { text: "      |   |   |       ", highlight: true },
+                    { text: "       \\ / \\ /        ", highlight: false },
+                    { text: "   [HIVE_MIND_SYNC]   ", highlight: true },
+                    { text: "   NODES: 402,194     ", highlight: false }
+                ]
+            ];
+            
+            const cellW = w / 4.0;
+            const cellH = h / 4.0;
+
+            for (let i = 0; i < 16; i++) {
+                const gridX = i % 4;
+                const gridY = Math.floor(i / 4);
+                
+                let currentY = gridY * cellH + 40;
+                const startX = gridX * cellW + 40;
+                
+                for (let line of blocks[i]) {
+                    ctx.fillStyle = line.highlight ? 'rgb(0, 255, 0)' : 'rgb(255, 0, 0)';
+                    ctx.fillText(line.text, startX, currentY);
+                    currentY += 28;
+                }
+            }
+        }, 2048, 2048);
+
+        // Raymarching Shader Material
+        const raymarchMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                uCameraPos: { value: new THREE.Vector3() },
+                uCameraMatrixWorld: { value: new THREE.Matrix4() },
+                uProjectionMatrixInverse: { value: new THREE.Matrix4() },
+                uTime: { value: 0 },
+                tCode: { value: tCode },
+                tList: { value: tList },
+                tASCII: { value: tASCII },
+                uColorPrimary: { value: new THREE.Color('#00ff40') },
+                uColorHighlight: { value: new THREE.Color('#38cdff') },
+                uGlow: { value: 1.0 },
+                uFlickerSpeed: { value: 1.0 },
+                uFloorReflectivity: { value: 0.4 },
+                uFloorRoughness: { value: 0.08 },
+                uFloorGridIntensity: { value: 0.04 },
+                uFloorGridScale: { value: 0.15 },
+                uFloorGridThickness: { value: 0.04 }
+            },
+            vertexShader: `
+                varying vec2 vUv;
+                void main() {
+                    vUv = uv;
+                    gl_Position = vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform vec3 uCameraPos;
+                uniform mat4 uCameraMatrixWorld;
+                uniform mat4 uProjectionMatrixInverse;
+                uniform float uTime;
+                
+                uniform sampler2D tCode;
+                uniform sampler2D tList;
+                uniform sampler2D tASCII;
+                
+                uniform vec3 uColorPrimary;
+                uniform vec3 uColorHighlight;
+                uniform float uGlow;
+                uniform float uFlickerSpeed;
+                uniform float uFloorReflectivity;
+                uniform float uFloorRoughness;
+                uniform float uFloorGridIntensity;
+                uniform float uFloorGridScale;
+                uniform float uFloorGridThickness;
+                
+                varying vec2 vUv;
+                
+                #define MAX_STEPS 100
+                #define MAX_DIST 220.0
+                #define SURF_DIST 0.005
+                #define PI 3.14159265359
+                
+                float hash12(vec2 p) {
+                    vec3 p3  = fract(vec3(p.xyx) * 0.1031);
+                    p3 += dot(p3, p3.yzx + 33.33);
+                    return fract((p3.x + p3.y) * p3.z);
+                }
+                
+                float getDist(vec3 p) {
+                    float spacing = 40.0;
+                    float w = 8.0;
+                    
+                    vec2 q = fract(p.xz / spacing + 0.5) * spacing - spacing * 0.5;
+                    vec2 d = abs(q) - (spacing * 0.5 - w * 0.5);
+                    float walls = length(max(d, 0.0)) + min(max(d.x, d.y), 0.0);
+                    
+                    float floorDist = p.y + 4.0;
+                    float ceilDist = 12.0 - p.y;
+                    
+                    return min(walls, min(floorDist, ceilDist));
+                }
+                
+                vec3 getNormal(vec3 p) {
+                    vec2 e = vec2(0.01, 0.0);
+                    return normalize(getDist(p) - vec3(
+                        getDist(p - e.xyy),
+                        getDist(p - e.yxy),
+                        getDist(p - e.yyx)
+                    ));
+                }
+                
+                vec3 getWallTextureContent(vec2 wallUv, float sideSeed) {
+                    vec2 scaledUv = wallUv * 0.25;
+                    
+                    vec2 panelId = floor(scaledUv);
+                    float hPanel = hash12(panelId + sideSeed);
+                    
+                    if (hPanel < 0.25) return vec3(0.0);
+                    
+                    float style = hash12(panelId * 1.618 + sideSeed);
+                    vec2 localUv = fract(scaledUv);
+                    
+                    localUv = (localUv - 0.04) / 0.92;
+                    if (localUv.x < 0.0 || localUv.x > 1.0 || localUv.y < 0.0 || localUv.y > 1.0) {
+                        return vec3(0.0);
+                    }
+                    
+                    vec4 texCol = vec4(0.0);
+                    
+                    if (style < 0.35) {
+                        float baseIdx = floor(hash12(panelId * 5.12 + sideSeed) * 4.0);
+                        float offset = mod(panelId.x * 3.0 + panelId.y * 5.0, 4.0);
+                        float listIdx = mod(baseIdx + offset, 4.0);
+                        
+                        vec2 gridPos = vec2(mod(listIdx, 2.0), 1.0 - floor(listIdx / 2.0));
+                        vec2 subUv = (localUv + gridPos) / 2.0;
+                        texCol = texture2D(tList, subUv);
+                    } else if (style < 0.7) {
+                        float baseIdx = floor(hash12(panelId * 6.34 + sideSeed) * 4.0);
+                        float offset = mod(panelId.x * 2.0 + panelId.y * 7.0, 4.0);
+                        float codeIdx = mod(baseIdx + offset, 4.0);
+                        
+                        vec2 gridPos = vec2(mod(codeIdx, 2.0), 1.0 - floor(codeIdx / 2.0));
+                        vec2 subUv = (localUv + gridPos) / 2.0;
+                        texCol = texture2D(tCode, subUv);
+                    } else {
+                        float baseIdx = floor(hash12(panelId * 7.77 + sideSeed) * 16.0);
+                        float offset = mod(panelId.x * 7.0 + panelId.y * 11.0, 16.0);
+                        float artIdx = mod(baseIdx + offset, 16.0);
+                        
+                        vec2 gridPos = vec2(mod(artIdx, 4.0), 3.0 - floor(artIdx / 4.0));
+                        vec2 subUv = (localUv + gridPos) / 4.0;
+                        texCol = texture2D(tASCII, subUv);
+                    }
+                    
+                    vec3 col = uColorPrimary * texCol.r + uColorHighlight * texCol.g;
+                    
+                    float flicker = mix(0.92, 1.0, hash12(vec2(uTime * 18.0 * uFlickerSpeed, sideSeed)));
+                    float brightness = mix(0.45, 1.0, hash12(panelId + 99.0));
+                    
+                    return col * flicker * brightness;
+                }
+
+                vec3 calcWallColor(vec3 p, vec3 n) {
+                    vec2 wallUv;
+                    float sideSeed;
+                    
+                    if (abs(n.x) > 0.5) {
+                        float u = (n.x < 0.0) ? p.z : -p.z;
+                        wallUv = vec2(u, p.y);
+                        sideSeed = sign(n.x) * 1.5 + floor(p.x * 0.1);
+                    } else {
+                        float u = (n.z > 0.0) ? p.x : -p.x;
+                        wallUv = vec2(u, p.y);
+                        sideSeed = sign(n.z) * 2.5 + floor(p.z * 0.1);
+                    }
+                    
+                    vec3 col = getWallTextureContent(wallUv, sideSeed);
+                    col *= smoothstep(-4.0, -3.5, p.y) * smoothstep(12.0, 10.5, p.y);
+                    col += col * uGlow;
+                    return col;
+                }
+                
+                void main() {
+                    vec2 ndc = vUv * 2.0 - 1.0;
+                    vec4 clipPos = vec4(ndc, -1.0, 1.0);
+                    vec4 viewPos = uProjectionMatrixInverse * clipPos;
+                    viewPos /= viewPos.w;
+                    viewPos.xyz = normalize(viewPos.xyz);
+                    vec4 worldDir = uCameraMatrixWorld * vec4(viewPos.xyz, 0.0);
+                    vec3 rd = normalize(worldDir.xyz);
+                    vec3 ro = uCameraPos;
+                    
+                    float d = 0.0;
+                    bool hit = false;
+                    for(int i = 0; i < MAX_STEPS; i++) {
+                        float dS = getDist(ro + rd * d);
+                        if(dS < SURF_DIST) {
+                            hit = true;
+                            break;
+                        }
+                        if(d > MAX_DIST) break;
+                        d += dS;
+                    }
+                    
+                    vec3 col = vec3(0.0);
+                    
+                    if (hit && d < MAX_DIST) {
+                        vec3 p = ro + rd * d;
+                        vec3 n = getNormal(p);
+                        
+                        if (abs(n.y) < 0.5) {
+                            col = calcWallColor(p, n);
+                        } else if (n.y > 0.5) {
+                            float grid = smoothstep(uFloorGridThickness, 0.0, abs(fract(p.x * uFloorGridScale) - 0.5)) +
+                                         smoothstep(uFloorGridThickness, 0.0, abs(fract(p.z * uFloorGridScale) - 0.5));
+                            vec3 floorBase = uColorPrimary * grid * uFloorGridIntensity;
+                            
+                            vec3 ref_rd = reflect(rd, n);
+                            vec3 ref_ro = p + n * 0.1;
+                            float ref_d = 0.0;
+                            bool ref_hit = false;
+                            
+                            for(int j = 0; j < 50; j++) {
+                                float dS = getDist(ref_ro + ref_rd * ref_d);
+                                if(dS < SURF_DIST) {
+                                    ref_hit = true;
+                                    break;
+                                }
+                                if(ref_d > 120.0) break;
+                                ref_d += dS;
+                            }
+                            
+                            vec3 ref_col = vec3(0.0);
+                            if(ref_hit) {
+                                vec3 ref_p = ref_ro + ref_rd * ref_d;
+                                vec3 ref_n = getNormal(ref_p);
+                                
+                                if(abs(ref_n.y) < 0.5) {
+                                    ref_col = calcWallColor(ref_p, ref_n);
+                                    ref_col *= exp(-ref_d * uFloorRoughness);
+                                }
+                            }
+                            
+                            float fresnel = mix(0.15, 1.0, pow(1.0 - max(dot(n, -rd), 0.0), 3.0));
+                            col = floorBase + ref_col * uFloorReflectivity * fresnel;
+                        }
+                    }
+                    
+                    vec2 uvCenter = vUv - 0.5;
+                    col *= smoothstep(0.8, 0.25, length(uvCenter));
+                    
+                    gl_FragColor = vec4(col, 1.0);
+                }
+            `
+        });
+
+        // 全屏四边形
+        const geometry = new THREE.PlaneGeometry(2, 2);
+        const quad = new THREE.Mesh(geometry, raymarchMaterial);
+        orthoScene.add(quad);
+
+        // GUI 配置
+        const config = {
+            speed: 0.8,
+            primaryColor: '#00ff40',
+            highlightColor: '#38cdff',
+            glowIntensity: 1.0,
+            flickerSpeed: 1.0,
+            floorReflectivity: 0.4,
+            floorRoughness: 0.08,
+            floorGridIntensity: 0.04,
+            floorGridScale: 0.15,
+            floorGridThickness: 0.04
+        };
+
+        // GUI
+        const gui = new GUI({ title: "赛博走廊控制" });
+        gui.domElement.style.top = '50px';
+        gui.close();
+        
+        gui.add(config, 'speed', 0.0, 2.0, 0.1).name("移动速度");
+        gui.addColor(config, 'primaryColor').name("主色调").onChange(val => {
+            raymarchMaterial.uniforms.uColorPrimary.value.set(val);
+        });
+        gui.addColor(config, 'highlightColor').name("高亮色").onChange(val => {
+            raymarchMaterial.uniforms.uColorHighlight.value.set(val);
+        });
+        gui.add(config, 'glowIntensity', 0.0, 1.0, 0.05).name("发光强度").onChange(val => {
+            raymarchMaterial.uniforms.uGlow.value = val;
+        });
+        gui.add(config, 'flickerSpeed', 0.0, 2.0, 0.1).name("闪烁速度").onChange(val => {
+            raymarchMaterial.uniforms.uFlickerSpeed.value = val;
+        });
+        gui.add(config, 'floorReflectivity', 0.0, 1.0, 0.05).name("地板反射").onChange(val => {
+            raymarchMaterial.uniforms.uFloorReflectivity.value = val;
+        });
+        gui.add(config, 'floorRoughness', 0.0, 0.3, 0.01).name("地板粗糙度").onChange(val => {
+            raymarchMaterial.uniforms.uFloorRoughness.value = val;
+        });
+        gui.add(config, 'floorGridIntensity', 0.0, 0.5, 0.01).name("网格亮度").onChange(val => {
+            raymarchMaterial.uniforms.uFloorGridIntensity.value = val;
+        });
+        gui.add(config, 'floorGridScale', 0.05, 0.5, 0.01).name("网格缩放").onChange(val => {
+            raymarchMaterial.uniforms.uFloorGridScale.value = val;
+        });
+        gui.add(config, 'floorGridThickness', 0.01, 0.2, 0.01).name("网格粗细").onChange(val => {
+            raymarchMaterial.uniforms.uFloorGridThickness.value = val;
+        });
+
+        raymarchMaterial.uniforms.uColorPrimary.value.set(config.primaryColor);
+        raymarchMaterial.uniforms.uColorHighlight.value.set(config.highlightColor);
+
+        // 窗口调整
+        window.addEventListener('resize', () => {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            
+            renderer.setSize(width, height);
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+        });
+
+        // 路径生成
+        const gridSpacing = 40.0;
+        const gridPath = [[0, 0]];
+        let currentDir = [0, 1];
+
+        function pathHash(x) {
+            let t = x * 127.1;
+            return Math.sin(t) * 43758.5453123 % 1;
+        }
+
+        function getGridNode(index) {
+            while (gridPath.length <= index + 2) {
+                const prevNode = gridPath[gridPath.length - 1];
+                const lastDir = currentDir;
+                
+                const r = Math.abs(pathHash(gridPath.length));
+                let nextDir = [...lastDir];
+                
+                if (r < 0.15) {
+                    nextDir = [-lastDir[1], lastDir[0]];
+                } else if (r < 0.30) {
+                    nextDir = [lastDir[1], -lastDir[0]];
+                }
+                
+                const nextNode = [prevNode[0] + nextDir[0], prevNode[1] + nextDir[1]];
+                gridPath.push(nextNode);
+                currentDir = nextDir;
+            }
+            return gridPath[index];
+        }
+
+        // 预分配向量
+        const posA = new THREE.Vector3();
+        const posB = new THREE.Vector3();
+        const posC = new THREE.Vector3();
+        const posPrev = new THREE.Vector3();
+        const dir1 = new THREE.Vector3();
+        const dir2 = new THREE.Vector3();
+        const dir0 = new THREE.Vector3();
+        const camPos = new THREE.Vector3();
+        const lookDir = new THREE.Vector3();
+        const lookTarget = new THREE.Vector3();
+        const pStart = new THREE.Vector3();
+        const pEnd = new THREE.Vector3();
+
+        function getSmoothAngle(directionA, directionB, u) {
+            const a1 = Math.atan2(directionA.x, directionA.z);
+            const a2 = Math.atan2(directionB.x, directionB.z);
+            
+            let diff = a2 - a1;
+            while(diff < -Math.PI) diff += Math.PI * 2;
+            while(diff > Math.PI) diff -= Math.PI * 2;
+            
+            const ease = u * u * u * (u * (u * 6.0 - 15.0) + 10.0);
+            return a1 + diff * ease;
+        }
+
+        // 动画循环
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            const elapsedTime = clock.getElapsedTime();
+            const time = elapsedTime * config.speed * 0.25;
+
+            const idx = Math.floor(time);
+            const f = time - idx;
+
+            const pA = getGridNode(idx);
+            const pB = getGridNode(idx + 1);
+            const pC = getGridNode(idx + 2);
+
+            posA.set(20.0 + pA[0] * gridSpacing, 0, 20.0 + pA[1] * gridSpacing);
+            posB.set(20.0 + pB[0] * gridSpacing, 0, 20.0 + pB[1] * gridSpacing);
+            posC.set(20.0 + pC[0] * gridSpacing, 0, 20.0 + pC[1] * gridSpacing);
+
+            const pPrev = idx > 0 ? getGridNode(idx - 1) : null;
+            if (pPrev) {
+                posPrev.set(20.0 + pPrev[0] * gridSpacing, 0, 20.0 + pPrev[1] * gridSpacing);
+                dir0.subVectors(posA, posPrev).normalize();
+            } else {
+                dir0.subVectors(posB, posA).normalize();
+            }
+
+            dir1.subVectors(posB, posA).normalize();
+            dir2.subVectors(posC, posB).normalize();
+
+            const turnSize = 0.30;
+
+            if (f > (1.0 - turnSize)) {
+                const u = (f - (1.0 - turnSize)) / (turnSize * 2.0);
+                
+                pStart.copy(posB).addScaledVector(dir1, -turnSize * gridSpacing);
+                pEnd.copy(posB).addScaledVector(dir2, turnSize * gridSpacing);
+
+                const oneMinusU = 1.0 - u;
+                camPos.copy(pStart).multiplyScalar(oneMinusU * oneMinusU)
+                      .addScaledVector(posB, 2.0 * oneMinusU * u)
+                      .addScaledVector(pEnd, u * u);
+
+                const angle = getSmoothAngle(dir1, dir2, u);
+                lookDir.set(Math.sin(angle), 0, Math.cos(angle)).normalize();
+
+            } else if (f < turnSize) {
+                const u = (f + turnSize) / (turnSize * 2.0);
+                
+                pStart.copy(posA).addScaledVector(dir0, -turnSize * gridSpacing);
+                pEnd.copy(posA).addScaledVector(dir1, turnSize * gridSpacing);
+
+                const oneMinusU = 1.0 - u;
+                camPos.copy(pStart).multiplyScalar(oneMinusU * oneMinusU)
+                      .addScaledVector(posA, 2.0 * oneMinusU * u)
+                      .addScaledVector(pEnd, u * u);
+
+                const angle = getSmoothAngle(dir0, dir1, u);
+                lookDir.set(Math.sin(angle), 0, Math.cos(angle)).normalize();
+
+            } else {
+                const tStraight = (f - turnSize) / (1.0 - turnSize * 2.0);
+                
+                pStart.copy(posA).addScaledVector(dir1, turnSize * gridSpacing);
+                pEnd.copy(posB).addScaledVector(dir1, -turnSize * gridSpacing);
+
+                camPos.lerpVectors(pStart, pEnd, tStraight);
+                lookDir.copy(dir1);
+            }
+            
+            camPos.y = Math.sin(time * Math.PI * 4.0) * 0.15;
+
+            lookTarget.addVectors(camPos, lookDir.multiplyScalar(15.0));
+            camera.position.copy(camPos);
+            camera.lookAt(lookTarget);
+            
+            camera.updateMatrixWorld();
+            camera.updateProjectionMatrix();
+            
+            raymarchMaterial.uniforms.uTime.value = elapsedTime;
+            raymarchMaterial.uniforms.uCameraPos.value.copy(camera.position);
+            raymarchMaterial.uniforms.uCameraMatrixWorld.value.copy(camera.matrixWorld);
+            raymarchMaterial.uniforms.uProjectionMatrixInverse.value.copy(camera.projectionMatrixInverse);
+            
+            renderer.render(orthoScene, orthoCamera);
+        }
+
+        animate();
+
+        // 暴露到 window 供截图使用
+        window.renderer = renderer;
+        window.orthoCamera = orthoCamera;
+        window.orthoScene = orthoScene;
+    </script>
+
+    <!-- 截图支持脚本 -->
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.orthoScene && window.orthoCamera && window.renderer) {
+                        window.renderer.render(window.orthoScene, window.orthoCamera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="3D场景中的测量工具，支持距离和角度测量">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 3D测量工具</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+    <style>
+        #measureUI {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            z-index: 100;
+        }
+        #measureUI h3 {
+            margin: 0 0 10px 0;
+            color: #00ff00;
+        }
+        #measureUI .mode {
+            margin: 5px 0;
+            padding: 5px 10px;
+            background: #333;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        #measureUI .mode:hover {
+            background: #444;
+        }
+        #measureUI .mode.active {
+            background: #00ff00;
+            color: #000;
+        }
+        #measureUI .info {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #aaa;
+        }
+        #measureUI .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: #222;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        #measureUI .result span {
+            color: #00ff00;
+            font-weight: bold;
+        }
+        #instructions {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #fff;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 14px;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+    
+    <div id="measureUI">
+        <h3>测量工具</h3>
+        <div class="mode active" data-mode="distance">📏 距离测量</div>
+        <div class="mode" data-mode="angle">📐 角度测量</div>
+        <div class="mode" data-mode="clear">🗑️ 清除所有</div>
+        <div class="info">
+            点击场景放置测量点<br>
+            右键拖拽旋转视角
+        </div>
+        <div class="result" id="result">
+            等待测量...
+        </div>
+    </div>
+    
+    <div id="instructions">
+        左键点击放置点 | 右键拖拽旋转 | 滚轮缩放
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        const container = document.getElementById('threeContainer');
+        
+        // 场景设置
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x222222);
+        
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(15, 15, 15);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        container.appendChild(renderer.domElement);
+        
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        
+        // 灯光
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+        
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(10, 20, 10);
+        directionalLight.castShadow = true;
+        scene.add(directionalLight);
+        
+        // 网格地板
+        const gridHelper = new THREE.GridHelper(30, 30, 0x444444, 0x333333);
+        scene.add(gridHelper);
+        
+        // 参考物体
+        const boxGeometry = new THREE.BoxGeometry(4, 4, 4);
+        const boxMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0x0088ff,
+            roughness: 0.3,
+            metalness: 0.7
+        });
+        const box = new THREE.Mesh(boxGeometry, boxMaterial);
+        box.position.set(0, 2, 0);
+        box.castShadow = true;
+        box.receiveShadow = true;
+        scene.add(box);
+        
+        const sphereGeometry = new THREE.SphereGeometry(2, 32, 32);
+        const sphereMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0xff8800,
+            roughness: 0.3,
+            metalness: 0.5
+        });
+        const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        sphere.position.set(6, 2, 3);
+        sphere.castShadow = true;
+        sphere.receiveShadow = true;
+        scene.add(sphere);
+        
+        const cylinderGeometry = new THREE.CylinderGeometry(1.5, 1.5, 5, 32);
+        const cylinderMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0x00ff88,
+            roughness: 0.4,
+            metalness: 0.6
+        });
+        const cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterial);
+        cylinder.position.set(-5, 2.5, 4);
+        cylinder.castShadow = true;
+        cylinder.receiveShadow = true;
+        scene.add(cylinder);
+        
+        // 测量状态
+        let measureMode = 'distance';
+        let measurePoints = [];
+        let measureLines = [];
+        let measureLabels = [];
+        
+        // 测量点材质
+        const pointGeometry = new THREE.SphereGeometry(0.15, 16, 16);
+        const pointMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+        
+        // 测量线材质
+        const lineMaterial = new THREE.LineBasicMaterial({ 
+            color: 0xffff00,
+            linewidth: 2
+        });
+        
+        // 角度弧材质
+        const arcMaterial = new THREE.LineBasicMaterial({ 
+            color: 0x00ffff,
+            linewidth: 2
+        });
+        
+        // 创建文字标签
+        function createTextLabel(text, position) {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = 256;
+            canvas.height = 64;
+            
+            context.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            
+            context.font = 'bold 24px Arial';
+            context.fillStyle = '#00ff00';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.fillText(text, canvas.width / 2, canvas.height / 2);
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
+            const sprite = new THREE.Sprite(spriteMaterial);
+            sprite.position.copy(position);
+            sprite.position.y += 0.5;
+            sprite.scale.set(2, 0.5, 1);
+            
+            scene.add(sprite);
+            return sprite;
+        }
+        
+        // 创建测量点
+        function createMeasurePoint(position) {
+            const point = new THREE.Mesh(pointGeometry, pointMaterial);
+            point.position.copy(position);
+            scene.add(point);
+            return point;
+        }
+        
+        // 创建测量线
+        function createMeasureLine(start, end) {
+            const points = [start, end];
+            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            const line = new THREE.Line(geometry, lineMaterial);
+            scene.add(line);
+            return line;
+        }
+        
+        // 计算距离
+        function calculateDistance(p1, p2) {
+            return p1.distanceTo(p2).toFixed(2);
+        }
+        
+        // 计算角度
+        function calculateAngle(p1, p2, p3) {
+            const v1 = new THREE.Vector3().subVectors(p1, p2);
+            const v2 = new THREE.Vector3().subVectors(p3, p2);
+            const angle = v1.angleTo(v2);
+            return (angle * 180 / Math.PI).toFixed(1);
+        }
+        
+        // 更新结果显示
+        function updateResult(text) {
+            document.getElementById('result').innerHTML = text;
+        }
+        
+        // 清除测量
+        function clearMeasurements() {
+            measurePoints.forEach(p => scene.remove(p));
+            measureLines.forEach(l => scene.remove(l));
+            measureLabels.forEach(l => scene.remove(l));
+            measurePoints = [];
+            measureLines = [];
+            measureLabels = [];
+            updateResult('等待测量...');
+        }
+        
+        // 鼠标点击处理
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        
+        function onMouseClick(event) {
+            // 忽略UI点击
+            if (event.target.closest('#measureUI')) return;
+            
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            
+            raycaster.setFromCamera(mouse, camera);
+            
+            // 检测与物体的交点
+            const objects = [box, sphere, cylinder];
+            const intersects = raycaster.intersectObjects(objects);
+            
+            let point;
+            if (intersects.length > 0) {
+                point = intersects[0].point;
+            } else {
+                // 检测与地面的交点
+                const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+                const target = new THREE.Vector3();
+                raycaster.ray.intersectPlane(plane, target);
+                if (target) {
+                    point = target;
+                }
+            }
+            
+            if (point) {
+                handleMeasure(point);
+            }
+        }
+        
+        // 处理测量
+        function handleMeasure(point) {
+            if (measureMode === 'distance') {
+                // 距离测量
+                measurePoints.push(createMeasurePoint(point));
+                
+                if (measurePoints.length >= 2) {
+                    const p1 = measurePoints[measurePoints.length - 2].position;
+                    const p2 = measurePoints[measurePoints.length - 1].position;
+                    
+                    measureLines.push(createMeasureLine(p1, p2));
+                    
+                    const distance = calculateDistance(p1, p2);
+                    const midPoint = new THREE.Vector3().addVectors(p1, p2).multiplyScalar(0.5);
+                    measureLabels.push(createTextLabel(distance + ' m', midPoint));
+                    
+                    updateResult(`距离: <span>${distance} m</span>`);
+                }
+            } else if (measureMode === 'angle') {
+                // 角度测量
+                if (measurePoints.length >= 3) {
+                    clearMeasurements();
+                }
+                
+                measurePoints.push(createMeasurePoint(point));
+                
+                if (measurePoints.length === 2) {
+                    const p1 = measurePoints[0].position;
+                    const p2 = measurePoints[1].position;
+                    measureLines.push(createMeasureLine(p1, p2));
+                    updateResult('请点击第三个点');
+                } else if (measurePoints.length === 3) {
+                    const p1 = measurePoints[0].position;
+                    const p2 = measurePoints[1].position;
+                    const p3 = measurePoints[2].position;
+                    
+                    measureLines.push(createMeasureLine(p2, p3));
+                    
+                    const angle = calculateAngle(p1, p2, p3);
+                    measureLabels.push(createTextLabel(angle + '°', p2.clone().add(new THREE.Vector3(0, 1, 0))));
+                    
+                    updateResult(`角度: <span>${angle}°</span>`);
+                }
+            }
+        }
+        
+        // UI事件
+        document.querySelectorAll('.mode').forEach(mode => {
+            mode.addEventListener('click', () => {
+                const modeType = mode.dataset.mode;
+                
+                if (modeType === 'clear') {
+                    clearMeasurements();
+                    return;
+                }
+                
+                measureMode = modeType;
+                document.querySelectorAll('.mode').forEach(m => m.classList.remove('active'));
+                mode.classList.add('active');
+                
+                clearMeasurements();
+                
+                if (modeType === 'distance') {
+                    updateResult('请点击两个点测量距离');
+                } else if (modeType === 'angle') {
+                    updateResult('请点击三个点测量角度');
+                }
+            });
+        });
+        
+        // 事件监听
+        window.addEventListener('click', onMouseClick);
+        
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // 暴露到 window 供截图使用
+        window.renderer = renderer;
+        window.camera = camera;
+        window.scene = scene;
+        
+        // 动画循环
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        
+        animate();
+        
+        // 初始提示
+        updateResult('请点击两个点测量距离');
+    </script>
+
+    <!-- 截图支持脚本 -->
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

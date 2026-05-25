@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="3D矩阵变换可视化，展示平移、旋转、缩放等变换效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 3D矩阵变换可视化</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+    <style>
+        #matrixUI {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            z-index: 100;
+            max-width: 320px;
+        }
+        #matrixUI h3 {
+            margin: 0 0 10px 0;
+            color: #00ff00;
+            font-size: 16px;
+        }
+        #matrixUI .matrix-display {
+            background: #1a1a1a;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin: 10px 0;
+            line-height: 1.6;
+        }
+        #matrixUI .matrix-row {
+            display: flex;
+            justify-content: space-around;
+            color: #00ffff;
+        }
+        #matrixUI .controls {
+            margin-top: 15px;
+        }
+        #matrixUI .control-group {
+            margin: 10px 0;
+            padding: 10px;
+            background: #2a2a2a;
+            border-radius: 4px;
+        }
+        #matrixUI .control-group h4 {
+            margin: 0 0 8px 0;
+            color: #ffff00;
+            font-size: 13px;
+        }
+        #matrixUI .control-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 5px 0;
+            font-size: 11px;
+        }
+        #matrixUI input[type="range"] {
+            width: 120px;
+        }
+        #matrixUI .value {
+            color: #00ff00;
+            min-width: 50px;
+            text-align: right;
+        }
+        #matrixUI .btn {
+            background: #333;
+            border: 1px solid #555;
+            color: #fff;
+            padding: 5px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin: 5px 5px 0 0;
+            transition: all 0.3s;
+        }
+        #matrixUI .btn:hover {
+            background: #444;
+            border-color: #00ff00;
+        }
+        #matrixUI .btn.active {
+            background: #00ff00;
+            color: #000;
+        }
+        #matrixUI .info {
+            margin-top: 10px;
+            font-size: 11px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+    
+    <div id="matrixUI">
+        <h3>3D矩阵变换可视化</h3>
+        
+        <div class="matrix-display">
+            <div style="color: #888; margin-bottom: 5px;">变换矩阵 (4x4):</div>
+            <div class="matrix-row" id="row0">[1.00, 0.00, 0.00, 0.00]</div>
+            <div class="matrix-row" id="row1">[0.00, 1.00, 0.00, 0.00]</div>
+            <div class="matrix-row" id="row2">[0.00, 0.00, 1.00, 0.00]</div>
+            <div class="matrix-row" id="row3">[0.00, 0.00, 0.00, 1.00]</div>
+        </div>
+        
+        <div class="controls">
+            <div class="control-group">
+                <h4>平移 (Translation)</h4>
+                <div class="control-row">
+                    <span>X:</span>
+                    <input type="range" id="transX" min="-5" max="5" step="0.1" value="0">
+                    <span class="value" id="valTransX">0.0</span>
+                </div>
+                <div class="control-row">
+                    <span>Y:</span>
+                    <input type="range" id="transY" min="-5" max="5" step="0.1" value="0">
+                    <span class="value" id="valTransY">0.0</span>
+                </div>
+                <div class="control-row">
+                    <span>Z:</span>
+                    <input type="range" id="transZ" min="-5" max="5" step="0.1" value="0">
+                    <span class="value" id="valTransZ">0.0</span>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <h4>旋转 (Rotation) - 角度</h4>
+                <div class="control-row">
+                    <span>X轴:</span>
+                    <input type="range" id="rotX" min="-180" max="180" step="1" value="0">
+                    <span class="value" id="valRotX">0°</span>
+                </div>
+                <div class="control-row">
+                    <span>Y轴:</span>
+                    <input type="range" id="rotY" min="-180" max="180" step="1" value="0">
+                    <span class="value" id="valRotY">0°</span>
+                </div>
+                <div class="control-row">
+                    <span>Z轴:</span>
+                    <input type="range" id="rotZ" min="-180" max="180" step="1" value="0">
+                    <span class="value" id="valRotZ">0°</span>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <h4>缩放 (Scale)</h4>
+                <div class="control-row">
+                    <span>X:</span>
+                    <input type="range" id="scaleX" min="0.1" max="3" step="0.1" value="1">
+                    <span class="value" id="valScaleX">1.0</span>
+                </div>
+                <div class="control-row">
+                    <span>Y:</span>
+                    <input type="range" id="scaleY" min="0.1" max="3" step="0.1" value="1">
+                    <span class="value" id="valScaleY">1.0</span>
+                </div>
+                <div class="control-row">
+                    <span>Z:</span>
+                    <input type="range" id="scaleZ" min="0.1" max="3" step="0.1" value="1">
+                    <span class="value" id="valScaleZ">1.0</span>
+                </div>
+            </div>
+            
+            <button class="btn" id="btnReset">重置</button>
+            <button class="btn" id="btnAnimate">自动动画</button>
+        </div>
+        
+        <div class="info">
+            左键旋转 | 右键平移 | 滚轮缩放
+        </div>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        const container = document.getElementById('threeContainer');
+        
+        // 场景设置
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a1a1a);
+        
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(8, 6, 8);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        container.appendChild(renderer.domElement);
+        
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        
+        // 灯光
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        scene.add(ambientLight);
+        
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(5, 10, 5);
+        directionalLight.castShadow = true;
+        scene.add(directionalLight);
+        
+        // 坐标轴
+        const axesHelper = new THREE.AxesHelper(3);
+        scene.add(axesHelper);
+        
+        // 网格
+        const gridHelper = new THREE.GridHelper(20, 20, 0x444444, 0x222222);
+        scene.add(gridHelper);
+        
+        // 原始物体（半透明）
+        const originalGeometry = new THREE.BoxGeometry(2, 2, 2);
+        const originalMaterial = new THREE.MeshBasicMaterial({
+            color: 0x444444,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.3
+        });
+        const originalMesh = new THREE.Mesh(originalGeometry, originalMaterial);
+        scene.add(originalMesh);
+        
+        // 变换后的物体
+        const transformGeometry = new THREE.BoxGeometry(2, 2, 2);
+        const transformMaterial = new THREE.MeshStandardMaterial({
+            color: 0x00ff00,
+            roughness: 0.3,
+            metalness: 0.7
+        });
+        const transformMesh = new THREE.Mesh(transformGeometry, transformMaterial);
+        transformMesh.castShadow = true;
+        transformMesh.receiveShadow = true;
+        scene.add(transformMesh);
+        
+        // 添加顶点标记
+        const sphereGeo = new THREE.SphereGeometry(0.1, 16, 16);
+        const sphereMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+        const vertexMarkers = [];
+        
+        for (let i = 0; i < 8; i++) {
+            const marker = new THREE.Mesh(sphereGeo, sphereMat);
+            scene.add(marker);
+            vertexMarkers.push(marker);
+        }
+        
+        // 变换参数
+        const params = {
+            translation: { x: 0, y: 0, z: 0 },
+            rotation: { x: 0, y: 0, z: 0 },
+            scale: { x: 1, y: 1, z: 1 }
+        };
+        
+        // 动画状态
+        let isAnimating = false;
+        let animationTime = 0;
+        
+        // 更新变换
+        function updateTransform() {
+            const matrix = new THREE.Matrix4();
+            
+            // 重置为单位矩阵
+            matrix.identity();
+            
+            // 应用平移
+            const translationMatrix = new THREE.Matrix4().makeTranslation(
+                params.translation.x,
+                params.translation.y,
+                params.translation.z
+            );
+            
+            // 应用旋转
+            const rotationMatrix = new THREE.Matrix4().makeRotationFromEuler(
+                new THREE.Euler(
+                    THREE.MathUtils.degToRad(params.rotation.x),
+                    THREE.MathUtils.degToRad(params.rotation.y),
+                    THREE.MathUtils.degToRad(params.rotation.z)
+                )
+            );
+            
+            // 应用缩放
+            const scaleMatrix = new THREE.Matrix4().makeScale(
+                params.scale.x,
+                params.scale.y,
+                params.scale.z
+            );
+            
+            // 组合变换: T * R * S
+            matrix.multiply(translationMatrix);
+            matrix.multiply(rotationMatrix);
+            matrix.multiply(scaleMatrix);
+            
+            // 应用到物体
+            transformMesh.matrix.copy(matrix);
+            transformMesh.matrixAutoUpdate = false;
+            
+            // 更新矩阵显示
+            updateMatrixDisplay(matrix);
+            
+            // 更新顶点标记
+            updateVertexMarkers(matrix);
+        }
+        
+        // 更新矩阵显示
+        function updateMatrixDisplay(matrix) {
+            const elements = matrix.elements;
+            for (let i = 0; i < 4; i++) {
+                const row = [];
+                for (let j = 0; j < 4; j++) {
+                    row.push(elements[j * 4 + i].toFixed(2));
+                }
+                document.getElementById(`row${i}`).textContent = `[${row.join(', ')}]`;
+            }
+        }
+        
+        // 更新顶点标记
+        function updateVertexMarkers(matrix) {
+            const vertices = [
+                new THREE.Vector3(-1, -1, -1),
+                new THREE.Vector3(1, -1, -1),
+                new THREE.Vector3(1, 1, -1),
+                new THREE.Vector3(-1, 1, -1),
+                new THREE.Vector3(-1, -1, 1),
+                new THREE.Vector3(1, -1, 1),
+                new THREE.Vector3(1, 1, 1),
+                new THREE.Vector3(-1, 1, 1)
+            ];
+            
+            vertices.forEach((v, i) => {
+                v.applyMatrix4(matrix);
+                vertexMarkers[i].position.copy(v);
+            });
+        }
+        
+        // UI事件
+        function setupSlider(id, param, key, displayId, suffix = '') {
+            const slider = document.getElementById(id);
+            const display = document.getElementById(displayId);
+            
+            slider.addEventListener('input', () => {
+                const value = parseFloat(slider.value);
+                params[param][key] = value;
+                display.textContent = value.toFixed(1) + suffix;
+                updateTransform();
+            });
+        }
+        
+        setupSlider('transX', 'translation', 'x', 'valTransX');
+        setupSlider('transY', 'translation', 'y', 'valTransY');
+        setupSlider('transZ', 'translation', 'z', 'valTransZ');
+        setupSlider('rotX', 'rotation', 'x', 'valRotX', '°');
+        setupSlider('rotY', 'rotation', 'y', 'valRotY', '°');
+        setupSlider('rotZ', 'rotation', 'z', 'valRotZ', '°');
+        setupSlider('scaleX', 'scale', 'x', 'valScaleX');
+        setupSlider('scaleY', 'scale', 'y', 'valScaleY');
+        setupSlider('scaleZ', 'scale', 'z', 'valScaleZ');
+        
+        // 重置按钮
+        document.getElementById('btnReset').addEventListener('click', () => {
+            params.translation = { x: 0, y: 0, z: 0 };
+            params.rotation = { x: 0, y: 0, z: 0 };
+            params.scale = { x: 1, y: 1, z: 1 };
+            
+            document.getElementById('transX').value = 0;
+            document.getElementById('transY').value = 0;
+            document.getElementById('transZ').value = 0;
+            document.getElementById('rotX').value = 0;
+            document.getElementById('rotY').value = 0;
+            document.getElementById('rotZ').value = 0;
+            document.getElementById('scaleX').value = 1;
+            document.getElementById('scaleY').value = 1;
+            document.getElementById('scaleZ').value = 1;
+            
+            document.getElementById('valTransX').textContent = '0.0';
+            document.getElementById('valTransY').textContent = '0.0';
+            document.getElementById('valTransZ').textContent = '0.0';
+            document.getElementById('valRotX').textContent = '0°';
+            document.getElementById('valRotY').textContent = '0°';
+            document.getElementById('valRotZ').textContent = '0°';
+            document.getElementById('valScaleX').textContent = '1.0';
+            document.getElementById('valScaleY').textContent = '1.0';
+            document.getElementById('valScaleZ').textContent = '1.0';
+            
+            isAnimating = false;
+            document.getElementById('btnAnimate').classList.remove('active');
+            
+            updateTransform();
+        });
+        
+        // 动画按钮
+        document.getElementById('btnAnimate').addEventListener('click', () => {
+            isAnimating = !isAnimating;
+            document.getElementById('btnAnimate').classList.toggle('active');
+        });
+        
+        // 窗口调整
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // 暴露到 window 供截图使用
+        window.renderer = renderer;
+        window.camera = camera;
+        window.scene = scene;
+        
+        // 动画循环
+        const clock = new THREE.Clock();
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            if (isAnimating) {
+                animationTime += clock.getDelta();
+                
+                params.rotation.y = Math.sin(animationTime) * 45;
+                params.rotation.x = Math.cos(animationTime * 0.7) * 30;
+                
+                document.getElementById('rotX').value = params.rotation.x;
+                document.getElementById('rotY').value = params.rotation.y;
+                document.getElementById('valRotX').textContent = params.rotation.x.toFixed(0) + '°';
+                document.getElementById('valRotY').textContent = params.rotation.y.toFixed(0) + '°';
+                
+                updateTransform();
+            }
+            
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        
+        animate();
+        
+        // 初始更新
+        updateTransform();
+    </script>
+
+    <!-- 截图支持脚本 -->
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
