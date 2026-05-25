@@ -1153,14 +1153,6 @@ const threejsData = {
               url: "examples/z258/application-measureTool",
             },
             {
-              id: "application-matrixTransform",
-              title: "矩阵变换可视化",
-              description: "3D矩阵变换可视化，展示平移、旋转、缩放等变换效果",
-              thumbnail: "images/application-matrixTransform.jpg",
-              version: "r179",
-              url: "examples/z258/application-matrixTransform",
-            },
-            {
               id: "shader-audioSolutions",
               title: "音乐可视化",
               description:

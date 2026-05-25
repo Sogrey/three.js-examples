@@ -23,7 +23,7 @@
             border-radius: 8px;
             font-family: 'Courier New', monospace;
             z-index: 100;
-            max-width: 300px;
+            max-width: 280px;
         }
         #matrixUI h3 {
             margin: 0 0 10px 0;
@@ -41,7 +41,7 @@
             color: #fff;
             cursor: pointer;
             transition: all 0.3s;
-            font-size: 11px;
+            font-size: 12px;
         }
         #matrixUI .btn:hover {
             background: #444;
@@ -51,28 +51,23 @@
             background: #00ff00;
             color: #000;
         }
-        #matrixUI .slider-group {
+        #matrixUI .slider-container {
             margin: 10px 0;
         }
-        #matrixUI .slider-group label {
+        #matrixUI .slider-container label {
             display: block;
-            font-size: 10px;
+            font-size: 11px;
             color: #aaa;
-            margin-bottom: 3px;
+            margin-bottom: 5px;
         }
         #matrixUI input[type="range"] {
             width: 100%;
-            margin: 5px 0;
+            accent-color: #00ff00;
         }
-        #matrixUI .matrix-display {
-            font-size: 10px;
+        #matrixUI .value {
+            font-size: 11px;
             color: #ffff00;
-            background: rgba(255, 255, 0, 0.1);
-            padding: 8px;
-            border-radius: 4px;
-            margin-top: 10px;
-            white-space: pre;
-            font-family: 'Courier New', monospace;
+            text-align: right;
         }
         #matrixUI .info {
             font-size: 10px;
@@ -85,7 +80,7 @@
             left: 50%;
             transform: translateX(-50%);
             color: #00ff00;
-            font-size: 18px;
+            font-size: 14px;
             font-family: 'Courier New', monospace;
             text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
             z-index: 100;
@@ -104,33 +99,33 @@
         <button class="btn active" id="btnTranslate">平移 (Translate)</button>
         <button class="btn" id="btnRotate">旋转 (Rotate)</button>
         <button class="btn" id="btnScale">缩放 (Scale)</button>
-        <button class="btn" id="btnCombined">组合变换</button>
+        <button class="btn" id="btnCombine">组合变换</button>
         <button class="btn" id="btnReset">重置</button>
         
-        <div class="slider-group">
-            <label>X轴: <span id="valX">0</span></label>
+        <div class="slider-container">
+            <label>X 轴</label>
             <input type="range" id="sliderX" min="-5" max="5" step="0.1" value="0">
+            <div class="value" id="valueX">0</div>
         </div>
-        <div class="slider-group">
-            <label>Y轴: <span id="valY">0</span></label>
+        <div class="slider-container">
+            <label>Y 轴</label>
             <input type="range" id="sliderY" min="-5" max="5" step="0.1" value="0">
+            <div class="value" id="valueY">0</div>
         </div>
-        <div class="slider-group">
-            <label>Z轴: <span id="valZ">0</span></label>
+        <div class="slider-container">
+            <label>Z 轴</label>
             <input type="range" id="sliderZ" min="-5" max="5" step="0.1" value="0">
+            <div class="value" id="valueZ">0</div>
         </div>
-        
-        <div class="matrix-display" id="matrixDisplay">矩阵数据...</div>
         
         <div class="info">
-            绿色=原始物体<br>
-            蓝色=变换后物体<br>
-            左键拖拽旋转视角
+            左键拖拽旋转视角<br>
+            滚轮缩放
         </div>
     </div>
     
     <div id="transformInfo">
-        平移变换
+        当前变换: 平移
     </div>
 
     <script type="importmap">
@@ -173,215 +168,150 @@
         directionalLight.castShadow = true;
         scene.add(directionalLight);
         
-        // 网格地面
-        const gridHelper = new THREE.GridHelper(20, 20, 0x444444, 0x222222);
-        scene.add(gridHelper);
-        
         // 坐标轴
         const axesHelper = new THREE.AxesHelper(5);
         scene.add(axesHelper);
         
-        // 原始物体（绿色，半透明）
+        // 网格地面
+        const gridHelper = new THREE.GridHelper(20, 20, 0x444444, 0x222222);
+        scene.add(gridHelper);
+        
+        // 原始对象（半透明参考）
         const originalGeometry = new THREE.BoxGeometry(2, 2, 2);
-        const originalMaterial = new THREE.MeshBasicMaterial({ 
-            color: 0x00ff00,
+        const originalMaterial = new THREE.MeshBasicMaterial({
+            color: 0x444444,
+            wireframe: true,
             transparent: true,
-            opacity: 0.3,
-            wireframe: true
+            opacity: 0.3
         });
         const originalMesh = new THREE.Mesh(originalGeometry, originalMaterial);
         originalMesh.position.set(0, 1, 0);
         scene.add(originalMesh);
         
-        // 变换后物体（蓝色，实体）
-        const transformedGeometry = new THREE.BoxGeometry(2, 2, 2);
-        const transformedMaterial = new THREE.MeshStandardMaterial({ 
-            color: 0x0088ff,
+        // 变换对象
+        const transformGeometry = new THREE.BoxGeometry(2, 2, 2);
+        const transformMaterial = new THREE.MeshStandardMaterial({
+            color: 0x00ff00,
             roughness: 0.3,
             metalness: 0.7
         });
-        const transformedMesh = new THREE.Mesh(transformedGeometry, transformedMaterial);
-        transformedMesh.position.set(0, 1, 0);
-        transformedMesh.castShadow = true;
-        scene.add(transformedMesh);
+        const transformMesh = new THREE.Mesh(transformGeometry, transformMaterial);
+        transformMesh.position.set(0, 1, 0);
+        transformMesh.castShadow = true;
+        scene.add(transformMesh);
         
         // 变换状态
-        let currentTransform = 'translate';
+        let transformMode = 'translate';
         let transformValues = { x: 0, y: 0, z: 0 };
         
         // 更新变换
         function updateTransform() {
-            const { x, y, z } = transformValues;
+            const x = parseFloat(document.getElementById('sliderX').value);
+            const y = parseFloat(document.getElementById('sliderY').value);
+            const z = parseFloat(document.getElementById('sliderZ').value);
             
-            // 重置变换
-            transformedMesh.position.set(0, 1, 0);
-            transformedMesh.rotation.set(0, 0, 0);
-            transformedMesh.scale.set(1, 1, 1);
+            document.getElementById('valueX').textContent = x.toFixed(1);
+            document.getElementById('valueY').textContent = y.toFixed(1);
+            document.getElementById('valueZ').textContent = z.toFixed(1);
             
-            switch (currentTransform) {
+            transformMesh.position.set(0, 1, 0);
+            transformMesh.rotation.set(0, 0, 0);
+            transformMesh.scale.set(1, 1, 1);
+            
+            switch (transformMode) {
                 case 'translate':
-                    transformedMesh.position.set(x, 1 + y, z);
+                    transformMesh.position.set(x, 1 + y, z);
                     break;
                 case 'rotate':
-                    transformedMesh.rotation.set(
+                    transformMesh.rotation.set(
                         x * Math.PI / 180,
                         y * Math.PI / 180,
                         z * Math.PI / 180
                     );
                     break;
                 case 'scale':
-                    transformedMesh.scale.set(
-                        Math.max(0.1, x + 1),
-                        Math.max(0.1, y + 1),
-                        Math.max(0.1, z + 1)
-                    );
+                    const sx = Math.max(0.1, 1 + x * 0.2);
+                    const sy = Math.max(0.1, 1 + y * 0.2);
+                    const sz = Math.max(0.1, 1 + z * 0.2);
+                    transformMesh.scale.set(sx, sy, sz);
                     break;
-                case 'combined':
-                    transformedMesh.position.set(x * 0.5, 1 + y * 0.5, z * 0.5);
-                    transformedMesh.rotation.set(
-                        x * Math.PI / 180,
-                        y * Math.PI / 180,
-                        z * Math.PI / 180
+                case 'combine':
+                    transformMesh.position.set(x * 0.5, 1 + y * 0.5, z * 0.5);
+                    transformMesh.rotation.set(
+                        x * Math.PI / 360,
+                        y * Math.PI / 360,
+                        z * Math.PI / 360
                     );
-                    transformedMesh.scale.set(
-                        Math.max(0.5, 1 + x * 0.1),
-                        Math.max(0.5, 1 + y * 0.1),
-                        Math.max(0.5, 1 + z * 0.1)
-                    );
+                    const s = Math.max(0.5, 1 + (x + y + z) * 0.05);
+                    transformMesh.scale.set(s, s, s);
                     break;
             }
-            
-            updateMatrixDisplay();
         }
         
-        // 更新矩阵显示
-        function updateMatrixDisplay() {
-            const { x, y, z } = transformValues;
-            let matrixText = '';
+        // 设置变换模式
+        function setTransformMode(mode) {
+            transformMode = mode;
             
-            switch (currentTransform) {
+            // 更新按钮状态
+            document.querySelectorAll('#matrixUI .btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('btn' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active');
+            
+            // 更新滑块范围
+            const sliderX = document.getElementById('sliderX');
+            const sliderY = document.getElementById('sliderY');
+            const sliderZ = document.getElementById('sliderZ');
+            
+            switch (mode) {
                 case 'translate':
-                    matrixText = `平移矩阵:
-| 1  0  0  ${x.toFixed(1)} |
-| 0  1  0  ${y.toFixed(1)} |
-| 0  0  1  ${z.toFixed(1)} |
-| 0  0  0   1   |`;
+                    sliderX.min = -5; sliderX.max = 5; sliderX.step = 0.1;
+                    sliderY.min = -5; sliderY.max = 5; sliderY.step = 0.1;
+                    sliderZ.min = -5; sliderZ.max = 5; sliderZ.step = 0.1;
+                    document.getElementById('transformInfo').textContent = '当前变换: 平移 (Translate)';
                     break;
                 case 'rotate':
-                    const rx = (x * Math.PI / 180).toFixed(2);
-                    const ry = (y * Math.PI / 180).toFixed(2);
-                    const rz = (z * Math.PI / 180).toFixed(2);
-                    matrixText = `旋转角度:
-X: ${x.toFixed(0)}° (${rx} rad)
-Y: ${y.toFixed(0)}° (${ry} rad)
-Z: ${z.toFixed(0)}° (${rz} rad)`;
+                    sliderX.min = -180; sliderX.max = 180; sliderX.step = 1;
+                    sliderY.min = -180; sliderY.max = 180; sliderY.step = 1;
+                    sliderZ.min = -180; sliderZ.max = 180; sliderZ.step = 1;
+                    document.getElementById('transformInfo').textContent = '当前变换: 旋转 (Rotate)';
                     break;
                 case 'scale':
-                    const sx = Math.max(0.1, x + 1).toFixed(2);
-                    const sy = Math.max(0.1, y + 1).toFixed(2);
-                    const sz = Math.max(0.1, z + 1).toFixed(2);
-                    matrixText = `缩放矩阵:
-| ${sx}  0   0   0 |
-|  0  ${sy}  0   0 |
-|  0   0  ${sz}  0 |
-|  0   0   0   1 |`;
+                    sliderX.min = -5; sliderX.max = 5; sliderX.step = 0.1;
+                    sliderY.min = -5; sliderY.max = 5; sliderY.step = 0.1;
+                    sliderZ.min = -5; sliderZ.max = 5; sliderZ.step = 0.1;
+                    document.getElementById('transformInfo').textContent = '当前变换: 缩放 (Scale)';
                     break;
-                case 'combined':
-                    matrixText = `组合变换:
-位置: (${(x*0.5).toFixed(1)}, ${(y*0.5).toFixed(1)}, ${(z*0.5).toFixed(1)})
-旋转: (${x.toFixed(0)}°, ${y.toFixed(0)}°, ${z.toFixed(0)}°)
-缩放: (${Math.max(0.5, 1+x*0.1).toFixed(2)}, ${Math.max(0.5, 1+y*0.1).toFixed(2)}, ${Math.max(0.5, 1+z*0.1).toFixed(2)})`;
+                case 'combine':
+                    sliderX.min = -5; sliderX.max = 5; sliderX.step = 0.1;
+                    sliderY.min = -5; sliderY.max = 5; sliderY.step = 0.1;
+                    sliderZ.min = -5; sliderZ.max = 5; sliderZ.step = 0.1;
+                    document.getElementById('transformInfo').textContent = '当前变换: 组合变换 (Combine)';
                     break;
             }
             
-            document.getElementById('matrixDisplay').textContent = matrixText;
-        }
-        
-        // 更新滑块标签
-        function updateSliderLabels() {
-            document.getElementById('valX').textContent = transformValues.x.toFixed(1);
-            document.getElementById('valY').textContent = transformValues.y.toFixed(1);
-            document.getElementById('valZ').textContent = transformValues.z.toFixed(1);
-        }
-        
-        // 设置滑块范围
-        function setSliderRange(min, max, step) {
-            ['sliderX', 'sliderY', 'sliderZ'].forEach(id => {
-                const slider = document.getElementById(id);
-                slider.min = min;
-                slider.max = max;
-                slider.step = step;
-                slider.value = 0;
-            });
-            transformValues = { x: 0, y: 0, z: 0 };
-            updateSliderLabels();
+            // 重置滑块
+            sliderX.value = 0;
+            sliderY.value = 0;
+            sliderZ.value = 0;
+            
+            updateTransform();
         }
         
         // UI事件
-        function setActiveButton(id) {
-            document.querySelectorAll('#matrixUI .btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-        }
-        
-        document.getElementById('btnTranslate').addEventListener('click', () => {
-            currentTransform = 'translate';
-            setActiveButton('btnTranslate');
-            document.getElementById('transformInfo').textContent = '平移变换';
-            setSliderRange(-5, 5, 0.1);
-            updateTransform();
-        });
-        
-        document.getElementById('btnRotate').addEventListener('click', () => {
-            currentTransform = 'rotate';
-            setActiveButton('btnRotate');
-            document.getElementById('transformInfo').textContent = '旋转变换';
-            setSliderRange(-180, 180, 5);
-            updateTransform();
-        });
-        
-        document.getElementById('btnScale').addEventListener('click', () => {
-            currentTransform = 'scale';
-            setActiveButton('btnScale');
-            document.getElementById('transformInfo').textContent = '缩放变换';
-            setSliderRange(-0.5, 2, 0.1);
-            updateTransform();
-        });
-        
-        document.getElementById('btnCombined').addEventListener('click', () => {
-            currentTransform = 'combined';
-            setActiveButton('btnCombined');
-            document.getElementById('transformInfo').textContent = '组合变换';
-            setSliderRange(-5, 5, 0.1);
-            updateTransform();
-        });
+        document.getElementById('btnTranslate').addEventListener('click', () => setTransformMode('translate'));
+        document.getElementById('btnRotate').addEventListener('click', () => setTransformMode('rotate'));
+        document.getElementById('btnScale').addEventListener('click', () => setTransformMode('scale'));
+        document.getElementById('btnCombine').addEventListener('click', () => setTransformMode('combine'));
         
         document.getElementById('btnReset').addEventListener('click', () => {
-            transformValues = { x: 0, y: 0, z: 0 };
             document.getElementById('sliderX').value = 0;
             document.getElementById('sliderY').value = 0;
             document.getElementById('sliderZ').value = 0;
-            updateSliderLabels();
             updateTransform();
         });
         
-        // 滑块事件
-        document.getElementById('sliderX').addEventListener('input', (e) => {
-            transformValues.x = parseFloat(e.target.value);
-            updateSliderLabels();
-            updateTransform();
-        });
-        
-        document.getElementById('sliderY').addEventListener('input', (e) => {
-            transformValues.y = parseFloat(e.target.value);
-            updateSliderLabels();
-            updateTransform();
-        });
-        
-        document.getElementById('sliderZ').addEventListener('input', (e) => {
-            transformValues.z = parseFloat(e.target.value);
-            updateSliderLabels();
-            updateTransform();
-        });
+        document.getElementById('sliderX').addEventListener('input', updateTransform);
+        document.getElementById('sliderY').addEventListener('input', updateTransform);
+        document.getElementById('sliderZ').addEventListener('input', updateTransform);
         
         // 窗口调整
         window.addEventListener('resize', () => {
@@ -394,9 +324,6 @@ Z: ${z.toFixed(0)}° (${rz} rad)`;
         window.renderer = renderer;
         window.camera = camera;
         window.scene = scene;
-        
-        // 初始化
-        updateTransform();
         
         // 动画循环
         function animate() {
