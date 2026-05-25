@@ -1057,6 +1057,14 @@ const threejsData = {
               url: "examples/z258/shader-magicalSphere",
             },
             {
+              id: "game-snake3D",
+              title: "3D贪吃蛇",
+              description: "经典贪吃蛇游戏的3D版本，支持键盘控制和碰撞检测",
+              thumbnail: "images/game-snake3D.jpg",
+              version: "r179",
+              url: "examples/z258/game-snake3D",
+            },
+            {
               id: "shader-audioSolutions",
               title: "音乐可视化",
               description:
