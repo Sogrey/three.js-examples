@@ -1105,6 +1105,14 @@ const threejsData = {
               url: "examples/z258/effect-fireworks",
             },
             {
+              id: "application-modelViewer",
+              title: "3D模型查看器",
+              description: "支持多种几何体预览和材质调节的3D模型查看器",
+              thumbnail: "images/application-modelViewer.jpg",
+              version: "r179",
+              url: "examples/z258/application-modelViewer",
+            },
+            {
               id: "shader-audioSolutions",
               title: "音乐可视化",
               description:
