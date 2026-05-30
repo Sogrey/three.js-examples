@@ -1153,14 +1153,6 @@ const threejsData = {
               url: "examples/z258/application-measureTool",
             },
             {
-              id: "application-drawFaceInner",
-              title: "绘制面_内置点",
-              description: "使用内置几何点绘制面，展示几何体内部顶点结构",
-              thumbnail: "images/application-drawFaceInner.jpg",
-              version: "r179",
-              url: "examples/z258/application-drawFaceInner",
-            },
-            {
               id: "shader-audioSolutions",
               title: "音乐可视化",
               description:
