@@ -2016,6 +2016,14 @@ const threejsData = {
               version: "r179",
               url: "examples/z258/postprocessing-uvTransformation",
             },
+            {
+              id: "postprocessing-afterimagePass",
+              title: "残影效果",
+              description: "残影效果，展示运动残影和拖尾效果",
+              thumbnail: "images/postprocessing-afterimagePass.jpg",
+              version: "r179",
+              url: "examples/z258/postprocessing-afterimagePass",
+            },
           ],
         },
         {
