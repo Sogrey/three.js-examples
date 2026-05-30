@@ -2000,6 +2000,14 @@ const threejsData = {
               version: "r179",
               url: "examples/z258/effectComposer-threeSelectBloom",
             },
+            {
+              id: "postprocessing-customMaskPass",
+              title: "自定义遮罩通道",
+              description: "自定义遮罩通道，展示后期处理遮罩效果",
+              thumbnail: "images/postprocessing-customMaskPass.jpg",
+              version: "r179",
+              url: "examples/z258/postprocessing-customMaskPass",
+            },
           ],
         },
         {
