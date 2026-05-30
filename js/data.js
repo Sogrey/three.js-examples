@@ -2008,6 +2008,14 @@ const threejsData = {
               version: "r179",
               url: "examples/z258/postprocessing-customMaskPass",
             },
+            {
+              id: "postprocessing-uvTransformation",
+              title: "UV图像变换",
+              description: "UV图像变换，展示UV坐标变换效果",
+              thumbnail: "images/postprocessing-uvTransformation.jpg",
+              version: "r179",
+              url: "examples/z258/postprocessing-uvTransformation",
+            },
           ],
         },
         {
