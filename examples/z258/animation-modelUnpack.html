@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="模型拆解动画，展示3D模型拆解和组装效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 模型拆解动画</title>
+    <script src="../../libs/gsap/3.12.2/gsap.min.js"></script>
+    <link rel="stylesheet" href="../../css/example-common.css">
+    <style>
+        body {
+            background: #0a0a0a;
+            margin: 0;
+            overflow: hidden;
+        }
+        #unpackUI {
+            position: absolute;
+            top: 50px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            z-index: 100;
+            max-width: 280px;
+        }
+        #unpackUI h3 {
+            margin: 0 0 10px 0;
+            color: #00ff00;
+            font-size: 16px;
+        }
+        #unpackUI .btn {
+            display: block;
+            width: 100%;
+            margin: 5px 0;
+            padding: 8px 12px;
+            background: #333;
+            border: 1px solid #555;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 11px;
+        }
+        #unpackUI .btn:hover {
+            background: #444;
+            border-color: #00ff00;
+        }
+        #unpackUI .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        #unpackUI .info {
+            font-size: 10px;
+            color: #aaa;
+            margin-top: 10px;
+        }
+        #progressBar {
+            width: 100%;
+            height: 4px;
+            background: #333;
+            border-radius: 2px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        #progressFill {
+            height: 100%;
+            background: #00ff00;
+            width: 0%;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+    
+    <div id="unpackUI">
+        <h3>🔧 模型拆解动画</h3>
+        <button class="btn" id="btnUnpack">拆解模型</button>
+        <button class="btn" id="btnPack">组装模型</button>
+        <button class="btn" id="btnReset">重置</button>
+        <div id="progressBar">
+            <div id="progressFill"></div>
+        </div>
+        <div class="info">
+            左键拖拽旋转<br>
+            滚轮缩放<br>
+            查看模型拆解和组装动画
+        </div>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        const container = document.getElementById('threeContainer');
+        
+        // 场景设置
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a0a0a);
+        
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(8, 6, 8);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        container.appendChild(renderer.domElement);
+        
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        
+        // 灯光
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        scene.add(ambientLight);
+        
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(5, 10, 5);
+        directionalLight.castShadow = true;
+        scene.add(directionalLight);
+        
+        const pointLight = new THREE.PointLight(0x00ff00, 0.5, 20);
+        pointLight.position.set(0, 5, 0);
+        scene.add(pointLight);
+        
+        // 网格地面
+        const gridHelper = new THREE.GridHelper(20, 20, 0x444444, 0x222222);
+        scene.add(gridHelper);
+        
+        // 创建模型部件
+        const parts = [];
+        const partGroup = new THREE.Group();
+        scene.add(partGroup);
+        
+        // 底座
+        const baseGeometry = new THREE.CylinderGeometry(2, 2.5, 0.5, 32);
+        const baseMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0x444444,
+            roughness: 0.5,
+            metalness: 0.8
+        });
+        const base = new THREE.Mesh(baseGeometry, baseMaterial);
+        base.position.y = 0.25;
+        base.castShadow = true;
+        base.userData = { 
+            originalPos: base.position.clone(),
+            unpackPos: new THREE.Vector3(0, -2, 0)
+        };
+        parts.push(base);
+        partGroup.add(base);
+        
+        // 支柱
+        const pillarGeometry = new THREE.CylinderGeometry(0.3, 0.3, 3, 16);
+        const pillarMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0x666666,
+            roughness: 0.3,
+            metalness: 0.9
+        });
+        const pillar = new THREE.Mesh(pillarGeometry, pillarMaterial);
+        pillar.position.y = 2;
+        pillar.castShadow = true;
+        pillar.userData = { 
+            originalPos: pillar.position.clone(),
+            unpackPos: new THREE.Vector3(0, 5, 0)
+        };
+        parts.push(pillar);
+        partGroup.add(pillar);
+        
+        // 核心球体
+        const coreGeometry = new THREE.SphereGeometry(1, 32, 32);
+        const coreMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0x0088ff,
+            emissive: 0x0044aa,
+            emissiveIntensity: 0.5,
+            roughness: 0.2,
+            metalness: 0.8
+        });
+        const core = new THREE.Mesh(coreGeometry, coreMaterial);
+        core.position.y = 3.5;
+        core.castShadow = true;
+        core.userData = { 
+            originalPos: core.position.clone(),
+            unpackPos: new THREE.Vector3(0, 6, 0)
+        };
+        parts.push(core);
+        partGroup.add(core);
+        
+        // 外环1
+        const ring1Geometry = new THREE.TorusGeometry(2, 0.1, 16, 100);
+        const ring1Material = new THREE.MeshStandardMaterial({ 
+            color: 0xff8800,
+            roughness: 0.3,
+            metalness: 0.7
+        });
+        const ring1 = new THREE.Mesh(ring11Geometry, ring1Material);
+        ring1.position.y = 3.5;
+        ring1.rotation.x = Math.PI / 2;
+        ring1.castShadow = true;
+        ring1.userData = { 
+            originalPos: ring1.position.clone(),
+            unpackPos: new THREE.Vector3(-4, 3.5, 0)
+        };
+        parts.push(ring1);
+        partGroup.add(ring1);
+        
+        // 外环2
+        const ring2Geometry = new THREE.TorusGeometry(2.5, 0.1, 16, 100);
+        const ring2Material = new THREE.MeshStandardMaterial({ 
+            color: 0x00ff88,
+            roughness: 0.3,
+            metalness: 0.7
+        });
+        const ring2 = new THREE.Mesh(ring2Geometry, ring2Material);
+        ring2.position.y = 3.5;
+        ring2.rotation.x = Math.PI / 2;
+        ring2.rotation.y = Math.PI / 4;
+        ring2.castShadow = true;
+        ring2.userData = { 
+            originalPos: ring2.position.clone(),
+            unpackPos: new THREE.Vector3(4, 3.5, 0)
+        };
+        parts.push(ring2);
+        partGroup.add(ring2);
+        
+        // 卫星1
+        const satellite1Geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+        const satellite1Material = new THREE.MeshStandardMaterial({ 
+            color: 0xff0088,
+            roughness: 0.4,
+            metalness: 0.6
+        });
+        const satellite1 = new THREE.Mesh(satellite1Geometry, satellite1Material);
+        satellite1.position.set(2.5, 3.5, 0);
+        satellite1.castShadow = true;
+        satellite1.userData = { 
+            originalPos: satellite1.position.clone(),
+            unpackPos: new THREE.Vector3(5, 3.5, 3)
+        };
+        parts.push(satellite1);
+        partGroup.add(satellite1);
+        
+        // 卫星2
+        const satellite2Geometry = new THREE.OctahedronGeometry(0.3);
+        const satellite2Material = new THREE.MeshStandardMaterial({ 
+            color: 0xffff00,
+            roughness: 0.4,
+            metalness: 0.6
+        });
+        const satellite2 = new THREE.Mesh(satellite2Geometry, satellite2Material);
+        satellite2.position.set(-2.5, 3.5, 0);
+        satellite2.castShadow = true;
+        satellite2.userData = { 
+            originalPos: satellite2.position.clone(),
+            unpackPos: new THREE.Vector3(-5, 3.5, -3)
+        };
+        parts.push(satellite2);
+        partGroup.add(satellite2);
+        
+        // 动画状态
+        let isUnpacked = false;
+        let currentAnimation = null;
+        
+        // 更新进度条
+        function updateProgress(progress) {
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+        
+        // 拆解动画
+        function unpackModel() {
+            if (isUnpacked || currentAnimation) return;
+            
+            currentAnimation = gsap.timeline({
+                onComplete: () => {
+                    isUnpacked = true;
+                    currentAnimation = null;
+                    updateProgress(100);
+                },
+                onUpdate: function() {
+                    updateProgress(this.progress() * 100);
+                }
+            });
+            
+            parts.forEach((part, index) => {
+                currentAnimation.to(part.position, {
+                    x: part.userData.unpackPos.x,
+                    y: part.userData.unpackPos.y,
+                    z: part.userData.unpackPos.z,
+                    duration: 1,
+                    ease: "power2.inOut",
+                    delay: index * 0.1
+                }, 0);
+                
+                currentAnimation.to(part.rotation, {
+                    x: part.rotation.x + Math.random() * Math.PI,
+                    y: part.rotation.y + Math.random() * Math.PI,
+                    duration: 1,
+                    ease: "power2.inOut"
+                }, 0);
+            });
+        }
+        
+        // 组装动画
+        function packModel() {
+            if (!isUnpacked || currentAnimation) return;
+            
+            currentAnimation = gsap.timeline({
+                onComplete: () => {
+                    isUnpacked = false;
+                    currentAnimation = null;
+                    updateProgress(0);
+                },
+                onUpdate: function() {
+                    updateProgress((1 - this.progress()) * 100);
+                }
+            });
+            
+            parts.forEach((part, index) => {
+                currentAnimation.to(part.position, {
+                    x: part.userData.originalPos.x,
+                    y: part.userData.originalPos.y,
+                    z: part.userData.originalPos.z,
+                    duration: 1,
+                    ease: "power2.inOut",
+                    delay: (parts.length - index - 1) * 0.1
+                }, 0);
+                
+                currentAnimation.to(part.rotation, {
+                    x: part.userData.originalPos.x === 3.5 && part.geometry.type === 'TorusGeometry' ? Math.PI / 2 : 0,
+                    y: part.userData.originalPos.x === 3.5 && part === ring2 ? Math.PI / 4 : 0,
+                    z: 0,
+                    duration: 1,
+                    ease: "power2.inOut"
+                }, 0);
+            });
+        }
+        
+        // 重置
+        function resetModel() {
+            if (currentAnimation) {
+                currentAnimation.kill();
+                currentAnimation = null;
+            }
+            
+            parts.forEach(part => {
+                part.position.copy(part.userData.originalPos);
+                part.rotation.set(0, 0, 0);
+                if (part === ring1) part.rotation.x = Math.PI / 2;
+                if (part === ring2) {
+                    part.rotation.x = Math.PI / 2;
+                    part.rotation.y = Math.PI / 4;
+                }
+            });
+            
+            isUnpacked = false;
+            updateProgress(0);
+        }
+        
+        // UI事件
+        document.getElementById('btnUnpack').addEventListener('click', unpackModel);
+        document.getElementById('btnPack').addEventListener('click', packModel);
+        document.getElementById('btnReset').addEventListener('click', resetModel);
+        
+        // 窗口调整
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // 暴露到 window 供截图使用
+        window.renderer = renderer;
+        window.camera = camera;
+        window.scene = scene;
+        
+        // 动画循环
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // 旋转外环
+            if (!isUnpacked) {
+                ring1.rotation.z += 0.01;
+                ring2.rotation.x = Math.PI / 2 + Math.sin(Date.now() * 0.001) * 0.2;
+            }
+            
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        
+        animate();
+    </script>
+
+    <!-- 截图支持脚本 -->
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

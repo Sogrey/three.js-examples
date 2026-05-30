@@ -1153,6 +1153,14 @@ const threejsData = {
               url: "examples/z258/application-measureTool",
             },
             {
+              id: "animation-modelUnpack",
+              title: "模型拆解动画",
+              description: "模型拆解动画，展示3D模型拆解和组装效果",
+              thumbnail: "images/animation-modelUnpack.jpg",
+              version: "r179",
+              url: "examples/z258/animation-modelUnpack",
+            },
+            {
               id: "shader-audioSolutions",
               title: "音乐可视化",
               description:
