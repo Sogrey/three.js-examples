@@ -52,7 +52,7 @@
         scene.background = new THREE.Color(0x1f1f1f);
         
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000000);
-        camera.position.set(200, 200, 200);
+        camera.position.set(50, 50, 100);
         
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, logarithmicDepthBuffer: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -209,6 +209,14 @@
             '../../models/obj/ninja/ninjaHead_Low.obj',
             (obj) => {
                 const box3 = new THREE.Box3().setFromObject(obj);
+                
+                // 计算中心点并移动到原点
+                const center = new THREE.Vector3();
+                box3.getCenter(center);
+                obj.position.sub(center);
+                
+                // 更新边界框到新的位置
+                box3.setFromObject(obj);
                 
                 // 创建热力图材质
                 const material = setHeat(box3);
