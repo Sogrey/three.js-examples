@@ -1193,6 +1193,14 @@ const threejsData = {
               url: "examples/z258/application-videoEffect",
             },
             {
+              id: "application-videoFloor",
+              title: "视频地板",
+              description: "视频地板效果，展示视频投影在地板上的效果",
+              thumbnail: "images/application-videoFloor.jpg",
+              version: "r179",
+              url: "examples/z258/application-videoFloor",
+            },
+            {
               id: "shader-audioSolutions",
               title: "音乐可视化",
               description:
