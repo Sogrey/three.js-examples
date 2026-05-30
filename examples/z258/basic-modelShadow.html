@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="模型阴影效果展示">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 模型阴影</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+    <style>
+        body {
+            background: #1a1a2e;
+            margin: 0;
+            overflow: hidden;
+        }
+        #shadowUI {
+            position: absolute;
+            top: 50px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            z-index: 100;
+            max-width: 280px;
+        }
+        #shadowUI h3 {
+            margin: 0 0 10px 0;
+            color: #ffaa00;
+            font-size: 16px;
+        }
+        #shadowUI .control {
+            margin: 10px 0;
+        }
+        #shadowUI label {
+            display: block;
+            font-size: 11px;
+            color: #aaa;
+            margin-bottom: 5px;
+        }
+        #shadowUI input[type="range"] {
+            width: 100%;
+            height: 4px;
+            background: #333;
+            border-radius: 2px;
+            outline: none;
+        }
+        #shadowUI .value {
+            font-size: 10px;
+            color: #ffaa00;
+            text-align: right;
+        }
+        #shadowUI .btn {
+            display: block;
+            width: 100%;
+            margin: 5px 0;
+            padding: 8px 12px;
+            background: #333;
+            border: 1px solid #555;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 11px;
+        }
+        #shadowUI .btn:hover {
+            background: #444;
+            border-color: #ffaa00;
+        }
+        #shadowUI .btn.active {
+            background: #ffaa00;
+            color: #000;
+        }
+        #shadowUI .info {
+            font-size: 10px;
+            color: #aaa;
+            margin-top: 10px;
+        }
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ffaa00;
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            z-index: 200;
+        }
+    </style>
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+    <div id="loading">加载模型中...</div>
+    
+    <div id="shadowUI">
+        <h3>🌑 模型阴影</h3>
+        <div class="control">
+            <label>光源位置 X</label>
+            <input type="range" id="lightX" min="-10" max="10" value="5" step="0.5">
+            <div class="value" id="lightXValue">5.0</div>
+        </div>
+        <div class="control">
+            <label>光源位置 Y</label>
+            <input type="range" id="lightY" min="2" max="20" value="10" step="0.5">
+            <div class="value" id="lightYValue">10.0</div>
+        </div>
+        <div class="control">
+            <label>光源位置 Z</label>
+            <input type="range" id="lightZ" min="-10" max="10" value="5" step="0.5">
+            <div class="value" id="lightZValue">5.0</div>
+        </div>
+        <div class="control">
+            <label>阴影模糊</label>
+            <input type="range" id="shadowBlur" min="0" max="10" value="3" step="0.5">
+            <div class="value" id="blurValue">3.0</div>
+        </div>
+        <div class="control">
+            <label>阴影透明度</label>
+            <input type="range" id="shadowOpacity" min="0" max="1" value="0.5" step="0.05">
+            <div class="value" id="opacityValue">0.50</div>
+        </div>
+        <button class="btn active" id="btnRotate">自动旋转</button>
+        <button class="btn" id="btnReset">重置视角</button>
+        <div class="info">
+            左键拖拽旋转视角<br>
+            滚轮缩放<br>
+            展示模型阴影效果
+        </div>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+        const container = document.getElementById('threeContainer');
+        const loadingDiv = document.getElementById('loading');
+        
+        // 场景设置
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a1a2e);
+        
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(8, 6, 8);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        container.appendChild(renderer.domElement);
+        
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        
+        // 环境光
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        scene.add(ambientLight);
+        
+        // 方向光（主光源，产生阴影）
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+        directionalLight.position.set(5, 10, 5);
+        directionalLight.castShadow = true;
+        directionalLight.shadow.mapSize.width = 2048;
+        directionalLight.shadow.mapSize.height = 2048;
+        directionalLight.shadow.camera.near = 0.5;
+        directionalLight.shadow.camera.far = 50;
+        directionalLight.shadow.camera.left = -10;
+        directionalLight.shadow.camera.right = 10;
+        directionalLight.shadow.camera.top = 10;
+        directionalLight.shadow.camera.bottom = -10;
+        directionalLight.shadow.bias = -0.001;
+        scene.add(directionalLight);
+        
+        // 辅助光源
+        const fillLight = new THREE.DirectionalLight(0x4444ff, 0.3);
+        fillLight.position.set(-5, 5, -5);
+        scene.add(fillLight);
+        
+        // 地面（接收阴影）
+        const groundGeometry = new THREE.PlaneGeometry(30, 30);
+        const groundMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0x222222,
+            roughness: 0.8,
+            metalness: 0.2
+        });
+        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+        ground.rotation.x = -Math.PI / 2;
+        ground.receiveShadow = true;
+        scene.add(ground);
+        
+        // 网格辅助
+        const gridHelper = new THREE.GridHelper(30, 30, 0x444444, 0x333333);
+        scene.add(gridHelper);
+        
+        // 加载模型
+        let model;
+        const loader = new GLTFLoader();
+        loader.load(
+            '../../models/gltf/DamagedHelmet/glTF/DamagedHelmet.gltf',
+            (gltf) => {
+                model = gltf.scene;
+                
+                // 遍历模型启用阴影
+                model.traverse((child) => {
+                    if (child.isMesh) {
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                    }
+                });
+                
+                model.position.set(0, 1.5, 0);
+                model.scale.set(2, 2, 2);
+                
+                scene.add(model);
+                loadingDiv.style.display = 'none';
+            },
+            undefined,
+            (error) => {
+                console.error('模型加载失败:', error);
+                loadingDiv.textContent = '加载失败';
+            }
+        );
+        
+        // 添加一些几何体展示阴影
+        const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
+        const boxMaterial = new THREE.MeshStandardMaterial({ color: 0xff4444 });
+        const box = new THREE.Mesh(boxGeometry, boxMaterial);
+        box.position.set(-3, 0.5, 2);
+        box.castShadow = true;
+        box.receiveShadow = true;
+        scene.add(box);
+        
+        const sphereGeometry = new THREE.SphereGeometry(0.6, 32, 32);
+        const sphereMaterial = new THREE.MeshStandardMaterial({ color: 0x44ff44 });
+        const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        sphere.position.set(3, 0.6, 2);
+        sphere.castShadow = true;
+        sphere.receiveShadow = true;
+        scene.add(sphere);
+        
+        const cylinderGeometry = new THREE.CylinderGeometry(0.5, 0.5, 1.5, 32);
+        const cylinderMaterial = new THREE.MeshStandardMaterial({ color: 0x4444ff });
+        const cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterial);
+        cylinder.position.set(0, 0.75, -3);
+        cylinder.castShadow = true;
+        cylinder.receiveShadow = true;
+        scene.add(cylinder);
+        
+        // UI控制
+        const lightXSlider = document.getElementById('lightX');
+        const lightXValue = document.getElementById('lightXValue');
+        const lightYSlider = document.getElementById('lightY');
+        const lightYValue = document.getElementById('lightYValue');
+        const lightZSlider = document.getElementById('lightZ');
+        const lightZValue = document.getElementById('lightZValue');
+        const shadowBlurSlider = document.getElementById('shadowBlur');
+        const blurValue = document.getElementById('blurValue');
+        const shadowOpacitySlider = document.getElementById('shadowOpacity');
+        const opacityValue = document.getElementById('opacityValue');
+        const btnRotate = document.getElementById('btnRotate');
+        const btnReset = document.getElementById('btnReset');
+        
+        function updateLightPosition() {
+            const x = parseFloat(lightXSlider.value);
+            const y = parseFloat(lightYSlider.value);
+            const z = parseFloat(lightZSlider.value);
+            directionalLight.position.set(x, y, z);
+        }
+        
+        lightXSlider.addEventListener('input', (e) => {
+            lightXValue.textContent = parseFloat(e.target.value).toFixed(1);
+            updateLightPosition();
+        });
+        
+        lightYSlider.addEventListener('input', (e) => {
+            lightYValue.textContent = parseFloat(e.target.value).toFixed(1);
+            updateLightPosition();
+        });
+        
+        lightZSlider.addEventListener('input', (e) => {
+            lightZValue.textContent = parseFloat(e.target.value).toFixed(1);
+            updateLightPosition();
+        });
+        
+        shadowBlurSlider.addEventListener('input', (e) => {
+            const value = parseFloat(e.target.value);
+            blurValue.textContent = value.toFixed(1);
+            directionalLight.shadow.radius = value;
+        });
+        
+        shadowOpacitySlider.addEventListener('input', (e) => {
+            const value = parseFloat(e.target.value);
+            opacityValue.textContent = value.toFixed(2);
+            directionalLight.intensity = value * 2;
+        });
+        
+        let isRotating = true;
+        btnRotate.addEventListener('click', function() {
+            isRotating = !isRotating;
+            this.classList.toggle('active');
+            this.textContent = isRotating ? '自动旋转' : '停止旋转';
+        });
+        
+        btnReset.addEventListener('click', () => {
+            camera.position.set(8, 6, 8);
+            controls.target.set(0, 0, 0);
+            controls.update();
+        });
+        
+        // 窗口调整
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // 暴露到 window 供截图使用
+        window.renderer = renderer;
+        window.camera = camera;
+        window.scene = scene;
+        
+        // 动画循环
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            if (isRotating && model) {
+                model.rotation.y += 0.005;
+            }
+            
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        
+        animate();
+    </script>
+
+    <!-- 截图支持脚本 -->
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

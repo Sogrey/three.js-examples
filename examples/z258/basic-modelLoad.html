@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="多格式模型加载示例，展示GLTF、FBX、OBJ模型加载">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 模型加载</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+    <style>
+        body {
+            background: #1a1a2e;
+            margin: 0;
+            overflow: hidden;
+        }
+        #modelUI {
+            position: absolute;
+            top: 50px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            z-index: 100;
+            max-width: 300px;
+        }
+        #modelUI h3 {
+            margin: 0 0 10px 0;
+            color: #00ff88;
+            font-size: 16px;
+        }
+        #modelUI .model-item {
+            margin: 8px 0;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+            border-left: 3px solid #00ff88;
+        }
+        #modelUI .model-item.fbx {
+            border-left-color: #0088ff;
+        }
+        #modelUI .model-item.obj {
+            border-left-color: #ff8800;
+        }
+        #modelUI .model-name {
+            font-size: 12px;
+            color: #fff;
+            font-weight: bold;
+        }
+        #modelUI .model-type {
+            font-size: 10px;
+            color: #888;
+            margin-top: 2px;
+        }
+        #modelUI .model-status {
+            font-size: 10px;
+            margin-top: 4px;
+        }
+        #modelUI .model-status.loading {
+            color: #ffaa00;
+        }
+        #modelUI .model-status.loaded {
+            color: #00ff88;
+        }
+        #modelUI .model-status.error {
+            color: #ff4444;
+        }
+        #modelUI .btn {
+            display: block;
+            width: 100%;
+            margin: 5px 0;
+            padding: 8px 12px;
+            background: #333;
+            border: 1px solid #555;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 11px;
+        }
+        #modelUI .btn:hover {
+            background: #444;
+            border-color: #00ff88;
+        }
+        #modelUI .info {
+            font-size: 10px;
+            color: #aaa;
+            margin-top: 10px;
+        }
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #00ff88;
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            z-index: 200;
+        }
+    </style>
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+    <div id="loading">加载模型中...</div>
+    
+    <div id="modelUI">
+        <h3>🎯 模型加载</h3>
+        <div class="model-item">
+            <div class="model-name">小黄鸭 (Duck)</div>
+            <div class="model-type">GLTF/GLB 格式</div>
+            <div class="model-status loading" id="status-gltf">加载中...</div>
+        </div>
+        <div class="model-item fbx">
+            <div class="model-name">城市 (City)</div>
+            <div class="model-type">FBX 格式</div>
+            <div class="model-status loading" id="status-fbx">加载中...</div>
+        </div>
+        <div class="model-item obj">
+            <div class="model-name">树 (Tree)</div>
+            <div class="model-type">OBJ 格式</div>
+            <div class="model-status loading" id="status-obj">加载中...</div>
+        </div>
+        <button class="btn" id="btnReset">重置视角</button>
+        <button class="btn" id="btnToggleAnim">暂停旋转</button>
+        <div class="info">
+            左键拖拽旋转视角<br>
+            滚轮缩放<br>
+            展示三种主流3D模型格式加载
+        </div>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+        import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
+
+        const container = document.getElementById('threeContainer');
+        const loadingDiv = document.getElementById('loading');
+        
+        // 场景设置
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a1a2e);
+        
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(8, 6, 8);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+        
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        
+        // 灯光
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+        
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+        directionalLight.position.set(5, 10, 5);
+        directionalLight.castShadow = true;
+        scene.add(directionalLight);
+        
+        // 网格辅助
+        const gridHelper = new THREE.GridHelper(20, 20, 0x444444, 0x222222);
+        scene.add(gridHelper);
+        
+        // 加载状态
+        const loadStatus = {
+            gltf: false,
+            fbx: false,
+            obj: false
+        };
+        
+        function checkAllLoaded() {
+            if (loadStatus.gltf && loadStatus.fbx && loadStatus.obj) {
+                loadingDiv.style.display = 'none';
+            }
+        }
+        
+        function updateStatus(id, status, message) {
+            const el = document.getElementById(id);
+            el.className = 'model-status ' + status;
+            el.textContent = message;
+        }
+        
+        // 1. 加载 GLTF/GLB 模型 - 小黄鸭
+        const gltfLoader = new GLTFLoader();
+        gltfLoader.load(
+            '../../models/gltf/duck.glb',
+            (gltf) => {
+                const model = gltf.scene;
+                model.position.set(-3, 0, 0);
+                model.scale.set(0.5, 0.5, 0.5);
+                model.rotation.y = Math.PI;
+                
+                // 添加自动旋转动画
+                model.userData.autoRotate = true;
+                model.userData.rotateSpeed = 0.01;
+                
+                scene.add(model);
+                
+                loadStatus.gltf = true;
+                updateStatus('status-gltf', 'loaded', '已加载 ✓');
+                checkAllLoaded();
+            },
+            (progress) => {
+                const percent = Math.round((progress.loaded / progress.total) * 100);
+                updateStatus('status-gltf', 'loading', `加载中 ${percent}%`);
+            },
+            (error) => {
+                console.error('GLTF加载失败:', error);
+                loadStatus.gltf = true;
+                updateStatus('status-gltf', 'error', '加载失败 ✗');
+                checkAllLoaded();
+            }
+        );
+        
+        // 2. 加载 FBX 模型 - 城市
+        const fbxLoader = new FBXLoader();
+        fbxLoader.load(
+            '../../models/fbx/city.FBX',
+            (object) => {
+                object.position.set(0, 0, 0);
+                object.scale.set(0.0005, 0.0005, 0.0005);
+                
+                // 添加自动旋转动画
+                object.userData.autoRotate = true;
+                object.userData.rotateSpeed = 0.005;
+                
+                scene.add(object);
+                
+                loadStatus.fbx = true;
+                updateStatus('status-fbx', 'loaded', '已加载 ✓');
+                checkAllLoaded();
+            },
+            (progress) => {
+                const percent = progress.total ? Math.round((progress.loaded / progress.total) * 100) : 0;
+                updateStatus('status-fbx', 'loading', `加载中 ${percent}%`);
+            },
+            (error) => {
+                console.error('FBX加载失败:', error);
+                loadStatus.fbx = true;
+                updateStatus('status-fbx', 'error', '加载失败 ✗');
+                checkAllLoaded();
+            }
+        );
+        
+        // 3. 加载 OBJ 模型 - 树
+        const objLoader = new OBJLoader();
+        objLoader.load(
+            '../../models/obj/tree.obj',
+            (object) => {
+                object.position.set(3, 0, 0);
+                object.scale.set(0.3, 0.3, 0.3);
+                
+                // 添加材质
+                object.traverse((child) => {
+                    if (child.isMesh) {
+                        child.material = new THREE.MeshStandardMaterial({
+                            color: 0x8B4513,
+                            roughness: 0.8
+                        });
+                    }
+                });
+                
+                // 添加自动旋转动画
+                object.userData.autoRotate = true;
+                object.userData.rotateSpeed = 0.008;
+                
+                scene.add(object);
+                
+                loadStatus.obj = true;
+                updateStatus('status-obj', 'loaded', '已加载 ✓');
+                checkAllLoaded();
+            },
+            (progress) => {
+                const percent = progress.total ? Math.round((progress.loaded / progress.total) * 100) : 0;
+                updateStatus('status-obj', 'loading', `加载中 ${percent}%`);
+            },
+            (error) => {
+                console.error('OBJ加载失败:', error);
+                loadStatus.obj = true;
+                updateStatus('status-obj', 'error', '加载失败 ✗');
+                checkAllLoaded();
+            }
+        );
+        
+        // UI控制
+        let isAnimating = true;
+        document.getElementById('btnToggleAnim').addEventListener('click', function() {
+            isAnimating = !isAnimating;
+            this.textContent = isAnimating ? '暂停旋转' : '继续旋转';
+        });
+        
+        document.getElementById('btnReset').addEventListener('click', () => {
+            camera.position.set(8, 6, 8);
+            controls.target.set(0, 0, 0);
+            controls.update();
+        });
+        
+        // 窗口调整
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // 暴露到 window 供截图使用
+        window.renderer = renderer;
+        window.camera = camera;
+        window.scene = scene;
+        
+        // 动画循环
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // 自动旋转模型
+            if (isAnimating) {
+                scene.traverse((child) => {
+                    if (child.userData.autoRotate) {
+                        child.rotation.y += child.userData.rotateSpeed;
+                    }
+                });
+            }
+            
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        
+        animate();
+    </script>
+
+    <!-- 截图支持脚本 -->
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

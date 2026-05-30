@@ -336,6 +336,51 @@ const threejsData = {
               version: "r179",
               url: "examples/z258/basic-modelAnimation",
             },
+            {
+              id: "basic-modelLoad",
+              title: "模型加载",
+              description:
+                "展示多种3D模型格式加载，包括GLTF/GLB、FBX、OBJ格式，支持加载进度显示",
+              thumbnail: "images/basic-modelLoad.jpg",
+              version: "r179",
+              url: "examples/z258/basic-modelLoad",
+            },
+            {
+              id: "basic-modelShadow",
+              title: "模型阴影",
+              description:
+                "展示Three.js阴影系统，支持光源位置调整、阴影模糊度和透明度控制",
+              thumbnail: "images/basic-modelShadow.jpg",
+              version: "r179",
+              url: "examples/z258/basic-modelShadow",
+            },
+            {
+              id: "basic-loadingAnimate",
+              title: "加载动画",
+              description:
+                "展示模型加载进度动画和GLTF骨骼动画播放控制，支持暂停和继续",
+              thumbnail: "images/basic-loadingAnimate.jpg",
+              version: "r179",
+              url: "examples/z258/basic-loadingAnimate",
+            },
+            {
+              id: "basic-cameraAnimate",
+              title: "相机动画",
+              description:
+                "展示多种相机动画效果，包括环绕运动、飞行穿梭、镜头抖动、缩放聚焦",
+              thumbnail: "images/basic-cameraAnimate.jpg",
+              version: "r179",
+              url: "examples/z258/basic-cameraAnimate",
+            },
+            {
+              id: "basic-skyAndEnv",
+              title: "天空盒与环境",
+              description:
+                "展示程序化天空盒和环境贴图效果，支持多种天空主题和材质参数调节",
+              thumbnail: "images/basic-skyAndEnv.jpg",
+              version: "r179",
+              url: "examples/z258/basic-skyAndEnv",
+            },
           ],
         },
       ],
@@ -2544,6 +2589,14 @@ const threejsData = {
               thumbnail: "images/expand-geoBorder.jpg",
               version: "r179",
               url: "examples/z258/expand-geoBorder",
+            },
+            {
+              id: "expand-heatmapModel",
+              title: "模型热力图",
+              description: "3D模型热力图可视化，展示模型表面的数据热力分布效果",
+              thumbnail: "images/expand-heatmapModel.jpg",
+              version: "r179",
+              url: "examples/z258/expand-heatmapModel",
             },
           ],
         },
