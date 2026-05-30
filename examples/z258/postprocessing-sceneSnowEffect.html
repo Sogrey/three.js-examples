@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="场景雪景效果，展示粒子系统模拟下雪">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 场景雪</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+    <style>
+        body {
+            background: #0a1628;
+            margin: 0;
+            overflow: hidden;
+        }
+        #snowUI {
+            position: absolute;
+            top: 50px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            z-index: 100;
+            max-width: 280px;
+        }
+        #snowUI h3 {
+            margin: 0 0 10px 0;
+            color: #00ff00;
+            font-size: 16px;
+        }
+        #snowUI .control {
+            margin: 10px 0;
+        }
+        #snowUI label {
+            display: block;
+            font-size: 11px;
+            color: #aaa;
+            margin-bottom: 5px;
+        }
+        #snowUI input[type="range"] {
+            width: 100%;
+            height: 4px;
+            background: #333;
+            border-radius: 2px;
+            outline: none;
+        }
+        #snowUI .value {
+            font-size: 10px;
+            color: #00ff00;
+            text-align: right;
+        }
+        #snowUI .btn {
+            display: block;
+            width: 100%;
+            margin: 5px 0;
+            padding: 8px 12px;
+            background: #333;
+            border: 1px solid #555;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 11px;
+        }
+        #snowUI .btn:hover {
+            background: #444;
+            border-color: #00ff00;
+        }
+        #snowUI .btn.active {
+            background: #00ff00;
+            color: #000;
+        }
+        #snowUI .info {
+            font-size: 10px;
+            color: #aaa;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+    
+    <div id="snowUI">
+        <h3>❄️ 场景雪</h3>
+        <div class="control">
+            <label>雪花数量</label>
+            <input type="range" id="snowCount" min="1000" max="20000" value="8000" step="1000">
+            <div class="value" id="countValue">8000</div>
+        </div>
+        <div class="control">
+            <label>下落速度</label>
+            <input type="range" id="fallSpeed" min="1" max="10" value="3" step="0.5">
+            <div class="value" id="speedValue">3.0</div>
+        </div>
+        <div class="control">
+            <label>风力强度</label>
+            <input type="range" id="windStrength" min="0" max="5" value="1" step="0.5">
+            <div class="value" id="windValue">1.0</div>
+        </div>
+        <div class="control">
+            <label>雪花大小</label>
+            <input type="range" id="snowSize" min="0.5" max="3" value="1" step="0.1">
+            <div class="value" id="sizeValue">1.0</div>
+        </div>
+        <button class="btn active" id="btnSnowOn">下雪开启</button>
+        <button class="btn" id="btnSnowOff">下雪关闭</button>
+        <button class="btn" id="btnBlizzard">暴风雪</button>
+        <button class="btn" id="btnGentle">小雪</button>
+        <div class="info">
+            左键拖拽旋转视角<br>
+            滚轮缩放<br>
+            调整参数查看雪景效果
+        </div>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        const container = document.getElementById('threeContainer');
+        
+        // 场景设置
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a1628);
+        scene.fog = new THREE.FogExp2(0x0a1628, 0.02);
+        
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 8, 15);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.shadowMap.enabled = true;
+        container.appendChild(renderer.domElement);
+        
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.maxPolarAngle = Math.PI / 2 - 0.05;
+        
+        // 灯光
+        const ambientLight = new THREE.AmbientLight(0x404060, 0.5);
+        scene.add(ambientLight);
+        
+        const moonLight = new THREE.DirectionalLight(0xaaccff, 0.8);
+        moonLight.position.set(10, 20, 10);
+        moonLight.castShadow = true;
+        scene.add(moonLight);
+        
+        // 创建地面
+        const floorGeometry = new THREE.PlaneGeometry(100, 100);
+        const floorMaterial = new THREE.MeshStandardMaterial({
+            color: 0x2a3a4a,
+            roughness: 0.9,
+            metalness: 0.1
+        });
+        const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+        floor.rotation.x = -Math.PI / 2;
+        floor.receiveShadow = true;
+        scene.add(floor);
+        
+        // 创建树木
+        function createTree(x, z) {
+            const trunkGeometry = new THREE.CylinderGeometry(0.3, 0.5, 2, 8);
+            const trunkMaterial = new THREE.MeshStandardMaterial({ color: 0x4a3728 });
+            const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
+            trunk.position.set(x, 1, z);
+            trunk.castShadow = true;
+            scene.add(trunk);
+            
+            const leavesGeometry = new THREE.ConeGeometry(2, 5, 8);
+            const leavesMaterial = new THREE.MeshStandardMaterial({ color: 0x1a3a2a });
+            const leaves = new THREE.Mesh(leavesGeometry, leavesMaterial);
+            leaves.position.set(x, 4, z);
+            leaves.castShadow = true;
+            scene.add(leaves);
+            
+            // 积雪
+            const snowGeometry = new THREE.ConeGeometry(1.8, 1, 8);
+            const snowMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
+            const snow = new THREE.Mesh(snowGeometry, snowMaterial);
+            snow.position.set(x, 5.5, z);
+            scene.add(snow);
+        }
+        
+        for (let i = 0; i < 15; i++) {
+            const angle = (i / 15) * Math.PI * 2;
+            const radius = 10 + Math.random() * 15;
+            createTree(Math.cos(angle) * radius, Math.sin(angle) * radius);
+        }
+        
+        // 创建雪人
+        function createSnowman(x, z) {
+            const snowMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 });
+            
+            // 身体
+            const bodyGeometry = new THREE.SphereGeometry(1.2, 16, 16);
+            const body = new THREE.Mesh(bodyGeometry, snowMaterial);
+            body.position.set(x, 1.2, z);
+            body.castShadow = true;
+            scene.add(body);
+            
+            // 头
+            const headGeometry = new THREE.SphereGeometry(0.8, 16, 16);
+            const head = new THREE.Mesh(headGeometry, snowMaterial);
+            head.position.set(x, 2.8, z);
+            head.castShadow = true;
+            scene.add(head);
+            
+            // 眼睛
+            const eyeGeometry = new THREE.SphereGeometry(0.1, 8, 8);
+            const eyeMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+            const eye1 = new THREE.Mesh(eyeGeometry, eyeMaterial);
+            eye1.position.set(x - 0.25, 3, z + 0.7);
+            scene.add(eye1);
+            const eye2 = new THREE.Mesh(eyeGeometry, eyeMaterial);
+            eye2.position.set(x + 0.25, 3, z + 0.7);
+            scene.add(eye2);
+            
+            // 鼻子
+            const noseGeometry = new THREE.ConeGeometry(0.1, 0.5, 8);
+            const noseMaterial = new THREE.MeshStandardMaterial({ color: 0xff6600 });
+            const nose = new THREE.Mesh(noseGeometry, noseMaterial);
+            nose.rotation.x = Math.PI / 2;
+            nose.position.set(x, 2.9, z + 0.9);
+            scene.add(nose);
+        }
+        
+        createSnowman(5, 5);
+        createSnowman(-6, 3);
+        
+        // 雪花粒子系统
+        let snowSystem;
+        let snowGeometry;
+        let snowMaterial;
+        const maxSnowCount = 20000;
+        
+        function createSnowTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 32;
+            canvas.height = 32;
+            const ctx = canvas.getContext('2d');
+            
+            const gradient = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
+            gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+            gradient.addColorStop(0.4, 'rgba(255, 255, 255, 0.8)');
+            gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 32, 32);
+            
+            return new THREE.CanvasTexture(canvas);
+        }
+        
+        function createSnowSystem(count) {
+            if (snowSystem) {
+                scene.remove(snowSystem);
+                snowGeometry.dispose();
+            }
+            
+            snowGeometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(maxSnowCount * 3);
+            const velocities = new Float32Array(maxSnowCount * 3);
+            const sizes = new Float32Array(maxSnowCount);
+            
+            for (let i = 0; i < maxSnowCount; i++) {
+                positions[i * 3] = (Math.random() - 0.5) * 100;
+                positions[i * 3 + 1] = Math.random() * 50;
+                positions[i * 3 + 2] = (Math.random() - 0.5) * 100;
+                
+                velocities[i * 3] = (Math.random() - 0.5) * 0.5;
+                velocities[i * 3 + 1] = -Math.random() * 0.5 - 0.2;
+                velocities[i * 3 + 2] = (Math.random() - 0.5) * 0.5;
+                
+                sizes[i] = Math.random() * 0.5 + 0.5;
+            }
+            
+            snowGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            snowGeometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3));
+            snowGeometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+            
+            snowMaterial = new THREE.PointsMaterial({
+                color: 0xffffff,
+                size: 0.5,
+                map: createSnowTexture(),
+                transparent: true,
+                opacity: 0.8,
+                depthWrite: false,
+                blending: THREE.AdditiveBlending
+            });
+            
+            snowSystem = new THREE.Points(snowGeometry, snowMaterial);
+            snowSystem.frustumCulled = false;
+            scene.add(snowSystem);
+            
+            return count;
+        }
+        
+        let activeSnowCount = createSnowSystem(8000);
+        
+        // 动画变量
+        let time = 0;
+        let isSnowing = true;
+        let fallSpeed = 3;
+        let windStrength = 1;
+        let snowSize = 1;
+        
+        // UI控制
+        const snowCountSlider = document.getElementById('snowCount');
+        const countValueDisplay = document.getElementById('countValue');
+        const fallSpeedSlider = document.getElementById('fallSpeed');
+        const speedValueDisplay = document.getElementById('speedValue');
+        const windStrengthSlider = document.getElementById('windStrength');
+        const windValueDisplay = document.getElementById('windValue');
+        const snowSizeSlider = document.getElementById('snowSize');
+        const sizeValueDisplay = document.getElementById('sizeValue');
+        
+        snowCountSlider.addEventListener('input', (e) => {
+            const value = parseInt(e.target.value);
+            countValueDisplay.textContent = value;
+            activeSnowCount = value;
+        });
+        
+        fallSpeedSlider.addEventListener('input', (e) => {
+            const value = parseFloat(e.target.value);
+            speedValueDisplay.textContent = value.toFixed(1);
+            fallSpeed = value;
+        });
+        
+        windStrengthSlider.addEventListener('input', (e) => {
+            const value = parseFloat(e.target.value);
+            windValueDisplay.textContent = value.toFixed(1);
+            windStrength = value;
+        });
+        
+        snowSizeSlider.addEventListener('input', (e) => {
+            const value = parseFloat(e.target.value);
+            sizeValueDisplay.textContent = value.toFixed(1);
+            snowSize = value;
+            snowMaterial.size = 0.5 * value;
+        });
+        
+        document.getElementById('btnSnowOn').addEventListener('click', () => {
+            isSnowing = true;
+            snowSystem.visible = true;
+            document.getElementById('btnSnowOn').classList.add('active');
+            document.getElementById('btnSnowOff').classList.remove('active');
+        });
+        
+        document.getElementById('btnSnowOff').addEventListener('click', () => {
+            isSnowing = false;
+            snowSystem.visible = false;
+            document.getElementById('btnSnowOff').classList.add('active');
+            document.getElementById('btnSnowOn').classList.remove('active');
+        });
+        
+        document.getElementById('btnBlizzard').addEventListener('click', () => {
+            snowCountSlider.value = 15000;
+            countValueDisplay.textContent = '15000';
+            activeSnowCount = 15000;
+            
+            fallSpeedSlider.value = 8;
+            speedValueDisplay.textContent = '8.0';
+            fallSpeed = 8;
+            
+            windStrengthSlider.value = 4;
+            windValueDisplay.textContent = '4.0';
+            windStrength = 4;
+            
+            snowSizeSlider.value = 1.5;
+            sizeValueDisplay.textContent = '1.5';
+            snowSize = 1.5;
+            snowMaterial.size = 0.75;
+        });
+        
+        document.getElementById('btnGentle').addEventListener('click', () => {
+            snowCountSlider.value = 3000;
+            countValueDisplay.textContent = '3000';
+            activeSnowCount = 3000;
+            
+            fallSpeedSlider.value = 1.5;
+            speedValueDisplay.textContent = '1.5';
+            fallSpeed = 1.5;
+            
+            windStrengthSlider.value = 0.5;
+            windValueDisplay.textContent = '0.5';
+            windStrength = 0.5;
+            
+            snowSizeSlider.value = 0.7;
+            sizeValueDisplay.textContent = '0.7';
+            snowSize = 0.7;
+            snowMaterial.size = 0.35;
+        });
+        
+        // 窗口调整
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // 暴露到 window 供截图使用
+        window.renderer = renderer;
+        window.camera = camera;
+        window.scene = scene;
+        
+        // 动画循环
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            time += 0.01;
+            
+            if (isSnowing && snowSystem) {
+                const positions = snowGeometry.attributes.position.array;
+                const velocities = snowGeometry.attributes.velocity.array;
+                
+                for (let i = 0; i < activeSnowCount; i++) {
+                    const idx = i * 3;
+                    
+                    // 更新位置
+                    positions[idx] += velocities[idx] * fallSpeed + Math.sin(time + i) * windStrength * 0.02;
+                    positions[idx + 1] += velocities[idx + 1] * fallSpeed;
+                    positions[idx + 2] += velocities[idx + 2] * fallSpeed + Math.cos(time + i * 0.5) * windStrength * 0.01;
+                    
+                    // 重置落到地面的雪花
+                    if (positions[idx + 1] < 0) {
+                        positions[idx] = (Math.random() - 0.5) * 100;
+                        positions[idx + 1] = 50;
+                        positions[idx + 2] = (Math.random() - 0.5) * 100;
+                    }
+                    
+                    // 边界检查
+                    if (Math.abs(positions[idx]) > 50) {
+                        positions[idx] = -positions[idx] * 0.9;
+                    }
+                    if (Math.abs(positions[idx + 2]) > 50) {
+                        positions[idx + 2] = -positions[idx + 2] * 0.9;
+                    }
+                }
+                
+                snowGeometry.attributes.position.needsUpdate = true;
+            }
+            
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        
+        animate();
+    </script>
+
+    <!-- 截图支持脚本 -->
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

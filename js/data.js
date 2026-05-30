@@ -2032,6 +2032,14 @@ const threejsData = {
               version: "r179",
               url: "examples/z258/postprocessing-deferredLighting",
             },
+            {
+              id: "postprocessing-sceneSnowEffect",
+              title: "场景雪",
+              description: "场景雪景效果，展示粒子系统模拟下雪",
+              thumbnail: "images/postprocessing-sceneSnowEffect.jpg",
+              version: "r179",
+              url: "examples/z258/postprocessing-sceneSnowEffect",
+            },
           ],
         },
         {
