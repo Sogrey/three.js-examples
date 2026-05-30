@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="延迟光照效果，展示多光源渲染">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 延迟光照</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+    <style>
+        body {
+            background: #000;
+            margin: 0;
+            overflow: hidden;
+        }
+        #deferredUI {
+            position: absolute;
+            top: 50px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            z-index: 100;
+            max-width: 280px;
+        }
+        #deferredUI h3 {
+            margin: 0 0 10px 0;
+            color: #00ff00;
+            font-size: 16px;
+        }
+        #deferredUI .control {
+            margin: 10px 0;
+        }
+        #deferredUI label {
+            display: block;
+            font-size: 11px;
+            color: #aaa;
+            margin-bottom: 5px;
+        }
+        #deferredUI input[type="range"] {
+            width: 100%;
+            height: 4px;
+            background: #333;
+            border-radius: 2px;
+            outline: none;
+        }
+        #deferredUI .value {
+            font-size: 10px;
+            color: #00ff00;
+            text-align: right;
+        }
+        #deferredUI .btn {
+            display: block;
+            width: 100%;
+            margin: 5px 0;
+            padding: 8px 12px;
+            background: #333;
+            border: 1px solid #555;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 11px;
+        }
+        #deferredUI .btn:hover {
+            background: #444;
+            border-color: #00ff00;
+        }
+        #deferredUI .btn.active {
+            background: #00ff00;
+            color: #000;
+        }
+        #deferredUI .info {
+            font-size: 10px;
+            color: #aaa;
+            margin-top: 10px;
+        }
+        #lightCount {
+            font-size: 14px;
+            color: #00ff00;
+            text-align: center;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+    
+    <div id="deferredUI">
+        <h3>💡 延迟光照</h3>
+        <div id="lightCount">光源数量: 50</div>
+        <div class="control">
+            <label>光源数量</label>
+            <input type="range" id="lightNum" min="10" max="100" value="50" step="10">
+            <div class="value" id="lightNumValue">50</div>
+        </div>
+        <div class="control">
+            <label>光源强度</label>
+            <input type="range" id="lightIntensity" min="0.5" max="3" value="1.5" step="0.1">
+            <div class="value" id="intensityValue">1.5</div>
+        </div>
+        <div class="control">
+            <label>光源范围</label>
+            <input type="range" id="lightDistance" min="5" max="20" value="10" step="1">
+            <div class="value" id="distanceValue">10</div>
+        </div>
+        <button class="btn active" id="btnAnimate">动画模式</button>
+        <button class="btn" id="btnStatic">静态模式</button>
+        <button class="btn" id="btnRandomize">随机位置</button>
+        <div class="info">
+            左键拖拽旋转视角<br>
+            滚轮缩放<br>
+            展示多光源渲染效果
+        </div>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        const container = document.getElementById('threeContainer');
+        
+        // 场景设置
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x050505);
+        
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(15, 10, 15);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.shadowMap.enabled = true;
+        container.appendChild(renderer.domElement);
+        
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        
+        // 创建场景物体
+        const objects = [];
+        const objectColors = [0x888888, 0x666666, 0x444444, 0xaaaaaa];
+        
+        // 地面
+        const floorGeometry = new THREE.PlaneGeometry(40, 40);
+        const floorMaterial = new THREE.MeshStandardMaterial({
+            color: 0x222222,
+            roughness: 0.8,
+            metalness: 0.2
+        });
+        const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+        floor.rotation.x = -Math.PI / 2;
+        floor.receiveShadow = true;
+        scene.add(floor);
+        
+        // 创建随机几何体
+        const geometries = [
+            new THREE.BoxGeometry(1, 1, 1),
+            new THREE.SphereGeometry(0.6, 16, 16),
+            new THREE.CylinderGeometry(0.4, 0.4, 1.2, 16),
+            new THREE.ConeGeometry(0.5, 1, 16),
+            new THREE.TorusGeometry(0.5, 0.2, 8, 16)
+        ];
+        
+        for (let i = 0; i < 30; i++) {
+            const geometry = geometries[i % geometries.length];
+            const material = new THREE.MeshStandardMaterial({
+                color: objectColors[i % objectColors.length],
+                roughness: 0.5 + Math.random() * 0.3,
+                metalness: 0.3 + Math.random() * 0.4
+            });
+            const mesh = new THREE.Mesh(geometry, material);
+            
+            mesh.position.set(
+                (Math.random() - 0.5) * 30,
+                0.5 + Math.random() * 2,
+                (Math.random() - 0.5) * 30
+            );
+            mesh.rotation.set(
+                Math.random() * Math.PI,
+                Math.random() * Math.PI,
+                Math.random() * Math.PI
+            );
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            scene.add(mesh);
+            objects.push(mesh);
+        }
+        
+        // 光源管理
+        const lights = [];
+        const lightColors = [0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff, 0x00ffff, 0xff8800, 0x8800ff];
+        const maxLights = 100;
+        
+        function createLight(index) {
+            const color = lightColors[index % lightColors.length];
+            const light = new THREE.PointLight(color, 1.5, 10);
+            
+            const angle = (index / maxLights) * Math.PI * 4;
+            const radius = 5 + (index % 10) * 1.5;
+            const height = 2 + (index % 5) * 1.5;
+            
+            light.position.set(
+                Math.cos(angle) * radius,
+                height,
+                Math.sin(angle) * radius
+            );
+            
+            // 添加光源可视化
+            const sphereGeometry = new THREE.SphereGeometry(0.1, 8, 8);
+            const sphereMaterial = new THREE.MeshBasicMaterial({ color: color });
+            const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+            sphere.position.copy(light.position);
+            scene.add(sphere);
+            
+            scene.add(light);
+            return { light, sphere, baseAngle: angle, baseRadius: radius, baseHeight: height, speed: 0.5 + Math.random() };
+        }
+        
+        // 初始化光源
+        for (let i = 0; i < maxLights; i++) {
+            lights.push(createLight(i));
+            if (i >= 50) {
+                lights[i].light.visible = false;
+                lights[i].sphere.visible = false;
+            }
+        }
+        
+        // 动画变量
+        let time = 0;
+        let isAnimating = true;
+        let activeLightCount = 50;
+        let lightIntensity = 1.5;
+        let lightDistance = 10;
+        
+        // UI控制
+        const lightNumSlider = document.getElementById('lightNum');
+        const lightNumValueDisplay = document.getElementById('lightNumValue');
+        const lightCountDisplay = document.getElementById('lightCount');
+        const lightIntensitySlider = document.getElementById('lightIntensity');
+        const intensityValueDisplay = document.getElementById('intensityValue');
+        const lightDistanceSlider = document.getElementById('lightDistance');
+        const distanceValueDisplay = document.getElementById('distanceValue');
+        
+        function updateLightCount(count) {
+            activeLightCount = count;
+            lightNumValueDisplay.textContent = count;
+            lightCountDisplay.textContent = `光源数量: ${count}`;
+            
+            lights.forEach((lightObj, i) => {
+                const visible = i < count;
+                lightObj.light.visible = visible;
+                lightObj.sphere.visible = visible;
+            });
+        }
+        
+        lightNumSlider.addEventListener('input', (e) => {
+            updateLightCount(parseInt(e.target.value));
+        });
+        
+        lightIntensitySlider.addEventListener('input', (e) => {
+            const value = parseFloat(e.target.value);
+            intensityValueDisplay.textContent = value.toFixed(1);
+            lightIntensity = value;
+            lights.forEach(lightObj => {
+                lightObj.light.intensity = value;
+            });
+        });
+        
+        lightDistanceSlider.addEventListener('input', (e) => {
+            const value = parseInt(e.target.value);
+            distanceValueDisplay.textContent = value;
+            lightDistance = value;
+            lights.forEach(lightObj => {
+                lightObj.light.distance = value;
+            });
+        });
+        
+        document.getElementById('btnAnimate').addEventListener('click', () => {
+            isAnimating = true;
+            document.getElementById('btnAnimate').classList.add('active');
+            document.getElementById('btnStatic').classList.remove('active');
+        });
+        
+        document.getElementById('btnStatic').addEventListener('click', () => {
+            isAnimating = false;
+            document.getElementById('btnStatic').classList.add('active');
+            document.getElementById('btnAnimate').classList.remove('active');
+        });
+        
+        document.getElementById('btnRandomize').addEventListener('click', () => {
+            lights.forEach((lightObj, i) => {
+                if (i < activeLightCount) {
+                    lightObj.baseAngle = Math.random() * Math.PI * 2;
+                    lightObj.baseRadius = 3 + Math.random() * 12;
+                    lightObj.baseHeight = 1 + Math.random() * 4;
+                    lightObj.speed = 0.3 + Math.random() * 1.5;
+                }
+            });
+        });
+        
+        // 窗口调整
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // 暴露到 window 供截图使用
+        window.renderer = renderer;
+        window.camera = camera;
+        window.scene = scene;
+        
+        // 动画循环
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            time += 0.01;
+            
+            if (isAnimating) {
+                lights.forEach((lightObj, i) => {
+                    if (i >= activeLightCount) return;
+                    
+                    const angle = lightObj.baseAngle + time * lightObj.speed * 0.5;
+                    const radius = lightObj.baseRadius + Math.sin(time + i) * 2;
+                    const height = lightObj.baseHeight + Math.sin(time * 2 + i) * 1;
+                    
+                    lightObj.light.position.x = Math.cos(angle) * radius;
+                    lightObj.light.position.z = Math.sin(angle) * radius;
+                    lightObj.light.position.y = Math.max(0.5, height);
+                    
+                    lightObj.sphere.position.copy(lightObj.light.position);
+                });
+            }
+            
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        
+        animate();
+    </script>
+
+    <!-- 截图支持脚本 -->
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

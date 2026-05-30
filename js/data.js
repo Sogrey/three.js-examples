@@ -2024,6 +2024,14 @@ const threejsData = {
               version: "r179",
               url: "examples/z258/postprocessing-afterimagePass",
             },
+            {
+              id: "postprocessing-deferredLighting",
+              title: "延迟光照",
+              description: "延迟光照效果，展示多光源渲染",
+              thumbnail: "images/postprocessing-deferredLighting.jpg",
+              version: "r179",
+              url: "examples/z258/postprocessing-deferredLighting",
+            },
           ],
         },
         {
