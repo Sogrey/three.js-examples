@@ -294,30 +294,19 @@
         let isUpdating = true;
         let currentPointCount = 20;
         let currentSpeed = 200;
+        let modelBoundingBox = null;
         
         const objLoader = new OBJLoader();
         objLoader.load(
             '../../models/obj/ninja/ninjaHead_Low.obj',
             (object) => {
-                // 计算模型边界
+                // 计算模型边界（在应用变换前）
                 const box = new THREE.Box3().setFromObject(object);
                 const boxSize = new THREE.Vector3();
                 box.getSize(boxSize);
                 
-                // 创建热力图材质
-                heatmapMaterial = new HeatmapMaterial({
-                    maxPoints: 50,
-                    opacity: 0.8,
-                    boxMin: box.min,
-                    boxMax: box.max
-                });
-                
-                // 应用材质
-                object.traverse((child) => {
-                    if (child.isMesh) {
-                        child.material = heatmapMaterial;
-                    }
-                });
+                // 保存原始边界用于数据生成
+                modelBoundingBox = box.clone();
                 
                 // 居中并缩放
                 const center = new THREE.Vector3();
@@ -328,10 +317,38 @@
                 const scale = 4 / maxDim;
                 object.scale.set(scale, scale, scale);
                 
+                // 更新边界到变换后的坐标系
+                const scaledBox = new THREE.Box3();
+                object.traverse((child) => {
+                    if (child.isMesh) {
+                        child.geometry.computeBoundingBox();
+                        const childBox = child.geometry.boundingBox.clone();
+                        childBox.applyMatrix4(child.matrixWorld);
+                        scaledBox.union(childBox);
+                    }
+                });
+                
+                // 创建热力图材质
+                heatmapMaterial = new HeatmapMaterial({
+                    maxPoints: 50,
+                    opacity: 0.9,
+                    boxMin: new THREE.Vector3(-2, -2, -2),
+                    boxMax: new THREE.Vector3(2, 2, 2)
+                });
+                
+                // 应用材质
+                object.traverse((child) => {
+                    if (child.isMesh) {
+                        // 确保几何体有正确的法线
+                        child.geometry.computeVertexNormals();
+                        child.material = heatmapMaterial;
+                    }
+                });
+                
                 scene.add(object);
                 
                 // 开始数据更新
-                startDataUpdate(box, currentPointCount, currentSpeed);
+                startDataUpdate(currentPointCount, currentSpeed);
                 
                 loadingDiv.style.display = 'none';
             },
@@ -342,17 +359,16 @@
             }
         );
         
-        function generateRandomData(box, count) {
+        function generateRandomData(count) {
             const points = [];
             const values = [];
-            const size = new THREE.Vector3();
-            box.getSize(size);
             
+            // 在模型周围生成数据点
             for (let i = 0; i < count; i++) {
                 const point = new THREE.Vector3(
-                    (Math.random() - 0.5) * size.x,
-                    (Math.random() - 0.5) * size.y,
-                    (Math.random() - 0.5) * size.z
+                    (Math.random() - 0.5) * 4,
+                    (Math.random() - 0.5) * 4,
+                    (Math.random() - 0.5) * 4
                 );
                 points.push(point);
                 values.push(Math.random());
@@ -361,18 +377,18 @@
             return { points, values };
         }
         
-        function startDataUpdate(box, count, speed) {
+        function startDataUpdate(count, speed) {
             if (updateInterval) clearInterval(updateInterval);
             
             // 初始数据
-            const data = generateRandomData(box, count);
+            const data = generateRandomData(count);
             heatmapMaterial.updateData(data.points, data.values);
             
             // 定期更新
             updateInterval = setInterval(() => {
                 if (!isUpdating) return;
                 
-                const data = generateRandomData(box, count);
+                const data = generateRandomData(count);
                 heatmapMaterial.updateData(data.points, data.values);
             }, speed);
         }
@@ -392,11 +408,7 @@
             pointCountValue.textContent = currentPointCount;
             
             if (heatmapMaterial) {
-                const box = new THREE.Box3(
-                    heatmapMaterial.uniforms.uBoxMin.value,
-                    heatmapMaterial.uniforms.uBoxMax.value
-                );
-                startDataUpdate(box, currentPointCount, currentSpeed);
+                startDataUpdate(currentPointCount, currentSpeed);
             }
         });
         
@@ -405,11 +417,7 @@
             speedValue.textContent = currentSpeed + 'ms';
             
             if (heatmapMaterial) {
-                const box = new THREE.Box3(
-                    heatmapMaterial.uniforms.uBoxMin.value,
-                    heatmapMaterial.uniforms.uBoxMax.value
-                );
-                startDataUpdate(box, currentPointCount, currentSpeed);
+                startDataUpdate(currentPointCount, currentSpeed);
             }
         });
         
