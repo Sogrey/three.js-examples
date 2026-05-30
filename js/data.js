@@ -2590,14 +2590,7 @@ const threejsData = {
               version: "r179",
               url: "examples/z258/expand-geoBorder",
             },
-            {
-              id: "expand-heatmapModel",
-              title: "模型热力图",
-              description: "3D模型热力图可视化，展示模型表面的数据热力分布效果",
-              thumbnail: "images/expand-heatmapModel.jpg",
-              version: "r179",
-              url: "examples/z258/expand-heatmapModel",
-            },
+
           ],
         },
       ],

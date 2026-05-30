@@ -1,0 +1,520 @@
+文件夹 PATH 列表
+卷序列号为 82C4-0772
+E:.
+│  tree.txt
+│  下载测试模型.txt
+│  
+├─3dm
+│      Rhino_Logo.3dm
+│      
+├─3ds
+│  └─portalgun
+│      │  color.jpg
+│      │  portalgun.3ds
+│      │  
+│      └─textures
+│              color.jpg
+│              normal.jpg
+│              
+├─3mf
+│      cube_gears.3mf
+│      facecolors.3mf
+│      multipletextures.3mf
+│      README.md
+│      truck.3mf
+│      vertexcolors.3mf
+│      volumetric.3mf
+│      
+├─amf
+│      rook.amf
+│      
+├─bvh
+│      pirouette.bvh
+│      
+├─collada
+│  │  abb_irb52_7_120.dae
+│  │  skin_and_morph.dae
+│  │  
+│  ├─elf
+│  │      Body_tex_003.jpg
+│  │      ce.jpg
+│  │      elf.dae
+│  │      Face_tex_002_toObj.jpg
+│  │      Hair_tex_001.jpg
+│  │      
+│  ├─pump
+│  │      pump.dae
+│  │      pump_body.jpg
+│  │      pump_gears.jpg
+│  │      pump_metalreflect.jpg
+│  │      
+│  └─stormtrooper
+│          stormtrooper.dae
+│          Stormtrooper_D.jpg
+│          
+├─draco
+│      bunny.drc
+│      
+├─fbx
+│  │  bunny_thickness.jpg
+│  │  city.FBX
+│  │  mixamo.fbx
+│  │  monkey.fbx
+│  │  monkey_embedded_texture.fbx
+│  │  morph_test.fbx
+│  │  nurbs.fbx
+│  │  README.md
+│  │  Samba Dancing.fbx
+│  │  shanghai.FBX
+│  │  stanford-bunny.fbx
+│  │  vCube.fbx
+│  │  white.jpg
+│  │  
+│  └─monkey.fbm
+│          UVTexture.png
+│          
+├─gcode
+│      benchy.gcode
+│      
+├─geojson
+│  └─world-geo-json-zh
+│          world.zh.json
+│          
+├─gltf
+│  │  AnisotropyBarnLamp.glb
+│  │  bath_day.glb
+│  │  BoomBox.glb
+│  │  build.glb
+│  │  build3.glb
+│  │  car.glb
+│  │  Cesium_Air.glb
+│  │  coffeemat.glb
+│  │  coffeeMug.glb
+│  │  collision-world.glb
+│  │  computer.glb
+│  │  daodan.glb
+│  │  DispersionTest.glb
+│  │  DragonAttenuation.glb
+│  │  duck.glb
+│  │  dungeon_warkarma.glb
+│  │  elegant.glb
+│  │  facecap.glb
+│  │  ferrari.glb
+│  │  ferrari_ao.png
+│  │  Flamingo.glb
+│  │  Fox.glb
+│  │  gears.glb
+│  │  Horse.glb
+│  │  IridescenceLamp.glb
+│  │  IridescentDishWithOlives.glb
+│  │  kira.glb
+│  │  LittlestTokyo.glb
+│  │  Michelle.glb
+│  │  minimalistic_modern_bedroom.glb
+│  │  modern_city.glb
+│  │  Parrot.glb
+│  │  pool.glb
+│  │  PrimaryIonDrive.glb
+│  │  readyplayer.me.glb
+│  │  rolex.glb
+│  │  ShaderBall.glb
+│  │  ShaderBall2.glb
+│  │  ShadowmappableMesh.glb
+│  │  SheenChair.glb
+│  │  ship_2.glb
+│  │  Soldier.glb
+│  │  space_ship_hallway.glb
+│  │  steampunk_camera.glb
+│  │  Stork.glb
+│  │  venice_mask.glb
+│  │  Xbot.blend
+│  │  Xbot.glb
+│  │  zhanguan.glb
+│  │  
+│  ├─AnimatedMorphSphere
+│  │  │  README.md
+│  │  │  
+│  │  ├─glTF
+│  │  │      AnimatedMorphSphere.bin
+│  │  │      AnimatedMorphSphere.gltf
+│  │  │      
+│  │  └─screenshot
+│  │          screenshot.gif
+│  │          
+│  ├─AVIFTest
+│  │      forest_house.glb
+│  │      
+│  ├─ClearcoatTest
+│  │      ClearcoatTest.glb
+│  │      README.md
+│  │      
+│  ├─DamagedHelmet
+│  │  │  README.md
+│  │  │  
+│  │  ├─glTF
+│  │  │      DamagedHelmet.bin
+│  │  │      DamagedHelmet.gltf
+│  │  │      Default_albedo.jpg
+│  │  │      Default_AO.jpg
+│  │  │      Default_emissive.jpg
+│  │  │      Default_metalRoughness.jpg
+│  │  │      Default_normal.jpg
+│  │  │      
+│  │  └─glTF-instancing
+│  │          DamagedHelmetGpuInstancing.gltf
+│  │          GpuInstancingRotation.bin
+│  │          GpuInstancingScale.bin
+│  │          GpuInstancingTranslation.bin
+│  │          
+│  ├─Flower
+│  │      Flower.glb
+│  │      README.md
+│  │      
+│  ├─LeePerrySmith
+│  │      Infinite-Level_02_Disp_NoSmoothUV-4096.jpg
+│  │      Infinite-Level_02_Tangent_SmoothUV.jpg
+│  │      LeePerrySmith.glb
+│  │      LeePerrySmith_License.txt
+│  │      Map-COL.jpg
+│  │      Map-SPEC.jpg
+│  │      
+│  ├─MaterialsVariantsShoe
+│  │  │  README.md
+│  │  │  
+│  │  ├─glTF
+│  │  │      diffuseBeach.jpg
+│  │  │      diffuseMidnight.jpg
+│  │  │      diffuseStreet.jpg
+│  │  │      MaterialsVariantsShoe.bin
+│  │  │      MaterialsVariantsShoe.gltf
+│  │  │      normal.jpg
+│  │  │      occlusionRougnessMetalness.jpg
+│  │  │      
+│  │  └─screenshot
+│  │          screenshot.jpg
+│  │          
+│  ├─Nefertiti
+│  │      Nefertiti.glb
+│  │      README.md
+│  │      
+│  └─RobotExpressive
+│          README.md
+│          RobotExpressive.glb
+│          
+├─ifc
+│      rac_advanced_sample_project.ifc
+│      
+├─json
+│  │  earthquake.json
+│  │  guangzhou.json
+│  │  pressure.json
+│  │  QRCode_buffergeometry.json
+│  │  suzanne_buffergeometry.json
+│  │  traffic.json
+│  │  WaltHeadLo_buffergeometry.json
+│  │  wind.json
+│  │  
+│  └─lightmap
+│          lightmap-ao-shadow.png
+│          lightmap.json
+│          readme.txt
+│          rocks.jpg
+│          stone.jpg
+│          
+├─kmz
+│      Box.kmz
+│      Readme.txt
+│      
+├─ldraw
+│  ├─ldraw_org_logo
+│  │      LDraw.org_logo_LICENSE.txt
+│  │      Stamp145.png
+│  │      
+│  └─officialLibrary
+│      │  CAlicense.txt
+│      │  CAreadme.txt
+│      │  Readme.txt
+│      │  
+│      └─models
+│              10174-1-ImperialAT-ST-UCS.mpd_Packed.mpd
+│              1621-1-LunarMPVVehicle.mpd_Packed.mpd
+│              30023-1-Lighthouse.ldr_Packed.mpd
+│              30051-1-X-wingFighter-Mini.mpd_Packed.mpd
+│              30054-1-AT-ST-Mini.mpd_Packed.mpd
+│              4489-1-AT-AT-Mini.mpd_Packed.mpd
+│              4494-1-Imperial Shuttle-Mini.mpd_Packed.mpd
+│              4838-1-MiniVehicles.mpd_Packed.mpd
+│              4915-1-MiniConstruction.mpd_Packed.mpd
+│              4918-1-MiniFlyers.mpd_Packed.mpd
+│              5935-1-IslandHopper.mpd_Packed.mpd
+│              6965-1-TIEIntercep_4h4MXk5.mpd_Packed.mpd
+│              6966-1-JediStarfighter-Mini.mpd_Packed.mpd
+│              7140-1-X-wingFighter.mpd_Packed.mpd
+│              889-1-RadarTruck.mpd_Packed.mpd
+│              car.ldr_Packed.mpd
+│              
+├─lwo
+│  │  LICENSE.txt
+│  │  
+│  ├─Images
+│  │  ├─environments
+│  │  │      kiara_8_sunset.jpg
+│  │  │      kloofendal_48d_partly_cloudy.jpg
+│  │  │      
+│  │  ├─material-PBR-abstract
+│  │  │      Abstract_008_basecolor.jpg
+│  │  │      Abstract_008_bump.jpg
+│  │  │      Abstract_008_metallic.jpg
+│  │  │      Abstract_008_normal.jpg
+│  │  │      Abstract_008_roughness.jpg
+│  │  │      
+│  │  └─material-Phong-metal
+│  │          167_BUMP.jpg
+│  │          167_COLOR.JPG
+│  │          167_GLOSS.jpg
+│  │          167_SPEC.jpg
+│  │          
+│  └─Objects
+│      └─LWO3
+│              Demo.lwo
+│              
+├─md2
+│  ├─ogro
+│  │  │  ogro.md2
+│  │  │  Ogro.txt
+│  │  │  weapon.md2
+│  │  │  
+│  │  └─skins
+│  │          arboshak.png
+│  │          ctf_b.png
+│  │          ctf_r.png
+│  │          darkam.png
+│  │          freedom.png
+│  │          gib.png
+│  │          gordogh.png
+│  │          grok.jpg
+│  │          igdosh.png
+│  │          khorne.png
+│  │          nabogro.png
+│  │          ogrobase.png
+│  │          sharokh.png
+│  │          weapon.jpg
+│  │          
+│  └─ratamahatta
+│      │  ratamahatta.md2
+│      │  weapon.md2
+│      │  w_bfg.md2
+│      │  w_blaster.md2
+│      │  w_chaingun.md2
+│      │  w_glauncher.md2
+│      │  w_hyperblaster.md2
+│      │  w_machinegun.md2
+│      │  w_railgun.md2
+│      │  w_rlauncher.md2
+│      │  w_shotgun.md2
+│      │  w_sshotgun.md2
+│      │  
+│      └─skins
+│              ctf_b.png
+│              ctf_r.png
+│              dead.png
+│              gearwhore.png
+│              ratamahatta.png
+│              weapon.png
+│              w_bfg.png
+│              w_blaster.png
+│              w_chaingun.png
+│              w_glauncher.png
+│              w_hyperblaster.png
+│              w_machinegun.png
+│              w_railgun.png
+│              w_rlauncher.png
+│              w_shotgun.png
+│              w_sshotgun.png
+│              
+├─mdd
+│      cube.mdd
+│      
+├─nrrd
+│      I.nrrd
+│      README.txt
+│      stent.nrrd
+│      
+├─obj
+│  │  tree.obj
+│  │  
+│  ├─cerberus
+│  │      Cerberus.obj
+│  │      Cerberus_A.jpg
+│  │      Cerberus_M.jpg
+│  │      Cerberus_N.jpg
+│  │      Cerberus_R.jpg
+│  │      Cerberus_RM.jpg
+│  │      
+│  ├─female02
+│  │      01_-_Default1noCulling.JPG
+│  │      02_-_Default1noCulling.JPG
+│  │      03_-_Default1noCulling.JPG
+│  │      female02.mtl
+│  │      female02.obj
+│  │      female02_vertex_colors.obj
+│  │      readme.txt
+│  │      
+│  ├─male02
+│  │      01_-_Default1noCulling.JPG
+│  │      male-02-1noCulling.JPG
+│  │      male02.mtl
+│  │      male02.obj
+│  │      orig_02_-_Defaul1noCulling.JPG
+│  │      readme.txt
+│  │      
+│  ├─ninja
+│  │      ao.jpg
+│  │      displacement.jpg
+│  │      displacement.txt
+│  │      ninjaHead_Low.obj
+│  │      normal.png
+│  │      
+│  └─walt
+│          WaltHead.mtl
+│          WaltHead.obj
+│          
+├─pcd
+│  ├─ascii
+│  │      simple.pcd
+│  │      
+│  ├─binary
+│  │      Zaghetto.pcd
+│  │      Zaghetto_8bit.pcd
+│  │      
+│  └─binary_compressed
+│          pcl_logo.pcd
+│          
+├─pdb
+│      Al2O3.pdb
+│      aspirin.pdb
+│      buckyball.pdb
+│      caf2.pdb
+│      caffeine.pdb
+│      cholesterol.pdb
+│      cocaine.pdb
+│      cu.pdb
+│      cubane.pdb
+│      diamond.pdb
+│      ethanol.pdb
+│      glucose.pdb
+│      graphite.pdb
+│      lsd.pdb
+│      lycopene.pdb
+│      nacl.pdb
+│      nicotine.pdb
+│      ybco.pdb
+│      
+├─ply
+│  ├─ascii
+│  │      dolphins.ply
+│  │      dolphins_colored.ply
+│  │      
+│  └─binary
+│          dolphins_be.ply
+│          dolphins_le.ply
+│          Lucy100k.ply
+│          
+├─stl
+│  ├─ascii
+│  │      pr2_head_pan.stl
+│  │      pr2_head_tilt.stl
+│  │      slotted_disk.stl
+│  │      
+│  └─binary
+│          colored.stl
+│          pr2_head_pan.stl
+│          pr2_head_tilt.stl
+│          
+├─svg
+│  │  emptyPath.svg
+│  │  energy.svg
+│  │  hexagon.svg
+│  │  lineJoinsAndCaps.svg
+│  │  multiple-css-classes.svg
+│  │  singlePointTest.svg
+│  │  singlePointTest2.svg
+│  │  singlePointTest3.svg
+│  │  style-css-inside-defs.svg
+│  │  tiger.svg
+│  │  zero-radius.svg
+│  │  
+│  └─tests
+│      │  1.png
+│      │  1.svg
+│      │  2.png
+│      │  2.svg
+│      │  3.png
+│      │  3.svg
+│      │  4.png
+│      │  4.svg
+│      │  5.png
+│      │  5.svg
+│      │  6.png
+│      │  6.svg
+│      │  7.png
+│      │  7.svg
+│      │  8.png
+│      │  8.svg
+│      │  9.svg
+│      │  ellipseTransform.svg
+│      │  ordering.svg
+│      │  roundJoinPrecisionIssue.svg
+│      │  styles.svg
+│      │  units.svg
+│      │  
+│      └─testDefs
+│              defs4.svg
+│              defs5.svg
+│              Svg-defs-license.txt
+│              Svg-defs.svg
+│              Svg-defs2.svg
+│              Wave-defs-license.txt
+│              Wave-defs.svg
+│              
+├─tex
+│      tex.png
+│      
+├─tilt
+│      BRUSH_DOME.tilt
+│      
+├─usdz
+│      saeukkang.usdz
+│      
+├─vox
+│      menger.vox
+│      monu10.vox
+│      teapot.vox
+│      
+├─vrml
+│      creaseAngle.wrl
+│      crystal.wrl
+│      elevationGrid1.wrl
+│      elevationGrid2.wrl
+│      extrusion1.wrl
+│      extrusion2.wrl
+│      extrusion3.wrl
+│      house.wrl
+│      lines.wrl
+│      linesTransparent.wrl
+│      map.gif
+│      meshWithLines.wrl
+│      meshWithTexture.wrl
+│      pixelTexture.wrl
+│      points.wrl
+│      
+├─vtk
+│      bunny.vtk
+│      cube_ascii.vtp
+│      cube_binary.vtp
+│      cube_no_compression.vtp
+│      liver.vtk
+│      
+└─xyz
+        helix_201.xyz
+        
