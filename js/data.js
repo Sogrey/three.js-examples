@@ -1185,6 +1185,14 @@ const threejsData = {
               url: "examples/z258/application-measureTool",
             },
             {
+              id: "application-videoEffect",
+              title: "视频碎片",
+              description: "视频碎片效果，展示视频碎片化动画",
+              thumbnail: "images/application-videoEffect.jpg",
+              version: "r179",
+              url: "examples/z258/application-videoEffect",
+            },
+            {
               id: "shader-audioSolutions",
               title: "音乐可视化",
               description:
