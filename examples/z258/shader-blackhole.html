@@ -360,10 +360,8 @@
         window.addEventListener('message', function(event) {
             if (event.data && event.data.type === 'take-screenshot') {
                 try {
-                    // 触发一次渲染确保画面最新
-                    if (window.renderer && window.camera) {
-                        window.renderer.render(window.scene, window.camera);
-                    }
+                    // 全屏着色器示例，直接捕获当前canvas内容
+                    // 渲染是在ani循环中通过quad.render完成的
                     const quality = event.data.quality || 0.8;
                     const canvas = window.renderer.domElement;
                     const tempCanvas = document.createElement('canvas');
