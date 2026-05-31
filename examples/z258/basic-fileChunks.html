@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件分片 - Three.js r179</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            overflow: hidden;
+            background: #1a1a2e;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+        #container {
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        /* 控制面板 */
+        #controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.85);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            z-index: 100;
+            max-width: 350px;
+        }
+        #controls h3 {
+            color: #4a9eff;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        #controls .file-input-wrapper {
+            margin: 15px 0;
+        }
+        #controls input[type="file"] {
+            display: none;
+        }
+        #controls .file-label {
+            display: block;
+            padding: 12px;
+            background: #4a9eff;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        #controls .file-label:hover {
+            background: #3a8eef;
+        }
+        #controls .settings {
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+        }
+        #controls .setting-item {
+            margin: 10px 0;
+        }
+        #controls label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 13px;
+            color: #ccc;
+        }
+        #controls input[type="range"] {
+            width: 100%;
+        }
+        #controls .value-display {
+            text-align: right;
+            color: #4a9eff;
+            font-size: 12px;
+        }
+        #controls button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        #controls button:hover {
+            background: #ff5252;
+        }
+        #controls button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        
+        /* 进度面板 */
+        #progress-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.85);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            z-index: 100;
+            min-width: 280px;
+        }
+        #progress-panel h4 {
+            color: #4a9eff;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        .progress-item {
+            margin: 12px 0;
+        }
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            margin-bottom: 5px;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4a9eff, #6bcf7f);
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+        .progress-fill.complete {
+            background: #6bcf7f;
+        }
+        .progress-fill.error {
+            background: #ff6b6b;
+        }
+        .chunk-info {
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 6px;
+            font-size: 12px;
+        }
+        .chunk-info div {
+            margin: 5px 0;
+        }
+        
+        /* 可视化区域 */
+        #visualization {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            height: 200px;
+            background: rgba(0,0,0,0.85);
+            border-radius: 12px;
+            padding: 15px;
+            z-index: 100;
+        }
+        #chunk-canvas {
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* 消息提示 */
+        #message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 20px 40px;
+            border-radius: 12px;
+            font-size: 16px;
+            z-index: 200;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        #message.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+    
+    <div id="controls">
+        <h3>📁 文件分片加载</h3>
+        
+        <div class="file-input-wrapper">
+            <input type="file" id="fileInput" accept="*/*">
+            <label for="fileInput" class="file-label">选择文件</label>
+        </div>
+        
+        <div class="settings">
+            <div class="setting-item">
+                <label>分片大小</label>
+                <input type="range" id="chunkSize" min="64" max="1024" value="256">
+                <div class="value-display" id="chunkSizeValue">256 KB</div>
+            </div>
+            <div class="setting-item">
+                <label>并发数</label>
+                <input type="range" id="concurrency" min="1" max="10" value="3">
+                <div class="value-display" id="concurrencyValue">3</div>
+            </div>
+        </div>
+        
+        <button id="startBtn" disabled>开始加载</button>
+    </div>
+    
+    <div id="progress-panel">
+        <h4>📊 加载进度</h4>
+        
+        <div class="progress-item">
+            <div class="progress-label">
+                <span>总体进度</span>
+                <span id="overall-percent">0%</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="overall-bar" style="width: 0%"></div>
+            </div>
+        </div>
+        
+        <div class="progress-item">
+            <div class="progress-label">
+                <span>当前分片</span>
+                <span id="chunk-percent">0/0</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="chunk-bar" style="width: 0%"></div>
+            </div>
+        </div>
+        
+        <div class="chunk-info">
+            <div>文件大小: <span id="file-size">-</span></div>
+            <div>分片数量: <span id="chunk-count">-</span></div>
+            <div>已加载: <span id="loaded-size">-</span></div>
+            <div>速度: <span id="speed">-</span></div>
+            <div>预计时间: <span id="eta">-</span></div>
+        </div>
+    </div>
+    
+    <div id="visualization">
+        <canvas id="chunk-canvas"></canvas>
+    </div>
+    
+    <div id="message"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // 场景设置
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a1a2e);
+
+        // 相机
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(40, 40, 60);
+
+        // 渲染器
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        document.getElementById('container').appendChild(renderer.domElement);
+
+        // 控制器
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+
+        // 灯光
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(50, 100, 50);
+        scene.add(directionalLight);
+
+        // 地面网格
+        const gridHelper = new THREE.GridHelper(100, 20, 0x444444, 0x222222);
+        scene.add(gridHelper);
+
+        // 分片可视化组
+        const chunkGroup = new THREE.Group();
+        scene.add(chunkGroup);
+
+        // 文件处理变量
+        let selectedFile = null;
+        let chunkSize = 256 * 1024; // 256KB
+        let concurrency = 3;
+        let chunks = [];
+        let isLoading = false;
+
+        // 分片加载器类
+        class ChunkLoader {
+            constructor(file, chunkSize, concurrency) {
+                this.file = file;
+                this.chunkSize = chunkSize;
+                this.concurrency = concurrency;
+                this.totalChunks = Math.ceil(file.size / chunkSize);
+                this.loadedChunks = 0;
+                this.loadedBytes = 0;
+                this.startTime = 0;
+                this.chunkMeshes = [];
+            }
+
+            async load() {
+                this.startTime = Date.now();
+                chunks = [];
+                
+                // 创建分片可视化
+                this.createChunkVisualization();
+                
+                // 使用并发加载
+                const queue = [];
+                for (let i = 0; i < this.totalChunks; i++) {
+                    queue.push(i);
+                }
+                
+                const loadPromises = [];
+                for (let i = 0; i < this.concurrency; i++) {
+                    loadPromises.push(this.loadWorker(queue));
+                }
+                
+                await Promise.all(loadPromises);
+                
+                return chunks;
+            }
+
+            async loadWorker(queue) {
+                while (queue.length > 0) {
+                    const index = queue.shift();
+                    await this.loadChunk(index);
+                }
+            }
+
+            async loadChunk(index) {
+                const start = index * this.chunkSize;
+                const end = Math.min(start + this.chunkSize, this.file.size);
+                const chunk = this.file.slice(start, end);
+                
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    
+                    reader.onload = (e) => {
+                        const data = e.target.result;
+                        chunks[index] = {
+                            index: index,
+                            data: data,
+                            size: end - start,
+                            start: start,
+                            end: end
+                        };
+                        
+                        this.loadedChunks++;
+                        this.loadedBytes += (end - start);
+                        
+                        // 更新进度
+                        this.updateProgress(index);
+                        
+                        // 更新可视化
+                        this.updateChunkVisualization(index, true);
+                        
+                        resolve();
+                    };
+                    
+                    reader.onerror = () => {
+                        this.updateChunkVisualization(index, false);
+                        resolve();
+                    };
+                    
+                    // 模拟网络延迟
+                    setTimeout(() => {
+                        reader.readAsArrayBuffer(chunk);
+                    }, Math.random() * 100);
+                });
+            }
+
+            createChunkVisualization() {
+                // 清除旧的可视化
+                while(chunkGroup.children.length > 0) {
+                    chunkGroup.remove(chunkGroup.children[0]);
+                }
+                
+                this.chunkMeshes = [];
+                
+                // 计算网格布局
+                const cols = Math.ceil(Math.sqrt(this.totalChunks));
+                const spacing = 3;
+                const offset = (cols * spacing) / 2;
+                
+                for (let i = 0; i < this.totalChunks; i++) {
+                    const row = Math.floor(i / cols);
+                    const col = i % cols;
+                    
+                    const geometry = new THREE.BoxGeometry(2, 0.5, 2);
+                    const material = new THREE.MeshPhongMaterial({
+                        color: 0x444444,
+                        transparent: true,
+                        opacity: 0.8
+                    });
+                    
+                    const mesh = new THREE.Mesh(geometry, material);
+                    mesh.position.set(
+                        col * spacing - offset,
+                        0.25,
+                        row * spacing - offset
+                    );
+                    
+                    chunkGroup.add(mesh);
+                    this.chunkMeshes.push(mesh);
+                }
+            }
+
+            updateChunkVisualization(index, success) {
+                if (this.chunkMeshes[index]) {
+                    this.chunkMeshes[index].material.color.setHex(
+                        success ? 0x4a9eff : 0xff6b6b
+                    );
+                    this.chunkMeshes[index].material.opacity = 1;
+                    
+                    // 添加动画效果
+                    const targetY = 2;
+                    const startY = 0.25;
+                    const duration = 300;
+                    const startTime = Date.now();
+                    
+                    const animate = () => {
+                        const elapsed = Date.now() - startTime;
+                        const progress = Math.min(elapsed / duration, 1);
+                        
+                        this.chunkMeshes[index].position.y = startY + (targetY - startY) * progress;
+                        this.chunkMeshes[index].rotation.y = progress * Math.PI * 2;
+                        
+                        if (progress < 1) {
+                            requestAnimationFrame(animate);
+                        }
+                    };
+                    animate();
+                }
+            }
+
+            updateProgress(currentChunk) {
+                const overallPercent = (this.loadedChunks / this.totalChunks) * 100;
+                const chunkPercent = ((currentChunk + 1) / this.totalChunks) * 100;
+                
+                // 计算速度
+                const elapsed = (Date.now() - this.startTime) / 1000;
+                const speed = this.loadedBytes / elapsed;
+                const remaining = this.file.size - this.loadedBytes;
+                const eta = speed > 0 ? remaining / speed : 0;
+                
+                // 更新UI
+                document.getElementById('overall-percent').textContent = overallPercent.toFixed(1) + '%';
+                document.getElementById('overall-bar').style.width = overallPercent + '%';
+                
+                document.getElementById('chunk-percent').textContent = `${currentChunk + 1}/${this.totalChunks}`;
+                document.getElementById('chunk-bar').style.width = chunkPercent + '%';
+                
+                document.getElementById('loaded-size').textContent = this.formatSize(this.loadedBytes);
+                document.getElementById('speed').textContent = this.formatSize(speed) + '/s';
+                document.getElementById('eta').textContent = this.formatTime(eta);
+                
+                // 更新可视化画布
+                this.updateCanvas(overallPercent);
+            }
+
+            updateCanvas(percent) {
+                const canvas = document.getElementById('chunk-canvas');
+                const ctx = canvas.getContext('2d');
+                
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+                
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // 绘制标题
+                ctx.fillStyle = '#4a9eff';
+                ctx.font = '14px Arial';
+                ctx.fillText('分片加载可视化', 10, 20);
+                
+                // 绘制进度条
+                const barY = 50;
+                const barHeight = 30;
+                
+                ctx.fillStyle = 'rgba(255,255,255,0.2)';
+                ctx.fillRect(10, barY, canvas.width - 20, barHeight);
+                
+                const gradient = ctx.createLinearGradient(10, 0, canvas.width - 10, 0);
+                gradient.addColorStop(0, '#4a9eff');
+                gradient.addColorStop(1, '#6bcf7f');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(10, barY, (canvas.width - 20) * (percent / 100), barHeight);
+                
+                // 绘制百分比
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(percent.toFixed(1) + '%', canvas.width / 2, barY + 20);
+                
+                // 绘制分片状态
+                const chunkSize = 8;
+                const gap = 2;
+                const startY = barY + barHeight + 20;
+                const chunksPerRow = Math.floor((canvas.width - 20) / (chunkSize + gap));
+                
+                for (let i = 0; i < this.totalChunks; i++) {
+                    const row = Math.floor(i / chunksPerRow);
+                    const col = i % chunksPerRow;
+                    const x = 10 + col * (chunkSize + gap);
+                    const y = startY + row * (chunkSize + gap);
+                    
+                    if (i < this.loadedChunks) {
+                        ctx.fillStyle = '#6bcf7f';
+                    } else if (i === this.loadedChunks) {
+                        ctx.fillStyle = '#ffd93d';
+                    } else {
+                        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+                    }
+                    
+                    ctx.fillRect(x, y, chunkSize, chunkSize);
+                }
+            }
+
+            formatSize(bytes) {
+                if (bytes === 0) return '0 B';
+                const k = 1024;
+                const sizes = ['B', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            formatTime(seconds) {
+                if (seconds < 60) return seconds.toFixed(1) + 's';
+                const mins = Math.floor(seconds / 60);
+                const secs = Math.floor(seconds % 60);
+                return mins + 'm ' + secs + 's';
+            }
+        }
+
+        // 事件监听
+        document.getElementById('fileInput').addEventListener('change', (e) => {
+            selectedFile = e.target.files[0];
+            if (selectedFile) {
+                document.getElementById('startBtn').disabled = false;
+                document.querySelector('.file-label').textContent = selectedFile.name;
+                document.getElementById('file-size').textContent = formatFileSize(selectedFile.size);
+                
+                // 计算分片数
+                const size = parseInt(document.getElementById('chunkSize').value) * 1024;
+                const count = Math.ceil(selectedFile.size / size);
+                document.getElementById('chunk-count').textContent = count;
+            }
+        });
+
+        document.getElementById('chunkSize').addEventListener('input', (e) => {
+            chunkSize = parseInt(e.target.value) * 1024;
+            document.getElementById('chunkSizeValue').textContent = e.target.value + ' KB';
+            
+            if (selectedFile) {
+                const count = Math.ceil(selectedFile.size / chunkSize);
+                document.getElementById('chunk-count').textContent = count;
+            }
+        });
+
+        document.getElementById('concurrency').addEventListener('input', (e) => {
+            concurrency = parseInt(e.target.value);
+            document.getElementById('concurrencyValue').textContent = concurrency;
+        });
+
+        document.getElementById('startBtn').addEventListener('click', async () => {
+            if (!selectedFile || isLoading) return;
+            
+            isLoading = true;
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('startBtn').textContent = '加载中...';
+            
+            const loader = new ChunkLoader(selectedFile, chunkSize, concurrency);
+            
+            try {
+                await loader.load();
+                showMessage('文件加载完成！');
+            } catch (error) {
+                showMessage('加载失败：' + error.message, true);
+            }
+            
+            isLoading = false;
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('startBtn').textContent = '开始加载';
+        });
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function showMessage(text, isError = false) {
+            const msg = document.getElementById('message');
+            msg.textContent = text;
+            msg.style.borderLeft = isError ? '4px solid #ff6b6b' : '4px solid #6bcf7f';
+            msg.classList.add('show');
+            setTimeout(() => {
+                msg.classList.remove('show');
+            }, 3000);
+        }
+
+        // 动画循环
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // 窗口大小调整
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // 暴露到 window 供截图使用
+        window.renderer = renderer;
+        window.camera = camera;
+        window.scene = scene;
+    </script>
+
+    <!-- 截图支持脚本 -->
+    <script>
+        let _screenshotRenderer;
+        
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (!_screenshotRenderer && window.renderer) {
+                        _screenshotRenderer = window.renderer;
+                    }
+                    
+                    if (!_screenshotRenderer) {
+                        throw new Error('渲染器未初始化');
+                    }
+                    
+                    if (window.scene && window.camera) {
+                        _screenshotRenderer.render(window.scene, window.camera);
+                    }
+                    
+                    const quality = event.data.quality || 0.8;
+                    const canvas = _screenshotRenderer.domElement;
+                    
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    
+                    window.parent.postMessage({
+                        type: 'screenshot-data',
+                        dataUrl: dataUrl
+                    }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({
+                        type: 'screenshot-error',
+                        error: error.message
+                    }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
