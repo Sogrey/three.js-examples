@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>模型视图 - Three.js r179</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            overflow: hidden;
+            background: #1a1a2e;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+        #container {
+            width: 100vw;
+            height: 100vh;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 2px;
+            background: #000;
+        }
+        .view-panel {
+            position: relative;
+            background: #1a1a2e;
+            overflow: hidden;
+        }
+        .view-label {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: #fff;
+            background: rgba(0,0,0,0.7);
+            padding: 5px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            z-index: 10;
+            pointer-events: none;
+        }
+        .view-label::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+        .main-view .view-label::before { background: #ff6b6b; }
+        .front-view .view-label::before { background: #4ecdc4; }
+        .side-view .view-label::before { background: #45b7d1; }
+        .top-view .view-label::before { background: #96ceb4; }
+        
+        #info {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: white;
+            background: rgba(0,0,0,0.8);
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 13px;
+            z-index: 100;
+            max-width: 250px;
+        }
+        #info h4 {
+            margin-bottom: 10px;
+            color: #4a9eff;
+        }
+        #info p {
+            margin: 5px 0;
+            line-height: 1.5;
+        }
+        
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+        .control-btn {
+            padding: 10px 20px;
+            background: rgba(74,158,255,0.8);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        .control-btn:hover {
+            background: rgba(74,158,255,1);
+            transform: translateY(-2px);
+        }
+        .control-btn.active {
+            background: #ff6b6b;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div class="view-panel main-view" id="mainView">
+            <div class="view-label">主视图 (透视)</div>
+        </div>
+        <div class="view-panel front-view" id="frontView">
+            <div class="view-label">前视图 (正视)</div>
+        </div>
+        <div class="view-panel side-view" id="sideView">
+            <div class="view-label">侧视图 (左视)</div>
+        </div>
+        <div class="view-panel top-view" id="topView">
+            <div class="view-label">俯视图 (顶视)</div>
+        </div>
+    </div>
+    
+    <div id="info">
+        <h4>多视角模型查看器</h4>
+        <p>• 主视图：鼠标旋转/缩放</p>
+        <p>• 其他视图：自动同步</p>
+        <p>• 点击按钮切换模型</p>
+    </div>
+    
+    <div id="controls">
+        <button class="control-btn active" onclick="switchModel('cube')">立方体</button>
+        <button class="control-btn" onclick="switchModel('sphere')">球体</button>
+        <button class="control-btn" onclick="switchModel('torus')">圆环</button>
+        <button class="control-btn" onclick="switchModel('knot')">结</button>
+        <button class="control-btn" onclick="toggleWireframe()">线框</button>
+        <button class="control-btn" onclick="toggleAutoRotate()">旋转</button>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // 场景设置
+        let scene, mainCamera, frontCamera, sideCamera, topCamera;
+        let mainRenderer, frontRenderer, sideRenderer, topRenderer;
+        let mainControls;
+        let currentModel;
+        let isWireframe = false;
+        let autoRotate = false;
+        
+        // 获取容器
+        const mainContainer = document.getElementById('mainView');
+        const frontContainer = document.getElementById('frontView');
+        const sideContainer = document.getElementById('sideView');
+        const topContainer = document.getElementById('topView');
+
+        function init() {
+            // 创建共享场景
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1a1a2e);
+
+            // 添加灯光
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(100, 200, 100);
+            scene.add(directionalLight);
+
+            const pointLight = new THREE.PointLight(0x4a9eff, 0.5);
+            pointLight.position.set(-100, 100, -100);
+            scene.add(pointLight);
+
+            // 添加网格辅助
+            const gridHelper = new THREE.GridHelper(200, 20, 0x444444, 0x222222);
+            scene.add(gridHelper);
+
+            // 添加坐标轴辅助
+            const axesHelper = new THREE.AxesHelper(100);
+            scene.add(axesHelper);
+
+            // 创建默认模型
+            createModel('cube');
+
+            // 初始化四个视图
+            initMainView();
+            initFrontView();
+            initSideView();
+            initTopView();
+
+            // 开始动画
+            animate();
+        }
+
+        function createModel(type) {
+            // 移除旧模型
+            if (currentModel) {
+                scene.remove(currentModel);
+            }
+
+            let geometry;
+            switch(type) {
+                case 'sphere':
+                    geometry = new THREE.SphereGeometry(40, 32, 32);
+                    break;
+                case 'torus':
+                    geometry = new THREE.TorusGeometry(30, 10, 16, 100);
+                    break;
+                case 'knot':
+                    geometry = new THREE.TorusKnotGeometry(25, 8, 100, 16);
+                    break;
+                case 'cube':
+                default:
+                    geometry = new THREE.BoxGeometry(60, 60, 60);
+                    break;
+            }
+
+            const material = new THREE.MeshPhongMaterial({
+                color: 0x4a9eff,
+                shininess: 100,
+                wireframe: isWireframe
+            });
+
+            currentModel = new THREE.Mesh(geometry, material);
+            currentModel.position.y = 40;
+            scene.add(currentModel);
+
+            // 添加边缘线框
+            const edges = new THREE.EdgesGeometry(geometry);
+            const lineMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.3 });
+            const wireframe = new THREE.LineSegments(edges, lineMaterial);
+            currentModel.add(wireframe);
+        }
+
+        function initMainView() {
+            const width = mainContainer.clientWidth;
+            const height = mainContainer.clientHeight;
+
+            mainCamera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
+            mainCamera.position.set(150, 150, 150);
+            mainCamera.lookAt(0, 0, 0);
+
+            mainRenderer = new THREE.WebGLRenderer({ antialias: true });
+            mainRenderer.setSize(width, height);
+            mainRenderer.setPixelRatio(window.devicePixelRatio);
+            mainContainer.appendChild(mainRenderer.domElement);
+
+            mainControls = new OrbitControls(mainCamera, mainRenderer.domElement);
+            mainControls.enableDamping = true;
+            mainControls.dampingFactor = 0.05;
+        }
+
+        function initFrontView() {
+            const width = frontContainer.clientWidth;
+            const height = frontContainer.clientHeight;
+
+            frontCamera = new THREE.OrthographicCamera(-100, 100, 100, -100, 0.1, 1000);
+            frontCamera.position.set(0, 0, 200);
+            frontCamera.lookAt(0, 0, 0);
+
+            frontRenderer = new THREE.WebGLRenderer({ antialias: true });
+            frontRenderer.setSize(width, height);
+            frontRenderer.setPixelRatio(window.devicePixelRatio);
+            frontContainer.appendChild(frontRenderer.domElement);
+        }
+
+        function initSideView() {
+            const width = sideContainer.clientWidth;
+            const height = sideContainer.clientHeight;
+
+            sideCamera = new THREE.OrthographicCamera(-100, 100, 100, -100, 0.1, 1000);
+            sideCamera.position.set(-200, 0, 0);
+            sideCamera.lookAt(0, 0, 0);
+
+            sideRenderer = new THREE.WebGLRenderer({ antialias: true });
+            sideRenderer.setSize(width, height);
+            sideRenderer.setPixelRatio(window.devicePixelRatio);
+            sideContainer.appendChild(sideRenderer.domElement);
+        }
+
+        function initTopView() {
+            const width = topContainer.clientWidth;
+            const height = topContainer.clientHeight;
+
+            topCamera = new THREE.OrthographicCamera(-100, 100, 100, -100, 0.1, 1000);
+            topCamera.position.set(0, 200, 0);
+            topCamera.lookAt(0, 0, 0);
+
+            topRenderer = new THREE.WebGLRenderer({ antialias: true });
+            topRenderer.setSize(width, height);
+            topRenderer.setPixelRatio(window.devicePixelRatio);
+            topContainer.appendChild(topRenderer.domElement);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (autoRotate && currentModel) {
+                currentModel.rotation.y += 0.01;
+                currentModel.rotation.x += 0.005;
+            }
+
+            if (mainControls) {
+                mainControls.update();
+            }
+
+            // 渲染四个视图
+            if (mainRenderer) mainRenderer.render(scene, mainCamera);
+            if (frontRenderer) frontRenderer.render(scene, frontCamera);
+            if (sideRenderer) sideRenderer.render(scene, sideCamera);
+            if (topRenderer) topRenderer.render(scene, topCamera);
+        }
+
+        // 窗口大小调整
+        window.addEventListener('resize', () => {
+            const mainWidth = mainContainer.clientWidth;
+            const mainHeight = mainContainer.clientHeight;
+            mainCamera.aspect = mainWidth / mainHeight;
+            mainCamera.updateProjectionMatrix();
+            mainRenderer.setSize(mainWidth, mainHeight);
+
+            const frontWidth = frontContainer.clientWidth;
+            const frontHeight = frontContainer.clientHeight;
+            frontRenderer.setSize(frontWidth, frontHeight);
+
+            const sideWidth = sideContainer.clientWidth;
+            const sideHeight = sideContainer.clientHeight;
+            sideRenderer.setSize(sideWidth, sideHeight);
+
+            const topWidth = topContainer.clientWidth;
+            const topHeight = topContainer.clientHeight;
+            topRenderer.setSize(topWidth, topHeight);
+        });
+
+        // 全局函数
+        window.switchModel = function(type) {
+            createModel(type);
+            
+            // 更新按钮状态
+            document.querySelectorAll('#controls .control-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        };
+
+        window.toggleWireframe = function() {
+            isWireframe = !isWireframe;
+            if (currentModel) {
+                currentModel.material.wireframe = isWireframe;
+            }
+            event.target.classList.toggle('active');
+        };
+
+        window.toggleAutoRotate = function() {
+            autoRotate = !autoRotate;
+            event.target.classList.toggle('active');
+        };
+
+        // 暴露到 window 供截图使用
+        window.renderer = mainRenderer;
+        window.camera = mainCamera;
+        window.scene = scene;
+
+        // 初始化
+        init();
+    </script>
+</body>
+</html>

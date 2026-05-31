@@ -2590,7 +2590,14 @@ const threejsData = {
               version: "r179",
               url: "examples/z258/expand-geoBorder",
             },
-
+            {
+              id: "basic-modelView",
+              title: "模型视图",
+              description: "多视角模型查看器，支持主视图、前视图、侧视图和俯视图同时显示",
+              thumbnail: "images/basic-modelView.jpg",
+              version: "r179",
+              url: "examples/z258/basic-modelView",
+            },
           ],
         },
       ],
