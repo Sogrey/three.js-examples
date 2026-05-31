@@ -360,6 +360,10 @@
         window.addEventListener('message', function(event) {
             if (event.data && event.data.type === 'take-screenshot') {
                 try {
+                    // 触发一次渲染确保画面最新
+                    if (window.renderer && window.camera) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
                     const quality = event.data.quality || 0.8;
                     const canvas = window.renderer.domElement;
                     const tempCanvas = document.createElement('canvas');

@@ -902,8 +902,8 @@
         window.addEventListener('message', function(event) {
             if (event.data && event.data.type === 'take-screenshot') {
                 try {
-                    if (window.orthoScene && window.orthoCamera && window.renderer) {
-                        window.renderer.render(window.orthoScene, window.orthoCamera);
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
                     }
                     const quality = event.data.quality || 0.8;
                     const canvas = window.renderer.domElement;
