@@ -21,75 +21,78 @@
             height: 100vh;
         }
         
-        /* 控制面板 */
+        /* 控制面板 - 紧凑样式 */
         #controls {
             position: absolute;
-            top: 150px;
+            top: 10px;
             left: 10px;
             background: rgba(0,0,0,0.85);
             color: white;
-            padding: 20px;
-            border-radius: 12px;
+            padding: 12px;
+            border-radius: 8px;
             z-index: 100;
-            max-width: 350px;
+            width: 220px;
+            font-size: 12px;
         }
         #controls h3 {
             color: #4a9eff;
-            margin-bottom: 15px;
-            font-size: 18px;
+            margin-bottom: 8px;
+            font-size: 14px;
         }
         #controls .file-input-wrapper {
-            margin: 15px 0;
+            margin: 8px 0;
         }
         #controls input[type="file"] {
             display: none;
         }
         #controls .file-label {
             display: block;
-            padding: 12px;
+            padding: 6px 10px;
             background: #4a9eff;
             color: white;
-            border-radius: 6px;
+            border-radius: 4px;
             cursor: pointer;
             text-align: center;
             transition: all 0.3s;
+            font-size: 11px;
         }
         #controls .file-label:hover {
             background: #3a8eef;
         }
         #controls .settings {
-            margin: 15px 0;
-            padding: 15px;
+            margin: 8px 0;
+            padding: 8px;
             background: rgba(255,255,255,0.1);
-            border-radius: 8px;
+            border-radius: 6px;
         }
         #controls .setting-item {
-            margin: 10px 0;
+            margin: 6px 0;
         }
         #controls label {
             display: block;
-            margin-bottom: 5px;
-            font-size: 13px;
+            margin-bottom: 2px;
+            font-size: 11px;
             color: #ccc;
         }
         #controls input[type="range"] {
             width: 100%;
+            height: 4px;
         }
         #controls .value-display {
             text-align: right;
             color: #4a9eff;
-            font-size: 12px;
+            font-size: 10px;
         }
         #controls button {
             width: 100%;
-            padding: 12px;
-            margin-top: 10px;
+            padding: 6px;
+            margin-top: 6px;
             background: #ff6b6b;
             color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: 4px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 11px;
             transition: all 0.3s;
         }
         #controls button:hover {
