@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>文件分片 - Three.js r179</title>
+    <meta name="description" content="文件分片加载演示 - 展示大文件分片加载技术。功能：将大文件分割成小块并发加载，实时追踪进度。原理：使用FileReader API读取文件切片(Blob.slice)，通过并发队列控制同时加载的分片数量，每个分片加载完成后更新3D可视化状态。执行流程：1)文件分割为指定大小的chunk 2)并发加载多个chunk 3)实时计算进度/速度/剩余时间 4)3D方块动画展示加载状态">
     <style>
         * {
             margin: 0;
