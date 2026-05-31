@@ -39,6 +39,10 @@
         camera.position.set(0, 3, 10);
         window.camera = camera;
 
+        // 创建虚拟场景供截图使用
+        const scene = new THREE.Scene();
+        window.scene = scene;
+
         const controls = new OrbitControls(camera, canvas);
         controls.enableDamping = true;
         controls.maxDistance = 25;
