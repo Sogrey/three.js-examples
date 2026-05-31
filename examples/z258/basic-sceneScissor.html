@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>场景剪切 - Three.js r179</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            overflow: hidden;
+            background: #1a1a2e;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+        #container {
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        /* 控制面板 */
+        #controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.85);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            z-index: 100;
+            max-width: 300px;
+        }
+        #controls h3 {
+            color: #4a9eff;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        #controls p {
+            margin: 8px 0;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #ccc;
+        }
+        #controls .view-info {
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+        }
+        #controls .view-info h4 {
+            color: #4a9eff;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        #controls .view-info div {
+            font-size: 12px;
+            color: #aaa;
+            margin: 4px 0;
+        }
+        #controls .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        #controls button {
+            flex: 1;
+            padding: 10px;
+            background: #4a9eff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        #controls button:hover {
+            background: #3a8eef;
+        }
+        #controls button.active {
+            background: #ff6b6b;
+        }
+        
+        /* 视图标签 */
+        .view-label {
+            position: absolute;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 50;
+        }
+        #label-main { top: 10px; left: 50%; transform: translateX(-50%); }
+        #label-front { top: 10px; left: 25%; transform: translateX(-50%); }
+        #label-side { top: 10px; left: 75%; transform: translateX(-50%); }
+        #label-top { bottom: 10px; left: 25%; transform: translateX(-50%); }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+    
+    <div id="controls">
+        <h3>✂️ 场景剪切</h3>
+        <p>使用 scissor 和 viewport 实现多视图渲染</p>
+        <p>• 左上：主视图（透视相机）</p>
+        <p>• 右上：前视图（正交相机）</p>
+        <p>• 左下：侧视图（正交相机）</p>
+        <p>• 右下：俯视图（正交相机）</p>
+        
+        <div class="view-info">
+            <h4>📊 视图信息</h4>
+            <div>主视图: 透视投影</div>
+            <div>前视图: X-Z 平面</div>
+            <div>侧视图: Y-Z 平面</div>
+            <div>俯视图: X-Y 平面</div>
+        </div>
+        
+        <div class="btn-group">
+            <button id="btn-rotate" class="active">自动旋转</button>
+            <button id="btn-sync">同步控制</button>
+        </div>
+    </div>
+    
+    <div class="view-label" id="label-main">主视图 (透视)</div>
+    <div class="view-label" id="label-front">前视图 (正交)</div>
+    <div class="view-label" id="label-side">侧视图 (正交)</div>
+    <div class="view-label" id="label-top">俯视图 (正交)</div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // 场景设置
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a1a2e);
+
+        // 创建复杂场景
+        function createScene() {
+            // 地面网格
+            const gridHelper = new THREE.GridHelper(100, 20, 0x444444, 0x222222);
+            scene.add(gridHelper);
+            
+            // 坐标轴
+            const axesHelper = new THREE.AxesHelper(30);
+            scene.add(axesHelper);
+            
+            // 中心物体 - 复杂几何体
+            const torusKnot = new THREE.Mesh(
+                new THREE.TorusKnotGeometry(10, 3, 100, 16),
+                new THREE.MeshPhongMaterial({ 
+                    color: 0xff6b6b,
+                    shininess: 100
+                })
+            );
+            torusKnot.position.y = 15;
+            torusKnot.userData.isMainObject = true;
+            scene.add(torusKnot);
+            
+            // 周围物体
+            const colors = [0x4ecdc4, 0x45b7d1, 0x96ceb4, 0xffeead, 0xd4a5a5, 0x9b59b6];
+            const geometries = [
+                new THREE.BoxGeometry(5, 5, 5),
+                new THREE.SphereGeometry(3, 32, 32),
+                new THREE.ConeGeometry(3, 6, 32),
+                new THREE.CylinderGeometry(2, 2, 6, 32),
+                new THREE.OctahedronGeometry(3),
+                new THREE.DodecahedronGeometry(3)
+            ];
+            
+            for (let i = 0; i < 12; i++) {
+                const angle = (i / 12) * Math.PI * 2;
+                const radius = 25 + Math.random() * 10;
+                const geometry = geometries[i % geometries.length];
+                const material = new THREE.MeshPhongMaterial({
+                    color: colors[i % colors.length],
+                    shininess: 80
+                });
+                const mesh = new THREE.Mesh(geometry, material);
+                
+                mesh.position.set(
+                    Math.cos(angle) * radius,
+                    5 + Math.random() * 10,
+                    Math.sin(angle) * radius
+                );
+                mesh.rotation.set(
+                    Math.random() * Math.PI,
+                    Math.random() * Math.PI,
+                    Math.random() * Math.PI
+                );
+                mesh.userData.rotationSpeed = {
+                    x: (Math.random() - 0.5) * 0.02,
+                    y: (Math.random() - 0.5) * 0.02,
+                    z: (Math.random() - 0.5) * 0.02
+                };
+                
+                scene.add(mesh);
+            }
+            
+            // 灯光
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(50, 100, 50);
+            scene.add(directionalLight);
+            
+            const pointLight = new THREE.PointLight(0x4a9eff, 0.6);
+            pointLight.position.set(-50, 50, -50);
+            scene.add(pointLight);
+        }
+        
+        createScene();
+
+        // 渲染器
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        document.getElementById('container').appendChild(renderer.domElement);
+
+        // 主视图相机（透视）
+        const mainCamera = new THREE.PerspectiveCamera(
+            60, 
+            window.innerWidth / window.innerHeight, 
+            0.1, 
+            1000
+        );
+        mainCamera.position.set(50, 50, 80);
+
+        // 前视图相机（正交）- 从正面看
+        const frontCamera = new THREE.OrthographicCamera(
+            -50, 50, 50, -50, 0.1, 1000
+        );
+        frontCamera.position.set(0, 0, 100);
+        frontCamera.lookAt(0, 0, 0);
+
+        // 侧视图相机（正交）- 从侧面看
+        const sideCamera = new THREE.OrthographicCamera(
+            -50, 50, 50, -50, 0.1, 1000
+        );
+        sideCamera.position.set(100, 0, 0);
+        sideCamera.lookAt(0, 0, 0);
+
+        // 俯视图相机（正交）- 从上方看
+        const topCamera = new THREE.OrthographicCamera(
+            -50, 50, 50, -50, 0.1, 1000
+        );
+        topCamera.position.set(0, 100, 0);
+        topCamera.lookAt(0, 0, 0);
+
+        // 控制器
+        const controls = new OrbitControls(mainCamera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+
+        // 状态变量
+        let autoRotate = true;
+        let syncControl = false;
+
+        // 获取视口尺寸
+        function getViewports() {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            const halfWidth = Math.floor(width / 2);
+            const halfHeight = Math.floor(height / 2);
+            
+            return {
+                main: { x: 0, y: halfHeight, width: halfWidth, height: halfHeight },
+                front: { x: halfWidth, y: halfHeight, width: halfWidth, height: halfHeight },
+                side: { x: 0, y: 0, width: halfWidth, height: halfHeight },
+                top: { x: halfWidth, y: 0, width: halfWidth, height: halfHeight }
+            };
+        }
+
+        // 更新视图标签位置
+        function updateLabels() {
+            const v = getViewports();
+            
+            document.getElementById('label-main').style.left = (v.main.x + v.main.width / 2) + 'px';
+            document.getElementById('label-main').style.top = (v.main.y + 10) + 'px';
+            
+            document.getElementById('label-front').style.left = (v.front.x + v.front.width / 2) + 'px';
+            document.getElementById('label-front').style.top = (v.front.y + 10) + 'px';
+            
+            document.getElementById('label-side').style.left = (v.side.x + v.side.width / 2) + 'px';
+            document.getElementById('label-side').style.top = (v.side.y + 10) + 'px';
+            
+            document.getElementById('label-top').style.left = (v.top.x + v.top.width / 2) + 'px';
+            document.getElementById('label-top').style.bottom = (window.innerHeight - v.top.y - v.top.height + 10) + 'px';
+            document.getElementById('label-top').style.top = 'auto';
+        }
+
+        // 渲染单个视图
+        function renderView(camera, viewport) {
+            const { x, y, width, height } = viewport;
+            
+            // 设置 scissor 和 viewport
+            renderer.setScissorTest(true);
+            renderer.setScissor(x, y, width, height);
+            renderer.setViewport(x, y, width, height);
+            
+            // 清除该区域
+            renderer.clear();
+            
+            // 渲染场景
+            renderer.render(scene, camera);
+        }
+
+        // 动画循环
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // 旋转物体
+            if (autoRotate) {
+                scene.children.forEach(child => {
+                    if (child.userData.rotationSpeed) {
+                        child.rotation.x += child.userData.rotationSpeed.x;
+                        child.rotation.y += child.userData.rotationSpeed.y;
+                        child.rotation.z += child.userData.rotationSpeed.z;
+                    }
+                });
+                
+                // 旋转主物体
+                const mainObject = scene.children.find(c => c.userData.isMainObject);
+                if (mainObject) {
+                    mainObject.rotation.y += 0.005;
+                    mainObject.rotation.x += 0.002;
+                }
+            }
+            
+            // 同步控制
+            if (syncControl) {
+                frontCamera.zoom = mainCamera.zoom;
+                sideCamera.zoom = mainCamera.zoom;
+                topCamera.zoom = mainCamera.zoom;
+                frontCamera.updateProjectionMatrix();
+                sideCamera.updateProjectionMatrix();
+                topCamera.updateProjectionMatrix();
+            }
+            
+            controls.update();
+            
+            // 获取视口
+            const v = getViewports();
+            
+            // 渲染四个视图
+            renderView(mainCamera, v.main);
+            renderView(frontCamera, v.front);
+            renderView(sideCamera, v.side);
+            renderView(topCamera, v.top);
+            
+            // 重置 scissor
+            renderer.setScissorTest(false);
+        }
+        animate();
+
+        // 更新标签位置
+        updateLabels();
+
+        // 事件监听
+        document.getElementById('btn-rotate').addEventListener('click', () => {
+            autoRotate = !autoRotate;
+            document.getElementById('btn-rotate').classList.toggle('active');
+        });
+
+        document.getElementById('btn-sync').addEventListener('click', () => {
+            syncControl = !syncControl;
+            document.getElementById('btn-sync').classList.toggle('active');
+        });
+
+        // 窗口大小调整
+        window.addEventListener('resize', () => {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            
+            renderer.setSize(width, height);
+            
+            // 更新主相机
+            mainCamera.aspect = width / height;
+            mainCamera.updateProjectionMatrix();
+            
+            updateLabels();
+        });
+
+        // 暴露到 window 供截图使用
+        window.renderer = renderer;
+        window.camera = mainCamera;
+        window.scene = scene;
+    </script>
+
+    <!-- 截图支持脚本 -->
+    <script>
+        let _screenshotRenderer;
+        
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (!_screenshotRenderer && window.renderer) {
+                        _screenshotRenderer = window.renderer;
+                    }
+                    
+                    if (!_screenshotRenderer) {
+                        throw new Error('渲染器未初始化');
+                    }
+                    
+                    if (window.scene && window.camera) {
+                        _screenshotRenderer.render(window.scene, window.camera);
+                    }
+                    
+                    const quality = event.data.quality || 0.8;
+                    const canvas = _screenshotRenderer.domElement;
+                    
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    
+                    window.parent.postMessage({
+                        type: 'screenshot-data',
+                        dataUrl: dataUrl
+                    }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({
+                        type: 'screenshot-error',
+                        error: error.message
+                    }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
