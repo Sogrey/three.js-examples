@@ -2590,14 +2590,7 @@ const threejsData = {
               version: "r179",
               url: "examples/z258/expand-geoBorder",
             },
-            {
-              id: "basic-cssElement",
-              title: "CSS元素",
-              description: "使用CSS3DRenderer在3D场景中渲染HTML元素，展示CSS3DObject和CSS3DSprite的使用",
-              thumbnail: "images/basic-cssElement.jpg",
-              version: "r179",
-              url: "examples/z258/basic-cssElement",
-            },
+
           ],
         },
       ],
