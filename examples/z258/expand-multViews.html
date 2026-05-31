@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="多视图展示，同时显示主视图、前视图、左视图和俯视图">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 多视图</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+    <style>
+        body {
+            background: #0a0a0a;
+            margin: 0;
+            overflow: hidden;
+        }
+        #multiview-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .view-label {
+            position: absolute;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+            background: rgba(0, 0, 0, 0.7);
+            padding: 5px 10px;
+            border-radius: 4px;
+            pointer-events: none;
+            z-index: 10;
+        }
+        #main-label { top: 10px; left: 10px; }
+        #front-label { bottom: 35%; left: 10px; }
+        #left-label { bottom: 35%; left: 33.33%; margin-left: 10px; }
+        #top-label { bottom: 35%; left: 66.66%; margin-left: 10px; }
+        
+        #controls {
+            position: absolute;
+            top: 50px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            z-index: 100;
+            max-width: 200px;
+        }
+        #controls h3 {
+            margin: 0 0 10px 0;
+            color: #00ff00;
+            font-size: 14px;
+        }
+        #controls .btn {
+            display: block;
+            width: 100%;
+            margin: 5px 0;
+            padding: 6px 10px;
+            background: #333;
+            border: 1px solid #555;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 11px;
+        }
+        #controls .btn:hover {
+            background: #444;
+            border-color: #00ff00;
+        }
+        #controls .info {
+            font-size: 10px;
+            color: #aaa;
+            margin-top: 10px;
+        }
+        .view-border {
+            position: absolute;
+            border: 2px solid #00ff00;
+            pointer-events: none;
+            z-index: 5;
+        }
+        #main-border {
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 65%;
+        }
+        #sub-border-1 {
+            bottom: 0;
+            left: 0;
+            width: 33.33%;
+            height: 35%;
+        }
+        #sub-border-2 {
+            bottom: 0;
+            left: 33.33%;
+            width: 33.33%;
+            height: 35%;
+        }
+        #sub-border-3 {
+            bottom: 0;
+            left: 66.66%;
+            width: 33.34%;
+            height: 35%;
+        }
+    </style>
+</head>
+<body>
+    <div id="multiview-container"></div>
+    
+    <div class="view-border" id="main-border"></div>
+    <div class="view-border" id="sub-border-1"></div>
+    <div class="view-border" id="sub-border-2"></div>
+    <div class="view-border" id="sub-border-3"></div>
+    
+    <div class="view-label" id="main-label">主视图 (透视)</div>
+    <div class="view-label" id="front-label">前视图</div>
+    <div class="view-label" id="left-label">左视图</div>
+    <div class="view-label" id="top-label">俯视图</div>
+    
+    <div id="controls">
+        <h3>👁️ 多视图控制</h3>
+        <button class="btn" id="btnRotate">自动旋转</button>
+        <button class="btn" id="btnWireframe">线框模式</button>
+        <button class="btn" id="btnRandom">随机模型</button>
+        <button class="btn" id="btnReset">重置视角</button>
+        <div class="info">
+            主视图：鼠标控制<br>
+            子视图：正交投影<br>
+            同时显示4个视角
+        </div>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        const container = document.getElementById('multiview-container');
+        
+        // 场景设置
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a1a1a);
+        
+        // 灯光
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        scene.add(ambientLight);
+        
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(10, 20, 10);
+        directionalLight.castShadow = true;
+        scene.add(directionalLight);
+        
+        const pointLight = new THREE.PointLight(0x00ff00, 0.5, 50);
+        pointLight.position.set(0, 5, 0);
+        scene.add(pointLight);
+        
+        // 创建网格地面
+        const gridHelper = new THREE.GridHelper(20, 20, 0x444444, 0x333333);
+        scene.add(gridHelper);
+        
+        // 坐标轴
+        const axesHelper = new THREE.AxesHelper(3);
+        scene.add(axesHelper);
+        
+        // 当前模型
+        let currentModel = null;
+        let isAutoRotating = false;
+        
+        // 创建复杂模型（由多个几何体组成）
+        function createComplexModel() {
+            if (currentModel) {
+                scene.remove(currentModel);
+                currentModel.traverse(child => {
+                    if (child.geometry) child.geometry.dispose();
+                    if (child.material) child.material.dispose();
+                });
+            }
+            
+            const group = new THREE.Group();
+            
+            // 主体 - 立方体
+            const bodyGeometry = new THREE.BoxGeometry(3, 2, 4);
+            const bodyMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0x0088ff,
+                roughness: 0.3,
+                metalness: 0.7
+            });
+            const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+            body.position.y = 1.5;
+            body.castShadow = true;
+            group.add(body);
+            
+            // 顶部 - 圆柱
+            const topGeometry = new THREE.CylinderGeometry(1, 1.5, 1, 16);
+            const topMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0xff8800,
+                roughness: 0.4,
+                metalness: 0.6
+            });
+            const top = new THREE.Mesh(topGeometry, topMaterial);
+            top.position.y = 3;
+            top.castShadow = true;
+            group.add(top);
+            
+            // 侧面装饰 - 球体
+            const sphereGeometry = new THREE.SphereGeometry(0.5, 16, 16);
+            const sphereMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0xff0088,
+                emissive: 0xff0088,
+                emissiveIntensity: 0.3
+            });
+            
+            const sphere1 = new THREE.Mesh(sphereGeometry, sphereMaterial);
+            sphere1.position.set(1.8, 1.5, 0);
+            group.add(sphere1);
+            
+            const sphere2 = new THREE.Mesh(sphereGeometry, sphereMaterial);
+            sphere2.position.set(-1.8, 1.5, 0);
+            group.add(sphere2);
+            
+            // 前面 - 圆锥
+            const coneGeometry = new THREE.ConeGeometry(0.8, 2, 16);
+            const coneMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0x00ff88,
+                roughness: 0.3,
+                metalness: 0.5
+            });
+            const cone = new THREE.Mesh(coneGeometry, coneMaterial);
+            cone.position.set(0, 1.5, 2.5);
+            cone.rotation.x = Math.PI / 2;
+            cone.castShadow = true;
+            group.add(cone);
+            
+            // 底部支撑 - 圆环
+            const ringGeometry = new THREE.TorusGeometry(1.5, 0.2, 8, 32);
+            const ringMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0xffff00,
+                roughness: 0.5,
+                metalness: 0.8
+            });
+            const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+            ring.position.y = 0.5;
+            ring.rotation.x = Math.PI / 2;
+            group.add(ring);
+            
+            scene.add(group);
+            currentModel = group;
+            
+            return group;
+        }
+        
+        // 创建随机模型
+        function createRandomModel() {
+            if (currentModel) {
+                scene.remove(currentModel);
+                currentModel.traverse(child => {
+                    if (child.geometry) child.geometry.dispose();
+                    if (child.material) child.material.dispose();
+                });
+            }
+            
+            const group = new THREE.Group();
+            const geometries = [
+                new THREE.BoxGeometry(1, 1, 1),
+                new THREE.SphereGeometry(0.6, 16, 16),
+                new THREE.CylinderGeometry(0.5, 0.5, 1, 16),
+                new THREE.ConeGeometry(0.5, 1, 16),
+                new THREE.TorusGeometry(0.5, 0.2, 8, 16)
+            ];
+            
+            const colors = [0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff, 0x00ffff, 0xff8800, 0x8800ff];
+            
+            for (let i = 0; i < 8; i++) {
+                const geometry = geometries[Math.floor(Math.random() * geometries.length)];
+                const material = new THREE.MeshStandardMaterial({ 
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    roughness: 0.3 + Math.random() * 0.4,
+                    metalness: 0.3 + Math.random() * 0.4
+                });
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.position.set(
+                    (Math.random() - 0.5) * 6,
+                    0.5 + Math.random() * 3,
+                    (Math.random() - 0.5) * 6
+                );
+                mesh.rotation.set(
+                    Math.random() * Math.PI,
+                    Math.random() * Math.PI,
+                    Math.random() * Math.PI
+                );
+                mesh.castShadow = true;
+                group.add(mesh);
+            }
+            
+            scene.add(group);
+            currentModel = group;
+        }
+        
+        // 初始化模型
+        createComplexModel();
+        
+        // 渲染器设置
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.shadowMap.enabled = true;
+        container.appendChild(renderer.domElement);
+        
+        // 视口尺寸计算
+        function getLayout() {
+            const W = window.innerWidth;
+            const H = window.innerHeight;
+            const mainH = Math.floor(H * 0.65);
+            const subH = H - mainH;
+            const subW = Math.floor(W / 3);
+            return { W, H, mainH, subH, subW };
+        }
+        
+        const { W, H, mainH, subH, subW } = getLayout();
+        
+        // 主相机（透视）
+        const mainCamera = new THREE.PerspectiveCamera(60, W / mainH, 0.1, 1000);
+        mainCamera.position.set(8, 6, 8);
+        mainCamera.lookAt(0, 0, 0);
+        
+        // 主视图控制器
+        const mainControls = new OrbitControls(mainCamera, renderer.domElement);
+        mainControls.enableDamping = true;
+        mainControls.dampingFactor = 0.05;
+        
+        // 正交相机参数
+        const ORTHO_SIZE = 8;
+        const aspect = subW / subH;
+        
+        // 前视图相机（从 +Z 看向原点）
+        const frontCamera = new THREE.OrthographicCamera(
+            -ORTHO_SIZE * aspect, ORTHO_SIZE * aspect,
+            ORTHO_SIZE, -ORTHO_SIZE,
+            0.1, 1000
+        );
+        frontCamera.position.set(0, 0, 15);
+        frontCamera.lookAt(0, 0, 0);
+        
+        // 左视图相机（从 -X 看向原点）
+        const leftCamera = new THREE.OrthographicCamera(
+            -ORTHO_SIZE * aspect, ORTHO_SIZE * aspect,
+            ORTHO_SIZE, -ORTHO_SIZE,
+            0.1, 1000
+        );
+        leftCamera.position.set(-15, 0, 0);
+        leftCamera.lookAt(0, 0, 0);
+        
+        // 俯视图相机（从 +Y 看向原点）
+        const topCamera = new THREE.OrthographicCamera(
+            -ORTHO_SIZE * aspect, ORTHO_SIZE * aspect,
+            ORTHO_SIZE, -ORTHO_SIZE,
+            0.1, 1000
+        );
+        topCamera.position.set(0, 15, 0);
+        topCamera.lookAt(0, 0, 0);
+        topCamera.up.set(0, 0, -1);
+        
+        // 渲染区域设置
+        const mainViewport = { x: 0, y: subH, width: W, height: mainH };
+        const frontViewport = { x: 0, y: 0, width: subW, height: subH };
+        const leftViewport = { x: subW, y: 0, width: subW, height: subH };
+        const topViewport = { x: subW * 2, y: 0, width: W - subW * 2, height: subH };
+        
+        // 渲染函数
+        function render() {
+            renderer.setScissorTest(true);
+            
+            // 主视图
+            renderer.setViewport(mainViewport.x, mainViewport.y, mainViewport.width, mainViewport.height);
+            renderer.setScissor(mainViewport.x, mainViewport.y, mainViewport.width, mainViewport.height);
+            renderer.render(scene, mainCamera);
+            
+            // 前视图
+            renderer.setViewport(frontViewport.x, frontViewport.y, frontViewport.width, frontViewport.height);
+            renderer.setScissor(frontViewport.x, frontViewport.y, frontViewport.width, frontViewport.height);
+            renderer.render(scene, frontCamera);
+            
+            // 左视图
+            renderer.setViewport(leftViewport.x, leftViewport.y, leftViewport.width, leftViewport.height);
+            renderer.setScissor(leftViewport.x, leftViewport.y, leftViewport.width, leftViewport.height);
+            renderer.render(scene, leftCamera);
+            
+            // 俯视图
+            renderer.setViewport(topViewport.x, topViewport.y, topViewport.width, topViewport.height);
+            renderer.setScissor(topViewport.x, topViewport.y, topViewport.width, topViewport.height);
+            renderer.render(scene, topCamera);
+            
+            renderer.setScissorTest(false);
+        }
+        
+        // UI控制
+        document.getElementById('btnRotate').addEventListener('click', () => {
+            isAutoRotating = !isAutoRotating;
+            document.getElementById('btnRotate').textContent = isAutoRotating ? '停止旋转' : '自动旋转';
+        });
+        
+        document.getElementById('btnWireframe').addEventListener('click', () => {
+            if (currentModel) {
+                currentModel.traverse(child => {
+                    if (child.isMesh && child.material) {
+                        child.material.wireframe = !child.material.wireframe;
+                    }
+                });
+            }
+        });
+        
+        document.getElementById('btnRandom').addEventListener('click', () => {
+            createRandomModel();
+        });
+        
+        document.getElementById('btnReset').addEventListener('click', () => {
+            mainCamera.position.set(8, 6, 8);
+            mainCamera.lookAt(0, 0, 0);
+            mainControls.reset();
+        });
+        
+        // 窗口调整
+        window.addEventListener('resize', () => {
+            const { W, H, mainH, subH, subW } = getLayout();
+            
+            mainCamera.aspect = W / mainH;
+            mainCamera.updateProjectionMatrix();
+            
+            const newAspect = subW / subH;
+            [frontCamera, leftCamera, topCamera].forEach(cam => {
+                cam.left = -ORTHO_SIZE * newAspect;
+                cam.right = ORTHO_SIZE * newAspect;
+                cam.top = ORTHO_SIZE;
+                cam.bottom = -ORTHO_SIZE;
+                cam.updateProjectionMatrix();
+            });
+            
+            renderer.setSize(W, H);
+            
+            mainViewport.width = W;
+            mainViewport.height = mainH;
+            mainViewport.y = subH;
+            
+            frontViewport.width = subW;
+            frontViewport.height = subH;
+            
+            leftViewport.x = subW;
+            leftViewport.width = subW;
+            leftViewport.height = subH;
+            
+            topViewport.x = subW * 2;
+            topViewport.width = W - subW * 2;
+            topViewport.height = subH;
+        });
+        
+        // 暴露到 window 供截图使用
+        window.renderer = renderer;
+        window.camera = mainCamera;
+        window.scene = scene;
+        
+        // 动画循环
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            if (isAutoRotating && currentModel) {
+                currentModel.rotation.y += 0.01;
+            }
+            
+            mainControls.update();
+            render();
+        }
+        
+        animate();
+    </script>
+
+    <!-- 截图支持脚本 -->
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

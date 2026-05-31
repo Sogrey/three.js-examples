@@ -39,6 +39,10 @@
         camera.position.set(0, 3, 10);
         window.camera = camera;
 
+        // 创建虚拟场景供截图使用
+        const scene = new THREE.Scene();
+        window.scene = scene;
+
         const controls = new OrbitControls(camera, canvas);
         controls.enableDamping = true;
         controls.maxDistance = 25;
@@ -356,6 +360,10 @@
         window.addEventListener('message', function(event) {
             if (event.data && event.data.type === 'take-screenshot') {
                 try {
+                    // 触发一次渲染确保画面最新
+                    if (window.renderer && window.camera) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
                     const quality = event.data.quality || 0.8;
                     const canvas = window.renderer.domElement;
                     const tempCanvas = document.createElement('canvas');

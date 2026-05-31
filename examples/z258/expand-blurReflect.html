@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="模糊反射效果，展示镜面反射和模糊反射">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 模糊反射</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+    <style>
+        body {
+            background: #0a0a0a;
+            margin: 0;
+            overflow: hidden;
+        }
+        #reflectUI {
+            position: absolute;
+            top: 50px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            z-index: 100;
+            max-width: 280px;
+        }
+        #reflectUI h3 {
+            margin: 0 0 10px 0;
+            color: #00ff00;
+            font-size: 16px;
+        }
+        #reflectUI .control {
+            margin: 10px 0;
+        }
+        #reflectUI label {
+            display: block;
+            font-size: 11px;
+            color: #aaa;
+            margin-bottom: 5px;
+        }
+        #reflectUI input[type="range"] {
+            width: 100%;
+            height: 4px;
+            background: #333;
+            border-radius: 2px;
+            outline: none;
+        }
+        #reflectUI .value {
+            font-size: 10px;
+            color: #00ff00;
+            text-align: right;
+        }
+        #reflectUI .btn {
+            display: block;
+            width: 100%;
+            margin: 5px 0;
+            padding: 8px 12px;
+            background: #333;
+            border: 1px solid #555;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 11px;
+        }
+        #reflectUI .btn:hover {
+            background: #444;
+            border-color: #00ff00;
+        }
+        #reflectUI .info {
+            font-size: 10px;
+            color: #aaa;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+    
+    <div id="reflectUI">
+        <h3>🔮 模糊反射</h3>
+        <div class="control">
+            <label>反射模糊度</label>
+            <input type="range" id="blurAmount" min="0" max="10" value="2" step="0.5">
+            <div class="value" id="blurValue">2.0</div>
+        </div>
+        <div class="control">
+            <label>反射强度</label>
+            <input type="range" id="reflectStrength" min="0" max="1" value="0.8" step="0.05">
+            <div class="value" id="strengthValue">0.80</div>
+        </div>
+        <div class="control">
+            <label>粗糙度</label>
+            <input type="range" id="roughness" min="0" max="1" value="0.1" step="0.05">
+            <div class="value" id="roughnessValue">0.10</div>
+        </div>
+        <button class="btn" id="btnClear">清晰反射</button>
+        <button class="btn" id="btnBlurry">模糊反射</button>
+        <button class="btn" id="btnReset">重置</button>
+        <div class="info">
+            左键拖拽旋转视角<br>
+            滚轮缩放<br>
+            调整参数查看反射效果
+        </div>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { Reflector } from 'three/addons/objects/Reflector.js';
+
+        const container = document.getElementById('threeContainer');
+        
+        // 场景设置
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a0a0a);
+        
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 5, 10);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        container.appendChild(renderer.domElement);
+        
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.maxPolarAngle = Math.PI / 2 - 0.05; // 防止穿过地面
+        
+        // 灯光
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+        scene.add(ambientLight);
+        
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+        directionalLight.position.set(5, 10, 5);
+        directionalLight.castShadow = true;
+        scene.add(directionalLight);
+        
+        const pointLight1 = new THREE.PointLight(0xff0088, 1, 20);
+        pointLight1.position.set(-3, 3, -3);
+        scene.add(pointLight1);
+        
+        const pointLight2 = new THREE.PointLight(0x0088ff, 1, 20);
+        pointLight2.position.set(3, 3, 3);
+        scene.add(pointLight2);
+        
+        // 创建反射地面
+        const planeGeometry = new THREE.PlaneGeometry(20, 20);
+        const reflector = new Reflector(planeGeometry, {
+            clipBias: 0.003,
+            textureWidth: window.innerWidth * window.devicePixelRatio,
+            textureHeight: window.innerHeight * window.devicePixelRatio,
+            color: 0x888888
+        });
+        reflector.rotation.x = -Math.PI / 2;
+        reflector.position.y = 0;
+        scene.add(reflector);
+        
+        // 创建模糊反射层（使用半透明平面模拟模糊效果）
+        const blurPlaneGeometry = new THREE.PlaneGeometry(20, 20);
+        const blurPlaneMaterial = new THREE.MeshPhysicalMaterial({
+            color: 0xffffff,
+            metalness: 0.9,
+            roughness: 0.1,
+            transparent: true,
+            opacity: 0.3,
+            transmission: 0.2
+        });
+        const blurPlane = new THREE.Mesh(blurPlaneGeometry, blurPlaneMaterial);
+        blurPlane.rotation.x = -Math.PI / 2;
+        blurPlane.position.y = 0.01; // 略高于反射面
+        scene.add(blurPlane);
+        
+        // 创建场景物体
+        const objects = [];
+        
+        // 中心物体 - 金属球
+        const sphereGeometry = new THREE.SphereGeometry(1.5, 32, 32);
+        const sphereMaterial = new THREE.MeshStandardMaterial({
+            color: 0xffaa00,
+            metalness: 0.9,
+            roughness: 0.1
+        });
+        const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        sphere.position.set(0, 2, 0);
+        sphere.castShadow = true;
+        scene.add(sphere);
+        objects.push(sphere);
+        
+        // 周围物体
+        const geometries = [
+            new THREE.BoxGeometry(1, 1, 1),
+            new THREE.ConeGeometry(0.5, 1.5, 16),
+            new THREE.CylinderGeometry(0.5, 0.5, 1.5, 16),
+            new THREE.TorusGeometry(0.6, 0.2, 8, 16)
+        ];
+        
+        const colors = [0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff, 0x00ffff];
+        
+        for (let i = 0; i < 6; i++) {
+            const geometry = geometries[i % geometries.length];
+            const material = new THREE.MeshStandardMaterial({
+                color: colors[i],
+                metalness: 0.3 + Math.random() * 0.4,
+                roughness: 0.2 + Math.random() * 0.4
+            });
+            const mesh = new THREE.Mesh(geometry, material);
+            
+            const angle = (i / 6) * Math.PI * 2;
+            const radius = 4 + Math.random() * 2;
+            mesh.position.set(
+                Math.cos(angle) * radius,
+                0.5 + Math.random() * 2,
+                Math.sin(angle) * radius
+            );
+            mesh.rotation.set(
+                Math.random() * Math.PI,
+                Math.random() * Math.PI,
+                Math.random() * Math.PI
+            );
+            mesh.castShadow = true;
+            scene.add(mesh);
+            objects.push(mesh);
+        }
+        
+        // 动画变量
+        let time = 0;
+        
+        // UI控制
+        const blurAmountSlider = document.getElementById('blurAmount');
+        const blurValueDisplay = document.getElementById('blurValue');
+        const reflectStrengthSlider = document.getElementById('reflectStrength');
+        const strengthValueDisplay = document.getElementById('strengthValue');
+        const roughnessSlider = document.getElementById('roughness');
+        const roughnessValueDisplay = document.getElementById('roughnessValue');
+        
+        blurAmountSlider.addEventListener('input', (e) => {
+            const value = parseFloat(e.target.value);
+            blurValueDisplay.textContent = value.toFixed(1);
+            // 调整模糊平面的透明度来模拟模糊程度
+            blurPlaneMaterial.opacity = value / 10 * 0.5;
+        });
+        
+        reflectStrengthSlider.addEventListener('input', (e) => {
+            const value = parseFloat(e.target.value);
+            strengthValueDisplay.textContent = value.toFixed(2);
+            reflector.material.color.setScalar(value);
+        });
+        
+        roughnessSlider.addEventListener('input', (e) => {
+            const value = parseFloat(e.target.value);
+            roughnessValueDisplay.textContent = value.toFixed(2);
+            blurPlaneMaterial.roughness = value;
+        });
+        
+        document.getElementById('btnClear').addEventListener('click', () => {
+            blurAmountSlider.value = 0;
+            blurValueDisplay.textContent = '0.0';
+            blurPlaneMaterial.opacity = 0;
+            roughnessSlider.value = 0;
+            roughnessValueDisplay.textContent = '0.00';
+            blurPlaneMaterial.roughness = 0;
+        });
+        
+        document.getElementById('btnBlurry').addEventListener('click', () => {
+            blurAmountSlider.value = 5;
+            blurValueDisplay.textContent = '5.0';
+            blurPlaneMaterial.opacity = 0.25;
+            roughnessSlider.value = 0.5;
+            roughnessValueDisplay.textContent = '0.50';
+            blurPlaneMaterial.roughness = 0.5;
+        });
+        
+        document.getElementById('btnReset').addEventListener('click', () => {
+            blurAmountSlider.value = 2;
+            blurValueDisplay.textContent = '2.0';
+            blurPlaneMaterial.opacity = 0.1;
+            reflectStrengthSlider.value = 0.8;
+            strengthValueDisplay.textContent = '0.80';
+            reflector.material.color.setScalar(0.8);
+            roughnessSlider.value = 0.1;
+            roughnessValueDisplay.textContent = '0.10';
+            blurPlaneMaterial.roughness = 0.1;
+        });
+        
+        // 窗口调整
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            
+            // 更新反射器分辨率
+            reflector.getRenderTarget().setSize(
+                window.innerWidth * window.devicePixelRatio,
+                window.innerHeight * window.devicePixelRatio
+            );
+        });
+        
+        // 暴露到 window 供截图使用
+        window.renderer = renderer;
+        window.camera = camera;
+        window.scene = scene;
+        
+        // 动画循环
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            time += 0.01;
+            
+            // 旋转物体
+            objects.forEach((obj, i) => {
+                obj.rotation.x += 0.005;
+                obj.rotation.y += 0.01;
+                obj.position.y = 1 + Math.sin(time + i) * 0.3;
+            });
+            
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        
+        animate();
+    </script>
+
+    <!-- 截图支持脚本 -->
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

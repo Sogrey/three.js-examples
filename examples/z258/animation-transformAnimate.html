@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Mesh变换动画，展示平移、旋转、缩放等变换效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - Mesh变换动画</title>
+    <script src="../../libs/gsap/dist/gsap.min.js"></script>
+    <link rel="stylesheet" href="../../css/example-common.css">
+    <style>
+        body {
+            background: #0a0a0a;
+            margin: 0;
+            overflow: hidden;
+        }
+        #transformUI {
+            position: absolute;
+            top: 50px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            z-index: 100;
+            max-width: 280px;
+        }
+        #transformUI h3 {
+            margin: 0 0 10px 0;
+            color: #00ff00;
+            font-size: 16px;
+        }
+        #transformUI .btn {
+            display: block;
+            width: 100%;
+            margin: 5px 0;
+            padding: 8px 12px;
+            background: #333;
+            border: 1px solid #555;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 11px;
+        }
+        #transformUI .btn:hover {
+            background: #444;
+            border-color: #00ff00;
+        }
+        #transformUI .btn.active {
+            background: #00ff00;
+            color: #000;
+        }
+        #transformUI .info {
+            font-size: 10px;
+            color: #aaa;
+            margin-top: 10px;
+        }
+        #transformInfo {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #00ff00;
+            font-size: 16px;
+            font-family: 'Courier New', monospace;
+            text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+            z-index: 100;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px 30px;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+    
+    <div id="transformUI">
+        <h3>🔄 Mesh变换动画</h3>
+        <button class="btn" id="btnTranslate">平移 (Translate)</button>
+        <button class="btn" id="btnRotate">旋转 (Rotate)</button>
+        <button class="btn" id="btnScale">缩放 (Scale)</button>
+        <button class="btn" id="btnCombined">组合变换</button>
+        <button class="btn" id="btnReset">重置</button>
+        <div class="info">
+            左键拖拽旋转视角<br>
+            滚轮缩放<br>
+            查看各种变换效果
+        </div>
+    </div>
+    
+    <div id="transformInfo">
+        点击按钮查看变换效果
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        const container = document.getElementById('threeContainer');
+        
+        // 场景设置
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a0a0a);
+        
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(8, 6, 8);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        container.appendChild(renderer.domElement);
+        
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        
+        // 灯光
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        scene.add(ambientLight);
+        
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(5, 10, 5);
+        directionalLight.castShadow = true;
+        scene.add(directionalLight);
+        
+        // 网格地面
+        const gridHelper = new THREE.GridHelper(20, 20, 0x444444, 0x222222);
+        scene.add(gridHelper);
+        
+        // 坐标轴
+        const axesHelper = new THREE.AxesHelper(3);
+        scene.add(axesHelper);
+        
+        // 创建变换对象
+        const geometry = new THREE.BoxGeometry(2, 2, 2);
+        const material = new THREE.MeshStandardMaterial({ 
+            color: 0x0088ff,
+            roughness: 0.3,
+            metalness: 0.7
+        });
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.position.y = 2;
+        mesh.castShadow = true;
+        scene.add(mesh);
+        
+        // 保存原始状态
+        const originalState = {
+            position: mesh.position.clone(),
+            rotation: mesh.rotation.clone(),
+            scale: mesh.scale.clone()
+        };
+        
+        // 当前动画
+        let currentAnimation = null;
+        
+        // 更新信息显示
+        function updateInfo(text) {
+            document.getElementById('transformInfo').textContent = text;
+        }
+        
+        // 平移动画
+        function translateAnimation() {
+            if (currentAnimation) currentAnimation.kill();
+            
+            // 重置到初始状态
+            mesh.position.copy(originalState.position);
+            mesh.rotation.copy(originalState.rotation);
+            mesh.scale.copy(originalState.scale);
+            
+            currentAnimation = gsap.timeline({
+                onComplete: () => updateInfo('平移完成')
+            });
+            
+            // X轴平移
+            currentAnimation.to(mesh.position, {
+                x: 3,
+                duration: 1,
+                ease: "power2.inOut",
+                onStart: () => updateInfo('沿 X 轴平移')
+            });
+            
+            // Y轴平移
+            currentAnimation.to(mesh.position, {
+                y: 5,
+                duration: 1,
+                ease: "power2.inOut",
+                onStart: () => updateInfo('沿 Y 轴平移')
+            });
+            
+            // Z轴平移
+            currentAnimation.to(mesh.position, {
+                z: 3,
+                duration: 1,
+                ease: "power2.inOut",
+                onStart: () => updateInfo('沿 Z 轴平移')
+            });
+            
+            // 回到原点
+            currentAnimation.to(mesh.position, {
+                x: originalState.position.x,
+                y: originalState.position.y,
+                z: originalState.position.z,
+                duration: 1,
+                ease: "power2.inOut",
+                onStart: () => updateInfo('回到原点')
+            });
+        }
+        
+        // 旋转动画
+        function rotateAnimation() {
+            if (currentAnimation) currentAnimation.kill();
+            
+            // 重置
+            mesh.position.copy(originalState.position);
+            mesh.rotation.copy(originalState.rotation);
+            mesh.scale.copy(originalState.scale);
+            
+            currentAnimation = gsap.timeline({
+                onComplete: () => updateInfo('旋转完成')
+            });
+            
+            // X轴旋转
+            currentAnimation.to(mesh.rotation, {
+                x: Math.PI * 2,
+                duration: 1.5,
+                ease: "power2.inOut",
+                onStart: () => updateInfo('绕 X 轴旋转 360°')
+            });
+            
+            // Y轴旋转
+            currentAnimation.to(mesh.rotation, {
+                y: Math.PI * 2,
+                duration: 1.5,
+                ease: "power2.inOut",
+                onStart: () => updateInfo('绕 Y 轴旋转 360°')
+            });
+            
+            // Z轴旋转
+            currentAnimation.to(mesh.rotation, {
+                z: Math.PI * 2,
+                duration: 1.5,
+                ease: "power2.inOut",
+                onStart: () => updateInfo('绕 Z 轴旋转 360°')
+            });
+        }
+        
+        // 缩放动画
+        function scaleAnimation() {
+            if (currentAnimation) currentAnimation.kill();
+            
+            // 重置
+            mesh.position.copy(originalState.position);
+            mesh.rotation.copy(originalState.rotation);
+            mesh.scale.copy(originalState.scale);
+            
+            currentAnimation = gsap.timeline({
+                onComplete: () => updateInfo('缩放完成')
+            });
+            
+            // 放大
+            currentAnimation.to(mesh.scale, {
+                x: 2,
+                y: 2,
+                z: 2,
+                duration: 1,
+                ease: "elastic.out(1, 0.3)",
+                onStart: () => updateInfo('放大 2 倍')
+            });
+            
+            // 缩小
+            currentAnimation.to(mesh.scale, {
+                x: 0.5,
+                y: 0.5,
+                z: 0.5,
+                duration: 1,
+                ease: "power2.inOut",
+                onStart: () => updateInfo('缩小到 0.5 倍')
+            });
+            
+            // 恢复
+            currentAnimation.to(mesh.scale, {
+                x: 1,
+                y: 1,
+                z: 1,
+                duration: 0.8,
+                ease: "bounce.out",
+                onStart: () => updateInfo('恢复原大小')
+            });
+        }
+        
+        // 组合变换
+        function combinedAnimation() {
+            if (currentAnimation) currentAnimation.kill();
+            
+            // 重置
+            mesh.position.copy(originalState.position);
+            mesh.rotation.copy(originalState.rotation);
+            mesh.scale.copy(originalState.scale);
+            
+            currentAnimation = gsap.timeline({
+                onComplete: () => updateInfo('组合变换完成')
+            });
+            
+            // 同时进行平移、旋转、缩放
+            currentAnimation.to(mesh.position, {
+                x: 2,
+                y: 4,
+                z: 2,
+                duration: 2,
+                ease: "power2.inOut"
+            }, 0);
+            
+            currentAnimation.to(mesh.rotation, {
+                x: Math.PI,
+                y: Math.PI,
+                z: Math.PI / 2,
+                duration: 2,
+                ease: "power2.inOut"
+            }, 0);
+            
+            currentAnimation.to(mesh.scale, {
+                x: 1.5,
+                y: 1.5,
+                z: 1.5,
+                duration: 2,
+                ease: "elastic.out(1, 0.5)"
+            }, 0);
+            
+            // 回到原位
+            currentAnimation.to(mesh.position, {
+                x: originalState.position.x,
+                y: originalState.position.y,
+                z: originalState.position.z,
+                duration: 1.5,
+                ease: "power2.inOut",
+                onStart: () => updateInfo('回到原位')
+            });
+            
+            currentAnimation.to(mesh.rotation, {
+                x: 0,
+                y: 0,
+                z: 0,
+                duration: 1.5,
+                ease: "power2.inOut"
+            }, "<");
+            
+            currentAnimation.to(mesh.scale, {
+                x: 1,
+                y: 1,
+                z: 1,
+                duration: 1.5,
+                ease: "power2.inOut"
+            }, "<");
+        }
+        
+        // 重置
+        function resetTransform() {
+            if (currentAnimation) currentAnimation.kill();
+            
+            gsap.to(mesh.position, {
+                x: originalState.position.x,
+                y: originalState.position.y,
+                z: originalState.position.z,
+                duration: 0.5,
+                ease: "power2.out"
+            });
+            
+            gsap.to(mesh.rotation, {
+                x: 0,
+                y: 0,
+                z: 0,
+                duration: 0.5,
+                ease: "power2.out"
+            });
+            
+            gsap.to(mesh.scale, {
+                x: 1,
+                y: 1,
+                z: 1,
+                duration: 0.5,
+                ease: "power2.out",
+                onComplete: () => updateInfo('已重置')
+            });
+        }
+        
+        // UI事件
+        document.getElementById('btnTranslate').addEventListener('click', translateAnimation);
+        document.getElementById('btnRotate').addEventListener('click', rotateAnimation);
+        document.getElementById('btnScale').addEventListener('click', scaleAnimation);
+        document.getElementById('btnCombined').addEventListener('click', combinedAnimation);
+        document.getElementById('btnReset').addEventListener('click', resetTransform);
+        
+        // 窗口调整
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // 暴露到 window 供截图使用
+        window.renderer = renderer;
+        window.camera = camera;
+        window.scene = scene;
+        
+        // 动画循环
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        
+        animate();
+    </script>
+
+    <!-- 截图支持脚本 -->
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

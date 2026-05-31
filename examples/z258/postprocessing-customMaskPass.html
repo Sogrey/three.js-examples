@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="自定义遮罩通道，展示后期处理遮罩效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 自定义遮罩通道</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+    <style>
+        body {
+            background: #0a0a0a;
+            margin: 0;
+            overflow: hidden;
+        }
+        #maskUI {
+            position: absolute;
+            top: 50px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            z-index: 100;
+            max-width: 280px;
+        }
+        #maskUI h3 {
+            margin: 0 0 10px 0;
+            color: #00ff00;
+            font-size: 16px;
+        }
+        #maskUI .control {
+            margin: 10px 0;
+        }
+        #maskUI label {
+            display: block;
+            font-size: 11px;
+            color: #aaa;
+            margin-bottom: 5px;
+        }
+        #maskUI input[type="range"] {
+            width: 100%;
+            height: 4px;
+            background: #333;
+            border-radius: 2px;
+            outline: none;
+        }
+        #maskUI .value {
+            font-size: 10px;
+            color: #00ff00;
+            text-align: right;
+        }
+        #maskUI .btn {
+            display: block;
+            width: 100%;
+            margin: 5px 0;
+            padding: 8px 12px;
+            background: #333;
+            border: 1px solid #555;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 11px;
+        }
+        #maskUI .btn:hover {
+            background: #444;
+            border-color: #00ff00;
+        }
+        #maskUI .btn.active {
+            background: #00ff00;
+            color: #000;
+        }
+        #maskUI .info {
+            font-size: 10px;
+            color: #aaa;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+    
+    <div id="maskUI">
+        <h3>🎭 自定义遮罩通道</h3>
+        <div class="control">
+            <label>遮罩大小</label>
+            <input type="range" id="maskSize" min="0.1" max="1" value="0.5" step="0.05">
+            <div class="value" id="sizeValue">0.50</div>
+        </div>
+        <div class="control">
+            <label>遮罩羽化</label>
+            <input type="range" id="maskFeather" min="0" max="0.5" value="0.1" step="0.05">
+            <div class="value" id="featherValue">0.10</div>
+        </div>
+        <div class="control">
+            <label>遮罩旋转</label>
+            <input type="range" id="maskRotation" min="0" max="6.28" value="0" step="0.1">
+            <div class="value" id="rotationValue">0.00</div>
+        </div>
+        <button class="btn active" id="btnCircle">圆形遮罩</button>
+        <button class="btn" id="btnRect">矩形遮罩</button>
+        <button class="btn" id="btnDiamond">菱形遮罩</button>
+        <button class="btn" id="btnAnimate">自动动画</button>
+        <div class="info">
+            左键拖拽旋转视角<br>
+            滚轮缩放<br>
+            遮罩内显示原色，遮罩外显示灰度
+        </div>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+
+        const container = document.getElementById('threeContainer');
+        
+        // 场景设置
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a1a2e);
+        
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 5, 10);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+        
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        
+        // 灯光
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        scene.add(ambientLight);
+        
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+        directionalLight.position.set(5, 10, 5);
+        directionalLight.castShadow = true;
+        scene.add(directionalLight);
+        
+        const pointLight1 = new THREE.PointLight(0xff0088, 0.8, 20);
+        pointLight1.position.set(-5, 3, -5);
+        scene.add(pointLight1);
+        
+        const pointLight2 = new THREE.PointLight(0x0088ff, 0.8, 20);
+        pointLight2.position.set(5, 3, 5);
+        scene.add(pointLight2);
+        
+        // 创建彩色物体
+        const objects = [];
+        const colors = [0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff, 0x00ffff, 0xff8800, 0x8800ff];
+        
+        for (let i = 0; i < 8; i++) {
+            const geometry = new THREE.BoxGeometry(1, 1, 1);
+            const material = new THREE.MeshStandardMaterial({
+                color: colors[i],
+                roughness: 0.3,
+                metalness: 0.6
+            });
+            const mesh = new THREE.Mesh(geometry, material);
+            
+            const angle = (i / 8) * Math.PI * 2;
+            const radius = 4;
+            mesh.position.set(
+                Math.cos(angle) * radius,
+                0.5,
+                Math.sin(angle) * radius
+            );
+            mesh.rotation.set(
+                Math.random() * Math.PI,
+                Math.random() * Math.PI,
+                Math.random() * Math.PI
+            );
+            mesh.castShadow = true;
+            scene.add(mesh);
+            objects.push(mesh);
+        }
+        
+        // 地面
+        const planeGeometry = new THREE.PlaneGeometry(20, 20);
+        const planeMaterial = new THREE.MeshStandardMaterial({
+            color: 0x333333,
+            roughness: 0.8,
+            metalness: 0.2
+        });
+        const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+        plane.rotation.x = -Math.PI / 2;
+        plane.receiveShadow = true;
+        scene.add(plane);
+        
+        // 自定义遮罩着色器
+        const MaskShader = {
+            uniforms: {
+                tDiffuse: { value: null },
+                maskCenter: { value: new THREE.Vector2(0.5, 0.5) },
+                maskSize: { value: 0.5 },
+                maskFeather: { value: 0.1 },
+                maskRotation: { value: 0.0 },
+                maskShape: { value: 0 } // 0: circle, 1: rect, 2: diamond
+            },
+            vertexShader: `
+                varying vec2 vUv;
+                void main() {
+                    vUv = uv;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform sampler2D tDiffuse;
+                uniform vec2 maskCenter;
+                uniform float maskSize;
+                uniform float maskFeather;
+                uniform float maskRotation;
+                uniform int maskShape;
+                varying vec2 vUv;
+                
+                float getMaskValue(vec2 uv) {
+                    vec2 delta = uv - maskCenter;
+                    
+                    // 应用旋转
+                    float cosR = cos(maskRotation);
+                    float sinR = sin(maskRotation);
+                    vec2 rotated = vec2(
+                        delta.x * cosR - delta.y * sinR,
+                        delta.x * sinR + delta.y * cosR
+                    );
+                    
+                    float dist;
+                    if (maskShape == 0) {
+                        // 圆形
+                        dist = length(rotated);
+                    } else if (maskShape == 1) {
+                        // 矩形
+                        dist = max(abs(rotated.x), abs(rotated.y));
+                    } else {
+                        // 菱形
+                        dist = abs(rotated.x) + abs(rotated.y);
+                    }
+                    
+                    // 羽化边缘
+                    float mask = smoothstep(maskSize + maskFeather, maskSize - maskFeather, dist);
+                    return mask;
+                }
+                
+                void main() {
+                    vec4 color = texture2D(tDiffuse, vUv);
+                    float mask = getMaskValue(vUv);
+                    
+                    // 遮罩外转换为灰度
+                    float gray = dot(color.rgb, vec3(0.299, 0.587, 0.114));
+                    vec3 grayColor = vec3(gray) * 0.5; // 降低亮度
+                    
+                    // 混合遮罩内外
+                    vec3 finalColor = mix(grayColor, color.rgb, mask);
+                    
+                    gl_FragColor = vec4(finalColor, color.a);
+                }
+            `
+        };
+        
+        // 后期处理
+        const renderScene = new RenderPass(scene, camera);
+        
+        const maskPass = new ShaderPass(MaskShader);
+        
+        const composer = new EffectComposer(renderer);
+        composer.addPass(renderScene);
+        composer.addPass(maskPass);
+        
+        // 动画变量
+        let time = 0;
+        let isAnimating = false;
+        let maskShape = 0;
+        
+        // UI控制
+        const maskSizeSlider = document.getElementById('maskSize');
+        const sizeValueDisplay = document.getElementById('sizeValue');
+        const maskFeatherSlider = document.getElementById('maskFeather');
+        const featherValueDisplay = document.getElementById('featherValue');
+        const maskRotationSlider = document.getElementById('maskRotation');
+        const rotationValueDisplay = document.getElementById('rotationValue');
+        
+        maskSizeSlider.addEventListener('input', (e) => {
+            const value = parseFloat(e.target.value);
+            sizeValueDisplay.textContent = value.toFixed(2);
+            maskPass.uniforms.maskSize.value = value;
+        });
+        
+        maskFeatherSlider.addEventListener('input', (e) => {
+            const value = parseFloat(e.target.value);
+            featherValueDisplay.textContent = value.toFixed(2);
+            maskPass.uniforms.maskFeather.value = value;
+        });
+        
+        maskRotationSlider.addEventListener('input', (e) => {
+            const value = parseFloat(e.target.value);
+            rotationValueDisplay.textContent = value.toFixed(2);
+            maskPass.uniforms.maskRotation.value = value;
+        });
+        
+        function setMaskShape(shape, btnId) {
+            maskShape = shape;
+            maskPass.uniforms.maskShape.value = shape;
+            document.querySelectorAll('#maskUI .btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(btnId).classList.add('active');
+        }
+        
+        document.getElementById('btnCircle').addEventListener('click', () => setMaskShape(0, 'btnCircle'));
+        document.getElementById('btnRect').addEventListener('click', () => setMaskShape(1, 'btnRect'));
+        document.getElementById('btnDiamond').addEventListener('click', () => setMaskShape(2, 'btnDiamond'));
+        
+        document.getElementById('btnAnimate').addEventListener('click', () => {
+            isAnimating = !isAnimating;
+            document.getElementById('btnAnimate').textContent = isAnimating ? '停止动画' : '自动动画';
+            document.getElementById('btnAnimate').classList.toggle('active');
+        });
+        
+        // 窗口调整
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // 暴露到 window 供截图使用
+        window.renderer = renderer;
+        window.camera = camera;
+        window.scene = scene;
+        
+        // 动画循环
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            time += 0.01;
+            
+            // 旋转物体
+            objects.forEach((obj, i) => {
+                obj.rotation.x += 0.005;
+                obj.rotation.y += 0.01;
+            });
+            
+            if (isAnimating) {
+                // 动态改变遮罩大小
+                const size = 0.3 + Math.sin(time) * 0.2;
+                maskSizeSlider.value = size;
+                sizeValueDisplay.textContent = size.toFixed(2);
+                maskPass.uniforms.maskSize.value = size;
+                
+                // 动态旋转
+                const rotation = time * 0.5;
+                maskRotationSlider.value = rotation % 6.28;
+                rotationValueDisplay.textContent = (rotation % 6.28).toFixed(2);
+                maskPass.uniforms.maskRotation.value = rotation;
+            }
+            
+            controls.update();
+            composer.render();
+        }
+        
+        animate();
+    </script>
+
+    <!-- 截图支持脚本 -->
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

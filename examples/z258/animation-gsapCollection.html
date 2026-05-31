@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="GSAP动画合集，展示多种GSAP动画效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - GSAP动画合集</title>
+    <script src="../../libs/gsap/dist/gsap.min.js"></script>
+    <link rel="stylesheet" href="../../css/example-common.css">
+    <style>
+        body {
+            background: #0a0a0a;
+            margin: 0;
+            overflow: hidden;
+        }
+        #gsapUI {
+            position: absolute;
+            top: 50px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            z-index: 100;
+            max-width: 280px;
+        }
+        #gsapUI h3 {
+            margin: 0 0 10px 0;
+            color: #00ff00;
+            font-size: 16px;
+        }
+        #gsapUI .btn {
+            display: block;
+            width: 100%;
+            margin: 5px 0;
+            padding: 8px 12px;
+            background: #333;
+            border: 1px solid #555;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 11px;
+        }
+        #gsapUI .btn:hover {
+            background: #444;
+            border-color: #00ff00;
+        }
+        #gsapUI .info {
+            font-size: 10px;
+            color: #aaa;
+            margin-top: 10px;
+        }
+        #animInfo {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #00ff00;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+            z-index: 100;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px 30px;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+    
+    <div id="gsapUI">
+        <h3>🎬 GSAP动画合集</h3>
+        <button class="btn" id="btnStagger">交错动画 (Stagger)</button>
+        <button class="btn" id="btnTimeline">时间轴 (Timeline)</button>
+        <button class="btn" id="btnElastic">弹性效果 (Elastic)</button>
+        <button class="btn" id="btnBounce">弹跳效果 (Bounce)</button>
+        <button class="btn" id="btnYoyo">往返动画 (Yoyo)</button>
+        <button class="btn" id="btnMorph">形态变换</button>
+        <button class="btn" id="btnReset">重置</button>
+        <div class="info">
+            左键拖拽旋转视角<br>
+            滚轮缩放<br>
+            查看各种GSAP动画效果
+        </div>
+    </div>
+    
+    <div id="animInfo">
+        点击按钮查看GSAP动画效果
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        const container = document.getElementById('threeContainer');
+        
+        // 场景设置
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a0a0a);
+        
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(15, 10, 15);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        container.appendChild(renderer.domElement);
+        
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        
+        // 灯光
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        scene.add(ambientLight);
+        
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(10, 20, 10);
+        directionalLight.castShadow = true;
+        scene.add(directionalLight);
+        
+        // 网格地面
+        const gridHelper = new THREE.GridHelper(30, 30, 0x444444, 0x222222);
+        scene.add(gridHelper);
+        
+        // 动画对象数组
+        let animObjects = [];
+        let currentTimeline = null;
+        
+        // 更新信息显示
+        function updateInfo(text) {
+            document.getElementById('animInfo').textContent = text;
+        }
+        
+        // 清除场景
+        function clearScene() {
+            if (currentTimeline) {
+                currentTimeline.kill();
+                currentTimeline = null;
+            }
+            animObjects.forEach(obj => {
+                scene.remove(obj);
+                if (obj.geometry) obj.geometry.dispose();
+                if (obj.material) obj.material.dispose();
+            });
+            animObjects = [];
+        }
+        
+        // 创建基础几何体
+        function createMesh(geometry, color, x, y, z) {
+            const material = new THREE.MeshStandardMaterial({ 
+                color: color,
+                roughness: 0.3,
+                metalness: 0.7
+            });
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.set(x, y, z);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            scene.add(mesh);
+            animObjects.push(mesh);
+            return mesh;
+        }
+        
+        // 1. 交错动画
+        function staggerAnimation() {
+            clearScene();
+            
+            const geometry = new THREE.BoxGeometry(1, 1, 1);
+            const colors = [0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff, 0x00ffff];
+            
+            for (let i = 0; i < 12; i++) {
+                const x = (i % 6 - 2.5) * 2;
+                const z = Math.floor(i / 6) * 2 - 1;
+                createMesh(geometry, colors[i % 6], x, 0.5, z);
+            }
+            
+            currentTimeline = gsap.timeline({
+                onComplete: () => updateInfo('交错动画完成')
+            });
+            
+            // 交错上升
+            currentTimeline.to(animObjects.map(obj => obj.position), {
+                y: 4,
+                duration: 0.5,
+                stagger: 0.1,
+                ease: "back.out(1.7)",
+                onStart: () => updateInfo('交错上升动画')
+            });
+            
+            // 交错旋转
+            currentTimeline.to(animObjects.map(obj => obj.rotation), {
+                y: Math.PI * 2,
+                duration: 1,
+                stagger: 0.05,
+                ease: "power2.inOut"
+            }, "<");
+            
+            // 交错下降
+            currentTimeline.to(animObjects.map(obj => obj.position), {
+                y: 0.5,
+                duration: 0.5,
+                stagger: 0.1,
+                ease: "bounce.out",
+                onStart: () => updateInfo('交错下降动画')
+            });
+        }
+        
+        // 2. 时间轴动画
+        function timelineAnimation() {
+            clearScene();
+            
+            const geometry = new THREE.SphereGeometry(0.8, 32, 32);
+            const mesh = createMesh(geometry, 0x00aaff, 0, 2, 0);
+            
+            currentTimeline = gsap.timeline({
+                onComplete: () => updateInfo('时间轴动画完成')
+            });
+            
+            // 序列动画
+            currentTimeline
+                .to(mesh.position, { x: 5, duration: 1, ease: "power2.inOut", onStart: () => updateInfo('向右移动') })
+                .to(mesh.position, { y: 5, duration: 0.8, ease: "power2.out", onStart: () => updateInfo('向上跳跃') })
+                .to(mesh.position, { x: -5, duration: 1, ease: "power2.inOut", onStart: () => updateInfo('向左移动') })
+                .to(mesh.position, { y: 2, duration: 0.8, ease: "bounce.out", onStart: () => updateInfo('下落弹跳') })
+                .to(mesh.position, { x: 0, duration: 0.8, ease: "power2.inOut", onStart: () => updateInfo('回到中心') })
+                .to(mesh.scale, { x: 2, y: 2, z: 2, duration: 0.5, ease: "elastic.out(1, 0.3)", onStart: () => updateInfo('弹性放大') })
+                .to(mesh.scale, { x: 1, y: 1, z: 1, duration: 0.5, ease: "power2.in" });
+        }
+        
+        // 3. 弹性效果
+        function elasticAnimation() {
+            clearScene();
+            
+            const geometry = new THREE.CylinderGeometry(0.5, 0.5, 2, 16);
+            const colors = [0xff4444, 0x44ff44, 0x4444ff];
+            
+            for (let i = 0; i < 3; i++) {
+                createMesh(geometry, colors[i], (i - 1) * 3, 1, 0);
+            }
+            
+            currentTimeline = gsap.timeline({
+                onComplete: () => updateInfo('弹性效果完成')
+            });
+            
+            animObjects.forEach((obj, i) => {
+                currentTimeline.to(obj.scale, {
+                    x: 1.5,
+                    z: 1.5,
+                    y: 0.5,
+                    duration: 0.6,
+                    ease: "elastic.out(1, 0.3)",
+                    delay: i * 0.2,
+                    onStart: () => updateInfo(`弹性变形 ${i + 1}`)
+                }, 0);
+                
+                currentTimeline.to(obj.scale, {
+                    x: 1,
+                    y: 1,
+                    z: 1,
+                    duration: 0.6,
+                    ease: "elastic.out(1, 0.3)"
+                });
+            });
+        }
+        
+        // 4. 弹跳效果
+        function bounceAnimation() {
+            clearScene();
+            
+            const geometry = new THREE.BoxGeometry(1.5, 1.5, 1.5);
+            const mesh = createMesh(geometry, 0xffaa00, 0, 5, 0);
+            
+            currentTimeline = gsap.timeline({
+                repeat: 2,
+                onComplete: () => updateInfo('弹跳效果完成')
+            });
+            
+            currentTimeline
+                .to(mesh.position, {
+                    y: 0.75,
+                    duration: 0.8,
+                    ease: "bounce.out",
+                    onStart: () => updateInfo('弹跳下落')
+                })
+                .to(mesh.position, {
+                    y: 5,
+                    duration: 0.5,
+                    ease: "power2.out"
+                });
+        }
+        
+        // 5. 往返动画
+        function yoyoAnimation() {
+            clearScene();
+            
+            const geometry = new THREE.TorusKnotGeometry(0.8, 0.3, 100, 16);
+            const mesh = createMesh(geometry, 0xff00ff, 0, 3, 0);
+            
+            currentTimeline = gsap.to(mesh.rotation, {
+                x: Math.PI * 4,
+                y: Math.PI * 4,
+                duration: 3,
+                ease: "power1.inOut",
+                yoyo: true,
+                repeat: 3,
+                onStart: () => updateInfo('往返旋转动画'),
+                onComplete: () => updateInfo('往返动画完成')
+            });
+            
+            // 同时缩放
+            gsap.to(mesh.scale, {
+                x: 1.5,
+                y: 1.5,
+                z: 1.5,
+                duration: 1.5,
+                yoyo: true,
+                repeat: 3,
+                ease: "sine.inOut"
+            });
+        }
+        
+        // 6. 形态变换
+        function morphAnimation() {
+            clearScene();
+            
+            const geometries = [
+                new THREE.BoxGeometry(1.5, 1.5, 1.5),
+                new THREE.SphereGeometry(1, 32, 32),
+                new THREE.ConeGeometry(1, 2, 32),
+                new THREE.CylinderGeometry(0.8, 0.8, 2, 32),
+                new THREE.TorusGeometry(1, 0.4, 16, 100)
+            ];
+            
+            const material = new THREE.MeshStandardMaterial({ 
+                color: 0x00ffaa,
+                roughness: 0.3,
+                metalness: 0.7
+            });
+            
+            let currentMesh = new THREE.Mesh(geometries[0], material);
+            currentMesh.position.y = 2;
+            currentMesh.castShadow = true;
+            scene.add(currentMesh);
+            animObjects.push(currentMesh);
+            
+            currentTimeline = gsap.timeline({
+                onComplete: () => updateInfo('形态变换完成')
+            });
+            
+            geometries.slice(1).forEach((geo, i) => {
+                currentTimeline.call(() => {
+                    scene.remove(currentMesh);
+                    currentMesh = new THREE.Mesh(geo, material);
+                    currentMesh.position.y = 2;
+                    currentMesh.castShadow = true;
+                    currentMesh.scale.set(0, 0, 0);
+                    scene.add(currentMesh);
+                    animObjects.push(currentMesh);
+                    
+                    gsap.to(currentMesh.scale, {
+                        x: 1,
+                        y: 1,
+                        z: 1,
+                        duration: 0.5,
+                        ease: "back.out(1.7)"
+                    });
+                    
+                    updateInfo(`变换形态 ${i + 2}`);
+                });
+                
+                currentTimeline.to({}, { duration: 1.5 });
+            });
+        }
+        
+        // 重置
+        function resetAnimation() {
+            clearScene();
+            updateInfo('已重置');
+        }
+        
+        // UI事件
+        document.getElementById('btnStagger').addEventListener('click', staggerAnimation);
+        document.getElementById('btnTimeline').addEventListener('click', timelineAnimation);
+        document.getElementById('btnElastic').addEventListener('click', elasticAnimation);
+        document.getElementById('btnBounce').addEventListener('click', bounceAnimation);
+        document.getElementById('btnYoyo').addEventListener('click', yoyoAnimation);
+        document.getElementById('btnMorph').addEventListener('click', morphAnimation);
+        document.getElementById('btnReset').addEventListener('click', resetAnimation);
+        
+        // 窗口调整
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // 暴露到 window 供截图使用
+        window.renderer = renderer;
+        window.camera = camera;
+        window.scene = scene;
+        
+        // 动画循环
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        
+        animate();
+    </script>
+
+    <!-- 截图支持脚本 -->
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

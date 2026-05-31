@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DOM遮挡 - Three.js r179</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            overflow: hidden;
+            background: #0a0a0a;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+        #container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+        
+        /* WebGL Canvas */
+        #webgl-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        
+        /* DOM 元素层 */
+        #dom-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none;
+        }
+        
+        /* DOM 元素样式 */
+        .dom-element {
+            position: absolute;
+            pointer-events: auto;
+            transition: all 0.3s ease;
+        }
+        
+        /* 浮动标签 */
+        .floating-label {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, rgba(255,107,107,0.9), rgba(255,142,83,0.9));
+            color: white;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(255,107,107,0.4);
+            cursor: pointer;
+        }
+        .floating-label:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(255,107,107,0.6);
+        }
+        .floating-label.occluded {
+            opacity: 0.3;
+            filter: grayscale(0.8);
+        }
+        
+        /* 信息卡片 */
+        .info-card {
+            width: 220px;
+            padding: 15px;
+            background: rgba(255,255,255,0.95);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            cursor: pointer;
+        }
+        .info-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+        }
+        .info-card.occluded {
+            opacity: 0.3;
+        }
+        .info-card h4 {
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+        .info-card p {
+            color: #666;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        
+        /* 按钮 */
+        .action-button {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(102,126,234,0.4);
+        }
+        .action-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102,126,234,0.6);
+        }
+        .action-button.occluded {
+            opacity: 0.3;
+        }
+        
+        /* 状态指示器 */
+        .status-indicator {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            cursor: pointer;
+        }
+        .status-indicator.visible {
+            background: linear-gradient(135deg, #11998e, #38ef7d);
+        }
+        .status-indicator.occluded {
+            background: linear-gradient(135deg, #eb3349, #f45c43);
+            opacity: 0.3;
+        }
+        
+        /* 控制面板 */
+        #controls {
+            position: absolute;
+            top: 50px;
+            right: 20px;
+            background: rgba(0,0,0,0.85);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            z-index: 100;
+            max-width: 300px;
+        }
+        #controls h3 {
+            color: #4a9eff;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        #controls p {
+            margin: 8px 0;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #ccc;
+        }
+        #controls .toggle-btn {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: #4a9eff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            width: 100%;
+        }
+        #controls .toggle-btn:hover {
+            background: #3a8eef;
+        }
+        
+        /* 统计信息 */
+        #stats {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: #4a9eff;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            z-index: 100;
+        }
+        #stats div {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <canvas id="webgl-canvas"></canvas>
+        
+        <div id="dom-layer">
+            <!-- DOM 元素将通过 JS 动态定位 -->
+        </div>
+        
+        <div id="controls">
+            <h3>🔍 DOM遮挡检测示例</h3>
+            <p>• 红色立方体：不透明物体</p>
+            <p>• 蓝色球体：透明物体</p>
+            <p>• DOM元素：根据遮挡状态改变透明度</p>
+            <p>• 被遮挡时：元素变灰/半透明</p>
+            <p>• 可见时：正常显示</p>
+            <button class="toggle-btn" onclick="toggleOcclusionTest()">切换遮挡检测</button>
+        </div>
+        
+        <div id="stats">
+            <div>FPS: <span id="fps">60</span></div>
+            <div>遮挡检测: <span id="occlusion-status">开启</span></div>
+            <div>可见元素: <span id="visible-count">0</span></div>
+        </div>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // 场景设置
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a0a0a);
+
+        // 相机
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 50, 150);
+
+        // 渲染器
+        const canvas = document.getElementById('webgl-canvas');
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setClearColor(0x0a0a0a, 1);
+
+        // 控制器
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 0.5;
+
+        // 灯光
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(50, 100, 50);
+        scene.add(directionalLight);
+
+        const pointLight = new THREE.PointLight(0x4a9eff, 0.6);
+        pointLight.position.set(-50, 50, -50);
+        scene.add(pointLight);
+
+        // 创建遮挡物体
+        const occluders = [];
+
+        // 中心红色立方体
+        const cubeGeometry = new THREE.BoxGeometry(40, 40, 40);
+        const cubeMaterial = new THREE.MeshPhongMaterial({ 
+            color: 0xff4444,
+            shininess: 100
+        });
+        const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+        cube.position.set(0, 20, 0);
+        cube.userData.isOccluder = true;
+        scene.add(cube);
+        occluders.push(cube);
+
+        // 蓝色球体
+        const sphereGeometry = new THREE.SphereGeometry(25, 32, 32);
+        const sphereMaterial = new THREE.MeshPhongMaterial({ 
+            color: 0x4444ff,
+            transparent: true,
+            opacity: 0.7
+        });
+        const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        sphere.position.set(60, 30, -30);
+        sphere.userData.isOccluder = true;
+        scene.add(sphere);
+        occluders.push(sphere);
+
+        // 绿色圆柱体
+        const cylinderGeometry = new THREE.CylinderGeometry(15, 15, 50, 32);
+        const cylinderMaterial = new THREE.MeshPhongMaterial({ color: 0x44ff44 });
+        const cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterial);
+        cylinder.position.set(-50, 25, 20);
+        cylinder.userData.isOccluder = true;
+        scene.add(cylinder);
+        occluders.push(cylinder);
+
+        // 地面网格
+        const gridHelper = new THREE.GridHelper(200, 20, 0x444444, 0x222222);
+        scene.add(gridHelper);
+
+        // 创建 DOM 元素
+        const domElements = [];
+        const domLayer = document.getElementById('dom-layer');
+
+        function createDOMElement(className, content, position, type = 'label') {
+            const div = document.createElement('div');
+            div.className = `dom-element ${className}`;
+            div.innerHTML = content;
+            domLayer.appendChild(div);
+            
+            domElements.push({
+                element: div,
+                position: position,
+                type: type,
+                visible: true
+            });
+            
+            return div;
+        }
+
+        // 创建各种 DOM 元素
+        createDOMElement('floating-label', '🎯 目标点', new THREE.Vector3(0, 60, 0), 'label');
+        createDOMElement('floating-label', '📍 标记A', new THREE.Vector3(60, 70, -30), 'label');
+        createDOMElement('floating-label', '📍 标记B', new THREE.Vector3(-50, 70, 20), 'label');
+        
+        createDOMElement('info-card', `
+            <h4>📊 数据信息</h4>
+            <p>这是3D场景中的信息卡片，当被物体遮挡时会变透明</p>
+        `, new THREE.Vector3(30, 50, 30), 'card');
+        
+        createDOMElement('info-card', `
+            <h4>🔔 状态通知</h4>
+            <p>实时显示当前3D场景的状态信息</p>
+        `, new THREE.Vector3(-30, 50, -30), 'card');
+        
+        createDOMElement('action-button', '点击交互', new THREE.Vector3(0, 80, 40), 'button');
+        
+        createDOMElement('status-indicator visible', '✓', new THREE.Vector3(40, 40, 40), 'indicator');
+        createDOMElement('status-indicator visible', '✓', new THREE.Vector3(-40, 40, -40), 'indicator');
+
+        // 射线检测器
+        const raycaster = new THREE.Raycaster();
+        let occlusionTestEnabled = true;
+
+        function updateDOMPositions() {
+            domElements.forEach(item => {
+                // 将3D坐标转换为屏幕坐标
+                const vector = item.position.clone();
+                vector.project(camera);
+                
+                const x = (vector.x * 0.5 + 0.5) * window.innerWidth;
+                const y = (-vector.y * 0.5 + 0.5) * window.innerHeight;
+                
+                // 更新DOM位置
+                item.element.style.left = `${x}px`;
+                item.element.style.top = `${y}px`;
+                item.element.style.transform = 'translate(-50%, -50%)';
+                
+                // 检测是否在相机前方
+                const isInFront = vector.z < 1;
+                
+                if (occlusionTestEnabled && isInFront) {
+                    // 射线检测遮挡
+                    raycaster.setFromCamera(new THREE.Vector2(vector.x, vector.y), camera);
+                    const intersects = raycaster.intersectObjects(occluders);
+                    
+                    let isOccluded = false;
+                    if (intersects.length > 0) {
+                        const distance = item.position.distanceTo(camera.position);
+                        // 如果物体比DOM元素更近，则被遮挡
+                        if (intersects[0].distance < distance - 5) {
+                            isOccluded = true;
+                        }
+                    }
+                    
+                    item.visible = !isOccluded;
+                    
+                    // 更新样式
+                    if (isOccluded) {
+                        item.element.classList.add('occluded');
+                        if (item.type === 'indicator') {
+                            item.element.classList.remove('visible');
+                            item.element.classList.add('occluded');
+                            item.element.textContent = '✗';
+                        }
+                    } else {
+                        item.element.classList.remove('occluded');
+                        if (item.type === 'indicator') {
+                            item.element.classList.remove('occluded');
+                            item.element.classList.add('visible');
+                            item.element.textContent = '✓';
+                        }
+                    }
+                } else {
+                    item.visible = isInFront;
+                    item.element.classList.remove('occluded');
+                }
+                
+                // 显示/隐藏
+                item.element.style.display = isInFront ? 'block' : 'none';
+            });
+            
+            // 更新统计
+            const visibleCount = domElements.filter(e => e.visible).length;
+            document.getElementById('visible-count').textContent = visibleCount;
+        }
+
+        // 全局函数
+        window.toggleOcclusionTest = function() {
+            occlusionTestEnabled = !occlusionTestEnabled;
+            document.getElementById('occlusion-status').textContent = 
+                occlusionTestEnabled ? '开启' : '关闭';
+            
+            if (!occlusionTestEnabled) {
+                domElements.forEach(item => {
+                    item.element.classList.remove('occluded');
+                    if (item.type === 'indicator') {
+                        item.element.classList.remove('occluded');
+                        item.element.classList.add('visible');
+                        item.element.textContent = '✓';
+                    }
+                });
+            }
+        };
+
+        // 动画循环
+        let lastTime = 0;
+        let frameCount = 0;
+        
+        function animate(time) {
+            requestAnimationFrame(animate);
+            
+            controls.update();
+            
+            // 更新DOM位置
+            updateDOMPositions();
+            
+            // 渲染
+            renderer.render(scene, camera);
+            
+            // FPS计算
+            frameCount++;
+            if (time - lastTime >= 1000) {
+                document.getElementById('fps').textContent = frameCount;
+                frameCount = 0;
+                lastTime = time;
+            }
+        }
+        animate(0);
+
+        // 窗口大小调整
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // 暴露到 window 供截图使用
+        window.renderer = renderer;
+        window.camera = camera;
+        window.scene = scene;
+    </script>
+
+    <!-- 截图支持脚本 -->
+    <script>
+        let _screenshotRenderer;
+        
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (!_screenshotRenderer && window.renderer) {
+                        _screenshotRenderer = window.renderer;
+                    }
+                    
+                    if (!_screenshotRenderer) {
+                        throw new Error('渲染器未初始化');
+                    }
+                    
+                    if (window.scene && window.camera) {
+                        _screenshotRenderer.render(window.scene, window.camera);
+                    }
+                    
+                    const quality = event.data.quality || 0.8;
+                    const canvas = _screenshotRenderer.domElement;
+                    
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    
+                    window.parent.postMessage({
+                        type: 'screenshot-data',
+                        dataUrl: dataUrl
+                    }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({
+                        type: 'screenshot-error',
+                        error: error.message
+                    }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

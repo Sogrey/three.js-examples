@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>模型导出 - Three.js r179</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            overflow: hidden;
+            background: #1a1a2e;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+        #container {
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        /* 控制面板 */
+        #controls {
+            position: absolute;
+            top: 150px;
+            left: 10px;
+            background: rgba(0,0,0,0.85);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            z-index: 100;
+            max-width: 320px;
+        }
+        #controls h3 {
+            color: #4a9eff;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        #controls .export-section {
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+        }
+        #controls .export-section h4 {
+            color: #4a9eff;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        #controls button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            background: #4a9eff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        #controls button:hover {
+            background: #3a8eef;
+            transform: translateY(-2px);
+        }
+        #controls button.secondary {
+            background: #6c757d;
+        }
+        #controls button.secondary:hover {
+            background: #5a6268;
+        }
+        #controls .info {
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(74,158,255,0.2);
+            border-radius: 6px;
+            font-size: 12px;
+            color: #ccc;
+        }
+        
+        /* 场景信息 */
+        #scene-info {
+            position: absolute;
+            top: 50px;
+            right: 10px;
+            background: rgba(0,0,0,0.85);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            z-index: 100;
+            min-width: 200px;
+        }
+        #scene-info h4 {
+            color: #4a9eff;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        #scene-info .stat {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            font-size: 13px;
+        }
+        #scene-info .stat-value {
+            color: #4a9eff;
+            font-weight: bold;
+        }
+        
+        /* 消息提示 */
+        #message {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 200;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        #message.show {
+            opacity: 1;
+        }
+        #message.success {
+            border-left: 4px solid #4a9eff;
+        }
+        #message.error {
+            border-left: 4px solid #ff6b6b;
+        }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+    
+    <div id="controls">
+        <h3>📦 模型导出</h3>
+        
+        <div class="export-section">
+            <h4>导出格式</h4>
+            <button onclick="exportGLTF()">导出 GLTF (.gltf)</button>
+            <button onclick="exportGLB()">导出 GLB (.glb)</button>
+            <button onclick="exportOBJ()">导出 OBJ (.obj)</button>
+            <button onclick="exportJSON()">导出 JSON (.json)</button>
+        </div>
+        
+        <div class="export-section">
+            <h4>场景操作</h4>
+            <button class="secondary" onclick="addRandomObject()">添加随机物体</button>
+            <button class="secondary" onclick="clearScene()">清空场景</button>
+            <button class="secondary" onclick="resetScene()">重置场景</button>
+        </div>
+        
+        <div class="info">
+            💡 提示：点击导出按钮将下载对应格式的文件
+        </div>
+    </div>
+    
+    <div id="scene-info">
+        <h4>📊 场景信息</h4>
+        <div class="stat">
+            <span>物体数量:</span>
+            <span class="stat-value" id="object-count">0</span>
+        </div>
+        <div class="stat">
+            <span>顶点数:</span>
+            <span class="stat-value" id="vertex-count">0</span>
+        </div>
+        <div class="stat">
+            <span>面数:</span>
+            <span class="stat-value" id="face-count">0</span>
+        </div>
+        <div class="stat">
+            <span>材质数:</span>
+            <span class="stat-value" id="material-count">0</span>
+        </div>
+    </div>
+    
+    <div id="message"></div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+        import { OBJExporter } from 'three/addons/exporters/OBJExporter.js';
+
+        // 场景设置
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a1a2e);
+
+        // 相机
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(30, 30, 50);
+
+        // 渲染器
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        document.getElementById('container').appendChild(renderer.domElement);
+
+        // 控制器
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+
+        // 灯光
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(50, 100, 50);
+        scene.add(directionalLight);
+
+        const pointLight = new THREE.PointLight(0x4a9eff, 0.6);
+        pointLight.position.set(-50, 50, -50);
+        scene.add(pointLight);
+
+        // 地面网格
+        const gridHelper = new THREE.GridHelper(100, 20, 0x444444, 0x222222);
+        scene.add(gridHelper);
+
+        // 物体组
+        const objectGroup = new THREE.Group();
+        scene.add(objectGroup);
+
+        // 创建默认场景
+        function createDefaultScene() {
+            // 中心立方体
+            const cube = new THREE.Mesh(
+                new THREE.BoxGeometry(10, 10, 10),
+                new THREE.MeshPhongMaterial({ color: 0xff6b6b })
+            );
+            cube.position.y = 5;
+            cube.name = "Cube";
+            objectGroup.add(cube);
+
+            // 球体
+            const sphere = new THREE.Mesh(
+                new THREE.SphereGeometry(5, 32, 32),
+                new THREE.MeshPhongMaterial({ color: 0x4ecdc4 })
+            );
+            sphere.position.set(15, 5, 0);
+            sphere.name = "Sphere";
+            objectGroup.add(sphere);
+
+            // 圆锥
+            const cone = new THREE.Mesh(
+                new THREE.ConeGeometry(4, 10, 32),
+                new THREE.MeshPhongMaterial({ color: 0xffd93d })
+            );
+            cone.position.set(-15, 5, 0);
+            cone.name = "Cone";
+            objectGroup.add(cone);
+
+            // 圆环
+            const torus = new THREE.Mesh(
+                new THREE.TorusGeometry(5, 2, 16, 100),
+                new THREE.MeshPhongMaterial({ color: 0x9b59b6 })
+            );
+            torus.position.set(0, 5, 15);
+            torus.rotation.x = Math.PI / 2;
+            torus.name = "Torus";
+            objectGroup.add(torus);
+
+            updateSceneInfo();
+        }
+
+        // 更新场景信息
+        function updateSceneInfo() {
+            let objectCount = 0;
+            let vertexCount = 0;
+            let faceCount = 0;
+            let materialCount = 0;
+            const materials = new Set();
+
+            objectGroup.traverse((child) => {
+                if (child.isMesh) {
+                    objectCount++;
+                    const geometry = child.geometry;
+                    if (geometry.attributes.position) {
+                        vertexCount += geometry.attributes.position.count;
+                    }
+                    if (geometry.index) {
+                        faceCount += geometry.index.count / 3;
+                    } else if (geometry.attributes.position) {
+                        faceCount += geometry.attributes.position.count / 3;
+                    }
+                    if (child.material) {
+                        materials.add(child.material.uuid);
+                    }
+                }
+            });
+
+            document.getElementById('object-count').textContent = objectCount;
+            document.getElementById('vertex-count').textContent = vertexCount.toLocaleString();
+            document.getElementById('face-count').textContent = Math.round(faceCount).toLocaleString();
+            document.getElementById('material-count').textContent = materials.size;
+        }
+
+        // 显示消息
+        function showMessage(text, isError = false) {
+            const msg = document.getElementById('message');
+            msg.textContent = text;
+            msg.className = 'show ' + (isError ? 'error' : 'success');
+            setTimeout(() => {
+                msg.classList.remove('show');
+            }, 3000);
+        }
+
+        // 下载文件
+        function downloadFile(content, filename, type) {
+            const blob = new Blob([content], { type: type });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
+            URL.revokeObjectURL(link.href);
+        }
+
+        // 导出 GLTF
+        window.exportGLTF = function() {
+            const exporter = new GLTFExporter();
+            exporter.parse(
+                objectGroup,
+                (gltf) => {
+                    const output = JSON.stringify(gltf, null, 2);
+                    downloadFile(output, 'scene.gltf', 'application/json');
+                    showMessage('GLTF 导出成功！');
+                },
+                (error) => {
+                    console.error(error);
+                    showMessage('GLTF 导出失败：' + error.message, true);
+                },
+                { binary: false }
+            );
+        };
+
+        // 导出 GLB
+        window.exportGLB = function() {
+            const exporter = new GLTFExporter();
+            exporter.parse(
+                objectGroup,
+                (glb) => {
+                    downloadFile(glb, 'scene.glb', 'application/octet-stream');
+                    showMessage('GLB 导出成功！');
+                },
+                (error) => {
+                    console.error(error);
+                    showMessage('GLB 导出失败：' + error.message, true);
+                },
+                { binary: true }
+            );
+        };
+
+        // 导出 OBJ
+        window.exportOBJ = function() {
+            const exporter = new OBJExporter();
+            const result = exporter.parse(objectGroup);
+            downloadFile(result, 'scene.obj', 'text/plain');
+            showMessage('OBJ 导出成功！');
+        };
+
+        // 导出 JSON
+        window.exportJSON = function() {
+            const sceneData = {
+                metadata: {
+                    version: 4.5,
+                    type: 'Object',
+                    generator: 'Object3D.toJSON'
+                },
+                object: objectGroup.toJSON()
+            };
+            const output = JSON.stringify(sceneData, null, 2);
+            downloadFile(output, 'scene.json', 'application/json');
+            showMessage('JSON 导出成功！');
+        };
+
+        // 添加随机物体
+        window.addRandomObject = function() {
+            const geometries = [
+                new THREE.BoxGeometry(5, 5, 5),
+                new THREE.SphereGeometry(3, 32, 32),
+                new THREE.ConeGeometry(3, 6, 32),
+                new THREE.CylinderGeometry(2, 2, 6, 32),
+                new THREE.TorusGeometry(3, 1, 16, 100),
+                new THREE.OctahedronGeometry(4),
+                new THREE.DodecahedronGeometry(4),
+                new THREE.IcosahedronGeometry(4)
+            ];
+
+            const colors = [0xff6b6b, 0x4ecdc4, 0xffd93d, 0x9b59b6, 0x1abc9c, 0xe74c3c, 0x3498db];
+
+            const geometry = geometries[Math.floor(Math.random() * geometries.length)];
+            const material = new THREE.MeshPhongMaterial({
+                color: colors[Math.floor(Math.random() * colors.length)]
+            });
+            const mesh = new THREE.Mesh(geometry, material);
+
+            mesh.position.set(
+                (Math.random() - 0.5) * 40,
+                3 + Math.random() * 5,
+                (Math.random() - 0.5) * 40
+            );
+            mesh.rotation.set(
+                Math.random() * Math.PI,
+                Math.random() * Math.PI,
+                Math.random() * Math.PI
+            );
+            mesh.name = "Object_" + objectGroup.children.length;
+
+            objectGroup.add(mesh);
+            updateSceneInfo();
+            showMessage('已添加随机物体');
+        };
+
+        // 清空场景
+        window.clearScene = function() {
+            while(objectGroup.children.length > 0) {
+                objectGroup.remove(objectGroup.children[0]);
+            }
+            updateSceneInfo();
+            showMessage('场景已清空');
+        };
+
+        // 重置场景
+        window.resetScene = function() {
+            window.clearScene();
+            createDefaultScene();
+            showMessage('场景已重置');
+        };
+
+        // 初始化
+        createDefaultScene();
+
+        // 动画循环
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // 窗口大小调整
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // 暴露到 window 供截图使用
+        window.renderer = renderer;
+        window.camera = camera;
+        window.scene = scene;
+    </script>
+
+    <!-- 截图支持脚本 -->
+    <script>
+        let _screenshotRenderer;
+        
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (!_screenshotRenderer && window.renderer) {
+                        _screenshotRenderer = window.renderer;
+                    }
+                    
+                    if (!_screenshotRenderer) {
+                        throw new Error('渲染器未初始化');
+                    }
+                    
+                    if (window.scene && window.camera) {
+                        _screenshotRenderer.render(window.scene, window.camera);
+                    }
+                    
+                    const quality = event.data.quality || 0.8;
+                    const canvas = _screenshotRenderer.domElement;
+                    
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    
+                    window.parent.postMessage({
+                        type: 'screenshot-data',
+                        dataUrl: dataUrl
+                    }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({
+                        type: 'screenshot-error',
+                        error: error.message
+                    }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

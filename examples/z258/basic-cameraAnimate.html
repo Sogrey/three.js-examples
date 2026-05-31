@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="相机动画示例，展示多种相机运动效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 相机动画</title>
+    <link rel="stylesheet" href="../../css/example-common.css">
+    <style>
+        body {
+            background: #0a0a1a;
+            margin: 0;
+            overflow: hidden;
+        }
+        #cameraUI {
+            position: absolute;
+            top: 50px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            z-index: 100;
+            max-width: 280px;
+        }
+        #cameraUI h3 {
+            margin: 0 0 10px 0;
+            color: #00ccff;
+            font-size: 16px;
+        }
+        #cameraUI .btn {
+            display: block;
+            width: 100%;
+            margin: 5px 0;
+            padding: 8px 12px;
+            background: #333;
+            border: 1px solid #555;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 11px;
+        }
+        #cameraUI .btn:hover {
+            background: #444;
+            border-color: #00ccff;
+        }
+        #cameraUI .btn.active {
+            background: #00ccff;
+            color: #000;
+        }
+        #cameraUI .control {
+            margin: 10px 0;
+        }
+        #cameraUI label {
+            display: block;
+            font-size: 11px;
+            color: #aaa;
+            margin-bottom: 5px;
+        }
+        #cameraUI input[type="range"] {
+            width: 100%;
+            height: 4px;
+            background: #333;
+            border-radius: 2px;
+            outline: none;
+        }
+        #cameraUI .value {
+            font-size: 10px;
+            color: #00ccff;
+            text-align: right;
+        }
+        #cameraUI .info {
+            font-size: 10px;
+            color: #aaa;
+            margin-top: 10px;
+        }
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #00ccff;
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            z-index: 200;
+        }
+    </style>
+</head>
+<body>
+    <div class="three-container" id="threeContainer"></div>
+    <div id="loading">加载模型中...</div>
+    
+    <div id="cameraUI">
+        <h3>📷 相机动画</h3>
+        <button class="btn" id="btnOrbit">环绕运动</button>
+        <button class="btn" id="btnFly">飞行穿梭</button>
+        <button class="btn" id="btnShake">镜头抖动</button>
+        <button class="btn" id="btnZoom">缩放聚焦</button>
+        <button class="btn" id="btnStop">停止动画</button>
+        <div class="control">
+            <label>动画速度</label>
+            <input type="range" id="animSpeed" min="0.1" max="3" value="1" step="0.1">
+            <div class="value" id="speedValue">1.0x</div>
+        </div>
+        <button class="btn" id="btnReset">重置视角</button>
+        <div class="info">
+            左键拖拽旋转视角<br>
+            滚轮缩放<br>
+            点击按钮体验不同相机动画
+        </div>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+        const container = document.getElementById('threeContainer');
+        const loadingDiv = document.getElementById('loading');
+        
+        // 场景设置
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a0a1a);
+        
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(8, 6, 8);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+        
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        
+        // 灯光
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+        
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+        directionalLight.position.set(5, 10, 5);
+        scene.add(directionalLight);
+        
+        // 网格辅助
+        const gridHelper = new THREE.GridHelper(20, 20, 0x444444, 0x222222);
+        scene.add(gridHelper);
+        
+        // 加载模型
+        let model;
+        const loader = new GLTFLoader();
+        loader.load(
+            '../../models/gltf/ferrari.glb',
+            (gltf) => {
+                model = gltf.scene;
+                model.position.set(0, 0, 0);
+                model.scale.set(2, 2, 2);
+                
+                // 启用阴影
+                model.traverse((child) => {
+                    if (child.isMesh) {
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                    }
+                });
+                
+                scene.add(model);
+                loadingDiv.style.display = 'none';
+            },
+            undefined,
+            (error) => {
+                console.error('模型加载失败:', error);
+                loadingDiv.textContent = '加载失败';
+            }
+        );
+        
+        // 添加一些装饰物体
+        const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
+        const boxMaterial = new THREE.MeshStandardMaterial({ color: 0xff4444 });
+        for (let i = 0; i < 5; i++) {
+            const box = new THREE.Mesh(boxGeometry, boxMaterial);
+            box.position.set(
+                (Math.random() - 0.5) * 10,
+                0.5,
+                (Math.random() - 0.5) * 10
+            );
+            scene.add(box);
+        }
+        
+        // 动画控制
+        let currentAnimation = null;
+        let animationSpeed = 1;
+        let animationId = null;
+        
+        function stopAnimation() {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+            currentAnimation = null;
+            
+            // 重置按钮状态
+            document.querySelectorAll('#cameraUI .btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+        }
+        
+        // 1. 环绕运动
+        function startOrbitAnimation() {
+            stopAnimation();
+            currentAnimation = 'orbit';
+            document.getElementById('btnOrbit').classList.add('active');
+            
+            let angle = 0;
+            const radius = 10;
+            const height = 6;
+            
+            function animate() {
+                if (currentAnimation !== 'orbit') return;
+                
+                angle += 0.01 * animationSpeed;
+                camera.position.x = Math.cos(angle) * radius;
+                camera.position.z = Math.sin(angle) * radius;
+                camera.position.y = height;
+                camera.lookAt(0, 0, 0);
+                
+                animationId = requestAnimationFrame(animate);
+            }
+            animate();
+        }
+        
+        // 2. 飞行穿梭
+        function startFlyAnimation() {
+            stopAnimation();
+            currentAnimation = 'fly';
+            document.getElementById('btnFly').classList.add('active');
+            
+            let progress = 0;
+            const startPos = new THREE.Vector3(-15, 5, -15);
+            const endPos = new THREE.Vector3(15, 5, 15);
+            const controlPoint = new THREE.Vector3(0, 15, 0);
+            
+            function animate() {
+                if (currentAnimation !== 'fly') return;
+                
+                progress += 0.005 * animationSpeed;
+                if (progress > 1) progress = 0;
+                
+                // 贝塞尔曲线
+                const t = progress;
+                const oneMinusT = 1 - t;
+                
+                camera.position.x = oneMinusT * oneMinusT * startPos.x + 
+                                   2 * oneMinusT * t * controlPoint.x + 
+                                   t * t * endPos.x;
+                camera.position.y = oneMinusT * oneMinusT * startPos.y + 
+                                   2 * oneMinusT * t * controlPoint.y + 
+                                   t * t * endPos.y;
+                camera.position.z = oneMinusT * oneMinusT * startPos.z + 
+                                   2 * oneMinusT * t * controlPoint.z + 
+                                   t * t * endPos.z;
+                
+                camera.lookAt(0, 0, 0);
+                
+                animationId = requestAnimationFrame(animate);
+            }
+            animate();
+        }
+        
+        // 3. 镜头抖动
+        function startShakeAnimation() {
+            stopAnimation();
+            currentAnimation = 'shake';
+            document.getElementById('btnShake').classList.add('active');
+            
+            const basePosition = camera.position.clone();
+            let time = 0;
+            
+            function animate() {
+                if (currentAnimation !== 'shake') return;
+                
+                time += 0.1 * animationSpeed;
+                
+                const shakeIntensity = 0.3;
+                camera.position.x = basePosition.x + (Math.random() - 0.5) * shakeIntensity;
+                camera.position.y = basePosition.y + (Math.random() - 0.5) * shakeIntensity;
+                camera.position.z = basePosition.z + (Math.random() - 0.5) * shakeIntensity;
+                
+                animationId = requestAnimationFrame(animate);
+            }
+            animate();
+        }
+        
+        // 4. 缩放聚焦
+        function startZoomAnimation() {
+            stopAnimation();
+            currentAnimation = 'zoom';
+            document.getElementById('btnZoom').classList.add('active');
+            
+            let progress = 0;
+            const minDist = 5;
+            const maxDist = 15;
+            
+            function animate() {
+                if (currentAnimation !== 'zoom') return;
+                
+                progress += 0.02 * animationSpeed;
+                
+                const dist = minDist + (maxDist - minDist) * (0.5 + 0.5 * Math.sin(progress));
+                const angle = progress * 0.5;
+                
+                camera.position.x = Math.cos(angle) * dist;
+                camera.position.z = Math.sin(angle) * dist;
+                camera.position.y = 3 + Math.sin(progress * 0.3) * 2;
+                camera.lookAt(0, 0, 0);
+                
+                animationId = requestAnimationFrame(animate);
+            }
+            animate();
+        }
+        
+        // UI事件
+        document.getElementById('btnOrbit').addEventListener('click', startOrbitAnimation);
+        document.getElementById('btnFly').addEventListener('click', startFlyAnimation);
+        document.getElementById('btnShake').addEventListener('click', startShakeAnimation);
+        document.getElementById('btnZoom').addEventListener('click', startZoomAnimation);
+        document.getElementById('btnStop').addEventListener('click', stopAnimation);
+        
+        document.getElementById('animSpeed').addEventListener('input', (e) => {
+            animationSpeed = parseFloat(e.target.value);
+            document.getElementById('speedValue').textContent = animationSpeed.toFixed(1) + 'x';
+        });
+        
+        document.getElementById('btnReset').addEventListener('click', () => {
+            stopAnimation();
+            camera.position.set(8, 6, 8);
+            controls.target.set(0, 0, 0);
+            controls.update();
+        });
+        
+        // 窗口调整
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // 暴露到 window 供截图使用
+        window.renderer = renderer;
+        window.camera = camera;
+        window.scene = scene;
+        
+        // 动画循环
+        function render() {
+            requestAnimationFrame(render);
+            
+            // 只有在没有自定义动画时才更新控制器
+            if (!currentAnimation) {
+                controls.update();
+            }
+            
+            renderer.render(scene, camera);
+        }
+        
+        render();
+    </script>
+
+    <!-- 截图支持脚本 -->
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

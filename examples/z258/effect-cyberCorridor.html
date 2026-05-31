@@ -893,8 +893,8 @@
 
         // 暴露到 window 供截图使用
         window.renderer = renderer;
-        window.orthoCamera = orthoCamera;
-        window.orthoScene = orthoScene;
+        window.camera = orthoCamera;
+        window.scene = orthoScene;
     </script>
 
     <!-- 截图支持脚本 -->
@@ -902,9 +902,8 @@
         window.addEventListener('message', function(event) {
             if (event.data && event.data.type === 'take-screenshot') {
                 try {
-                    if (window.orthoScene && window.orthoCamera && window.renderer) {
-                        window.renderer.render(window.orthoScene, window.orthoCamera);
-                    }
+                    // 光线追踪着色器示例，直接捕获当前canvas内容
+                    // 因为渲染是在animate循环中完成的
                     const quality = event.data.quality || 0.8;
                     const canvas = window.renderer.domElement;
                     const tempCanvas = document.createElement('canvas');

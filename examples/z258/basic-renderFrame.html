@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>帧率控制 - Three.js r179</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            overflow: hidden;
+            background: #1a1a2e;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+        #container {
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        /* 控制面板 */
+        #controls {
+            position: absolute;
+            top: 150px;
+            left: 10px;
+            background: rgba(0,0,0,0.85);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            z-index: 100;
+            max-width: 320px;
+        }
+        #controls h3 {
+            color: #4a9eff;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        #controls .control-group {
+            margin: 15px 0;
+        }
+        #controls label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #ccc;
+        }
+        #controls input[type="range"] {
+            width: 100%;
+            margin-bottom: 5px;
+        }
+        #controls .value-display {
+            text-align: right;
+            color: #4a9eff;
+            font-weight: bold;
+        }
+        #controls .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        #controls button {
+            flex: 1;
+            padding: 10px;
+            background: #4a9eff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        #controls button:hover {
+            background: #3a8eef;
+        }
+        #controls button.active {
+            background: #ff6b6b;
+        }
+        
+        /* 统计面板 */
+        #stats {
+            position: absolute;
+            top: 150px;
+            right: 10px;
+            background: rgba(0,0,0,0.85);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            z-index: 100;
+            font-family: 'Courier New', monospace;
+            min-width: 200px;
+        }
+        #stats h4 {
+            color: #4a9eff;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        #stats .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+        #stats .stat-value {
+            color: #4a9eff;
+            font-weight: bold;
+        }
+        #stats .fps-low { color: #ff6b6b; }
+        #stats .fps-medium { color: #ffd93d; }
+        #stats .fps-high { color: #6bcf7f; }
+        
+        /* 图表容器 */
+        #chart-container {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            height: 150px;
+            background: rgba(0,0,0,0.85);
+            border-radius: 12px;
+            padding: 15px;
+            z-index: 100;
+        }
+        #fps-chart {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+    
+    <div id="controls">
+        <h3>🎮 帧率控制</h3>
+        
+        <div class="control-group">
+            <label>目标帧率 (FPS)</label>
+            <input type="range" id="targetFps" min="1" max="120" value="60">
+            <div class="value-display" id="targetFpsValue">60 FPS</div>
+        </div>
+        
+        <div class="control-group">
+            <label>物体数量</label>
+            <input type="range" id="objectCount" min="10" max="500" value="100">
+            <div class="value-display" id="objectCountValue">100 个</div>
+        </div>
+        
+        <div class="btn-group">
+            <button id="btn-fixed" class="active">固定帧率</button>
+            <button id="btn-adaptive">自适应</button>
+        </div>
+        
+        <div class="btn-group">
+            <button id="btn-pause">暂停</button>
+            <button id="btn-reset">重置</button>
+        </div>
+    </div>
+    
+    <div id="stats">
+        <h4>📊 性能统计</h4>
+        <div class="stat-item">
+            <span>当前 FPS:</span>
+            <span class="stat-value fps-high" id="currentFps">60</span>
+        </div>
+        <div class="stat-item">
+            <span>平均 FPS:</span>
+            <span class="stat-value" id="avgFps">60</span>
+        </div>
+        <div class="stat-item">
+            <span>最低 FPS:</span>
+            <span class="stat-value" id="minFps">60</span>
+        </div>
+        <div class="stat-item">
+            <span>最高 FPS:</span>
+            <span class="stat-value" id="maxFps">60</span>
+        </div>
+        <div class="stat-item">
+            <span>帧时间:</span>
+            <span class="stat-value" id="frameTime">16.7ms</span>
+        </div>
+        <div class="stat-item">
+            <span>渲染模式:</span>
+            <span class="stat-value" id="renderMode">固定帧率</span>
+        </div>
+    </div>
+    
+    <div id="chart-container">
+        <canvas id="fps-chart"></canvas>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // 场景设置
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a1a2e);
+
+        // 相机
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 50, 100);
+
+        // 渲染器
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        document.getElementById('container').appendChild(renderer.domElement);
+
+        // 控制器
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+
+        // 灯光
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(50, 100, 50);
+        scene.add(directionalLight);
+
+        // 地面网格
+        const gridHelper = new THREE.GridHelper(200, 20, 0x444444, 0x222222);
+        scene.add(gridHelper);
+
+        // 物体数组
+        let objects = [];
+        const objectGroup = new THREE.Group();
+        scene.add(objectGroup);
+
+        // 创建物体
+        function createObjects(count) {
+            // 清除旧物体
+            objectGroup.clear();
+            objects = [];
+
+            const geometries = [
+                new THREE.BoxGeometry(2, 2, 2),
+                new THREE.SphereGeometry(1, 16, 16),
+                new THREE.ConeGeometry(1, 2, 16),
+                new THREE.CylinderGeometry(0.5, 0.5, 2, 16),
+                new THREE.TorusGeometry(1, 0.3, 8, 16)
+            ];
+
+            for (let i = 0; i < count; i++) {
+                const geometry = geometries[Math.floor(Math.random() * geometries.length)];
+                const material = new THREE.MeshPhongMaterial({
+                    color: new THREE.Color().setHSL(Math.random(), 0.8, 0.6)
+                });
+                const mesh = new THREE.Mesh(geometry, material);
+                
+                // 随机位置
+                mesh.position.set(
+                    (Math.random() - 0.5) * 80,
+                    Math.random() * 30 + 2,
+                    (Math.random() - 0.5) * 80
+                );
+                
+                // 随机旋转速度
+                mesh.userData.rotationSpeed = {
+                    x: (Math.random() - 0.5) * 0.02,
+                    y: (Math.random() - 0.5) * 0.02,
+                    z: (Math.random() - 0.5) * 0.02
+                };
+                
+                // 随机浮动速度
+                mesh.userData.floatSpeed = Math.random() * 0.02 + 0.01;
+                mesh.userData.floatOffset = Math.random() * Math.PI * 2;
+                
+                objectGroup.add(mesh);
+                objects.push(mesh);
+            }
+        }
+
+        // 初始化物体
+        createObjects(100);
+
+        // 帧率控制变量
+        let targetFps = 60;
+        let isFixedFps = true;
+        let isPaused = false;
+        let lastFrameTime = 0;
+        let frameInterval = 1000 / targetFps;
+
+        // 统计变量
+        let fpsHistory = [];
+        let currentFps = 60;
+        let minFps = 60;
+        let maxFps = 60;
+        let avgFps = 60;
+        let frameTime = 16.7;
+
+        // 图表设置
+        const chartCanvas = document.getElementById('fps-chart');
+        const chartCtx = chartCanvas.getContext('2d');
+        const maxHistory = 100;
+
+        function resizeChart() {
+            chartCanvas.width = chartCanvas.offsetWidth;
+            chartCanvas.height = chartCanvas.offsetHeight;
+        }
+        resizeChart();
+        window.addEventListener('resize', resizeChart);
+
+        // 绘制 FPS 图表
+        function drawChart() {
+            const width = chartCanvas.width;
+            const height = chartCanvas.height;
+            
+            chartCtx.clearRect(0, 0, width, height);
+            
+            // 绘制网格
+            chartCtx.strokeStyle = 'rgba(255,255,255,0.1)';
+            chartCtx.lineWidth = 1;
+            for (let i = 0; i <= 5; i++) {
+                const y = (height / 5) * i;
+                chartCtx.beginPath();
+                chartCtx.moveTo(0, y);
+                chartCtx.lineTo(width, y);
+                chartCtx.stroke();
+            }
+            
+            // 绘制 FPS 线
+            if (fpsHistory.length > 1) {
+                chartCtx.strokeStyle = '#4a9eff';
+                chartCtx.lineWidth = 2;
+                chartCtx.beginPath();
+                
+                for (let i = 0; i < fpsHistory.length; i++) {
+                    const x = (width / (maxHistory - 1)) * i;
+                    const y = height - (fpsHistory[i] / 120) * height;
+                    
+                    if (i === 0) {
+                        chartCtx.moveTo(x, y);
+                    } else {
+                        chartCtx.lineTo(x, y);
+                    }
+                }
+                chartCtx.stroke();
+            }
+            
+            // 绘制目标 FPS 线
+            const targetY = height - (targetFps / 120) * height;
+            chartCtx.strokeStyle = 'rgba(255,255,255,0.3)';
+            chartCtx.setLineDash([5, 5]);
+            chartCtx.beginPath();
+            chartCtx.moveTo(0, targetY);
+            chartCtx.lineTo(width, targetY);
+            chartCtx.stroke();
+            chartCtx.setLineDash([]);
+            
+            // 标签
+            chartCtx.fillStyle = '#fff';
+            chartCtx.font = '12px Arial';
+            chartCtx.fillText('120 FPS', 5, 15);
+            chartCtx.fillText('60 FPS', 5, height / 2);
+            chartCtx.fillText('0 FPS', 5, height - 5);
+        }
+
+        // 更新统计
+        function updateStats() {
+            document.getElementById('currentFps').textContent = Math.round(currentFps);
+            document.getElementById('avgFps').textContent = Math.round(avgFps);
+            document.getElementById('minFps').textContent = Math.round(minFps);
+            document.getElementById('maxFps').textContent = Math.round(maxFps);
+            document.getElementById('frameTime').textContent = frameTime.toFixed(1) + 'ms';
+            
+            // 更新 FPS 颜色
+            const fpsElement = document.getElementById('currentFps');
+            fpsElement.className = 'stat-value';
+            if (currentFps < 30) fpsElement.classList.add('fps-low');
+            else if (currentFps < 50) fpsElement.classList.add('fps-medium');
+            else fpsElement.classList.add('fps-high');
+        }
+
+        // 动画循环
+        function animate(currentTime) {
+            requestAnimationFrame(animate);
+            
+            if (isPaused) return;
+            
+            const deltaTime = currentTime - lastFrameTime;
+            
+            // 固定帧率模式
+            if (isFixedFps && deltaTime < frameInterval) {
+                return;
+            }
+            
+            lastFrameTime = currentTime;
+            
+            // 计算 FPS
+            const fps = 1000 / deltaTime;
+            currentFps = fps;
+            frameTime = deltaTime;
+            
+            // 更新历史
+            fpsHistory.push(fps);
+            if (fpsHistory.length > maxHistory) {
+                fpsHistory.shift();
+            }
+            
+            // 更新统计
+            minFps = Math.min(minFps, fps);
+            maxFps = Math.max(maxFps, fps);
+            avgFps = fpsHistory.reduce((a, b) => a + b, 0) / fpsHistory.length;
+            
+            // 自适应帧率
+            if (!isFixedFps && fpsHistory.length >= 10) {
+                const recentAvg = fpsHistory.slice(-10).reduce((a, b) => a + b, 0) / 10;
+                if (recentAvg < targetFps - 5) {
+                    // 降低物体数量以提高性能
+                    const newCount = Math.max(10, objects.length - 5);
+                    if (newCount !== objects.length) {
+                        createObjects(newCount);
+                        document.getElementById('objectCount').value = newCount;
+                        document.getElementById('objectCountValue').textContent = newCount + ' 个';
+                    }
+                }
+            }
+            
+            // 更新物体
+            objects.forEach(obj => {
+                obj.rotation.x += obj.userData.rotationSpeed.x;
+                obj.rotation.y += obj.userData.rotationSpeed.y;
+                obj.rotation.z += obj.userData.rotationSpeed.z;
+                
+                const time = currentTime * 0.001;
+                obj.position.y += Math.sin(time * obj.userData.floatSpeed + obj.userData.floatOffset) * 0.02;
+            });
+            
+            controls.update();
+            renderer.render(scene, camera);
+            
+            // 更新 UI
+            updateStats();
+            drawChart();
+        }
+        animate(0);
+
+        // 事件监听
+        document.getElementById('targetFps').addEventListener('input', (e) => {
+            targetFps = parseInt(e.target.value);
+            frameInterval = 1000 / targetFps;
+            document.getElementById('targetFpsValue').textContent = targetFps + ' FPS';
+        });
+
+        document.getElementById('objectCount').addEventListener('input', (e) => {
+            const count = parseInt(e.target.value);
+            createObjects(count);
+            document.getElementById('objectCountValue').textContent = count + ' 个';
+        });
+
+        document.getElementById('btn-fixed').addEventListener('click', () => {
+            isFixedFps = true;
+            document.getElementById('btn-fixed').classList.add('active');
+            document.getElementById('btn-adaptive').classList.remove('active');
+            document.getElementById('renderMode').textContent = '固定帧率';
+        });
+
+        document.getElementById('btn-adaptive').addEventListener('click', () => {
+            isFixedFps = false;
+            document.getElementById('btn-adaptive').classList.add('active');
+            document.getElementById('btn-fixed').classList.remove('active');
+            document.getElementById('renderMode').textContent = '自适应';
+        });
+
+        document.getElementById('btn-pause').addEventListener('click', () => {
+            isPaused = !isPaused;
+            document.getElementById('btn-pause').textContent = isPaused ? '继续' : '暂停';
+            document.getElementById('btn-pause').classList.toggle('active');
+        });
+
+        document.getElementById('btn-reset').addEventListener('click', () => {
+            fpsHistory = [];
+            minFps = 60;
+            maxFps = 60;
+            createObjects(100);
+            document.getElementById('objectCount').value = 100;
+            document.getElementById('objectCountValue').textContent = '100 个';
+        });
+
+        // 窗口大小调整
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // 暴露到 window 供截图使用
+        window.renderer = renderer;
+        window.camera = camera;
+        window.scene = scene;
+    </script>
+
+    <!-- 截图支持脚本 -->
+    <script>
+        let _screenshotRenderer;
+        
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (!_screenshotRenderer && window.renderer) {
+                        _screenshotRenderer = window.renderer;
+                    }
+                    
+                    if (!_screenshotRenderer) {
+                        throw new Error('渲染器未初始化');
+                    }
+                    
+                    if (window.scene && window.camera) {
+                        _screenshotRenderer.render(window.scene, window.camera);
+                    }
+                    
+                    const quality = event.data.quality || 0.8;
+                    const canvas = _screenshotRenderer.domElement;
+                    
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    
+                    window.parent.postMessage({
+                        type: 'screenshot-data',
+                        dataUrl: dataUrl
+                    }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({
+                        type: 'screenshot-error',
+                        error: error.message
+                    }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
