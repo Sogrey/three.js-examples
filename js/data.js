@@ -2590,7 +2590,14 @@ const threejsData = {
               version: "r179",
               url: "examples/z258/expand-geoBorder",
             },
-
+            {
+              id: "basic-domDisplay",
+              title: "DOM遮挡",
+              description: "展示3D场景中DOM元素与WebGL物体的遮挡关系处理",
+              thumbnail: "images/basic-domDisplay.jpg",
+              version: "r179",
+              url: "examples/z258/basic-domDisplay",
+            },
           ],
         },
       ],
