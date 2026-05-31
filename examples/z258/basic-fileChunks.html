@@ -23,7 +23,7 @@
         /* 控制面板 */
         #controls {
             position: absolute;
-            top: 10px;
+            top: 150px;
             left: 10px;
             background: rgba(0,0,0,0.85);
             color: white;
@@ -102,7 +102,7 @@
         /* 进度面板 */
         #progress-panel {
             position: absolute;
-            top: 10px;
+            top: 50px;
             right: 10px;
             background: rgba(0,0,0,0.85);
             color: white;
@@ -560,19 +560,51 @@
             }
         }
 
+        // 创建示例文件（用于默认加载）
+        function createSampleFile() {
+            // 创建一个 500KB 的示例文件内容
+            const size = 500 * 1024;
+            const content = new Uint8Array(size);
+            
+            // 填充一些有意义的数据模式
+            for (let i = 0; i < size; i++) {
+                content[i] = (i * 7 + 13) % 256;
+            }
+            
+            const blob = new Blob([content], { type: 'application/octet-stream' });
+            return new File([blob], 'sample-file.bin', { type: 'application/octet-stream' });
+        }
+
+        // 加载文件
+        async function loadFile(file) {
+            selectedFile = file;
+            document.getElementById('startBtn').disabled = false;
+            document.querySelector('.file-label').textContent = selectedFile.name;
+            document.getElementById('file-size').textContent = formatFileSize(selectedFile.size);
+            
+            // 计算分片数
+            const size = parseInt(document.getElementById('chunkSize').value) * 1024;
+            const count = Math.ceil(selectedFile.size / size);
+            document.getElementById('chunk-count').textContent = count;
+            
+            // 自动开始加载
+            setTimeout(() => {
+                document.getElementById('startBtn').click();
+            }, 500);
+        }
+
         // 事件监听
         document.getElementById('fileInput').addEventListener('change', (e) => {
-            selectedFile = e.target.files[0];
-            if (selectedFile) {
-                document.getElementById('startBtn').disabled = false;
-                document.querySelector('.file-label').textContent = selectedFile.name;
-                document.getElementById('file-size').textContent = formatFileSize(selectedFile.size);
-                
-                // 计算分片数
-                const size = parseInt(document.getElementById('chunkSize').value) * 1024;
-                const count = Math.ceil(selectedFile.size / size);
-                document.getElementById('chunk-count').textContent = count;
+            const file = e.target.files[0];
+            if (file) {
+                loadFile(file);
             }
+        });
+
+        // 默认加载示例文件
+        window.addEventListener('load', () => {
+            const sampleFile = createSampleFile();
+            loadFile(sampleFile);
         });
 
         document.getElementById('chunkSize').addEventListener('input', (e) => {
