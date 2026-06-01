@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="3D地图演示 - 程序生成3D地形地图，支持高度图和热力图展示。功能：程序生成地形、高度图可视化、热力图模式、地形编辑。原理：使用Simplex噪声生成高度数据，通过顶点着色器实现高度着色，支持鼠标交互修改地形高度。执行流程：1)生成噪声高度图 2)创建平面几何体 3)根据高度调整顶点位置 4)根据高度着色 5)支持交互编辑">
+    <title>3D地图 - Three.js r179</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { overflow: hidden; background: #1a1a2e; font-family: 'Microsoft YaHei', sans-serif; font-size: 12px; }
+        #container { width: 100vw; height: 100vh; }
+        
+        /* 控制面板 */
+        #controls {
+            position: absolute; top: 10px; left: 10px;
+            background: rgba(0,0,0,0.9); color: white;
+            padding: 12px; border-radius: 8px; z-index: 100;
+            width: 220px; font-size: 11px;
+        }
+        #controls h3 { color: #4a9eff; margin-bottom: 10px; font-size: 13px; }
+        #controls .section { margin: 10px 0; padding: 8px; background: rgba(255,255,255,0.1); border-radius: 6px; }
+        #controls .section h4 { color: #4a9eff; margin-bottom: 8px; font-size: 11px; }
+        #controls label { display: block; margin-bottom: 2px; font-size: 10px; color: #ccc; }
+        #controls input[type="range"] { width: 100%; height: 4px; margin: 4px 0; }
+        #controls .value-display { text-align: right; color: #4a9eff; font-size: 10px; }
+        #controls button {
+            width: 100%; padding: 6px; margin: 4px 0;
+            background: #4a9eff; color: white; border: none;
+            border-radius: 4px; cursor: pointer; font-size: 11px;
+        }
+        #controls button:hover { background: #3a8eef; }
+        #controls button.active { background: #6bcf7f; }
+        #controls button.secondary { background: #6c757d; }
+        
+        /* 图例 */
+        #legend {
+            position: absolute; top: 10px; right: 10px;
+            background: rgba(0,0,0,0.9); color: white;
+            padding: 12px; border-radius: 8px; z-index: 100;
+            width: 120px; font-size: 10px;
+        }
+        #legend h4 { color: #4a9eff; margin-bottom: 10px; font-size: 11px; }
+        .legend-item { display: flex; align-items: center; margin: 6px 0; }
+        .legend-color { width: 20px; height: 12px; margin-right: 8px; border-radius: 2px; }
+        
+        /* 信息 */
+        #info {
+            position: absolute; bottom: 10px; left: 10px;
+            background: rgba(0,0,0,0.9); color: white;
+            padding: 10px; border-radius: 8px; z-index: 100;
+            font-size: 10px;
+        }
+        #info div { margin: 4px 0; }
+        #info span { color: #4a9eff; }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+    
+    <div id="controls">
+        <h3>🗺️ 3D地图</h3>
+        
+        <div class="section">
+            <h4>地形参数</h4>
+            <label>缩放</label>
+            <input type="range" id="scale" min="10" max="100" value="50">
+            <div class="value-display" id="scaleValue">50</div>
+            
+            <label>高度</label>
+            <input type="range" id="height" min="1" max="20" value="10">
+            <div class="value-display" id="heightValue">10</div>
+            
+            <label>粗糙度</label>
+            <input type="range" id="roughness" min="0" max="100" value="50">
+            <div class="value-display" id="roughnessValue">50</div>
+        </div>
+        
+        <div class="section">
+            <h4>显示模式</h4>
+            <button id="btn-height" class="active">高度图</button>
+            <button id="btn-heatmap">热力图</button>
+            <button id="btn-wireframe">线框</button>
+        </div>
+        
+        <div class="section">
+            <h4>操作</h4>
+            <button class="secondary" onclick="regenerate()">🔄 重新生成</button>
+            <button class="secondary" onclick="resetView()">🎥 重置视角</button>
+        </div>
+    </div>
+    
+    <div id="legend">
+        <h4>📊 高度图例</h4>
+        <div class="legend-item"><div class="legend-color" style="background: #8B4513;"></div><span>高山</span></div>
+        <div class="legend-item"><div class="legend-color" style="background: #228B22;"></div><span>丘陵</span></div>
+        <div class="legend-item"><div class="legend-color" style="background: #32CD32;"></div><span>平原</span></div>
+        <div class="legend-item"><div class="legend-color" style="background: #1E90FF;"></div><span>水域</span></div>
+        <div class="legend-item"><div class="legend-color" style="background: #00008B;"></div><span>深海</span></div>
+    </div>
+    
+    <div id="info">
+        <div>位置: <span id="pos">-</span></div>
+        <div>高度: <span id="alt">-</span></div>
+        <div>提示: 左键旋转，右键平移，滚轮缩放</div>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // 场景
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a1a2e);
+        scene.fog = new THREE.Fog(0x1a1a2e, 50, 200);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(60, 60, 60);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        document.getElementById('container').appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.maxPolarAngle = Math.PI / 2.2;
+
+        // 灯光
+        scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        dirLight.position.set(50, 100, 50);
+        scene.add(dirLight);
+
+        // 地形参数
+        let terrainScale = 50;
+        let terrainHeight = 10;
+        let terrainRoughness = 0.5;
+        let displayMode = 'height';
+        let terrainMesh = null;
+
+        // Simplex噪声简化版
+        class SimplexNoise {
+            constructor() {
+                this.p = new Uint8Array(256);
+                for (let i = 0; i < 256; i++) this.p[i] = i;
+                for (let i = 255; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [this.p[i], this.p[j]] = [this.p[j], this.p[i]];
+                }
+                this.perm = new Uint8Array(512);
+                for (let i = 0; i < 512; i++) this.perm[i] = this.p[i & 255];
+            }
+            
+            noise2D(x, y) {
+                const F2 = 0.5 * (Math.sqrt(3) - 1);
+                const G2 = (3 - Math.sqrt(3)) / 6;
+                
+                let n0, n1, n2;
+                let s = (x + y) * F2;
+                let i = Math.floor(x + s);
+                let j = Math.floor(y + s);
+                let t = (i + j) * G2;
+                let X0 = i - t;
+                let Y0 = j - t;
+                let x0 = x - X0;
+                let y0 = y - Y0;
+                
+                let i1, j1;
+                if (x0 > y0) { i1 = 1; j1 = 0; }
+                else { i1 = 0; j1 = 1; }
+                
+                let x1 = x0 - i1 + G2;
+                let y1 = y0 - j1 + G2;
+                let x2 = x0 - 1 + 2 * G2;
+                let y2 = y0 - 1 + 2 * G2;
+                
+                let ii = i & 255;
+                let jj = j & 255;
+                
+                const grad = (hash, x, y) => {
+                    let h = hash & 3;
+                    let u = h < 2 ? x : y;
+                    let v = h < 2 ? y : x;
+                    return ((h & 1) ? -u : u) + ((h & 2) ? -2 * v : 2 * v);
+                };
+                
+                let t0 = 0.5 - x0 * x0 - y0 * y0;
+                if (t0 < 0) n0 = 0;
+                else { t0 *= t0; n0 = t0 * t0 * grad(this.perm[ii + this.perm[jj]], x0, y0); }
+                
+                let t1 = 0.5 - x1 * x1 - y1 * y1;
+                if (t1 < 0) n1 = 0;
+                else { t1 *= t1; n1 = t1 * t1 * grad(this.perm[ii + i1 + this.perm[jj + j1]], x1, y1); }
+                
+                let t2 = 0.5 - x2 * x2 - y2 * y2;
+                if (t2 < 0) n2 = 0;
+                else { t2 *= t2; n2 = t2 * t2 * grad(this.perm[ii + 1 + this.perm[jj + 1]], x2, y2); }
+                
+                return 70 * (n0 + n1 + n2);
+            }
+        }
+
+        const noise = new SimplexNoise();
+
+        // 获取高度颜色
+        function getHeightColor(height) {
+            if (displayMode === 'heatmap') {
+                // 热力图配色
+                if (height > 0.8) return new THREE.Color(0x8B0000);
+                if (height > 0.6) return new THREE.Color(0xFF4500);
+                if (height > 0.4) return new THREE.Color(0xFFD700);
+                if (height > 0.2) return new THREE.Color(0x32CD32);
+                return new THREE.Color(0x1E90FF);
+            } else {
+                // 高度图配色
+                if (height > 0.7) return new THREE.Color(0x8B4513);
+                if (height > 0.4) return new THREE.Color(0x228B22);
+                if (height > 0.2) return new THREE.Color(0x32CD32);
+                if (height > 0) return new THREE.Color(0x1E90FF);
+                return new THREE.Color(0x00008B);
+            }
+        }
+
+        // 生成地形
+        function generateTerrain() {
+            if (terrainMesh) {
+                scene.remove(terrainMesh);
+                terrainMesh.geometry.dispose();
+                terrainMesh.material.dispose();
+            }
+
+            const size = 100;
+            const segments = 128;
+            const geometry = new THREE.PlaneGeometry(size, size, segments, segments);
+            geometry.rotateX(-Math.PI / 2);
+
+            const positions = geometry.attributes.position;
+            const colors = [];
+            const count = positions.count;
+
+            for (let i = 0; i < count; i++) {
+                const x = positions.getX(i);
+                const z = positions.getZ(i);
+                
+                // 多层噪声叠加
+                let y = 0;
+                let amp = 1;
+                let freq = 1 / terrainScale;
+                
+                for (let o = 0; o < 4; o++) {
+                    y += noise.noise2D(x * freq, z * freq) * amp;
+                    amp *= terrainRoughness;
+                    freq *= 2;
+                }
+                
+                y = (y + 1) / 2 * terrainHeight;
+                positions.setY(i, y);
+                
+                // 计算颜色
+                const normalizedHeight = y / terrainHeight;
+                const color = getHeightColor(normalizedHeight);
+                colors.push(color.r, color.g, color.b);
+            }
+
+            geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+            geometry.computeVertexNormals();
+
+            const material = new THREE.MeshStandardMaterial({
+                vertexColors: true,
+                flatShading: true,
+                wireframe: displayMode === 'wireframe'
+            });
+
+            terrainMesh = new THREE.Mesh(geometry, material);
+            scene.add(terrainMesh);
+        }
+
+        // 重新生成
+        window.regenerate = function() {
+            generateTerrain();
+        };
+
+        // 重置视角
+        window.resetView = function() {
+            camera.position.set(60, 60, 60);
+            controls.target.set(0, 0, 0);
+            controls.update();
+        };
+
+        // 事件监听
+        document.getElementById('scale').addEventListener('input', (e) => {
+            terrainScale = parseInt(e.target.value);
+            document.getElementById('scaleValue').textContent = terrainScale;
+            generateTerrain();
+        });
+
+        document.getElementById('height').addEventListener('input', (e) => {
+            terrainHeight = parseInt(e.target.value);
+            document.getElementById('heightValue').textContent = terrainHeight;
+            generateTerrain();
+        });
+
+        document.getElementById('roughness').addEventListener('input', (e) => {
+            terrainRoughness = parseInt(e.target.value) / 100;
+            document.getElementById('roughnessValue').textContent = e.target.value;
+            generateTerrain();
+        });
+
+        document.getElementById('btn-height').addEventListener('click', () => {
+            displayMode = 'height';
+            updateButtons();
+            generateTerrain();
+        });
+
+        document.getElementById('btn-heatmap').addEventListener('click', () => {
+            displayMode = 'heatmap';
+            updateButtons();
+            generateTerrain();
+        });
+
+        document.getElementById('btn-wireframe').addEventListener('click', () => {
+            displayMode = 'wireframe';
+            updateButtons();
+            generateTerrain();
+        });
+
+        function updateButtons() {
+            ['btn-height', 'btn-heatmap', 'btn-wireframe'].forEach(id => {
+                document.getElementById(id).classList.remove('active');
+            });
+            document.getElementById('btn-' + displayMode).classList.add('active');
+        }
+
+        // 鼠标交互
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+            
+            if (terrainMesh) {
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObject(terrainMesh);
+                
+                if (intersects.length > 0) {
+                    const p = intersects[0].point;
+                    document.getElementById('pos').textContent = `${p.x.toFixed(1)}, ${p.z.toFixed(1)}`;
+                    document.getElementById('alt').textContent = p.y.toFixed(2);
+                }
+            }
+        });
+
+        // 初始化
+        generateTerrain();
+
+        // 动画
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // 窗口调整
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // 暴露
+        window.renderer = renderer;
+        window.camera = camera;
+        window.scene = scene;
+    </script>
+
+    <!-- 截图支持 -->
+    <script>
+        let _screenshotRenderer;
+        window.addEventListener('message', (e) => {
+            if (e.data?.type === 'take-screenshot') {
+                try {
+                    if (!_screenshotRenderer) _screenshotRenderer = window.renderer;
+                    if (window.scene && window.camera) _screenshotRenderer.render(window.scene, window.camera);
+                    const canvas = _screenshotRenderer.domElement;
+                    const temp = document.createElement('canvas');
+                    const scale = Math.min(600 / canvas.width, 600 / canvas.height);
+                    temp.width = canvas.width * scale;
+                    temp.height = canvas.height * scale;
+                    temp.getContext('2d').drawImage(canvas, 0, 0, temp.width, temp.height);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: temp.toDataURL('image/jpeg', e.data.quality || 0.8) }, '*');
+                } catch (err) {
+                    window.parent.postMessage({ type: 'screenshot-error', error: err.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
