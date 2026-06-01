@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="分级地图演示 - 3D分级统计地图，支持数据可视化和区域高亮。功能：区域分级着色、数据柱状图、鼠标悬停高亮、统计信息显示。原理：使用ExtrudeGeometry创建3D区域，根据数据值计算高度和颜色，使用射线检测实现鼠标交互。执行流程：1)生成区域多边形 2)根据数据值挤出高度 3)按数值范围着色 4)鼠标悬停高亮显示 5)显示区域统计信息">
+    <title>分级地图 - Three.js r179</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { overflow: hidden; background: #1a1a2e; font-family: 'Microsoft YaHei', sans-serif; font-size: 12px; }
+        #container { width: 100vw; height: 100vh; }
+        
+        /* 控制面板 */
+        #controls {
+            position: absolute; top: 10px; left: 10px;
+            background: rgba(0,0,0,0.9); color: white;
+            padding: 12px; border-radius: 8px; z-index: 100;
+            width: 220px; font-size: 11px;
+        }
+        #controls h3 { color: #4a9eff; margin-bottom: 10px; font-size: 13px; }
+        #controls .section { margin: 10px 0; padding: 8px; background: rgba(255,255,255,0.1); border-radius: 6px; }
+        #controls .section h4 { color: #4a9eff; margin-bottom: 8px; font-size: 11px; }
+        #controls button {
+            width: 100%; padding: 6px; margin: 4px 0;
+            background: #4a9eff; color: white; border: none;
+            border-radius: 4px; cursor: pointer; font-size: 11px;
+        }
+        #controls button:hover { background: #3a8eef; }
+        #controls button.active { background: #6bcf7f; }
+        #controls button.secondary { background: #6c757d; }
+        #controls button.secondary:hover { background: #5a6268; }
+        
+        /* 图例 */
+        #legend {
+            position: absolute; top: 10px; right: 10px;
+            background: rgba(0,0,0,0.9); color: white;
+            padding: 12px; border-radius: 8px; z-index: 100;
+            width: 140px; font-size: 10px;
+        }
+        #legend h4 { color: #4a9eff; margin-bottom: 10px; font-size: 11px; }
+        .legend-item { display: flex; align-items: center; margin: 6px 0; }
+        .legend-color { width: 20px; height: 14px; margin-right: 8px; border-radius: 2px; }
+        .legend-label { flex: 1; }
+        
+        /* 区域信息 */
+        #region-info {
+            position: absolute; bottom: 10px; left: 10px;
+            background: rgba(0,0,0,0.9); color: white;
+            padding: 12px; border-radius: 8px; z-index: 100;
+            width: 200px; font-size: 11px;
+        }
+        #region-info h4 { color: #4a9eff; margin-bottom: 10px; font-size: 12px; }
+        #region-info .stat { display: flex; justify-content: space-between; margin: 6px 0; }
+        #region-info .stat-value { color: #4a9eff; }
+        #region-info .bar-container {
+            height: 8px; background: rgba(255,255,255,0.2);
+            border-radius: 4px; margin-top: 8px; overflow: hidden;
+        }
+        #region-info .bar-fill {
+            height: 100%; background: #4a9eff; border-radius: 4px;
+            transition: width 0.3s;
+        }
+        
+        /* 统计面板 */
+        #stats {
+            position: absolute; bottom: 10px; right: 10px;
+            background: rgba(0,0,0,0.9); color: white;
+            padding: 12px; border-radius: 8px; z-index: 100;
+            width: 160px; font-size: 10px;
+        }
+        #stats h4 { color: #4a9eff; margin-bottom: 10px; font-size: 11px; }
+        #stats .stat { display: flex; justify-content: space-between; margin: 6px 0; }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+    
+    <div id="controls">
+        <h3>🗺️ 分级地图</h3>
+        
+        <div class="section">
+            <h4>数据类型</h4>
+            <button id="btn-population" class="active">人口分布</button>
+            <button id="btn-gdp">GDP产值</button>
+            <button id="btn-temperature">平均气温</button>
+        </div>
+        
+        <div class="section">
+            <h4>显示模式</h4>
+            <button id="btn-3d" class="active">3D柱状</button>
+            <button id="btn-flat">平面填充</button>
+        </div>
+        
+        <div class="section">
+            <h4>操作</h4>
+            <button class="secondary" onclick="randomizeData()">🎲 随机数据</button>
+            <button class="secondary" onclick="resetView()">🎥 重置视角</button>
+        </div>
+    </div>
+    
+    <div id="legend">
+        <h4>📊 数值分级</h4>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #d73027;"></div>
+            <span class="legend-label">极高 (>80)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #fc8d59;"></div>
+            <span class="legend-label">高 (60-80)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #fee090;"></div>
+            <span class="legend-label">中 (40-60)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #e0f3f8;"></div>
+            <span class="legend-label">低 (20-40)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #91bfdb;"></div>
+            <span class="legend-label">极低 (<20)</span>
+        </div>
+    </div>
+    
+    <div id="region-info">
+        <h4>📍 区域信息</h4>
+        <div class="stat"><span>区域:</span><span class="stat-value" id="region-name">-</span></div>
+        <div class="stat"><span>数值:</span><span class="stat-value" id="region-value">-</span></div>
+        <div class="stat"><span>排名:</span><span class="stat-value" id="region-rank">-</span></div>
+        <div class="bar-container">
+            <div class="bar-fill" id="region-bar" style="width: 0%;"></div>
+        </div>
+    </div>
+    
+    <div id="stats">
+        <h4>📈 全局统计</h4>
+        <div class="stat"><span>区域数:</span><span class="stat-value" id="total-regions">-</span></div>
+        <div class="stat"><span>平均值:</span><span class="stat-value" id="avg-value">-</span></div>
+        <div class="stat"><span>最大值:</span><span class="stat-value" id="max-value">-</span></div>
+        <div class="stat"><span>最小值:</span><span class="stat-value" id="min-value">-</span></div>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // 场景
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a1a2e);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 60, 80);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        document.getElementById('container').appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.maxPolarAngle = Math.PI / 2.2;
+
+        // 灯光
+        scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        dirLight.position.set(20, 50, 20);
+        scene.add(dirLight);
+        const backLight = new THREE.DirectionalLight(0xffffff, 0.3);
+        backLight.position.set(-20, 30, -20);
+        scene.add(backLight);
+
+        // 区域数据
+        const regions = [
+            { name: '华北区', path: [[-30, -20], [-10, -20], [-10, 0], [-20, 10], [-30, 0]] },
+            { name: '华东区', path: [[-10, -20], [20, -20], [25, -5], [10, 5], [-10, 0]] },
+            { name: '华南区', path: [[-10, 0], [10, 5], [15, 25], [-5, 30], [-20, 10]] },
+            { name: '西南区', path: [[-30, 0], [-20, 10], [-5, 30], [-25, 35], [-40, 20]] },
+            { name: '西北区', path: [[-50, -10], [-30, -20], [-30, 0], [-40, 20], [-55, 10]] },
+            { name: '东北区', path: [[-10, -40], [20, -40], [20, -20], [-10, -20]] },
+            { name: '华中区', path: [[-20, 10], [10, 5], [5, 15], [-15, 20]] },
+            { name: '港澳台', path: [[20, 5], [30, 0], [32, 10], [25, 15]] }
+        ];
+
+        let currentDataType = 'population';
+        let displayMode = '3d';
+        let regionMeshes = [];
+        let hoveredRegion = null;
+
+        // 数据类型配置
+        const dataConfigs = {
+            population: { name: '人口', unit: '万人', scale: 100 },
+            gdp: { name: 'GDP', unit: '亿元', scale: 1000 },
+            temperature: { name: '气温', unit: '°C', scale: 1 }
+        };
+
+        // 生成随机数据
+        function generateData() {
+            regions.forEach(r => {
+                r.value = Math.floor(Math.random() * 90) + 10;
+            });
+            updateStats();
+        }
+
+        // 获取颜色
+        function getColor(value) {
+            if (value > 80) return 0xd73027;
+            if (value > 60) return 0xfc8d59;
+            if (value > 40) return 0xfee090;
+            if (value > 20) return 0xe0f3f8;
+            return 0x91bfdb;
+        }
+
+        // 创建区域
+        function createRegions() {
+            // 清除旧区域
+            regionMeshes.forEach(m => {
+                scene.remove(m);
+                m.geometry.dispose();
+                m.material.dispose();
+            });
+            regionMeshes = [];
+
+            const maxValue = Math.max(...regions.map(r => r.value));
+
+            regions.forEach((region, index) => {
+                const shape = new THREE.Shape();
+                const path = region.path;
+                shape.moveTo(path[0][0], path[0][1]);
+                for (let i = 1; i < path.length; i++) {
+                    shape.lineTo(path[i][0], path[i][1]);
+                }
+                shape.closePath();
+
+                const height = displayMode === '3d' ? (region.value / 100) * 15 + 2 : 1;
+                
+                const geometry = new THREE.ExtrudeGeometry(shape, {
+                    depth: height,
+                    bevelEnabled: true,
+                    bevelThickness: 0.5,
+                    bevelSize: 0.5,
+                    bevelSegments: 2
+                });
+
+                const color = getColor(region.value);
+                const material = new THREE.MeshStandardMaterial({
+                    color: color,
+                    roughness: 0.6,
+                    metalness: 0.1
+                });
+
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.rotation.x = -Math.PI / 2;
+                mesh.position.y = 0;
+                mesh.userData = { region: region, index: index, originalColor: color };
+                
+                scene.add(mesh);
+                regionMeshes.push(mesh);
+
+                // 添加文字标签
+                const center = getCenter(path);
+                createLabel(region.name, center[0], height + 2, center[1]);
+            });
+        }
+
+        // 计算中心点
+        function getCenter(path) {
+            let x = 0, y = 0;
+            path.forEach(p => { x += p[0]; y += p[1]; });
+            return [x / path.length, y / path.length];
+        }
+
+        // 创建文字标签
+        function createLabel(text, x, y, z) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 128;
+            canvas.height = 64;
+            
+            ctx.fillStyle = 'rgba(0,0,0,0.7)';
+            ctx.fillRect(0, 0, 128, 64);
+            
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 16px Microsoft YaHei';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, 64, 32);
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            const material = new THREE.SpriteMaterial({ map: texture });
+            const sprite = new THREE.Sprite(material);
+            sprite.position.set(x, y, z);
+            sprite.scale.set(8, 4, 1);
+            scene.add(sprite);
+            regionMeshes.push(sprite);
+        }
+
+        // 更新统计
+        function updateStats() {
+            const values = regions.map(r => r.value);
+            const total = values.reduce((a, b) => a + b, 0);
+            const avg = (total / values.length).toFixed(1);
+            const max = Math.max(...values);
+            const min = Math.min(...values);
+
+            document.getElementById('total-regions').textContent = regions.length;
+            document.getElementById('avg-value').textContent = avg;
+            document.getElementById('max-value').textContent = max;
+            document.getElementById('min-value').textContent = min;
+        }
+
+        // 随机数据
+        window.randomizeData = function() {
+            generateData();
+            createRegions();
+        };
+
+        // 重置视角
+        window.resetView = function() {
+            camera.position.set(0, 60, 80);
+            controls.target.set(0, 0, 0);
+            controls.update();
+        };
+
+        // 事件监听
+        document.getElementById('btn-population').addEventListener('click', () => {
+            currentDataType = 'population';
+            updateButtons('data');
+        });
+
+        document.getElementById('btn-gdp').addEventListener('click', () => {
+            currentDataType = 'gdp';
+            updateButtons('data');
+        });
+
+        document.getElementById('btn-temperature').addEventListener('click', () => {
+            currentDataType = 'temperature';
+            updateButtons('data');
+        });
+
+        document.getElementById('btn-3d').addEventListener('click', () => {
+            displayMode = '3d';
+            updateButtons('mode');
+            createRegions();
+        });
+
+        document.getElementById('btn-flat').addEventListener('click', () => {
+            displayMode = 'flat';
+            updateButtons('mode');
+            createRegions();
+        });
+
+        function updateButtons(type) {
+            if (type === 'data') {
+                ['btn-population', 'btn-gdp', 'btn-temperature'].forEach(id => {
+                    document.getElementById(id).classList.remove('active');
+                });
+                document.getElementById('btn-' + currentDataType).classList.add('active');
+            } else {
+                ['btn-3d', 'btn-flat'].forEach(id => {
+                    document.getElementById(id).classList.remove('active');
+                });
+                document.getElementById('btn-' + displayMode).classList.add('active');
+            }
+        }
+
+        // 鼠标交互
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(regionMeshes.filter(m => m.isMesh));
+
+            // 恢复之前高亮
+            if (hoveredRegion && hoveredRegion !== intersects[0]?.object) {
+                hoveredRegion.material.emissive.setHex(0x000000);
+                hoveredRegion = null;
+                document.getElementById('region-name').textContent = '-';
+                document.getElementById('region-value').textContent = '-';
+                document.getElementById('region-rank').textContent = '-';
+                document.getElementById('region-bar').style.width = '0%';
+            }
+
+            // 高亮新区域
+            if (intersects.length > 0) {
+                const mesh = intersects[0].object;
+                if (mesh.userData.region) {
+                    hoveredRegion = mesh;
+                    mesh.material.emissive.setHex(0x444444);
+                    
+                    const region = mesh.userData.region;
+                    const sorted = [...regions].sort((a, b) => b.value - a.value);
+                    const rank = sorted.findIndex(r => r.name === region.name) + 1;
+                    
+                    document.getElementById('region-name').textContent = region.name;
+                    document.getElementById('region-value').textContent = region.value;
+                    document.getElementById('region-rank').textContent = rank + '/' + regions.length;
+                    document.getElementById('region-bar').style.width = region.value + '%';
+                }
+            }
+        });
+
+        // 初始化
+        generateData();
+        createRegions();
+
+        // 动画
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // 窗口调整
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // 暴露
+        window.renderer = renderer;
+        window.camera = camera;
+        window.scene = scene;
+    </script>
+
+    <!-- 截图支持 -->
+    <script>
+        let _screenshotRenderer;
+        window.addEventListener('message', (e) => {
+            if (e.data?.type === 'take-screenshot') {
+                try {
+                    if (!_screenshotRenderer) _screenshotRenderer = window.renderer;
+                    if (window.scene && window.camera) _screenshotRenderer.render(window.scene, window.camera);
+                    const canvas = _screenshotRenderer.domElement;
+                    const temp = document.createElement('canvas');
+                    const scale = Math.min(600 / canvas.width, 600 / canvas.height);
+                    temp.width = canvas.width * scale;
+                    temp.height = canvas.height * scale;
+                    temp.getContext('2d').drawImage(canvas, 0, 0, temp.width, temp.height);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: temp.toDataURL('image/jpeg', e.data.quality || 0.8) }, '*');
+                } catch (err) {
+                    window.parent.postMessage({ type: 'screenshot-error', error: err.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
