@@ -12,7 +12,7 @@
         
         /* 控制面板 */
         #controls {
-            position: absolute; top: 10px; left: 10px;
+            position: absolute; top: 50px; right: 10px;
             background: rgba(0,0,0,0.9); color: white;
             padding: 12px; border-radius: 8px; z-index: 100;
             width: 260px; font-size: 11px;
@@ -63,7 +63,7 @@
         
         /* 统计信息 */
         #stats {
-            position: absolute; bottom: 10px; left: 10px;
+            position: absolute; bottom: 70px; left: 10px;
             background: rgba(0,0,0,0.9); color: white;
             padding: 12px; border-radius: 8px; z-index: 100;
             width: 200px; font-size: 10px;
@@ -340,6 +340,7 @@
 
         // 暴露到window
         window.loadTileset = loadTileset;
+        window.loadPreset = loadPreset;
 
         // 动画循环
         function animate() {
