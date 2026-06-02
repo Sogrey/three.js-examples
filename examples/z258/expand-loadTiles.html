@@ -309,23 +309,23 @@
         }
 
         // 加载预设
-        window.loadPreset = function(name) {
+        function loadPresetFn(name) {
             const url = presets[name];
             if (url) {
                 document.getElementById('tileset-url').value = url;
                 loadTileset(url);
             }
-        };
+        }
 
         // 重置相机
-        window.resetCamera = function() {
+        function resetCameraFn() {
             camera.position.set(100, 100, 100);
             controls.target.set(0, 0, 0);
             controls.update();
-        };
+        }
 
         // 定位到Tileset
-        window.fitToTileset = function() {
+        function fitToTilesetFn() {
             if (!tilesRenderer || !tilesRenderer.group) return;
             
             const box = new THREE.Box3().setFromObject(tilesRenderer.group);
@@ -338,21 +338,21 @@
             camera.position.set(center.x + distance, center.y + distance, center.z + distance);
             controls.target.copy(center);
             controls.update();
-        };
+        }
 
         // 切换线框模式
-        window.toggleWireframe = function() {
+        function toggleWireframeFn() {
             wireframeMode = !wireframeMode;
             applyWireframe();
             showMessage(wireframeMode ? '线框模式已开启' : '线框模式已关闭');
-        };
+        }
 
-        // 暴露到window
+        // 暴露到window - 覆盖占位符
         window.loadTileset = loadTileset;
-        window.loadPreset = loadPreset;
-        window.resetCamera = resetCamera;
-        window.fitToTileset = fitToTileset;
-        window.toggleWireframe = toggleWireframe;
+        window.loadPreset = loadPresetFn;
+        window.resetCamera = resetCameraFn;
+        window.fitToTileset = fitToTilesetFn;
+        window.toggleWireframe = toggleWireframeFn;
 
         // 动画循环
         function animate() {
