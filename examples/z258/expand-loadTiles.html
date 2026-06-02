@@ -138,6 +138,15 @@
     }
     </script>
 
+    <script>
+        // 全局函数占位符，将在模块加载后被替换
+        window.loadTileset = function() { console.log('加载中...'); };
+        window.loadPreset = function() {};
+        window.resetCamera = function() {};
+        window.fitToTileset = function() {};
+        window.toggleWireframe = function() {};
+    </script>
+    
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
