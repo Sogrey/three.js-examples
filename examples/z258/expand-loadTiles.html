@@ -97,21 +97,21 @@
         <div class="section">
             <h4>Tileset URL</h4>
             <input type="text" id="tileset-url" value="https://data1.mars3d.cn/3dtiles/qx-dyt/tileset.json" placeholder="输入tileset.json地址">
-            <button onclick="loadTileset()">🔄 加载</button>
+            <button id="btnLoad">🔄 加载</button>
         </div>
         
         <div class="section">
             <h4>相机控制</h4>
-            <button onclick="resetCamera()">🎥 重置视角</button>
-            <button onclick="fitToTileset()">📍 定位到模型</button>
-            <button class="secondary" onclick="toggleWireframe()">🔲 线框模式</button>
+            <button id="btnReset">🎥 重置视角</button>
+            <button id="btnFit">📍 定位到模型</button>
+            <button id="btnWireframe" class="secondary">🔲 线框模式</button>
         </div>
         
         <div class="section">
             <h4>预设模型</h4>
-            <button onclick="loadPreset('dyt')">🏔️ 大雁塔</button>
-            <button onclick="loadPreset('bim')">🏢 BIM建筑</button>
-            <button onclick="loadPreset('terrain')">🌄 地形</button>
+            <button id="btnDyt">🏔️ 大雁塔</button>
+            <button id="btnBim">🏢 BIM建筑</button>
+            <button id="btnTerrain">🌄 地形</button>
         </div>
         
         <div class="hint">
@@ -366,6 +366,15 @@
         window.renderer = renderer;
         window.camera = camera;
         window.scene = scene;
+
+        // 绑定按钮事件
+        document.getElementById('btnLoad').addEventListener('click', () => window.loadTileset());
+        document.getElementById('btnReset').addEventListener('click', () => window.resetCamera());
+        document.getElementById('btnFit').addEventListener('click', () => window.fitToTileset());
+        document.getElementById('btnWireframe').addEventListener('click', () => window.toggleWireframe());
+        document.getElementById('btnDyt').addEventListener('click', () => window.loadPreset('dyt'));
+        document.getElementById('btnBim').addEventListener('click', () => window.loadPreset('bim'));
+        document.getElementById('btnTerrain').addEventListener('click', () => window.loadPreset('terrain'));
 
         // 自动加载默认模型
         window.loadTileset(presets.dyt);
