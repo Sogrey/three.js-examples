@@ -138,15 +138,6 @@
     }
     </script>
 
-    <script>
-        // 全局函数占位符，将在模块加载后被替换
-        window.loadTileset = function() { console.log('加载中...'); };
-        window.loadPreset = function() {};
-        window.resetCamera = function() {};
-        window.fitToTileset = function() {};
-        window.toggleWireframe = function() {};
-    </script>
-    
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -232,7 +223,7 @@
         }
 
         // 加载Tileset
-        async function loadTileset(url = null) {
+        window.loadTileset = async function(url = null) {
             const tilesetUrl = url || document.getElementById('tileset-url').value;
             
             if (!tilesetUrl) {
@@ -309,23 +300,23 @@
         }
 
         // 加载预设
-        function loadPresetFn(name) {
+        window.loadPreset = function(name) {
             const url = presets[name];
             if (url) {
                 document.getElementById('tileset-url').value = url;
-                loadTileset(url);
+                window.loadTileset(url);
             }
-        }
+        };
 
         // 重置相机
-        function resetCameraFn() {
+        window.resetCamera = function() {
             camera.position.set(100, 100, 100);
             controls.target.set(0, 0, 0);
             controls.update();
-        }
+        };
 
         // 定位到Tileset
-        function fitToTilesetFn() {
+        window.fitToTileset = function() {
             if (!tilesRenderer || !tilesRenderer.group) return;
             
             const box = new THREE.Box3().setFromObject(tilesRenderer.group);
@@ -338,21 +329,14 @@
             camera.position.set(center.x + distance, center.y + distance, center.z + distance);
             controls.target.copy(center);
             controls.update();
-        }
+        };
 
         // 切换线框模式
-        function toggleWireframeFn() {
+        window.toggleWireframe = function() {
             wireframeMode = !wireframeMode;
             applyWireframe();
             showMessage(wireframeMode ? '线框模式已开启' : '线框模式已关闭');
-        }
-
-        // 暴露到window - 覆盖占位符
-        window.loadTileset = loadTileset;
-        window.loadPreset = loadPresetFn;
-        window.resetCamera = resetCameraFn;
-        window.fitToTileset = fitToTilesetFn;
-        window.toggleWireframe = toggleWireframeFn;
+        };
 
         // 动画循环
         function animate() {
@@ -384,7 +368,7 @@
         window.scene = scene;
 
         // 自动加载默认模型
-        loadTileset(presets.dyt);
+        window.loadTileset(presets.dyt);
     </script>
 
     <!-- 截图支持 -->
