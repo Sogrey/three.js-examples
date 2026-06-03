@@ -202,11 +202,10 @@
       </div>
 
       <div class="section">
-        <h4>预设模型</h4>
-        <button id="btnTest">🧪 测试模型</button>
-        <button id="btnDyt">🏔️ 大雁塔</button>
-        <button id="btnBim">🏢 BIM建筑</button>
-      </div>
+            <h4>预设模型</h4>
+            <button id="btnTest">🧪 测试模型</button>
+            <button id="btnDyt">🏔️ 大雁塔</button>
+        </div>
 
       <div class="hint">
         💡 3D Tiles是Cesium的开放规范，用于流式传输大规模3D地理空间数据
@@ -285,8 +284,7 @@
       // 预设URL
       const presets = {
         test: "https://z2586300277.github.io/3d-file-server/3dtiles/test/tileset.json",
-        dyt: "https://data1.mars3d.cn/3dtiles/qx-dyt/tileset.json",
-        bim: "https://data1.mars3d.cn/3dtiles/bim/tileset.json",
+        dyt: "../../models/tileset/dayanta/tileset.json",
       };
 
       // 显示消息
@@ -496,9 +494,6 @@
       document
         .getElementById("btnDyt")
         .addEventListener("click", () => window.loadPreset("dyt"));
-      document
-        .getElementById("btnBim")
-        .addEventListener("click", () => window.loadPreset("bim"));
 
       // 自动加载默认模型
       window.loadTileset(presets.test);
