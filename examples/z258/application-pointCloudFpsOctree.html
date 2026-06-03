@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="点云第一人称漫游 - 使用八叉树优化的点云场景漫游">
+    <title>点云第一人称漫游 - Three.js r179</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { overflow: hidden; background: #000; }
+        #container { width: 100vw; height: 100vh; }
+        
+        #controls {
+            position: absolute; top: 50px; right: 10px;
+            background: rgba(0,0,0,0.8); color: white;
+            padding: 15px; border-radius: 8px; z-index: 100;
+            width: 220px; font-size: 12px;
+        }
+        #controls h3 { color: #4a9eff; margin-bottom: 10px; font-size: 14px; }
+        #controls .control-group { margin: 10px 0; }
+        #controls label { display: block; margin-bottom: 5px; color: #aaa; }
+        #controls input[type="range"] { width: 100%; }
+        #controls button {
+            width: 100%; padding: 8px; margin: 5px 0;
+            background: #4a9eff; color: white; border: none;
+            border-radius: 4px; cursor: pointer;
+        }
+        #controls button:hover { background: #3a8eef; }
+        #controls .value { color: #4a9eff; float: right; }
+        
+        #instructions {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            color: white; font-size: 16px;
+            background: rgba(0,0,0,0.8);
+            padding: 20px 40px; border-radius: 8px;
+            text-align: center; z-index: 200;
+        }
+        #instructions p { margin: 10px 0; }
+        #instructions .key { color: #4a9eff; font-weight: bold; }
+        
+        #crosshair {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px; height: 20px;
+            pointer-events: none; z-index: 150;
+        }
+        #crosshair::before, #crosshair::after {
+            content: ''; position: absolute;
+            background: rgba(255,255,255,0.8);
+        }
+        #crosshair::before {
+            width: 2px; height: 20px;
+            left: 50%; transform: translateX(-50%);
+        }
+        #crosshair::after {
+            width: 20px; height: 2px;
+            top: 50%; transform: translateY(-50%);
+        }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+    <div id="crosshair"></div>
+    
+    <div id="instructions">
+        <h3>🎮 点云第一人称漫游</h3>
+        <p>点击屏幕开始漫游</p>
+        <p><span class="key">W A S D</span> - 移动</p>
+        <p><span class="key">鼠标</span> - 视角</p>
+        <p><span class="key">ESC</span> - 退出</p>
+    </div>
+    
+    <div id="controls" style="display: none;">
+        <h3>⚙️ 设置</h3>
+        <div class="control-group">
+            <label>移动速度 <span class="value" id="speedValue">5</span></label>
+            <input type="range" id="speedRange" min="1" max="20" step="1" value="5">
+        </div>
+        <div class="control-group">
+            <label>点云密度 <span class="value" id="densityValue">50000</span></label>
+            <input type="range" id="densityRange" min="10000" max="100000" step="10000" value="50000">
+        </div>
+        <div class="control-group">
+            <label>视距 <span class="value" id="farValue">100</span></label>
+            <input type="range" id="farRange" min="50" max="200" step="10" value="100">
+        </div>
+        <button id="btnRegenerate">🔄 重新生成</button>
+        <button id="btnReset">🏠 重置位置</button>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+
+        const container = document.getElementById('container');
+
+        // 场景
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x050510);
+        scene.fog = new THREE.FogExp2(0x050510, 0.015);
+
+        // 相机
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 2, 0);
+
+        // 渲染器
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        container.appendChild(renderer.domElement);
+
+        // 控制器
+        const controls = new PointerLockControls(camera, document.body);
+        
+        const instructions = document.getElementById('instructions');
+        const controlsPanel = document.getElementById('controls');
+
+        instructions.addEventListener('click', () => {
+            controls.lock();
+        });
+
+        controls.addEventListener('lock', () => {
+            instructions.style.display = 'none';
+            controlsPanel.style.display = 'block';
+        });
+
+        controls.addEventListener('unlock', () => {
+            instructions.style.display = 'block';
+            controlsPanel.style.display = 'none';
+        });
+
+        // 灯光
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+        scene.add(ambientLight);
+
+        // 点云
+        let pointCloud = null;
+        
+        // 配置
+        const config = {
+            speed: 5,
+            density: 50000,
+            far: 100
+        };
+
+        // 创建点云场景
+        function createPointCloud() {
+            if (pointCloud) {
+                scene.remove(pointCloud);
+                pointCloud.geometry.dispose();
+                pointCloud.material.dispose();
+            }
+
+            const geometry = new THREE.BufferGeometry();
+            const positions = [];
+            const colors = [];
+
+            // 生成地形点云
+            for (let i = 0; i < config.density; i++) {
+                const x = (Math.random() - 0.5) * 200;
+                const z = (Math.random() - 0.5) * 200;
+                
+                // 使用噪声函数生成地形高度
+                const noise = Math.sin(x * 0.05) * Math.cos(z * 0.05) * 5 +
+                             Math.sin(x * 0.1) * Math.sin(z * 0.1) * 2 +
+                             Math.random() * 0.5;
+                const y = noise;
+
+                positions.push(x, y, z);
+
+                // 根据高度设置颜色
+                const color = new THREE.Color();
+                const t = (y + 5) / 10;
+                if (t < 0.3) {
+                    color.setRGB(0.1, 0.3, 0.1); // 深绿
+                } else if (t < 0.6) {
+                    color.setRGB(0.4, 0.6, 0.2); // 浅绿
+                } else if (t < 0.8) {
+                    color.setRGB(0.6, 0.5, 0.3); // 棕色
+                } else {
+                    color.setRGB(0.8, 0.8, 0.9); // 白色（山顶）
+                }
+                colors.push(color.r, color.g, color.b);
+            }
+
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+
+            const material = new THREE.PointsMaterial({
+                size: 0.3,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.8
+            });
+
+            pointCloud = new THREE.Points(geometry, material);
+            scene.add(pointCloud);
+        }
+
+        // 添加装饰性几何体
+        function addDecorations() {
+            // 添加一些发光的立方体作为地标
+            for (let i = 0; i < 10; i++) {
+                const geometry = new THREE.BoxGeometry(2, 2, 2);
+                const material = new THREE.MeshBasicMaterial({
+                    color: new THREE.Color().setHSL(Math.random(), 0.8, 0.5),
+                    wireframe: true
+                });
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.position.set(
+                    (Math.random() - 0.5) * 100,
+                    5 + Math.random() * 10,
+                    (Math.random() - 0.5) * 100
+                );
+                scene.add(mesh);
+
+                // 添加点光源
+                const light = new THREE.PointLight(material.color, 1, 20);
+                light.position.copy(mesh.position);
+                scene.add(light);
+            }
+        }
+
+        // 初始化
+        createPointCloud();
+        addDecorations();
+
+        // 移动控制
+        const moveState = { forward: false, backward: false, left: false, right: false };
+        const velocity = new THREE.Vector3();
+        const direction = new THREE.Vector3();
+
+        document.addEventListener('keydown', (e) => {
+            switch(e.code) {
+                case 'KeyW': moveState.forward = true; break;
+                case 'KeyS': moveState.backward = true; break;
+                case 'KeyA': moveState.left = true; break;
+                case 'KeyD': moveState.right = true; break;
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            switch(e.code) {
+                case 'KeyW': moveState.forward = false; break;
+                case 'KeyS': moveState.backward = false; break;
+                case 'KeyA': moveState.left = false; break;
+                case 'KeyD': moveState.right = false; break;
+            }
+        });
+
+        // 动画
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (controls.isLocked) {
+                const delta = clock.getDelta();
+
+                velocity.x -= velocity.x * 10.0 * delta;
+                velocity.z -= velocity.z * 10.0 * delta;
+
+                direction.z = Number(moveState.forward) - Number(moveState.backward);
+                direction.x = Number(moveState.right) - Number(moveState.left);
+                direction.normalize();
+
+                if (moveState.forward || moveState.backward) {
+                    velocity.z -= direction.z * config.speed * 10.0 * delta;
+                }
+                if (moveState.left || moveState.right) {
+                    velocity.x -= direction.x * config.speed * 10.0 * delta;
+                }
+
+                controls.moveRight(-velocity.x * delta);
+                controls.moveForward(-velocity.z * delta);
+
+                // 保持高度
+                const pos = camera.position;
+                const terrainHeight = Math.sin(pos.x * 0.05) * Math.cos(pos.z * 0.05) * 5 +
+                                     Math.sin(pos.x * 0.1) * Math.sin(pos.z * 0.1) * 2;
+                camera.position.y = Math.max(terrainHeight + 2, 2);
+            }
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // 窗口调整
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // 暴露到window
+        window.renderer = renderer;
+        window.camera = camera;
+        window.scene = scene;
+
+        // 控制面板事件
+        document.getElementById('speedRange').addEventListener('input', (e) => {
+            config.speed = parseInt(e.target.value);
+            document.getElementById('speedValue').textContent = config.speed;
+        });
+
+        document.getElementById('densityRange').addEventListener('input', (e) => {
+            config.density = parseInt(e.target.value);
+            document.getElementById('densityValue').textContent = config.density;
+        });
+
+        document.getElementById('farRange').addEventListener('input', (e) => {
+            config.far = parseInt(e.target.value);
+            document.getElementById('farValue').textContent = config.far;
+            camera.far = config.far;
+            camera.updateProjectionMatrix();
+        });
+
+        document.getElementById('btnRegenerate').addEventListener('click', () => {
+            createPointCloud();
+        });
+
+        document.getElementById('btnReset').addEventListener('click', () => {
+            camera.position.set(0, 2, 0);
+            camera.rotation.set(0, 0, 0);
+        });
+    </script>
+
+    <!-- 截图支持 -->
+    <script>
+        window.addEventListener('message', (e) => {
+            if (e.data?.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const canvas = window.renderer.domElement;
+                    const temp = document.createElement('canvas');
+                    const scale = Math.min(600 / canvas.width, 600 / canvas.height);
+                    temp.width = canvas.width * scale;
+                    temp.height = canvas.height * scale;
+                    temp.getContext('2d').drawImage(canvas, 0, 0, temp.width, temp.height);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: temp.toDataURL('image/jpeg', e.data.quality || 0.8) }, '*');
+                } catch (err) {
+                    window.parent.postMessage({ type: 'screenshot-error', error: err.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

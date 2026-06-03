@@ -1286,6 +1286,14 @@ const threejsData = {
               url: "examples/z258/application-modelParticle",
             },
             {
+              id: "application-pointCloudFpsOctree",
+              title: "点云第一人称漫游",
+              description: "使用八叉树优化的点云场景第一人称漫游",
+              thumbnail: "images/application-pointCloudFpsOctree.jpg",
+              version: "r179",
+              url: "examples/z258/application-pointCloudFpsOctree",
+            },
+            {
               id: "shader-audioSolutions",
               title: "音乐可视化",
               description:
