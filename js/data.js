@@ -1294,6 +1294,14 @@ const threejsData = {
               url: "examples/z258/application-pointCloudFpsOctree",
             },
             {
+              id: "application-drawFaceInner",
+              title: "绘制面_内置点",
+              description: "在3D平面上绘制内置点标记，支持多种分布模式",
+              thumbnail: "images/application-drawFaceInner.jpg",
+              version: "r179",
+              url: "examples/z258/application-drawFaceInner",
+            },
+            {
               id: "shader-audioSolutions",
               title: "音乐可视化",
               description:
