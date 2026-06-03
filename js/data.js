@@ -1246,6 +1246,14 @@ const threejsData = {
               url: "examples/z258/application-videoFloor",
             },
             {
+              id: "application-cartoonOcean",
+              title: "卡通海面",
+              description: "卡通风格海面波浪效果，带漂浮小船物理模拟",
+              thumbnail: "images/application-cartoonOcean.jpg",
+              version: "r179",
+              url: "examples/z258/application-cartoonOcean",
+            },
+            {
               id: "shader-audioSolutions",
               title: "音乐可视化",
               description:
