@@ -1326,6 +1326,14 @@ const threejsData = {
               url: "examples/z258/basic-changeMaterial",
             },
             {
+              id: "basic-transformBox3",
+              title: "变换Box3",
+              description: "Box3包围盒计算和可视化，支持缩放旋转变换",
+              thumbnail: "images/basic-transformBox3.jpg",
+              version: "r179",
+              url: "examples/z258/basic-transformBox3",
+            },
+            {
               id: "shader-audioSolutions",
               title: "音乐可视化",
               description:
