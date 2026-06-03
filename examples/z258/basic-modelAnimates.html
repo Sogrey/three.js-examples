@@ -145,10 +145,12 @@
                         playing: true,
                         time: 0,
                         update: (delta) => {
-                            group.userData.time += delta;
-                            const y = Math.abs(Math.sin(group.userData.time * 3)) * 3;
-                            mesh.position.y = 0.8 + y;
-                            mesh.scale.setScalar(1 - y * 0.05);
+                            if (group.userData.playing) {
+                                group.userData.time += delta;
+                                const y = Math.abs(Math.sin(group.userData.time * 3)) * 3;
+                                mesh.position.y = 0.8 + y;
+                                mesh.scale.setScalar(1 - y * 0.05);
+                            }
                         }
                     };
                     break;
