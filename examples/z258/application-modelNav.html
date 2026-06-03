@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="模型导航 - 3D场景中的模型导航和路径规划">
+    <meta name="description" content="自动寻路 - 3D场景中的模型导航和路径规划">
     <title>自动寻路 - Three.js r179</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -186,39 +186,149 @@
             return mesh;
         }
 
-        // 简单的路径规划（A*简化版）
+        // A*寻路算法
         function findPath(start, end) {
-            // 这里使用简单的直线路径，实际应用中使用A*算法
-            const path = [];
-            const steps = 50;
+            const gridSize = 0.5; // 网格大小
+            const gridRange = 15; // 网格范围
             
-            for (let i = 0; i <= steps; i++) {
-                const t = i / steps;
-                const x = start.x + (end.x - start.x) * t;
-                const z = start.z + (end.z - start.z) * t;
-                
-                // 简单的障碍物避让
-                let y = 0.1;
-                let adjustedX = x;
-                let adjustedZ = z;
-                
-                // 检查是否与障碍物碰撞
-                obstacles.forEach((obstacle) => {
-                    const dx = x - obstacle.position.x;
-                    const dz = z - obstacle.position.z;
-                    const dist = Math.sqrt(dx * dx + dz * dz);
-                    const minDist = 2.5;
-                    
-                    if (dist < minDist) {
-                        const angle = Math.atan2(dz, dx);
-                        adjustedX = obstacle.position.x + Math.cos(angle) * minDist;
-                        adjustedZ = obstacle.position.z + Math.sin(angle) * minDist;
-                    }
-                });
-                
-                path.push(new THREE.Vector3(adjustedX, y, adjustedZ));
+            // 将世界坐标转换为网格坐标
+            function worldToGrid(pos) {
+                return {
+                    x: Math.round(pos.x / gridSize),
+                    z: Math.round(pos.z / gridSize)
+                };
             }
             
+            // 将网格坐标转换为世界坐标
+            function gridToWorld(gx, gz) {
+                return new THREE.Vector3(gx * gridSize, 0.1, gz * gridSize);
+            }
+            
+            // 检查位置是否在障碍物内
+            function isObstacle(gx, gz) {
+                const worldPos = gridToWorld(gx, gz);
+                for (let obstacle of obstacles) {
+                    const dx = worldPos.x - obstacle.position.x;
+                    const dz = worldPos.z - obstacle.position.z;
+                    const dist = Math.sqrt(dx * dx + dz * dz);
+                    // 障碍物半径 + 安全距离
+                    const obstacleRadius = 2.0;
+                    if (dist < obstacleRadius) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            
+            const startGrid = worldToGrid(start);
+            const endGrid = worldToGrid(end);
+            
+            // A*算法
+            const openSet = [];
+            const closedSet = new Set();
+            const cameFrom = new Map();
+            const gScore = new Map();
+            const fScore = new Map();
+            
+            const startKey = `${startGrid.x},${startGrid.z}`;
+            const endKey = `${endGrid.x},${endGrid.z}`;
+            
+            openSet.push({ x: startGrid.x, z: startGrid.z });
+            gScore.set(startKey, 0);
+            fScore.set(startKey, Math.abs(startGrid.x - endGrid.x) + Math.abs(startGrid.z - endGrid.z));
+            
+            const directions = [
+                { dx: 0, dz: 1 }, { dx: 0, dz: -1 },
+                { dx: 1, dz: 0 }, { dx: -1, dz: 0 },
+                { dx: 1, dz: 1 }, { dx: 1, dz: -1 },
+                { dx: -1, dz: 1 }, { dx: -1, dz: -1 }
+            ];
+            
+            while (openSet.length > 0) {
+                // 找到fScore最小的节点
+                let current = openSet[0];
+                let currentIndex = 0;
+                let minF = fScore.get(`${current.x},${current.z}`) || Infinity;
+                
+                for (let i = 1; i < openSet.length; i++) {
+                    const node = openSet[i];
+                    const f = fScore.get(`${node.x},${node.z}`) || Infinity;
+                    if (f < minF) {
+                        minF = f;
+                        current = node;
+                        currentIndex = i;
+                    }
+                }
+                
+                const currentKey = `${current.x},${current.z}`;
+                
+                // 到达终点
+                if (current.x === endGrid.x && current.z === endGrid.z) {
+                    // 重建路径
+                    const path = [];
+                    let curr = current;
+                    while (curr) {
+                        path.unshift(gridToWorld(curr.x, curr.z));
+                        const prevKey = cameFrom.get(`${curr.x},${curr.z}`);
+                        if (!prevKey) break;
+                        const [px, pz] = prevKey.split(',').map(Number);
+                        curr = { x: px, z: pz };
+                    }
+                    return path;
+                }
+                
+                openSet.splice(currentIndex, 1);
+                closedSet.add(currentKey);
+                
+                // 检查邻居
+                for (let dir of directions) {
+                    const neighbor = {
+                        x: current.x + dir.dx,
+                        z: current.z + dir.dz
+                    };
+                    const neighborKey = `${neighbor.x},${neighbor.z}`;
+                    
+                    // 检查范围
+                    if (Math.abs(neighbor.x * gridSize) > gridRange ||
+                        Math.abs(neighbor.z * gridSize) > gridRange) {
+                        continue;
+                    }
+                    
+                    // 检查是否已访问或是障碍物
+                    if (closedSet.has(neighborKey) || isObstacle(neighbor.x, neighbor.z)) {
+                        continue;
+                    }
+                    
+                    // 计算代价
+                    const moveCost = (dir.dx !== 0 && dir.dz !== 0) ? 1.414 : 1;
+                    const tentativeG = (gScore.get(currentKey) || 0) + moveCost;
+                    
+                    const existingG = gScore.get(neighborKey);
+                    if (existingG === undefined || tentativeG < existingG) {
+                        cameFrom.set(neighborKey, currentKey);
+                        gScore.set(neighborKey, tentativeG);
+                        fScore.set(neighborKey, tentativeG + Math.abs(neighbor.x - endGrid.x) + Math.abs(neighbor.z - endGrid.z));
+                        
+                        // 检查是否已在openSet
+                        const exists = openSet.some(n => n.x === neighbor.x && n.z === neighbor.z);
+                        if (!exists) {
+                            openSet.push(neighbor);
+                        }
+                    }
+                }
+            }
+            
+            // 没有找到路径，返回直线路径
+            const path = [];
+            const steps = 50;
+            for (let i = 0; i <= steps; i++) {
+                const t = i / steps;
+                path.push(new THREE.Vector3(
+                    start.x + (end.x - start.x) * t,
+                    0.1,
+                    start.z + (end.z - start.z) * t
+                ));
+            }
             return path;
         }
 
