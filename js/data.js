@@ -1254,6 +1254,14 @@ const threejsData = {
               url: "examples/z258/application-mathApply",
             },
             {
+              id: "application-matrixOper",
+              title: "矩阵操作",
+              description: "可视化展示 Three.js 矩阵变换，包括平移、旋转、缩放",
+              thumbnail: "images/application-matrixOper.jpg",
+              version: "r179",
+              url: "examples/z258/application-matrixOper",
+            },
+            {
               id: "shader-audioSolutions",
               title: "音乐可视化",
               description:

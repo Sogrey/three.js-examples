@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="矩阵操作 - 可视化展示 Three.js 矩阵变换">
+    <title>矩阵操作 - Three.js r179</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { overflow: hidden; background: #1a1a2e; }
+        #container { width: 100vw; height: 100vh; }
+        
+        #controls {
+            position: absolute; top: 50px; right: 10px;
+            background: rgba(0,0,0,0.8); color: white;
+            padding: 15px; border-radius: 8px; z-index: 100;
+            width: 240px; font-size: 12px;
+        }
+        #controls h3 { color: #4a9eff; margin-bottom: 10px; font-size: 14px; }
+        #controls .control-group { margin: 10px 0; }
+        #controls label { display: block; margin-bottom: 5px; color: #aaa; }
+        #controls input[type="range"] { width: 100%; }
+        #controls button {
+            width: 100%; padding: 8px; margin: 5px 0;
+            background: #4a9eff; color: white; border: none;
+            border-radius: 4px; cursor: pointer;
+        }
+        #controls button:hover { background: #3a8eef; }
+        #controls .value { color: #4a9eff; float: right; }
+        
+        #matrixDisplay {
+            background: rgba(255,255,255,0.1);
+            padding: 10px; border-radius: 4px;
+            font-family: monospace; font-size: 10px;
+            margin-top: 10px; line-height: 1.6;
+        }
+        #matrixDisplay .row { display: flex; justify-content: space-around; }
+        #matrixDisplay .cell { width: 50px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+    
+    <div id="controls">
+        <h3>🔢 矩阵操作</h3>
+        <div class="control-group">
+            <label>位置 X <span class="value" id="posXValue">0</span></label>
+            <input type="range" id="posXRange" min="-5" max="5" step="0.1" value="0">
+        </div>
+        <div class="control-group">
+            <label>位置 Y <span class="value" id="posYValue">0</span></label>
+            <input type="range" id="posYRange" min="-5" max="5" step="0.1" value="0">
+        </div>
+        <div class="control-group">
+            <label>位置 Z <span class="value" id="posZValue">0</span></label>
+            <input type="range" id="posZRange" min="-5" max="5" step="0.1" value="0">
+        </div>
+        <div class="control-group">
+            <label>旋转 X <span class="value" id="rotXValue">0</span></label>
+            <input type="range" id="rotXRange" min="0" max="360" step="1" value="0">
+        </div>
+        <div class="control-group">
+            <label>旋转 Y <span class="value" id="rotYValue">0</span></label>
+            <input type="range" id="rotYRange" min="0" max="360" step="1" value="0">
+        </div>
+        <div class="control-group">
+            <label>旋转 Z <span class="value" id="rotZValue">0</span></label>
+            <input type="range" id="rotZRange" min="0" max="360" step="1" value="0">
+        </div>
+        <div class="control-group">
+            <label>缩放 <span class="value" id="scaleValue">1.0</span></label>
+            <input type="range" id="scaleRange" min="0.1" max="3" step="0.1" value="1">
+        </div>
+        <button id="btnReset">🔄 重置</button>
+        <button id="btnAnimate">▶️ 自动动画</button>
+        <div id="matrixDisplay">
+            <div class="row"><span class="cell">1.00</span><span class="cell">0.00</span><span class="cell">0.00</span><span class="cell">0.00</span></div>
+            <div class="row"><span class="cell">0.00</span><span class="cell">1.00</span><span class="cell">0.00</span><span class="cell">0.00</span></div>
+            <div class="row"><span class="cell">0.00</span><span class="cell">0.00</span><span class="cell">1.00</span><span class="cell">0.00</span></div>
+            <div class="row"><span class="cell">0.00</span><span class="cell">0.00</span><span class="cell">0.00</span><span class="cell">1.00</span></div>
+        </div>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        const container = document.getElementById('container');
+
+        // 场景
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a1a2e);
+
+        // 相机
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(10, 10, 10);
+
+        // 渲染器
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        container.appendChild(renderer.domElement);
+
+        // 控制器
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+
+        // 灯光
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        scene.add(ambientLight);
+        
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        dirLight.position.set(10, 20, 10);
+        scene.add(dirLight);
+
+        // 网格
+        const gridHelper = new THREE.GridHelper(20, 20, 0x4a9eff, 0x2a2a4e);
+        scene.add(gridHelper);
+
+        // 坐标轴
+        const axesHelper = new THREE.AxesHelper(5);
+        scene.add(axesHelper);
+
+        // 主物体
+        const geometry = new THREE.BoxGeometry(2, 2, 2);
+        const material = new THREE.MeshStandardMaterial({
+            color: 0x4a9eff,
+            roughness: 0.3,
+            metalness: 0.7
+        });
+        const mesh = new THREE.Mesh(geometry, material);
+        scene.add(mesh);
+
+        // 局部坐标轴（随物体变换）
+        const localAxes = new THREE.AxesHelper(3);
+        mesh.add(localAxes);
+
+        // 变换参数
+        const params = {
+            posX: 0, posY: 0, posZ: 0,
+            rotX: 0, rotY: 0, rotZ: 0,
+            scale: 1
+        };
+
+        let isAnimating = false;
+
+        // 更新矩阵显示
+        function updateMatrixDisplay() {
+            const matrix = mesh.matrix;
+            const elements = matrix.elements;
+            
+            const display = document.getElementById('matrixDisplay');
+            let html = '';
+            for (let i = 0; i < 4; i++) {
+                html += '<div class="row">';
+                for (let j = 0; j < 4; j++) {
+                    const value = elements[j * 4 + i];
+                    html += `<span class="cell">${value.toFixed(2)}</span>`;
+                }
+                html += '</div>';
+            }
+            display.innerHTML = html;
+        }
+
+        // 应用变换
+        function applyTransform() {
+            mesh.position.set(params.posX, params.posY, params.posZ);
+            mesh.rotation.set(
+                THREE.MathUtils.degToRad(params.rotX),
+                THREE.MathUtils.degToRad(params.rotY),
+                THREE.MathUtils.degToRad(params.rotZ)
+            );
+            mesh.scale.set(params.scale, params.scale, params.scale);
+            
+            mesh.updateMatrix();
+            updateMatrixDisplay();
+        }
+
+        // 动画
+        const clock = new THREE.Clock();
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            if (isAnimating) {
+                const time = clock.getElapsedTime();
+                params.posX = Math.sin(time) * 3;
+                params.posY = Math.cos(time * 0.5) * 2;
+                params.rotX = (time * 30) % 360;
+                params.rotY = (time * 45) % 360;
+                
+                // 更新UI
+                document.getElementById('posXRange').value = params.posX;
+                document.getElementById('posXValue').textContent = params.posX.toFixed(1);
+                document.getElementById('posYRange').value = params.posY;
+                document.getElementById('posYValue').textContent = params.posY.toFixed(1);
+                document.getElementById('rotXRange').value = params.rotX;
+                document.getElementById('rotXValue').textContent = Math.round(params.rotX);
+                document.getElementById('rotYRange').value = params.rotY;
+                document.getElementById('rotYValue').textContent = Math.round(params.rotY);
+                
+                applyTransform();
+            }
+            
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // 窗口调整
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // 暴露到window
+        window.renderer = renderer;
+        window.camera = camera;
+        window.scene = scene;
+
+        // 控制面板事件
+        const sliders = [
+            { id: 'posXRange', param: 'posX', display: 'posXValue' },
+            { id: 'posYRange', param: 'posY', display: 'posYValue' },
+            { id: 'posZRange', param: 'posZ', display: 'posZValue' },
+            { id: 'rotXRange', param: 'rotX', display: 'rotXValue' },
+            { id: 'rotYRange', param: 'rotY', display: 'rotYValue' },
+            { id: 'rotZRange', param: 'rotZ', display: 'rotZValue' },
+            { id: 'scaleRange', param: 'scale', display: 'scaleValue' }
+        ];
+
+        sliders.forEach(({ id, param, display }) => {
+            document.getElementById(id).addEventListener('input', (e) => {
+                const value = parseFloat(e.target.value);
+                params[param] = value;
+                document.getElementById(display).textContent = 
+                    param.startsWith('rot') ? Math.round(value) : value.toFixed(1);
+                applyTransform();
+            });
+        });
+
+        document.getElementById('btnReset').addEventListener('click', () => {
+            params.posX = 0; params.posY = 0; params.posZ = 0;
+            params.rotX = 0; params.rotY = 0; params.rotZ = 0;
+            params.scale = 1;
+            
+            sliders.forEach(({ id, param, display }) => {
+                document.getElementById(id).value = params[param];
+                document.getElementById(display).textContent = 
+                    param.startsWith('rot') ? '0' : params[param].toFixed(1);
+            });
+            
+            isAnimating = false;
+            document.getElementById('btnAnimate').textContent = '▶️ 自动动画';
+            applyTransform();
+        });
+
+        document.getElementById('btnAnimate').addEventListener('click', () => {
+            isAnimating = !isAnimating;
+            document.getElementById('btnAnimate').textContent = 
+                isAnimating ? '⏸️ 停止动画' : '▶️ 自动动画';
+        });
+
+        // 初始化
+        applyTransform();
+    </script>
+
+    <!-- 截图支持 -->
+    <script>
+        window.addEventListener('message', (e) => {
+            if (e.data?.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const canvas = window.renderer.domElement;
+                    const temp = document.createElement('canvas');
+                    const scale = Math.min(600 / canvas.width, 600 / canvas.height);
+                    temp.width = canvas.width * scale;
+                    temp.height = canvas.height * scale;
+                    temp.getContext('2d').drawImage(canvas, 0, 0, temp.width, temp.height);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: temp.toDataURL('image/jpeg', e.data.quality || 0.8) }, '*');
+                } catch (err) {
+                    window.parent.postMessage({ type: 'screenshot-error', error: err.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
