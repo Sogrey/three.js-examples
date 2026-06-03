@@ -1318,6 +1318,14 @@ const threejsData = {
               url: "examples/z258/basic-createScene",
             },
             {
+              id: "basic-modelSky",
+              title: "模型天空",
+              description: "程序化天空盒，支持时间变化和动态光照",
+              thumbnail: "images/basic-modelSky.jpg",
+              version: "r179",
+              url: "examples/z258/basic-modelSky",
+            },
+            {
               id: "shader-audioSolutions",
               title: "音乐可视化",
               description:
