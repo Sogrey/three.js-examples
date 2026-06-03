@@ -1303,8 +1303,8 @@ const threejsData = {
             },
             {
               id: "application-modelNav",
-              title: "模型导航",
-              description: "3D场景中的模型导航和路径规划",
+              title: "自动寻路",
+              description: "3D场景中的自动寻路和路径规划",
               thumbnail: "images/application-modelNav.jpg",
               version: "r179",
               url: "examples/z258/application-modelNav",
