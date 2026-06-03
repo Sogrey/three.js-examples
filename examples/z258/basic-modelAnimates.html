@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="单/多模型动画 - Three.js模型动画控制示例">
+    <title>单/多模型动画 - Three.js r179</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { overflow: hidden; background: #1a1a2e; }
+        #container { width: 100vw; height: 100vh; }
+        
+        #controls {
+            position: absolute; top: 50px; right: 10px;
+            background: rgba(0,0,0,0.8); color: white;
+            padding: 15px; border-radius: 8px; z-index: 100;
+            width: 240px; font-size: 12px;
+        }
+        #controls h3 { color: #4a9eff; margin-bottom: 10px; font-size: 14px; }
+        #controls .control-group { margin: 10px 0; }
+        #controls label { display: block; margin-bottom: 5px; color: #aaa; }
+        #controls input[type="range"] { width: 100%; }
+        #controls button {
+            width: 100%; padding: 8px; margin: 5px 0;
+            background: #4a9eff; color: white; border: none;
+            border-radius: 4px; cursor: pointer;
+        }
+        #controls button:hover { background: #3a8eef; }
+        #controls button.active { background: #ff6b6b; }
+        #controls .value { color: #4a9eff; float: right; }
+        
+        #info {
+            position: absolute; bottom: 10px; left: 10px;
+            background: rgba(0,0,0,0.7); color: white;
+            padding: 10px; border-radius: 4px;
+            font-size: 11px; line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+    
+    <div id="controls">
+        <h3>🎬 单/多模型动画</h3>
+        <div class="control-group">
+            <label>动画速度 <span class="value" id="speedValue">1.0</span></label>
+            <input type="range" id="speedRange" min="0" max="3" step="0.1" value="1">
+        </div>
+        <button id="btnPlayAll">▶️ 播放全部</button>
+        <button id="btnPauseAll">⏸️ 暂停全部</button>
+        <button id="btnStopAll">⏹️ 停止全部</button>
+        <hr style="border-color: #444; margin: 10px 0;">
+        <div id="modelControls"></div>
+    </div>
+
+    <div id="info">
+        <div>点击模型可单独控制动画</div>
+        <div>使用 OrbitControls 旋转视角</div>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        const container = document.getElementById('container');
+
+        // 场景
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a1a2e);
+
+        // 相机
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 8, 15);
+
+        // 渲染器
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        container.appendChild(renderer.domElement);
+
+        // 控制器
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.maxPolarAngle = Math.PI / 2 - 0.05;
+
+        // 灯光
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        scene.add(ambientLight);
+
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+        dirLight.position.set(10, 20, 10);
+        dirLight.castShadow = true;
+        scene.add(dirLight);
+
+        // 地面
+        const groundGeometry = new THREE.PlaneGeometry(30, 30);
+        const groundMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0x2a2a4a,
+            roughness: 0.8 
+        });
+        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+        ground.rotation.x = -Math.PI / 2;
+        ground.receiveShadow = true;
+        scene.add(ground);
+
+        // 网格辅助
+        const gridHelper = new THREE.GridHelper(30, 30, 0x4a4a6a, 0x3a3a5a);
+        scene.add(gridHelper);
+
+        // 模型数组
+        const models = [];
+
+        // 创建带动画的模型
+        function createAnimatedModel(type, x, z, color, name) {
+            const group = new THREE.Group();
+            group.position.set(x, 0, z);
+
+            let mesh;
+            const material = new THREE.MeshStandardMaterial({ 
+                color: color,
+                roughness: 0.3,
+                metalness: 0.3
+            });
+
+            switch(type) {
+                case 'bounce':
+                    // 弹跳球
+                    mesh = new THREE.Mesh(new THREE.SphereGeometry(0.8, 32, 32), material);
+                    mesh.castShadow = true;
+                    group.add(mesh);
+                    group.userData = {
+                        name: name,
+                        type: 'bounce',
+                        mesh: mesh,
+                        playing: true,
+                        time: 0,
+                        update: (delta) => {
+                            if (group.userData.playing) {
+                                group.userData.time += delta;
+                                const y = Math.abs(Math.sin(group.userData.time * 3)) * 3;
+                                mesh.position.y = 0.8 + y;
+                                mesh.scale.setScalar(1 - y * 0.05);
+                            }
+                        }
+                    };
+                    break;
+
+                case 'rotate':
+                    // 旋转立方体
+                    mesh = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.5, 1.5), material);
+                    mesh.castShadow = true;
+                    mesh.position.y = 0.75;
+                    group.add(mesh);
+                    group.userData = {
+                        name: name,
+                        type: 'rotate',
+                        mesh: mesh,
+                        playing: true,
+                        update: (delta) => {
+                            if (group.userData.playing) {
+                                mesh.rotation.x += delta * 2;
+                                mesh.rotation.y += delta * 3;
+                            }
+                        }
+                    };
+                    break;
+
+                case 'orbit':
+                    // 轨道运动
+                    mesh = new THREE.Mesh(new THREE.ConeGeometry(0.5, 1.5, 16), material);
+                    mesh.castShadow = true;
+                    mesh.position.y = 0.75;
+                    group.add(mesh);
+                    group.userData = {
+                        name: name,
+                        type: 'orbit',
+                        mesh: mesh,
+                        playing: true,
+                        angle: 0,
+                        update: (delta) => {
+                            if (group.userData.playing) {
+                                group.userData.angle += delta;
+                                const radius = 2;
+                                mesh.position.x = Math.cos(group.userData.angle) * radius;
+                                mesh.position.z = Math.sin(group.userData.angle) * radius;
+                                mesh.lookAt(0, 0.75, 0);
+                            }
+                        }
+                    };
+                    break;
+
+                case 'pulse':
+                    // 脉冲缩放
+                    mesh = new THREE.Mesh(new THREE.IcosahedronGeometry(0.8, 0), material);
+                    mesh.castShadow = true;
+                    mesh.position.y = 0.8;
+                    group.add(mesh);
+                    group.userData = {
+                        name: name,
+                        type: 'pulse',
+                        mesh: mesh,
+                        playing: true,
+                        time: 0,
+                        update: (delta) => {
+                            if (group.userData.playing) {
+                                group.userData.time += delta * 2;
+                                const scale = 1 + Math.sin(group.userData.time) * 0.3;
+                                mesh.scale.setScalar(scale);
+                                mesh.rotation.y += delta;
+                            }
+                        }
+                    };
+                    break;
+
+                case 'swing':
+                    // 摆动
+                    mesh = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 2, 16), material);
+                    mesh.castShadow = true;
+                    mesh.position.y = 1;
+                    group.add(mesh);
+                    group.userData = {
+                        name: name,
+                        type: 'swing',
+                        mesh: mesh,
+                        playing: true,
+                        time: 0,
+                        update: (delta) => {
+                            if (group.userData.playing) {
+                                group.userData.time += delta * 2;
+                                mesh.rotation.z = Math.sin(group.userData.time) * 0.5;
+                            }
+                        }
+                    };
+                    break;
+
+                case 'walk':
+                    // 行走动画（简化的腿部运动）
+                    const body = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.2, 0.5), material);
+                    body.position.y = 1.4;
+                    body.castShadow = true;
+                    group.add(body);
+
+                    const legGeo = new THREE.BoxGeometry(0.25, 0.8, 0.25);
+                    const legMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
+                    
+                    const leftLeg = new THREE.Mesh(legGeo, legMat);
+                    leftLeg.position.set(-0.2, 0.4, 0);
+                    group.add(leftLeg);
+                    
+                    const rightLeg = new THREE.Mesh(legGeo, legMat);
+                    rightLeg.position.set(0.2, 0.4, 0);
+                    group.add(rightLeg);
+
+                    group.userData = {
+                        name: name,
+                        type: 'walk',
+                        body: body,
+                        leftLeg: leftLeg,
+                        rightLeg: rightLeg,
+                        playing: true,
+                        time: 0,
+                        update: (delta) => {
+                            if (group.userData.playing) {
+                                group.userData.time += delta * 5;
+                                leftLeg.rotation.x = Math.sin(group.userData.time) * 0.5;
+                                rightLeg.rotation.x = Math.sin(group.userData.time + Math.PI) * 0.5;
+                                body.position.y = 1.4 + Math.abs(Math.sin(group.userData.time * 2)) * 0.1;
+                            }
+                        }
+                    };
+                    break;
+            }
+
+            // 添加选中框
+            const box = new THREE.BoxHelper(mesh, 0xffff00);
+            box.visible = false;
+            group.add(box);
+            group.userData.box = box;
+
+            scene.add(group);
+            return group;
+        }
+
+        // 创建模型
+        models.push(createAnimatedModel('bounce', -6, -3, 0xff6b6b, '弹跳球'));
+        models.push(createAnimatedModel('rotate', 0, -3, 0x4ecdc4, '旋转立方'));
+        models.push(createAnimatedModel('orbit', 6, -3, 0xffe66d, '轨道运动'));
+        models.push(createAnimatedModel('pulse', -6, 3, 0x9b59b6, '脉冲缩放'));
+        models.push(createAnimatedModel('swing', 0, 3, 0x3498db, '摆动圆柱'));
+        models.push(createAnimatedModel('walk', 6, 3, 0xe67e22, '行走动画'));
+
+        // 生成控制按钮
+        const modelControlsDiv = document.getElementById('modelControls');
+        models.forEach((model, index) => {
+            const btn = document.createElement('button');
+            btn.textContent = `${model.userData.playing ? '⏸️' : '▶️'} ${model.userData.name}`;
+            btn.style.margin = '2px 0';
+            btn.style.fontSize = '11px';
+            btn.onclick = () => {
+                model.userData.playing = !model.userData.playing;
+                btn.textContent = `${model.userData.playing ? '⏸️' : '▶️'} ${model.userData.name}`;
+                btn.classList.toggle('active', !model.userData.playing);
+            };
+            modelControlsDiv.appendChild(btn);
+        });
+
+        // 配置
+        const config = {
+            speed: 1.0
+        };
+
+        // 动画循环
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const delta = clock.getDelta() * config.speed;
+
+            // 更新所有模型动画
+            models.forEach(model => {
+                if (model.userData.update) {
+                    model.userData.update(delta);
+                }
+            });
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // 窗口调整
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // 暴露到window
+        window.renderer = renderer;
+        window.camera = camera;
+        window.scene = scene;
+
+        // 控制面板事件
+        document.getElementById('speedRange').addEventListener('input', (e) => {
+            config.speed = parseFloat(e.target.value);
+            document.getElementById('speedValue').textContent = config.speed.toFixed(1);
+        });
+
+        document.getElementById('btnPlayAll').addEventListener('click', () => {
+            models.forEach(model => {
+                model.userData.playing = true;
+            });
+            // 更新按钮状态
+            const buttons = modelControlsDiv.querySelectorAll('button');
+            buttons.forEach(btn => {
+                const name = btn.textContent.substring(2);
+                btn.textContent = `⏸️ ${name}`;
+                btn.classList.remove('active');
+            });
+        });
+
+        document.getElementById('btnPauseAll').addEventListener('click', () => {
+            models.forEach(model => {
+                model.userData.playing = false;
+            });
+            // 更新按钮状态
+            const buttons = modelControlsDiv.querySelectorAll('button');
+            buttons.forEach(btn => {
+                const name = btn.textContent.substring(2);
+                btn.textContent = `▶️ ${name}`;
+                btn.classList.add('active');
+            });
+        });
+
+        document.getElementById('btnStopAll').addEventListener('click', () => {
+            models.forEach(model => {
+                model.userData.playing = false;
+                // 重置动画状态
+                if (model.userData.time !== undefined) {
+                    model.userData.time = 0;
+                }
+                if (model.userData.angle !== undefined) {
+                    model.userData.angle = 0;
+                }
+            });
+            // 更新按钮状态
+            const buttons = modelControlsDiv.querySelectorAll('button');
+            buttons.forEach(btn => {
+                const name = btn.textContent.substring(2);
+                btn.textContent = `▶️ ${name}`;
+                btn.classList.add('active');
+            });
+        });
+    </script>
+
+    <!-- 截图支持 -->
+    <script>
+        window.addEventListener('message', (e) => {
+            if (e.data?.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const canvas = window.renderer.domElement;
+                    const temp = document.createElement('canvas');
+                    const scale = Math.min(600 / canvas.width, 600 / canvas.height);
+                    temp.width = canvas.width * scale;
+                    temp.height = canvas.height * scale;
+                    temp.getContext('2d').drawImage(canvas, 0, 0, temp.width, temp.height);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: temp.toDataURL('image/jpeg', e.data.quality || 0.8) }, '*');
+                } catch (err) {
+                    window.parent.postMessage({ type: 'screenshot-error', error: err.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="扩散圈 - Three.js波纹扩散效果">
+    <title>扩散圈 - Three.js r179</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { overflow: hidden; background: #0a0a1a; }
+        #container { width: 100vw; height: 100vh; }
+        
+        #controls {
+            position: absolute; top: 50px; right: 10px;
+            background: rgba(0,0,0,0.8); color: white;
+            padding: 15px; border-radius: 8px; z-index: 100;
+            width: 220px; font-size: 12px;
+        }
+        #controls h3 { color: #4a9eff; margin-bottom: 10px; font-size: 14px; }
+        #controls .control-group { margin: 10px 0; }
+        #controls label { display: block; margin-bottom: 5px; color: #aaa; }
+        #controls input[type="color"], #controls input[type="range"] { width: 100%; }
+        #controls button {
+            width: 100%; padding: 8px; margin: 5px 0;
+            background: #4a9eff; color: white; border: none;
+            border-radius: 4px; cursor: pointer;
+        }
+        #controls button:hover { background: #3a8eef; }
+        #controls .value { color: #4a9eff; float: right; }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+    
+    <div id="controls">
+        <h3>🌊 扩散圈</h3>
+        <div class="control-group">
+            <label>扩散速度 <span class="value" id="speedValue">2.0</span></label>
+            <input type="range" id="speedRange" min="0.5" max="5" step="0.1" value="2">
+        </div>
+        <div class="control-group">
+            <label>最大半径 <span class="value" id="radiusValue">15</span></label>
+            <input type="range" id="radiusRange" min="5" max="30" step="1" value="15">
+        </div>
+        <div class="control-group">
+            <label>波纹数量 <span class="value" id="countValue">3</span></label>
+            <input type="range" id="countRange" min="1" max="8" step="1" value="3">
+        </div>
+        <div class="control-group">
+            <label>波纹颜色</label>
+            <input type="color" id="waveColor" value="#00ffff">
+        </div>
+        <button id="btnTrigger">💥 触发扩散</button>
+        <button id="btnAuto">⏯️ 自动触发</button>
+        <button id="btnClear">🗑️ 清除所有</button>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        const container = document.getElementById('container');
+
+        // 场景
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a0a1a);
+        scene.fog = new THREE.Fog(0x0a0a1a, 10, 50);
+
+        // 相机
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 20, 20);
+        camera.lookAt(0, 0, 0);
+
+        // 渲染器
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        container.appendChild(renderer.domElement);
+
+        // 控制器
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.maxPolarAngle = Math.PI / 2 - 0.05;
+
+        // 灯光
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+        scene.add(ambientLight);
+
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        dirLight.position.set(10, 20, 10);
+        scene.add(dirLight);
+
+        // 地面
+        const groundGeometry = new THREE.PlaneGeometry(100, 100);
+        const groundMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0x1a1a2e,
+            roughness: 0.8,
+            metalness: 0.2
+        });
+        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+        ground.rotation.x = -Math.PI / 2;
+        ground.receiveShadow = true;
+        scene.add(ground);
+
+        // 网格辅助
+        const gridHelper = new THREE.GridHelper(100, 50, 0x2a2a4a, 0x1a1a3a);
+        scene.add(gridHelper);
+
+        // 扩散圈类
+        class DiffusionCircle {
+            constructor(x, z, color, maxRadius, speed) {
+                this.x = x;
+                this.z = z;
+                this.color = new THREE.Color(color);
+                this.maxRadius = maxRadius;
+                this.speed = speed;
+                this.radius = 0;
+                this.opacity = 1;
+                this.active = true;
+
+                // 创建圆环
+                const geometry = new THREE.RingGeometry(0.1, 0.5, 64);
+                const material = new THREE.MeshBasicMaterial({
+                    color: this.color,
+                    transparent: true,
+                    opacity: 1,
+                    side: THREE.DoubleSide
+                });
+                this.mesh = new THREE.Mesh(geometry, material);
+                this.mesh.rotation.x = -Math.PI / 2;
+                this.mesh.position.set(x, 0.1, z);
+                scene.add(this.mesh);
+
+                // 创建波纹线
+                const lineGeometry = new THREE.RingGeometry(0.1, 0.3, 64);
+                const lineMaterial = new THREE.MeshBasicMaterial({
+                    color: this.color,
+                    transparent: true,
+                    opacity: 0.8,
+                    side: THREE.DoubleSide
+                });
+                this.lineMesh = new THREE.Mesh(lineGeometry, lineMaterial);
+                this.lineMesh.rotation.x = -Math.PI / 2;
+                this.lineMesh.position.set(x, 0.15, z);
+                scene.add(this.lineMesh);
+            }
+
+            update(delta) {
+                if (!this.active) return;
+
+                this.radius += this.speed * delta * 5;
+                this.opacity = 1 - (this.radius / this.maxRadius);
+
+                if (this.radius >= this.maxRadius) {
+                    this.active = false;
+                    this.destroy();
+                    return;
+                }
+
+                // 更新圆环
+                const innerRadius = this.radius * 0.9;
+                const outerRadius = this.radius;
+                this.mesh.geometry.dispose();
+                this.mesh.geometry = new THREE.RingGeometry(innerRadius, outerRadius, 64);
+                this.mesh.material.opacity = this.opacity * 0.5;
+
+                // 更新波纹线
+                const lineInner = this.radius * 0.95;
+                const lineOuter = this.radius * 1.05;
+                this.lineMesh.geometry.dispose();
+                this.lineMesh.geometry = new THREE.RingGeometry(lineInner, lineOuter, 64);
+                this.lineMesh.material.opacity = this.opacity;
+            }
+
+            destroy() {
+                scene.remove(this.mesh);
+                scene.remove(this.lineMesh);
+                this.mesh.geometry.dispose();
+                this.mesh.material.dispose();
+                this.lineMesh.geometry.dispose();
+                this.lineMesh.material.dispose();
+            }
+        }
+
+        // 扩散圈管理
+        const diffusionCircles = [];
+        const config = {
+            speed: 2,
+            maxRadius: 15,
+            waveCount: 3,
+            color: '#00ffff',
+            autoTrigger: false
+        };
+
+        // 创建扩散圈组
+        function createDiffusionGroup(x, z) {
+            for (let i = 0; i < config.waveCount; i++) {
+                setTimeout(() => {
+                    const circle = new DiffusionCircle(
+                        x, z,
+                        config.color,
+                        config.maxRadius,
+                        config.speed
+                    );
+                    diffusionCircles.push(circle);
+                }, i * 300);
+            }
+        }
+
+        // 随机位置触发
+        function triggerRandom() {
+            const x = (Math.random() - 0.5) * 40;
+            const z = (Math.random() - 0.5) * 40;
+            createDiffusionGroup(x, z);
+        }
+
+        // 点击地面触发
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+
+        renderer.domElement.addEventListener('click', (event) => {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObject(ground);
+
+            if (intersects.length > 0) {
+                const point = intersects[0].point;
+                createDiffusionGroup(point.x, point.z);
+            }
+        });
+
+        // 动画循环
+        const clock = new THREE.Clock();
+        let autoTriggerTimer = 0;
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const delta = clock.getDelta();
+
+            // 更新扩散圈
+            for (let i = diffusionCircles.length - 1; i >= 0; i--) {
+                const circle = diffusionCircles[i];
+                circle.update(delta);
+                if (!circle.active) {
+                    diffusionCircles.splice(i, 1);
+                }
+            }
+
+            // 自动触发
+            if (config.autoTrigger) {
+                autoTriggerTimer += delta;
+                if (autoTriggerTimer >= 2) {
+                    triggerRandom();
+                    autoTriggerTimer = 0;
+                }
+            }
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // 窗口调整
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // 暴露到window
+        window.renderer = renderer;
+        window.camera = camera;
+        window.scene = scene;
+
+        // 控制面板事件
+        document.getElementById('speedRange').addEventListener('input', (e) => {
+            config.speed = parseFloat(e.target.value);
+            document.getElementById('speedValue').textContent = config.speed.toFixed(1);
+        });
+
+        document.getElementById('radiusRange').addEventListener('input', (e) => {
+            config.maxRadius = parseInt(e.target.value);
+            document.getElementById('radiusValue').textContent = config.maxRadius;
+        });
+
+        document.getElementById('countRange').addEventListener('input', (e) => {
+            config.waveCount = parseInt(e.target.value);
+            document.getElementById('countValue').textContent = config.waveCount;
+        });
+
+        document.getElementById('waveColor').addEventListener('input', (e) => {
+            config.color = e.target.value;
+        });
+
+        document.getElementById('btnTrigger').addEventListener('click', () => {
+            triggerRandom();
+        });
+
+        document.getElementById('btnAuto').addEventListener('click', () => {
+            config.autoTrigger = !config.autoTrigger;
+            document.getElementById('btnAuto').textContent = 
+                config.autoTrigger ? '⏹️ 停止自动' : '⏯️ 自动触发';
+        });
+
+        document.getElementById('btnClear').addEventListener('click', () => {
+            diffusionCircles.forEach(circle => circle.destroy());
+            diffusionCircles.length = 0;
+        });
+
+        // 初始触发
+        triggerRandom();
+    </script>
+
+    <!-- 截图支持 -->
+    <script>
+        window.addEventListener('message', (e) => {
+            if (e.data?.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const canvas = window.renderer.domElement;
+                    const temp = document.createElement('canvas');
+                    const scale = Math.min(600 / canvas.width, 600 / canvas.height);
+                    temp.width = canvas.width * scale;
+                    temp.height = canvas.height * scale;
+                    temp.getContext('2d').drawImage(canvas, 0, 0, temp.width, temp.height);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: temp.toDataURL('image/jpeg', e.data.quality || 0.8) }, '*');
+                } catch (err) {
+                    window.parent.postMessage({ type: 'screenshot-error', error: err.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

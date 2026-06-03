@@ -1,0 +1,12 @@
+{
+    "compilerOptions": {
+        "lib": [ "dom", "es2017" ],
+        "module": "node20",
+        "types": [],
+        "strict": true
+    },
+    "files": [
+        "src/index.d.ts",
+        "src/plugins.d.ts"
+    ]
+}

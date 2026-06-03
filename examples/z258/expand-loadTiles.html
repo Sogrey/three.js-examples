@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="3D Tiles加载演示 - 加载3D Tiles格式的大规模地形和建筑数据"
+    />
+    <title>3D Tiles加载 - Three.js r179</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        overflow: hidden;
+        background: #1f1f1f;
+        font-family: "Microsoft YaHei", sans-serif;
+        font-size: 12px;
+      }
+      #container {
+        width: 100vw;
+        height: 100vh;
+      }
+
+      /* 控制面板 */
+      #controls {
+        position: absolute;
+        top: 50px;
+        right: 10px;
+        background: rgba(0, 0, 0, 0.85);
+        color: white;
+        padding: 12px;
+        border-radius: 8px;
+        z-index: 100;
+        width: 260px;
+        font-size: 11px;
+      }
+      #controls h3 {
+        color: #4a9eff;
+        margin-bottom: 10px;
+        font-size: 13px;
+      }
+      #controls .section {
+        margin: 10px 0;
+        padding: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 6px;
+      }
+      #controls .section h4 {
+        color: #4a9eff;
+        margin-bottom: 8px;
+        font-size: 11px;
+      }
+      #controls input[type="text"] {
+        width: 100%;
+        padding: 6px;
+        border: none;
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        font-size: 10px;
+        margin-bottom: 6px;
+      }
+      #controls button {
+        width: 100%;
+        padding: 6px;
+        margin: 4px 0;
+        background: #4a9eff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 11px;
+      }
+      #controls button:hover {
+        background: #3a8eef;
+      }
+      #controls button.secondary {
+        background: #6c757d;
+      }
+      #controls button.secondary:hover {
+        background: #5a6268;
+      }
+      #controls .hint {
+        margin-top: 8px;
+        padding: 6px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+        font-size: 10px;
+        color: #aaa;
+      }
+
+      /* 加载进度 */
+      #loading {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.9);
+        color: white;
+        padding: 20px 40px;
+        border-radius: 12px;
+        z-index: 200;
+        text-align: center;
+        display: none;
+      }
+      #loading.show {
+        display: block;
+      }
+      #loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-top-color: #4a9eff;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 10px;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* 统计信息 */
+      #stats {
+        position: absolute;
+        bottom: 20px;
+        left: 10px;
+        background: rgba(0, 0, 0, 0.85);
+        color: white;
+        padding: 12px;
+        border-radius: 8px;
+        z-index: 100;
+        width: 200px;
+        font-size: 10px;
+      }
+      #stats h4 {
+        color: #4a9eff;
+        margin-bottom: 10px;
+        font-size: 11px;
+      }
+      #stats .stat {
+        display: flex;
+        justify-content: space-between;
+        margin: 6px 0;
+      }
+      #stats .stat-value {
+        color: #4a9eff;
+      }
+
+      /* 消息提示 */
+      #message {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.9);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 12px;
+        z-index: 200;
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+      #message.show {
+        opacity: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="container"></div>
+
+    <div id="loading">
+      <div id="loading-spinner"></div>
+      <div>加载3D Tiles...</div>
+    </div>
+
+    <div id="controls">
+      <h3>🗺️ 3D Tiles加载</h3>
+
+      <div class="section">
+        <h4>Tileset URL</h4>
+        <input
+          type="text"
+          id="tileset-url"
+          value="https://z2586300277.github.io/3d-file-server/3dtiles/test/tileset.json"
+          placeholder="输入tileset.json地址"
+        />
+        <button id="btnLoad">🔄 加载</button>
+      </div>
+
+      <div class="section">
+        <h4>相机控制</h4>
+        <button id="btnReset">🎥 重置视角</button>
+        <button id="btnFit">📍 定位到模型</button>
+        <button id="btnWireframe" class="secondary">🔲 线框模式</button>
+      </div>
+
+      <div class="section">
+            <h4>预设模型</h4>
+            <button id="btnTest">🧪 测试模型</button>
+            <button id="btnDyt">🏔️ 大雁塔</button>
+        </div>
+
+      <div class="hint">
+        💡 3D Tiles是Cesium的开放规范，用于流式传输大规模3D地理空间数据
+      </div>
+    </div>
+
+    <div id="stats">
+      <h4>📊 加载统计</h4>
+      <div class="stat">
+        <span>瓦片数:</span><span class="stat-value" id="tile-count">0</span>
+      </div>
+      <div class="stat">
+        <span>顶点数:</span><span class="stat-value" id="vertex-count">0</span>
+      </div>
+      <div class="stat">
+        <span>三角面:</span
+        ><span class="stat-value" id="triangle-count">0</span>
+      </div>
+    </div>
+
+    <div id="message"></div>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "../../libs/three/r179/build/three.module.js",
+          "three/addons/": "../../libs/three/r179/jsm/",
+          "3d-tiles-renderer": "../../libs/3DTilesRendererJS-0.4.27/src/three/renderer/index.js",
+          "3d-tiles-renderer/core": "../../libs/3DTilesRendererJS-0.4.27/src/core/renderer/index.js"
+        }
+      }
+    </script>
+
+    <script type="module">
+      import * as THREE from "three";
+      import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+      import { TilesRenderer } from "3d-tiles-renderer";
+
+      const container = document.getElementById("container");
+
+      // 场景
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x1f1f1f);
+
+      // 相机
+      const camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        10000,
+      );
+      camera.position.set(0, 30, 30);
+
+      // 渲染器 - 启用对数深度缓冲
+      const renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        alpha: true,
+        logarithmicDepthBuffer: true,
+      });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      container.appendChild(renderer.domElement);
+
+      // 控制器
+      const controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+
+      // 灯光
+      scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+      const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+      dirLight.position.set(100, 200, 100);
+      scene.add(dirLight);
+
+      // 坐标轴辅助
+      scene.add(new THREE.AxesHelper(1000));
+
+      // Tiles渲染器
+      let tilesRenderer = null;
+      let tilesGroup = null;
+      let wireframeMode = false;
+
+      // 预设URL
+      const presets = {
+        test: "https://z2586300277.github.io/3d-file-server/3dtiles/test/tileset.json",
+        dyt: "../../models/tileset/dayanta/tileset.json",
+      };
+
+      // 显示消息
+      function showMessage(text, isError = false) {
+        const msg = document.getElementById("message");
+        msg.textContent = text;
+        msg.style.background = isError
+          ? "rgba(255, 0, 0, 0.8)"
+          : "rgba(0, 0, 0, 0.9)";
+        msg.classList.add("show");
+        setTimeout(() => msg.classList.remove("show"), 3000);
+      }
+
+      // 更新统计
+      function updateStats() {
+        if (!tilesRenderer) return;
+
+        let tileCount = 0;
+        let vertexCount = 0;
+        let triangleCount = 0;
+
+        tilesRenderer.traverse((tile) => {
+          if (tile.scene) {
+            tileCount++;
+            tile.scene.traverse((child) => {
+              if (child.isMesh && child.geometry) {
+                const geo = child.geometry;
+                if (geo.attributes.position)
+                  vertexCount += geo.attributes.position.count;
+                if (geo.index) triangleCount += geo.index.count / 3;
+              }
+            });
+          }
+        });
+
+        document.getElementById("tile-count").textContent = tileCount;
+        document.getElementById("vertex-count").textContent =
+          (vertexCount / 1000000).toFixed(2) + "M";
+        document.getElementById("triangle-count").textContent =
+          (triangleCount / 1000000).toFixed(2) + "M";
+      }
+
+      // 应用线框模式
+      function applyWireframe() {
+        if (!tilesRenderer) return;
+        tilesRenderer.traverse((tile) => {
+          if (tile.scene) {
+            tile.scene.traverse((child) => {
+              if (child.isMesh && child.material) {
+                if (Array.isArray(child.material)) {
+                  child.material.forEach((m) => (m.wireframe = wireframeMode));
+                } else {
+                  child.material.wireframe = wireframeMode;
+                }
+              }
+            });
+          }
+        });
+      }
+
+      // 加载Tileset
+      window.loadTileset = async function (url = null) {
+        const tilesetUrl = url || document.getElementById("tileset-url").value;
+
+        if (!tilesetUrl) {
+          showMessage("请输入Tileset URL", true);
+          return;
+        }
+
+        document.getElementById("loading").classList.add("show");
+
+        try {
+          // 清除旧的
+          if (tilesGroup) {
+            scene.remove(tilesGroup);
+            tilesGroup = null;
+          }
+          if (tilesRenderer) {
+            tilesRenderer.dispose();
+            tilesRenderer = null;
+          }
+
+          // 创建新的Tiles渲染器
+          tilesRenderer = new TilesRenderer(tilesetUrl);
+          tilesRenderer.setCamera(camera);
+          tilesRenderer.setResolutionFromRenderer(camera, renderer);
+
+          // 创建组并添加到场景
+          tilesGroup = new THREE.Group();
+          tilesGroup.add(tilesRenderer.group);
+          scene.add(tilesGroup);
+
+          // 加载完成回调 - 居中模型并处理材质
+          const box3 = new THREE.Box3();
+          tilesRenderer.addEventListener("load-tile-set", () => {
+            document.getElementById("loading").classList.remove("show");
+            showMessage("3D Tiles加载完成");
+
+            if (tilesRenderer.getBoundingBox(box3)) {
+              box3.getCenter(tilesRenderer.group.position);
+              tilesRenderer.group.position.multiplyScalar(-1);
+            }
+
+            // 处理材质 - 确保材质接受光照
+            tilesRenderer.traverse((tile) => {
+              if (tile.scene) {
+                tile.scene.traverse((child) => {
+                  if (child.isMesh && child.material) {
+                    if (Array.isArray(child.material)) {
+                      child.material.forEach((m) => {
+                        if (m.isMeshBasicMaterial) {
+                          const newMat = new THREE.MeshStandardMaterial({
+                            color: m.color,
+                            map: m.map,
+                            roughness: 0.5,
+                            metalness: 0.1,
+                          });
+                          child.material = newMat;
+                        }
+                      });
+                    } else if (child.material.isMeshBasicMaterial) {
+                      const newMat = new THREE.MeshStandardMaterial({
+                        color: child.material.color,
+                        map: child.material.map,
+                        roughness: 0.5,
+                        metalness: 0.1,
+                      });
+                      child.material = newMat;
+                    }
+                  }
+                });
+              }
+            });
+          });
+
+          // 首次更新
+          await tilesRenderer.update();
+        } catch (error) {
+          console.error(error);
+          document.getElementById("loading").classList.remove("show");
+          showMessage("加载失败: " + error.message, true);
+        }
+      };
+
+      // 加载预设
+      window.loadPreset = function (name) {
+        const url = presets[name];
+        if (url) {
+          document.getElementById("tileset-url").value = url;
+          window.loadTileset(url);
+        }
+      };
+
+      // 重置相机
+      window.resetCamera = function () {
+        camera.position.set(0, 30, 30);
+        controls.target.set(0, 0, 0);
+        controls.update();
+      };
+
+      // 定位到Tileset
+      window.fitToTileset = function () {
+        if (!tilesRenderer || !tilesGroup) return;
+
+        const box = new THREE.Box3();
+        if (tilesRenderer.getBoundingBox(box)) {
+          const center = new THREE.Vector3();
+          const size = new THREE.Vector3();
+          box.getCenter(center);
+          box.getSize(size);
+          const maxDim = Math.max(size.x, size.y, size.z);
+
+          const distance =
+            (maxDim / Math.tan((camera.fov * Math.PI) / 180 / 2)) * 1.5;
+
+          camera.position.set(
+            center.x + distance,
+            center.y + distance,
+            center.z + distance,
+          );
+          controls.target.copy(center);
+          controls.update();
+        }
+      };
+
+      // 切换线框模式
+      window.toggleWireframe = function () {
+        wireframeMode = !wireframeMode;
+        applyWireframe();
+        showMessage(wireframeMode ? "线框模式已开启" : "线框模式已关闭");
+      };
+
+      // 动画循环
+      function animate() {
+        requestAnimationFrame(animate);
+
+        if (tilesRenderer) {
+          tilesRenderer.update();
+          updateStats();
+        }
+
+        controls.update();
+        renderer.render(scene, camera);
+      }
+      animate();
+
+      // 窗口调整
+      window.addEventListener("resize", () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        if (tilesRenderer) {
+          tilesRenderer.setResolutionFromRenderer(camera, renderer);
+        }
+      });
+
+      // 暴露到window
+      window.renderer = renderer;
+      window.camera = camera;
+      window.scene = scene;
+
+      // 绑定按钮事件
+      document
+        .getElementById("btnLoad")
+        .addEventListener("click", () => window.loadTileset());
+      document
+        .getElementById("btnReset")
+        .addEventListener("click", () => window.resetCamera());
+      document
+        .getElementById("btnFit")
+        .addEventListener("click", () => window.fitToTileset());
+      document
+        .getElementById("btnWireframe")
+        .addEventListener("click", () => window.toggleWireframe());
+      document
+        .getElementById("btnTest")
+        .addEventListener("click", () => window.loadPreset("test"));
+      document
+        .getElementById("btnDyt")
+        .addEventListener("click", () => window.loadPreset("dyt"));
+
+      // 自动加载默认模型
+      window.loadTileset(presets.test);
+    </script>
+
+    <!-- 截图支持 -->
+    <script>
+      let _screenshotRenderer;
+      window.addEventListener("message", (e) => {
+        if (e.data?.type === "take-screenshot") {
+          try {
+            if (!_screenshotRenderer) _screenshotRenderer = window.renderer;
+            if (window.scene && window.camera)
+              _screenshotRenderer.render(window.scene, window.camera);
+            const canvas = _screenshotRenderer.domElement;
+            const temp = document.createElement("canvas");
+            const scale = Math.min(600 / canvas.width, 600 / canvas.height);
+            temp.width = canvas.width * scale;
+            temp.height = canvas.height * scale;
+            temp
+              .getContext("2d")
+              .drawImage(canvas, 0, 0, temp.width, temp.height);
+            window.parent.postMessage(
+              {
+                type: "screenshot-data",
+                dataUrl: temp.toDataURL("image/jpeg", e.data.quality || 0.8),
+              },
+              "*",
+            );
+          } catch (err) {
+            window.parent.postMessage(
+              { type: "screenshot-error", error: err.message },
+              "*",
+            );
+          }
+        }
+      });
+    </script>
+  </body>
+</html>

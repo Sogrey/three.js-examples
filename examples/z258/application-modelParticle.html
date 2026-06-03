@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="模型粒子化 - 将3D模型转换为粒子效果">
+    <title>模型粒子化 - Three.js r179</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { overflow: hidden; background: #0a0a1a; }
+        #container { width: 100vw; height: 100vh; }
+        
+        #controls {
+            position: absolute; top: 50px; right: 10px;
+            background: rgba(0,0,0,0.8); color: white;
+            padding: 15px; border-radius: 8px; z-index: 100;
+            width: 220px; font-size: 12px;
+        }
+        #controls h3 { color: #4a9eff; margin-bottom: 10px; font-size: 14px; }
+        #controls .control-group { margin: 10px 0; }
+        #controls label { display: block; margin-bottom: 5px; color: #aaa; }
+        #controls select, #controls input[type="range"] { width: 100%; }
+        #controls button {
+            width: 100%; padding: 8px; margin: 5px 0;
+            background: #4a9eff; color: white; border: none;
+            border-radius: 4px; cursor: pointer;
+        }
+        #controls button:hover { background: #3a8eef; }
+        #controls .value { color: #4a9eff; float: right; }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+    
+    <div id="controls">
+        <h3>✨ 模型粒子化</h3>
+        <div class="control-group">
+            <label>粒子数量 <span class="value" id="countValue">5000</span></label>
+            <input type="range" id="countRange" min="1000" max="10000" step="500" value="5000">
+        </div>
+        <div class="control-group">
+            <label>粒子大小 <span class="value" id="sizeValue">0.05</span></label>
+            <input type="range" id="sizeRange" min="0.01" max="0.2" step="0.01" value="0.05">
+        </div>
+        <div class="control-group">
+            <label>扩散程度 <span class="value" id="spreadValue">0.5</span></label>
+            <input type="range" id="spreadRange" min="0" max="2" step="0.1" value="0.5">
+        </div>
+        <div class="control-group">
+            <label>旋转速度 <span class="value" id="speedValue">0.5</span></label>
+            <input type="range" id="speedRange" min="0" max="2" step="0.1" value="0.5">
+        </div>
+        <button id="btnExplode">💥 爆炸效果</button>
+        <button id="btnReset">🔄 重置</button>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        const container = document.getElementById('container');
+
+        // 场景
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a0a1a);
+        scene.fog = new THREE.FogExp2(0x0a0a1a, 0.02);
+
+        // 相机
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 0, 10);
+
+        // 渲染器
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        container.appendChild(renderer.domElement);
+
+        // 控制器
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 0.5;
+
+        // 灯光
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        scene.add(ambientLight);
+        
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        dirLight.position.set(10, 20, 10);
+        scene.add(dirLight);
+
+        // 粒子系统
+        let particleSystem = null;
+        let originalPositions = [];
+        let particlePositions = [];
+        let particleVelocities = [];
+
+        // 配置
+        const config = {
+            count: 5000,
+            size: 0.05,
+            spread: 0.5,
+            speed: 0.5,
+            isExploded: false
+        };
+
+        // 创建粒子纹理
+        function createParticleTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 32;
+            canvas.height = 32;
+            const ctx = canvas.getContext('2d');
+            
+            const gradient = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
+            gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+            gradient.addColorStop(0.5, 'rgba(74, 158, 255, 0.5)');
+            gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 32, 32);
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            return texture;
+        }
+
+        // 创建粒子系统
+        function createParticles() {
+            if (particleSystem) {
+                scene.remove(particleSystem);
+                particleSystem.geometry.dispose();
+                particleSystem.material.dispose();
+            }
+
+            originalPositions = [];
+            particlePositions = [];
+            particleVelocities = [];
+
+            const geometry = new THREE.BufferGeometry();
+            const positions = [];
+            const colors = [];
+            const sizes = [];
+
+            // 创建多个几何形状的组合
+            const shapes = ['sphere', 'cube', 'torus'];
+            const shapeType = shapes[Math.floor(Math.random() * shapes.length)];
+
+            for (let i = 0; i < config.count; i++) {
+                let x, y, z;
+                let phi, theta, u, v, R, r;
+
+                switch(shapeType) {
+                    case 'sphere':
+                        // 球体分布
+                        phi = Math.acos(-1 + (2 * i) / config.count);
+                        theta = Math.sqrt(config.count * Math.PI) * phi;
+                        r = 3;
+                        x = r * Math.cos(theta) * Math.sin(phi);
+                        y = r * Math.sin(theta) * Math.sin(phi);
+                        z = r * Math.cos(phi);
+                        break;
+                    
+                    case 'cube':
+                        // 立方体分布
+                        x = (Math.random() - 0.5) * 6;
+                        y = (Math.random() - 0.5) * 6;
+                        z = (Math.random() - 0.5) * 6;
+                        break;
+                    
+                    case 'torus':
+                        // 环面分布
+                        u = Math.random() * Math.PI * 2;
+                        v = Math.random() * Math.PI * 2;
+                        R = 3;
+                        r = 1;
+                        x = (R + r * Math.cos(v)) * Math.cos(u);
+                        y = (R + r * Math.cos(v)) * Math.sin(u);
+                        z = r * Math.sin(v);
+                        break;
+                    
+                    default:
+                        x = (Math.random() - 0.5) * 4;
+                        y = (Math.random() - 0.5) * 4;
+                        z = (Math.random() - 0.5) * 4;
+                }
+
+                positions.push(x, y, z);
+                originalPositions.push(x, y, z);
+                particlePositions.push(x, y, z);
+
+                // 随机速度
+                particleVelocities.push(
+                    (Math.random() - 0.5) * 0.1,
+                    (Math.random() - 0.5) * 0.1,
+                    (Math.random() - 0.5) * 0.1
+                );
+
+                // 颜色渐变
+                const color = new THREE.Color();
+                color.setHSL(0.5 + Math.random() * 0.3, 0.8, 0.5);
+                colors.push(color.r, color.g, color.b);
+
+                // 大小变化
+                sizes.push(config.size * (0.5 + Math.random() * 0.5));
+            }
+
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+            geometry.setAttribute('size', new THREE.Float32BufferAttribute(sizes, 1));
+
+            const material = new THREE.PointsMaterial({
+                size: config.size,
+                vertexColors: true,
+                map: createParticleTexture(),
+                transparent: true,
+                opacity: 0.8,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            });
+
+            particleSystem = new THREE.Points(geometry, material);
+            scene.add(particleSystem);
+        }
+
+        // 更新粒子
+        function updateParticles() {
+            if (!particleSystem) return;
+
+            const positions = particleSystem.geometry.attributes.position.array;
+            const time = Date.now() * 0.001;
+
+            for (let i = 0; i < config.count; i++) {
+                const i3 = i * 3;
+
+                if (config.isExploded) {
+                    // 爆炸效果
+                    positions[i3] += particleVelocities[i3] * config.spread * 2;
+                    positions[i3 + 1] += particleVelocities[i3 + 1] * config.spread * 2;
+                    positions[i3 + 2] += particleVelocities[i3 + 2] * config.spread * 2;
+                } else {
+                    // 恢复原始位置（带波动）
+                    const wave = Math.sin(time * config.speed + i * 0.1) * config.spread * 0.1;
+                    positions[i3] += (originalPositions[i3] + wave - positions[i3]) * 0.05;
+                    positions[i3 + 1] += (originalPositions[i3 + 1] + wave - positions[i3 + 1]) * 0.05;
+                    positions[i3 + 2] += (originalPositions[i3 + 2] + wave - positions[i3 + 2]) * 0.05;
+                }
+            }
+
+            particleSystem.geometry.attributes.position.needsUpdate = true;
+            
+            // 整体旋转
+            if (particleSystem) {
+                particleSystem.rotation.y += 0.001 * config.speed;
+            }
+        }
+
+        // 初始化
+        createParticles();
+
+        // 动画
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            updateParticles();
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // 窗口调整
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // 暴露到window
+        window.renderer = renderer;
+        window.camera = camera;
+        window.scene = scene;
+
+        // 控制面板事件
+        document.getElementById('countRange').addEventListener('input', (e) => {
+            config.count = parseInt(e.target.value);
+            document.getElementById('countValue').textContent = config.count;
+            createParticles();
+        });
+
+        document.getElementById('sizeRange').addEventListener('input', (e) => {
+            config.size = parseFloat(e.target.value);
+            document.getElementById('sizeValue').textContent = config.size.toFixed(2);
+            if (particleSystem) {
+                particleSystem.material.size = config.size;
+            }
+        });
+
+        document.getElementById('spreadRange').addEventListener('input', (e) => {
+            config.spread = parseFloat(e.target.value);
+            document.getElementById('spreadValue').textContent = config.spread.toFixed(1);
+        });
+
+        document.getElementById('speedRange').addEventListener('input', (e) => {
+            config.speed = parseFloat(e.target.value);
+            document.getElementById('speedValue').textContent = config.speed.toFixed(1);
+            controls.autoRotateSpeed = config.speed;
+        });
+
+        document.getElementById('btnExplode').addEventListener('click', () => {
+            config.isExploded = !config.isExploded;
+            document.getElementById('btnExplode').textContent = 
+                config.isExploded ? '🔄 恢复' : '💥 爆炸效果';
+        });
+
+        document.getElementById('btnReset').addEventListener('click', () => {
+            config.isExploded = false;
+            document.getElementById('btnExplode').textContent = '💥 爆炸效果';
+            createParticles();
+        });
+    </script>
+
+    <!-- 截图支持 -->
+    <script>
+        window.addEventListener('message', (e) => {
+            if (e.data?.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const canvas = window.renderer.domElement;
+                    const temp = document.createElement('canvas');
+                    const scale = Math.min(600 / canvas.width, 600 / canvas.height);
+                    temp.width = canvas.width * scale;
+                    temp.height = canvas.height * scale;
+                    temp.getContext('2d').drawImage(canvas, 0, 0, temp.width, temp.height);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: temp.toDataURL('image/jpeg', e.data.quality || 0.8) }, '*');
+                } catch (err) {
+                    window.parent.postMessage({ type: 'screenshot-error', error: err.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
