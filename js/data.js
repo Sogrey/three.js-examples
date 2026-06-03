@@ -1334,6 +1334,14 @@ const threejsData = {
               url: "examples/z258/basic-transformBox3",
             },
             {
+              id: "basic-modelAnimates",
+              title: "单/多模型动画",
+              description: "多种模型动画类型，支持独立控制和全局控制",
+              thumbnail: "images/basic-modelAnimates.jpg",
+              version: "r179",
+              url: "examples/z258/basic-modelAnimates",
+            },
+            {
               id: "shader-audioSolutions",
               title: "音乐可视化",
               description:
