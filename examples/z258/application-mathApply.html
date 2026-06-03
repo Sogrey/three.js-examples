@@ -151,6 +151,44 @@
             }
         };
 
+        // 创建参数化几何体（替代 ParametricGeometry）
+        function createParametricGeometry(func, slices, stacks) {
+            const geometry = new THREE.BufferGeometry();
+            const vertices = [];
+            const indices = [];
+            const uvs = [];
+            
+            for (let i = 0; i <= slices; i++) {
+                for (let j = 0; j <= stacks; j++) {
+                    const u = i / slices;
+                    const v = j / stacks;
+                    const p = new THREE.Vector3();
+                    func(u, v, p);
+                    vertices.push(p.x, p.y, p.z);
+                    uvs.push(u, v);
+                }
+            }
+            
+            for (let i = 0; i < slices; i++) {
+                for (let j = 0; j < stacks; j++) {
+                    const a = i * (stacks + 1) + j;
+                    const b = (i + 1) * (stacks + 1) + j;
+                    const c = (i + 1) * (stacks + 1) + (j + 1);
+                    const d = i * (stacks + 1) + (j + 1);
+                    
+                    indices.push(a, b, d);
+                    indices.push(b, c, d);
+                }
+            }
+            
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+            geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+            geometry.setIndex(indices);
+            geometry.computeVertexNormals();
+            
+            return geometry;
+        }
+
         // 创建参数化曲面
         function createParametricSurface(type) {
             if (currentMesh) {
@@ -165,7 +203,7 @@
                 geometry = new THREE.TorusGeometry(5 * scale, 2 * scale, 32, 100);
             } else if (type === 'klein') {
                 // 克莱因瓶参数方程
-                geometry = new THREE.ParametricGeometry((u, v, target) => {
+                geometry = createParametricGeometry((u, v, target) => {
                     u *= Math.PI * 2;
                     v *= Math.PI * 2;
                     const R = 5 * scale;
@@ -177,7 +215,7 @@
                 }, 50, 50);
             } else if (type === 'mobius') {
                 // 莫比乌斯环参数方程
-                geometry = new THREE.ParametricGeometry((u, v, target) => {
+                geometry = createParametricGeometry((u, v, target) => {
                     u = u * 2 * Math.PI;
                     v = (v - 0.5) * 2;
                     const R = 5 * scale;
