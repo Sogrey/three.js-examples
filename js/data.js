@@ -1246,6 +1246,14 @@ const threejsData = {
               url: "examples/z258/application-videoFloor",
             },
             {
+              id: "application-mathApply",
+              title: "数学公式应用",
+              description: "使用数学函数生成3D曲面，包括正弦波、涟漪、马鞍面等",
+              thumbnail: "images/application-mathApply.jpg",
+              version: "r179",
+              url: "examples/z258/application-mathApply",
+            },
+            {
               id: "shader-audioSolutions",
               title: "音乐可视化",
               description:
