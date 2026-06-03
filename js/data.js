@@ -2667,27 +2667,6 @@ const threejsData = {
       ],
     },
     {
-      id: "application",
-      name: "应用场景",
-      icon: "bi-app",
-      subcategories: [
-        {
-          id: "application-effects",
-          name: "特效应用",
-          examples: [
-            {
-              id: "application-videoEffect",
-              title: "视频碎片",
-              description: "将视频切割成多个碎片并添加动态效果",
-              thumbnail: "images/application-videoEffect.jpg",
-              version: "r179",
-              url: "examples/z258/application-videoEffect",
-            },
-          ],
-        },
-      ],
-    },
-    {
       id: "performance",
       name: "性能优化",
       icon: "bi-speedometer2",
