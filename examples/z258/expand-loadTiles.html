@@ -383,7 +383,7 @@
           tilesGroup.add(tilesRenderer.group);
           scene.add(tilesGroup);
 
-          // 加载完成回调 - 居中模型
+          // 加载完成回调 - 居中模型并处理材质
           const box3 = new THREE.Box3();
           tilesRenderer.addEventListener("load-tile-set", () => {
             document.getElementById("loading").classList.remove("show");
@@ -393,6 +393,37 @@
               box3.getCenter(tilesRenderer.group.position);
               tilesRenderer.group.position.multiplyScalar(-1);
             }
+
+            // 处理材质 - 确保材质接受光照
+            tilesRenderer.traverse((tile) => {
+              if (tile.scene) {
+                tile.scene.traverse((child) => {
+                  if (child.isMesh && child.material) {
+                    if (Array.isArray(child.material)) {
+                      child.material.forEach((m) => {
+                        if (m.isMeshBasicMaterial) {
+                          const newMat = new THREE.MeshStandardMaterial({
+                            color: m.color,
+                            map: m.map,
+                            roughness: 0.5,
+                            metalness: 0.1,
+                          });
+                          child.material = newMat;
+                        }
+                      });
+                    } else if (child.material.isMeshBasicMaterial) {
+                      const newMat = new THREE.MeshStandardMaterial({
+                        color: child.material.color,
+                        map: child.material.map,
+                        roughness: 0.5,
+                        metalness: 0.1,
+                      });
+                      child.material = newMat;
+                    }
+                  }
+                });
+              }
+            });
           });
 
           // 首次更新
