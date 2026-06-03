@@ -1310,12 +1310,12 @@ const threejsData = {
               url: "examples/z258/application-modelNav",
             },
             {
-              id: "application-measure",
-              title: "测量工具",
-              description: "3D场景中的距离、角度、面积测量工具",
-              thumbnail: "images/application-measure.jpg",
+              id: "basic-createScene",
+              title: "创建场景",
+              description: "Three.js基础场景创建示例，包含场景、相机、渲染器",
+              thumbnail: "images/basic-createScene.jpg",
               version: "r179",
-              url: "examples/z258/application-measure",
+              url: "examples/z258/basic-createScene",
             },
             {
               id: "shader-audioSolutions",

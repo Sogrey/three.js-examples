@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="创建场景 - Three.js基础场景创建示例">
+    <title>创建场景 - Three.js r179</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { overflow: hidden; background: #1a1a2e; }
+        #container { width: 100vw; height: 100vh; }
+        
+        #controls {
+            position: absolute; top: 50px; right: 10px;
+            background: rgba(0,0,0,0.8); color: white;
+            padding: 15px; border-radius: 8px; z-index: 100;
+            width: 220px; font-size: 12px;
+        }
+        #controls h3 { color: #4a9eff; margin-bottom: 10px; font-size: 14px; }
+        #controls .control-group { margin: 10px 0; }
+        #controls label { display: block; margin-bottom: 5px; color: #aaa; }
+        #controls input[type="color"] { width: 100%; }
+        #controls button {
+            width: 100%; padding: 8px; margin: 5px 0;
+            background: #4a9eff; color: white; border: none;
+            border-radius: 4px; cursor: pointer;
+        }
+        #controls button:hover { background: #3a8eef; }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+    
+    <div id="controls">
+        <h3>🎨 创建场景</h3>
+        <div class="control-group">
+            <label>背景颜色</label>
+            <input type="color" id="bgColor" value="#1a1a2e">
+        </div>
+        <div class="control-group">
+            <label>雾效颜色</label>
+            <input type="color" id="fogColor" value="#1a1a2e">
+        </div>
+        <button id="btnAddCube">➕ 添加立方体</button>
+        <button id="btnAddSphere">➕ 添加球体</button>
+        <button id="btnClear">🗑️ 清除物体</button>
+        <button id="btnReset">🔄 重置场景</button>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        const container = document.getElementById('container');
+
+        // 创建场景
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a1a2e);
+        scene.fog = new THREE.Fog(0x1a1a2e, 10, 50);
+
+        // 创建相机
+        const camera = new THREE.PerspectiveCamera(
+            75, // 视野角度
+            window.innerWidth / window.innerHeight, // 宽高比
+            0.1, // 近裁剪面
+            1000 // 远裁剪面
+        );
+        camera.position.set(5, 5, 10);
+
+        // 创建渲染器
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        container.appendChild(renderer.domElement);
+
+        // 创建控制器
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+
+        // 添加灯光
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        dirLight.position.set(10, 20, 10);
+        dirLight.castShadow = true;
+        scene.add(dirLight);
+
+        // 添加网格辅助
+        const gridHelper = new THREE.GridHelper(20, 20, 0x4a4a6a, 0x3a3a5a);
+        scene.add(gridHelper);
+
+        // 添加坐标轴辅助
+        const axesHelper = new THREE.AxesHelper(5);
+        scene.add(axesHelper);
+
+        // 物体数组
+        const objects = [];
+
+        // 创建立方体
+        function createCube() {
+            const geometry = new THREE.BoxGeometry(1, 1, 1);
+            const material = new THREE.MeshStandardMaterial({
+                color: new THREE.Color().setHSL(Math.random(), 0.7, 0.5)
+            });
+            const cube = new THREE.Mesh(geometry, material);
+            
+            cube.position.set(
+                (Math.random() - 0.5) * 10,
+                0.5,
+                (Math.random() - 0.5) * 10
+            );
+            
+            cube.castShadow = true;
+            cube.receiveShadow = true;
+            
+            scene.add(cube);
+            objects.push(cube);
+        }
+
+        // 创建球体
+        function createSphere() {
+            const geometry = new THREE.SphereGeometry(0.5, 32, 32);
+            const material = new THREE.MeshStandardMaterial({
+                color: new THREE.Color().setHSL(Math.random(), 0.7, 0.5)
+            });
+            const sphere = new THREE.Mesh(geometry, material);
+            
+            sphere.position.set(
+                (Math.random() - 0.5) * 10,
+                0.5,
+                (Math.random() - 0.5) * 10
+            );
+            
+            sphere.castShadow = true;
+            sphere.receiveShadow = true;
+            
+            scene.add(sphere);
+            objects.push(sphere);
+        }
+
+        // 初始化一些物体
+        for (let i = 0; i < 3; i++) {
+            createCube();
+            createSphere();
+        }
+
+        // 动画循环
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // 旋转物体
+            objects.forEach((obj, i) => {
+                obj.rotation.x += 0.01 * (i % 2 === 0 ? 1 : -1);
+                obj.rotation.y += 0.01 * (i % 2 === 0 ? 1 : -1);
+            });
+            
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // 窗口调整
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // 暴露到window
+        window.renderer = renderer;
+        window.camera = camera;
+        window.scene = scene;
+
+        // 控制面板事件
+        document.getElementById('bgColor').addEventListener('input', (e) => {
+            scene.background = new THREE.Color(e.target.value);
+        });
+
+        document.getElementById('fogColor').addEventListener('input', (e) => {
+            scene.fog.color = new THREE.Color(e.target.value);
+        });
+
+        document.getElementById('btnAddCube').addEventListener('click', createCube);
+        document.getElementById('btnAddSphere').addEventListener('click', createSphere);
+
+        document.getElementById('btnClear').addEventListener('click', () => {
+            objects.forEach(obj => scene.remove(obj));
+            objects.length = 0;
+        });
+
+        document.getElementById('btnReset').addEventListener('click', () => {
+            objects.forEach(obj => scene.remove(obj));
+            objects.length = 0;
+            
+            for (let i = 0; i < 3; i++) {
+                createCube();
+                createSphere();
+            }
+            
+            camera.position.set(5, 5, 10);
+            controls.reset();
+        });
+    </script>
+
+    <!-- 截图支持 -->
+    <script>
+        window.addEventListener('message', (e) => {
+            if (e.data?.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const canvas = window.renderer.domElement;
+                    const temp = document.createElement('canvas');
+                    const scale = Math.min(600 / canvas.width, 600 / canvas.height);
+                    temp.width = canvas.width * scale;
+                    temp.height = canvas.height * scale;
+                    temp.getContext('2d').drawImage(canvas, 0, 0, temp.width, temp.height);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: temp.toDataURL('image/jpeg', e.data.quality || 0.8) }, '*');
+                } catch (err) {
+                    window.parent.postMessage({ type: 'screenshot-error', error: err.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
