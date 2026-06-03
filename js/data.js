@@ -1318,12 +1318,12 @@ const threejsData = {
               url: "examples/z258/basic-createScene",
             },
             {
-              id: "basic-modelSky",
-              title: "模型天空",
-              description: "程序化天空盒，支持时间变化和动态光照",
-              thumbnail: "images/basic-modelSky.jpg",
+              id: "basic-changeMaterial",
+              title: "材质修改动画",
+              description: "材质过渡动画，支持颜色、粗糙度、金属度平滑过渡",
+              thumbnail: "images/basic-changeMaterial.jpg",
               version: "r179",
-              url: "examples/z258/basic-modelSky",
+              url: "examples/z258/basic-changeMaterial",
             },
             {
               id: "shader-audioSolutions",
