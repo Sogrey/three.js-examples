@@ -273,6 +273,12 @@
       const controls = new OrbitControls(camera, renderer.domElement);
       controls.enableDamping = true;
 
+      // 灯光
+      scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+      const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+      dirLight.position.set(100, 200, 100);
+      scene.add(dirLight);
+
       // 坐标轴辅助
       scene.add(new THREE.AxesHelper(1000));
 
