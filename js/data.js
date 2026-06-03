@@ -1278,6 +1278,14 @@ const threejsData = {
               url: "examples/z258/application-vrVideo",
             },
             {
+              id: "application-modelParticle",
+              title: "模型粒子化",
+              description: "将3D模型转换为粒子效果，支持爆炸动画",
+              thumbnail: "images/application-modelParticle.jpg",
+              version: "r179",
+              url: "examples/z258/application-modelParticle",
+            },
+            {
               id: "shader-audioSolutions",
               title: "音乐可视化",
               description:
