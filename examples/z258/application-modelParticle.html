@@ -155,13 +155,14 @@
 
             for (let i = 0; i < config.count; i++) {
                 let x, y, z;
+                let phi, theta, u, v, R, r;
 
                 switch(shapeType) {
                     case 'sphere':
                         // 球体分布
-                        const phi = Math.acos(-1 + (2 * i) / config.count);
-                        const theta = Math.sqrt(config.count * Math.PI) * phi;
-                        const r = 3;
+                        phi = Math.acos(-1 + (2 * i) / config.count);
+                        theta = Math.sqrt(config.count * Math.PI) * phi;
+                        r = 3;
                         x = r * Math.cos(theta) * Math.sin(phi);
                         y = r * Math.sin(theta) * Math.sin(phi);
                         z = r * Math.cos(phi);
@@ -176,9 +177,10 @@
                     
                     case 'torus':
                         // 环面分布
-                        const u = Math.random() * Math.PI * 2;
-                        const v = Math.random() * Math.PI * 2;
-                        const R = 3, r = 1;
+                        u = Math.random() * Math.PI * 2;
+                        v = Math.random() * Math.PI * 2;
+                        R = 3;
+                        r = 1;
                         x = (R + r * Math.cos(v)) * Math.cos(u);
                         y = (R + r * Math.cos(v)) * Math.sin(u);
                         z = r * Math.sin(v);
