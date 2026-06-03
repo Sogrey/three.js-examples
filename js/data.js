@@ -1342,6 +1342,14 @@ const threejsData = {
               url: "examples/z258/basic-modelAnimates",
             },
             {
+              id: "basic-diffusionCircle",
+              title: "扩散圈",
+              description: "波纹扩散效果，支持点击触发和自动触发",
+              thumbnail: "images/basic-diffusionCircle.jpg",
+              version: "r179",
+              url: "examples/z258/basic-diffusionCircle",
+            },
+            {
               id: "shader-audioSolutions",
               title: "音乐可视化",
               description:
