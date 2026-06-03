@@ -1270,6 +1270,14 @@ const threejsData = {
               url: "examples/z258/application-imageMove",
             },
             {
+              id: "application-vrVideo",
+              title: "VR 全景视频",
+              description: "360度全景视频播放，支持鼠标拖动查看",
+              thumbnail: "images/application-vrVideo.jpg",
+              version: "r179",
+              url: "examples/z258/application-vrVideo",
+            },
+            {
               id: "shader-audioSolutions",
               title: "音乐可视化",
               description:
