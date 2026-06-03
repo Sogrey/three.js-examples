@@ -1262,6 +1262,14 @@ const threejsData = {
               url: "examples/z258/application-matrixOper",
             },
             {
+              id: "application-imageMove",
+              title: "图片移动",
+              description: "展示图片在3D空间中的多种移动效果",
+              thumbnail: "images/application-imageMove.jpg",
+              version: "r179",
+              url: "examples/z258/application-imageMove",
+            },
+            {
               id: "shader-audioSolutions",
               title: "音乐可视化",
               description:
