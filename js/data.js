@@ -2166,12 +2166,20 @@ const threejsData = {
             },
             {
               id: "effectComposer-threeSelectBloom",
-              title: "选择性辉光效果",
+              title: "选择性辉光",
               description:
                 "使用图层系统实现选择性辉光效果，点击物体可切换辉光状态",
               thumbnail: "images/effectComposer-threeSelectBloom.jpg",
               version: "r179",
               url: "examples/z258/effectComposer-threeSelectBloom",
+            },
+            {
+              id: "effectComposer-selectBloomPass",
+              title: "辉光-postprocessing",
+              description: "UnrealBloomPass辉光效果，支持参数调节",
+              thumbnail: "images/effectComposer-selectBloomPass.jpg",
+              version: "r179",
+              url: "examples/z258/effectComposer-selectBloomPass",
             },
             {
               id: "postprocessing-customMaskPass",
