@@ -1,5 +1,5 @@
-通过网盘分享的文件：models.zip
-链接: https://pan.baidu.com/s/1caorh_eZgPXmsNhG1OWlrw?pwd=3n1m 提取码: 3n1m 
+通过网盘分享的文件：three.js-examples-models
+链接: https://pan.baidu.com/s/1aFBWo0y8AA3BpDZ7yOfvWA?pwd=h5h1 提取码: h5h1 
 --来自百度网盘超级会员v6的分享
 
 或 https://github.com/Sogrey/three.js-examples-models 下载

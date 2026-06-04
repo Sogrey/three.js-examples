@@ -1350,6 +1350,14 @@ const threejsData = {
               url: "examples/z258/basic-diffusionCircle",
             },
             {
+              id: "basic-gltfOptLoader",
+              title: "GLTF Opt解压",
+              description: "支持Draco和KTX2压缩格式的GLTF模型加载",
+              thumbnail: "images/basic-gltfOptLoader.jpg",
+              version: "r179",
+              url: "examples/z258/basic-gltfOptLoader",
+            },
+            {
               id: "shader-audioSolutions",
               title: "音乐可视化",
               description:
