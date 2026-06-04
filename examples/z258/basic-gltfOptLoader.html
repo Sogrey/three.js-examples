@@ -60,8 +60,8 @@
         <div class="control-group">
             <label>加载方式</label>
             <button id="btnLoadNormal">加载普通GLTF</button>
-            <button id="btnLoadDraco">加载Draco压缩</button>
-            <button id="btnLoadKtx2">加载KTX2压缩</button>
+            <button id="btnLoadDraco">加载Draco配置</button>
+            <button id="btnLoadKtx2">加载KTX2配置</button>
         </div>
         <div class="control-group">
             <label>模型操作</label>
@@ -226,7 +226,7 @@
             );
         }
 
-        // 加载Draco压缩模型
+        // 加载Draco压缩模型（使用普通模型演示加载器配置）
         function loadDracoGLTF() {
             clearModel();
             showLoading('加载Draco压缩模型...');
@@ -234,11 +234,13 @@
             const loader = new GLTFLoader();
             loader.setDRACOLoader(dracoLoader);
             
+            // 使用普通GLTF模型演示DracoLoader配置
+            // 实际项目中应使用 .drc 或 Draco压缩的 .gltf 文件
             loader.load(
-                '../../models/gltf/DamagedHelmet/glTF-Draco/DamagedHelmet.gltf',
+                '../../models/gltf/DamagedHelmet/glTF/DamagedHelmet.gltf',
                 (gltf) => {
                     currentModel = gltf.scene;
-                    setupModel(currentModel, 'Draco压缩');
+                    setupModel(currentModel, 'Draco配置演示');
                     hideLoading();
                 },
                 (progress) => {
@@ -253,7 +255,7 @@
             );
         }
 
-        // 加载KTX2压缩模型
+        // 加载KTX2压缩模型（使用普通模型演示加载器配置）
         function loadKtx2GLTF() {
             clearModel();
             showLoading('加载KTX2压缩模型...');
@@ -261,12 +263,13 @@
             const loader = new GLTFLoader();
             loader.setKTX2Loader(ktx2Loader);
             
-            // 如果没有KTX2模型，使用普通模型演示
+            // 使用普通GLTF模型演示KTX2Loader配置
+            // 实际项目中应使用 KTX2纹理压缩的 .gltf 文件
             loader.load(
                 '../../models/gltf/DamagedHelmet/glTF/DamagedHelmet.gltf',
                 (gltf) => {
                     currentModel = gltf.scene;
-                    setupModel(currentModel, 'KTX2压缩 (演示)');
+                    setupModel(currentModel, 'KTX2配置演示');
                     hideLoading();
                 },
                 (progress) => {
