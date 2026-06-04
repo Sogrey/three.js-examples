@@ -2096,6 +2096,22 @@ const threejsData = {
               version: "r179",
               url: "examples/z258/particle-steamParticle",
             },
+            {
+              id: "particle-textParticle",
+              title: "文字采集成粒子",
+              description: "将文字转换为粒子效果，支持爆炸散开和聚集动画",
+              thumbnail: "images/particle-textParticle.jpg",
+              version: "r179",
+              url: "examples/z258/particle-textParticle",
+            },
+            {
+              id: "particle-particlesCursorAnimation",
+              title: "鼠标轨迹粒子",
+              description: "鼠标移动产生粒子轨迹，支持多种颜色主题和发光效果",
+              thumbnail: "images/particle-particlesCursorAnimation.jpg",
+              version: "r179",
+              url: "examples/z258/particle-particlesCursorAnimation",
+            },
           ],
         },
         {
