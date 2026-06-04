@@ -84,8 +84,8 @@
             <input type="range" id="particleSize" min="1" max="10" value="3">
         </div>
         <div class="slider-container">
-            <label>粒子间距: <span id="gapValue">4</span></label>
-            <input type="range" id="particleGap" min="2" max="10" value="4">
+            <label>粒子间距: <span id="gapValue">2</span></label>
+            <input type="range" id="particleGap" min="1" max="8" value="2">
         </div>
         <button id="btnColor">随机颜色</button>
         <button id="btnRotate">自动旋转: 开</button>
@@ -153,16 +153,20 @@
             }
 
             const text = document.getElementById('textInput').value || 'HELLO';
-            const size = 15;
+            const size = 20;
             const gap = parseInt(document.getElementById('particleGap').value);
 
             // 创建文字几何体
             const textGeometry = new TextGeometry(text, {
                 font: font,
                 size: size,
-                height: 1,
-                curveSegments: 12,
-                bevelEnabled: false
+                height: 2,
+                curveSegments: 24,
+                bevelEnabled: true,
+                bevelThickness: 0.5,
+                bevelSize: 0.3,
+                bevelOffset: 0,
+                bevelSegments: 4
             });
 
             textGeometry.computeBoundingBox();
@@ -172,37 +176,111 @@
             // 采样点
             const positions = [];
             const positionAttribute = textGeometry.attributes.position;
-            const indexAttribute = textGeometry.index;
 
-            // 从三角面采样点
-            for (let i = 0; i < indexAttribute.count; i += 3) {
-                const a = indexAttribute.getX(i);
-                const b = indexAttribute.getX(i + 1);
-                const c = indexAttribute.getX(i + 2);
+            // 方法1: 如果有索引，从三角面采样
+            if (textGeometry.index) {
+                const indexAttribute = textGeometry.index;
+                for (let i = 0; i < indexAttribute.count; i += 3) {
+                    const a = indexAttribute.getX(i);
+                    const b = indexAttribute.getX(i + 1);
+                    const c = indexAttribute.getX(i + 2);
 
-                const vA = new THREE.Vector3().fromBufferAttribute(positionAttribute, a);
-                const vB = new THREE.Vector3().fromBufferAttribute(positionAttribute, b);
-                const vC = new THREE.Vector3().fromBufferAttribute(positionAttribute, c);
+                    const vA = new THREE.Vector3().fromBufferAttribute(positionAttribute, a);
+                    const vB = new THREE.Vector3().fromBufferAttribute(positionAttribute, b);
+                    const vC = new THREE.Vector3().fromBufferAttribute(positionAttribute, c);
 
-                // 在三角形内随机采样
-                for (let j = 0; j < 3; j++) {
-                    const r1 = Math.random();
-                    const r2 = Math.random();
-                    const sqrtR1 = Math.sqrt(r1);
+                    // 在三角形内随机采样
+                    for (let j = 0; j < 3; j++) {
+                        const r1 = Math.random();
+                        const r2 = Math.random();
+                        const sqrtR1 = Math.sqrt(r1);
 
-                    const u = 1 - sqrtR1;
-                    const v = sqrtR1 * (1 - r2);
-                    const w = sqrtR1 * r2;
+                        const u = 1 - sqrtR1;
+                        const v = sqrtR1 * (1 - r2);
+                        const w = sqrtR1 * r2;
 
-                    const point = new THREE.Vector3()
-                        .addScaledVector(vA, u)
-                        .addScaledVector(vB, v)
-                        .addScaledVector(vC, w);
+                        const point = new THREE.Vector3()
+                            .addScaledVector(vA, u)
+                            .addScaledVector(vB, v)
+                            .addScaledVector(vC, w);
 
+                        // 根据间距筛选点
+                        let tooClose = false;
+                        for (let p of positions) {
+                            if (point.distanceTo(p) < gap) {
+                                tooClose = true;
+                                break;
+                            }
+                        }
+
+                        if (!tooClose) {
+                            positions.push(point);
+                        }
+                    }
+                }
+            } else {
+                // 方法2: 无索引几何体，从顶点采样并在边之间插值
+                const vertexCount = positionAttribute.count;
+
+                // 先添加所有顶点
+                for (let i = 0; i < vertexCount; i++) {
+                    const point = new THREE.Vector3().fromBufferAttribute(positionAttribute, i);
+                    positions.push(point);
+                }
+
+                // 在相邻顶点之间插值生成更多点
+                const extraPointsPerEdge = 3; // 每条边额外插入的点数
+                for (let i = 0; i < vertexCount - 1; i++) {
+                    const v1 = new THREE.Vector3().fromBufferAttribute(positionAttribute, i);
+                    const v2 = new THREE.Vector3().fromBufferAttribute(positionAttribute, i + 1);
+
+                    for (let j = 1; j <= extraPointsPerEdge; j++) {
+                        const t = j / (extraPointsPerEdge + 1);
+                        const point = new THREE.Vector3().lerpVectors(v1, v2, t);
+
+                        // 根据间距筛选点
+                        let tooClose = false;
+                        for (let p of positions) {
+                            if (point.distanceTo(p) < gap * 0.5) {
+                                tooClose = true;
+                                break;
+                            }
+                        }
+
+                        if (!tooClose) {
+                            positions.push(point);
+                        }
+                    }
+                }
+            }
+
+            // 方法3: 在文字边界框内随机采样填充
+            const bbox = textGeometry.boundingBox;
+            const width = bbox.max.x - bbox.min.x;
+            const height = bbox.max.y - bbox.min.y;
+            const randomSamples = Math.min(2000, width * height * 2); // 根据文字大小调整采样数
+
+            for (let i = 0; i < randomSamples; i++) {
+                const x = bbox.min.x + Math.random() * width;
+                const y = bbox.min.y + Math.random() * height;
+                const z = (Math.random() - 0.5) * 2; // 稍微的厚度
+
+                const point = new THREE.Vector3(x, y, z);
+
+                // 检查是否在文字区域内（简化检查：与最近顶点的距离）
+                let minDist = Infinity;
+                for (let j = 0; j < positionAttribute.count; j++) {
+                    const vertex = new THREE.Vector3().fromBufferAttribute(positionAttribute, j);
+                    const dist = point.distanceTo(vertex);
+                    if (dist < minDist) minDist = dist;
+                }
+
+                // 如果距离顶点较近，认为是文字内部
+                if (minDist < gap * 2) {
                     // 根据间距筛选点
                     let tooClose = false;
                     for (let p of positions) {
-                        if (point.distanceTo(p) < gap) {
+                        if (point.distanceTo(p) < gap * 0.8) {
                             tooClose = true;
                             break;
                         }
@@ -256,18 +334,32 @@
                 sizeAttenuation: true
             });
 
-            // 创建圆形粒子纹理
+            // 创建圆形粒子纹理 - 使用纯白色避免黑边
             const canvas = document.createElement('canvas');
-            canvas.width = 32;
-            canvas.height = 32;
+            canvas.width = 64;
+            canvas.height = 64;
             const ctx = canvas.getContext('2d');
-            const gradient = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
+
+            // 清除画布
+            ctx.clearRect(0, 0, 64, 64);
+
+            // 创建更柔和的径向渐变
+            const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
             gradient.addColorStop(0, 'rgba(255,255,255,1)');
-            gradient.addColorStop(0.5, 'rgba(255,255,255,0.5)');
+            gradient.addColorStop(0.4, 'rgba(255,255,255,0.8)');
+            gradient.addColorStop(0.7, 'rgba(255,255,255,0.3)');
             gradient.addColorStop(1, 'rgba(255,255,255,0)');
+
             ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, 32, 32);
-            material.map = new THREE.CanvasTexture(canvas);
+            ctx.fillRect(0, 0, 64, 64);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.minFilter = THREE.LinearFilter;
+            texture.magFilter = THREE.LinearFilter;
+            texture.generateMipmaps = false;
+            material.map = texture;
+            material.alphaMap = texture;
+            material.alphaTest = 0.01;
 
             particleSystem = new THREE.Points(geometry, material);
             scene.add(particleSystem);

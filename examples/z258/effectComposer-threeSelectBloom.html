@@ -224,6 +224,9 @@
             finalComposer.setSize(window.innerWidth, window.innerHeight);
         });
 
+        // 暴露composer用于截图
+        window.composer = finalComposer;
+
         // 动画循环
         function animate() {
             requestAnimationFrame(animate);
