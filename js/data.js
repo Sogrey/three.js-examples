@@ -1350,6 +1350,14 @@ const threejsData = {
               url: "examples/z258/basic-diffusionCircle",
             },
             {
+              id: "basic-gltfOptLoader",
+              title: "GLTF Opt解压",
+              description: "支持Draco和KTX2压缩格式的GLTF模型加载",
+              thumbnail: "images/basic-gltfOptLoader.jpg",
+              version: "r179",
+              url: "examples/z258/basic-gltfOptLoader",
+            },
+            {
               id: "shader-audioSolutions",
               title: "音乐可视化",
               description:
@@ -2088,6 +2096,22 @@ const threejsData = {
               version: "r179",
               url: "examples/z258/particle-steamParticle",
             },
+            {
+              id: "particle-textParticle",
+              title: "文字采集成粒子",
+              description: "将文字转换为粒子效果，支持爆炸散开和聚集动画",
+              thumbnail: "images/particle-textParticle.jpg",
+              version: "r179",
+              url: "examples/z258/particle-textParticle",
+            },
+            {
+              id: "particle-particlesCursorAnimation",
+              title: "鼠标轨迹粒子",
+              description: "鼠标移动产生粒子轨迹，支持多种颜色主题和发光效果",
+              thumbnail: "images/particle-particlesCursorAnimation.jpg",
+              version: "r179",
+              url: "examples/z258/particle-particlesCursorAnimation",
+            },
           ],
         },
         {
@@ -2158,12 +2182,20 @@ const threejsData = {
             },
             {
               id: "effectComposer-threeSelectBloom",
-              title: "选择性辉光效果",
+              title: "选择性辉光",
               description:
                 "使用图层系统实现选择性辉光效果，点击物体可切换辉光状态",
               thumbnail: "images/effectComposer-threeSelectBloom.jpg",
               version: "r179",
               url: "examples/z258/effectComposer-threeSelectBloom",
+            },
+            {
+              id: "effectComposer-selectBloomPass",
+              title: "辉光-postprocessing",
+              description: "UnrealBloomPass辉光效果，支持参数调节",
+              thumbnail: "images/effectComposer-selectBloomPass.jpg",
+              version: "r179",
+              url: "examples/z258/effectComposer-selectBloomPass",
             },
             {
               id: "postprocessing-customMaskPass",

@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>鼠标轨迹粒子 - Three.js r179</title>
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "libs/three/r179/jsm/"
+        }
+    }
+    </script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { overflow: hidden; background: #000; font-family: 'Microsoft YaHei', sans-serif; }
+        #canvas-container { width: 100vw; height: 100vh; cursor: crosshair; }
+        #controls {
+            position: absolute;
+            top: 50px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            padding: 15px;
+            border-radius: 8px;
+            color: white;
+            font-size: 12px;
+            min-width: 200px;
+        }
+        #controls h3 { margin-bottom: 10px; font-size: 14px; color: #00d4ff; }
+        #controls button {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 8px;
+            border: none;
+            border-radius: 4px;
+            background: #00d4ff;
+            color: #000;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+        #controls button:hover { background: #00a8cc; }
+        #controls .slider-container {
+            margin-bottom: 10px;
+        }
+        #controls label {
+            display: block;
+            margin-bottom: 5px;
+            color: #aaa;
+        }
+        #controls input[type="range"] {
+            width: 100%;
+        }
+        #info {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            color: rgba(255,255,255,0.6);
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+    <div id="controls">
+        <h3>鼠标轨迹粒子</h3>
+        <button id="btnClear">清除轨迹</button>
+        <button id="btnAuto">自动演示: 关</button>
+        <div class="slider-container">
+            <label>粒子大小: <span id="sizeValue">4</span></label>
+            <input type="range" id="particleSize" min="1" max="15" value="4">
+        </div>
+        <div class="slider-container">
+            <label>粒子数量: <span id="countValue">5</span></label>
+            <input type="range" id="particleCount" min="1" max="20" value="5">
+        </div>
+        <div class="slider-container">
+            <label>消散速度: <span id="fadeValue">0.98</span></label>
+            <input type="range" id="fadeSpeed" min="90" max="99" value="98">
+        </div>
+        <button id="btnColor">切换颜色</button>
+        <button id="btnGlow">发光效果: 开</button>
+    </div>
+    <div id="info">移动鼠标产生粒子轨迹 | 点击并拖动绘制</div>
+
+    <script type="module">
+        import * as THREE from 'three';
+
+        // 场景设置
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x050510);
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 100;
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        // 粒子数组
+        const particles = [];
+        const maxParticles = 2000;
+
+        // 颜色主题
+        const colorThemes = [
+            { name: '青色', colors: [0x00d4ff, 0x0099cc, 0x00ffff] },
+            { name: '紫色', colors: [0xff00ff, 0x9900cc, 0xff66ff] },
+            { name: '金色', colors: [0xffd700, 0xff8c00, 0xffff00] },
+            { name: '绿色', colors: [0x00ff88, 0x00cc66, 0x66ffaa] },
+            { name: '彩虹', colors: null }
+        ];
+        let currentTheme = 0;
+        let glowEnabled = true;
+        let autoDemo = false;
+        let autoTime = 0;
+
+        // 创建粒子纹理
+        function createParticleTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 64;
+            canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+
+            // 清除画布
+            ctx.clearRect(0, 0, 64, 64);
+
+            // 创建发光圆形
+            const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+            gradient.addColorStop(0, 'rgba(255,255,255,1)');
+            gradient.addColorStop(0.3, 'rgba(255,255,255,0.8)');
+            gradient.addColorStop(0.6, 'rgba(255,255,255,0.3)');
+            gradient.addColorStop(1, 'rgba(255,255,255,0)');
+
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 64, 64);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.minFilter = THREE.LinearFilter;
+            texture.magFilter = THREE.LinearFilter;
+            return texture;
+        }
+
+        const particleTexture = createParticleTexture();
+
+        // 粒子类
+        class Particle {
+            constructor(x, y, z, color) {
+                this.position = new THREE.Vector3(x, y, z);
+                this.velocity = new THREE.Vector3(
+                    (Math.random() - 0.5) * 2,
+                    (Math.random() - 0.5) * 2,
+                    (Math.random() - 0.5) * 2
+                );
+                this.life = 1.0;
+                this.color = color;
+                this.size = 4 + Math.random() * 4;
+
+                // 创建网格
+                const geometry = new THREE.PlaneGeometry(1, 1);
+                const material = new THREE.MeshBasicMaterial({
+                    color: color,
+                    map: particleTexture,
+                    transparent: true,
+                    opacity: 0.8,
+                    blending: THREE.AdditiveBlending,
+                    depthTest: false,
+                    side: THREE.DoubleSide
+                });
+
+                this.mesh = new THREE.Mesh(geometry, material);
+                this.mesh.position.copy(this.position);
+                this.mesh.scale.setScalar(this.size);
+                this.mesh.lookAt(camera.position);
+
+                scene.add(this.mesh);
+            }
+
+            update(delta, fadeSpeed) {
+                // 更新位置
+                this.position.add(this.velocity.clone().multiplyScalar(delta * 10));
+                this.mesh.position.copy(this.position);
+                this.mesh.lookAt(camera.position);
+
+                // 减少生命周期
+                this.life -= (1 - fadeSpeed) * delta * 2;
+
+                // 更新透明度和大小
+                this.mesh.material.opacity = Math.max(0, this.life * 0.8);
+                const scale = this.size * Math.max(0.1, this.life);
+                this.mesh.scale.setScalar(scale);
+
+                return this.life > 0;
+            }
+
+            dispose() {
+                scene.remove(this.mesh);
+                this.mesh.geometry.dispose();
+                this.mesh.material.dispose();
+            }
+        }
+
+        // 添加粒子
+        function addParticles(x, y, count) {
+            const theme = colorThemes[currentTheme];
+
+            for (let i = 0; i < count; i++) {
+                if (particles.length >= maxParticles) {
+                    const oldParticle = particles.shift();
+                    oldParticle.dispose();
+                }
+
+                let color;
+                if (theme.name === '彩虹') {
+                    const hue = Math.random();
+                    color = new THREE.Color().setHSL(hue, 1, 0.5);
+                } else {
+                    const colorHex = theme.colors[Math.floor(Math.random() * theme.colors.length)];
+                    color = new THREE.Color(colorHex);
+                }
+
+                const particle = new Particle(
+                    x + (Math.random() - 0.5) * 10,
+                    y + (Math.random() - 0.5) * 10,
+                    (Math.random() - 0.5) * 20,
+                    color
+                );
+
+                particles.push(particle);
+            }
+        }
+
+        // 鼠标跟踪
+        const mouse = new THREE.Vector2();
+        let lastX = 0, lastY = 0;
+
+        document.addEventListener('mousemove', (event) => {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            // 转换为世界坐标
+            const x = mouse.x * 50;
+            const y = mouse.y * 50;
+
+            // 检查移动距离
+            const dist = Math.sqrt((x - lastX) ** 2 + (y - lastY) ** 2);
+            if (dist > 2) {
+                const count = parseInt(document.getElementById('particleCount').value);
+                addParticles(x, y, count);
+                lastX = x;
+                lastY = y;
+            }
+        });
+
+        // 触摸支持
+        document.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            mouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(touch.clientY / window.innerHeight) * 2 + 1;
+
+            const x = mouse.x * 50;
+            const y = mouse.y * 50;
+            const count = parseInt(document.getElementById('particleCount').value);
+            addParticles(x, y, count);
+        }, { passive: false });
+
+        // 动画循环
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const delta = clock.getDelta();
+            const time = clock.getElapsedTime();
+
+            // 自动演示
+            if (autoDemo) {
+                autoTime += delta * 2;
+                const radius = 30;
+                const x = Math.cos(autoTime) * radius + Math.cos(autoTime * 3) * 10;
+                const y = Math.sin(autoTime * 1.5) * radius * 0.6 + Math.sin(autoTime * 2) * 10;
+                addParticles(x, y, 3);
+            }
+
+            // 更新粒子
+            const fadeSpeed = parseInt(document.getElementById('fadeSpeed').value) / 100;
+            const particleSize = parseInt(document.getElementById('particleSize').value);
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const particle = particles[i];
+                particle.size = particleSize;
+                const alive = particle.update(delta, fadeSpeed);
+
+                if (!alive) {
+                    particle.dispose();
+                    particles.splice(i, 1);
+                }
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // UI控制
+        document.getElementById('btnClear').addEventListener('click', () => {
+            for (const particle of particles) {
+                particle.dispose();
+            }
+            particles.length = 0;
+        });
+
+        document.getElementById('btnAuto').addEventListener('click', function() {
+            autoDemo = !autoDemo;
+            this.textContent = `自动演示: ${autoDemo ? '开' : '关'}`;
+        });
+
+        document.getElementById('particleSize').addEventListener('input', function() {
+            document.getElementById('sizeValue').textContent = this.value;
+        });
+
+        document.getElementById('particleCount').addEventListener('input', function() {
+            document.getElementById('countValue').textContent = this.value;
+        });
+
+        document.getElementById('fadeSpeed').addEventListener('input', function() {
+            document.getElementById('fadeValue').textContent = (this.value / 100).toFixed(2);
+        });
+
+        document.getElementById('btnColor').addEventListener('click', () => {
+            currentTheme = (currentTheme + 1) % colorThemes.length;
+        });
+
+        document.getElementById('btnGlow').addEventListener('click', function() {
+            glowEnabled = !glowEnabled;
+            this.textContent = `发光效果: ${glowEnabled ? '开' : '关'}`;
+        });
+
+        // 窗口大小调整
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // 暴露到window用于截图
+        window.scene = scene;
+        window.camera = camera;
+        window.renderer = renderer;
+    </script>
+
+    <!-- 截图支持脚本 -->
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
