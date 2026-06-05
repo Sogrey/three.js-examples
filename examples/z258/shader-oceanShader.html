@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>海面着色器 - Three.js r179</title>
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { overflow: hidden; background: #000; font-family: 'Microsoft YaHei', sans-serif; }
+        #canvas-container { width: 100vw; height: 100vh; }
+        #controls {
+            position: absolute;
+            top: 50px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            padding: 15px;
+            border-radius: 8px;
+            color: white;
+            font-size: 12px;
+            min-width: 200px;
+        }
+        #controls h3 { margin-bottom: 10px; font-size: 14px; color: #00d4ff; }
+        #controls .slider-container {
+            margin-bottom: 10px;
+        }
+        #controls label {
+            display: block;
+            margin-bottom: 5px;
+            color: #aaa;
+        }
+        #controls input[type="range"] {
+            width: 100%;
+        }
+        #info {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            color: rgba(255,255,255,0.6);
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+    <div id="controls">
+        <h3>海面着色器</h3>
+        <div class="slider-container">
+            <label>波浪速度: <span id="speedValue">1.0</span></label>
+            <input type="range" id="waveSpeed" min="0" max="3" step="0.1" value="1.0">
+        </div>
+        <div class="slider-container">
+            <label>波浪高度: <span id="heightValue">0.5</span></label>
+            <input type="range" id="waveHeight" min="0.1" max="2.0" step="0.1" value="0.5">
+        </div>
+        <div class="slider-container">
+            <label>水面颜色:</label>
+            <input type="color" id="waterColor" value="#001e3d" style="width: 100%;">
+        </div>
+    </div>
+    <div id="info">Three.js Water | 天空盒 | 波浪动画</div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { Water } from 'three/addons/objects/Water.js';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+        // 场景设置
+        const scene = new THREE.Scene();
+
+        const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 10000);
+        camera.position.set(30, 15, 50);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        // 控制器
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.maxPolarAngle = Math.PI / 2 - 0.05;
+        controls.minDistance = 10;
+        controls.maxDistance = 500;
+
+        // 天空盒
+        const skyboxPaths = [
+            '../../images/textures/sky/skybox0/1.png',
+            '../../images/textures/sky/skybox0/2.png',
+            '../../images/textures/sky/skybox0/3.png',
+            '../../images/textures/sky/skybox0/4.png',
+            '../../images/textures/sky/skybox0/5.png',
+            '../../images/textures/sky/skybox0/6.png'
+        ];
+
+        const cubeTextureLoader = new THREE.CubeTextureLoader();
+        const skyboxTexture = cubeTextureLoader.load(skyboxPaths);
+        scene.background = skyboxTexture;
+        scene.environment = skyboxTexture;
+
+        // 水面法线纹理
+        const waterNormals = new THREE.TextureLoader().load('../../images/textures/waternormals.jpg', function(texture) {
+            texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+        });
+
+        // 创建水面
+        const waterGeometry = new THREE.PlaneGeometry(10000, 10000);
+        const water = new Water(
+            waterGeometry,
+            {
+                textureWidth: 512,
+                textureHeight: 512,
+                waterNormals: waterNormals,
+                sunDirection: new THREE.Vector3(0.5, 1, 0.5),
+                sunColor: 0xffffff,
+                waterColor: 0x001e3d,
+                distortionScale: 3.7,
+                fog: scene.fog !== undefined
+            }
+        );
+        water.rotation.x = -Math.PI / 2;
+        scene.add(water);
+
+        // 加载船只模型替代挖掘机
+        const loader = new GLTFLoader();
+        let ship;
+
+        loader.load('../../models/gltf/ship_2.glb', function(gltf) {
+            ship = gltf.scene;
+            ship.scale.set(2, 2, 2);
+            ship.position.set(0, 2, 0);
+            ship.rotation.y = Math.PI / 4;
+
+            ship.traverse(function(child) {
+                if (child.isMesh) {
+                    child.material.envMap = skyboxTexture;
+                    child.material.needsUpdate = true;
+                }
+            });
+
+            scene.add(ship);
+        }, undefined, function(error) {
+            console.warn('船只模型加载失败，使用替代模型');
+            // 加载鸭子作为替代
+            loader.load('../../models/gltf/duck.glb', function(gltf) {
+                ship = gltf.scene;
+                ship.scale.set(5, 5, 5);
+                ship.position.set(0, 2, 0);
+                ship.rotation.y = Math.PI / 4;
+
+                ship.traverse(function(child) {
+                    if (child.isMesh) {
+                        child.material.envMap = skyboxTexture;
+                        child.material.needsUpdate = true;
+                    }
+                });
+
+                scene.add(ship);
+            });
+        });
+
+        // 动画参数
+        let waveSpeed = 1.0;
+        let waveHeight = 0.5;
+
+        // 动画循环
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const time = clock.getElapsedTime();
+
+            // 更新水面时间
+            water.material.uniforms['time'].value += (1.0 / 60.0) * waveSpeed;
+
+            // 船只浮动动画
+            if (ship) {
+                ship.position.y = 2 + Math.sin(time * 1.5) * waveHeight;
+                ship.rotation.z = Math.sin(time * 0.8) * 0.05 * waveHeight;
+                ship.rotation.x = Math.sin(time * 0.6) * 0.03 * waveHeight;
+            }
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // 事件监听
+        document.getElementById('waveSpeed').addEventListener('input', function() {
+            waveSpeed = parseFloat(this.value);
+            document.getElementById('speedValue').textContent = waveSpeed.toFixed(1);
+        });
+
+        document.getElementById('waveHeight').addEventListener('input', function() {
+            waveHeight = parseFloat(this.value);
+            document.getElementById('heightValue').textContent = waveHeight.toFixed(1);
+        });
+
+        document.getElementById('waterColor').addEventListener('input', function() {
+            const color = new THREE.Color(this.value);
+            water.material.uniforms['waterColor'].value = color;
+        });
+
+        // 窗口大小调整
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // 暴露到window用于截图
+        window.scene = scene;
+        window.camera = camera;
+        window.renderer = renderer;
+    </script>
+
+    <!-- 截图支持脚本 -->
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
