@@ -30,11 +30,18 @@ function renderCategoryTree() {
     let html = '<ul>';
     
     threejsData.categories.forEach(category => {
+        // 计算一级分类下的所有示例数量
+        let categoryTotal = 0;
+        category.subcategories.forEach(sub => {
+            categoryTotal += sub.examples ? sub.examples.length : 0;
+        });
+        
         html += `
             <li class="category-item" data-id="${category.id}">
                 <div class="category">
                     <i class="bi ${category.icon}"></i>
                     <span>${category.name}</span>
+                    <span class="category-count">(${categoryTotal})</span>
                     <i class="bi bi-chevron-right"></i>
                 </div>
                 <div class="subcategory">
@@ -42,10 +49,14 @@ function renderCategoryTree() {
         `;
         
         category.subcategories.forEach(subcategory => {
+            // 计算二级分类的示例数量
+            const subCount = subcategory.examples ? subcategory.examples.length : 0;
+            
             html += `
                 <li class="subcategory-item" data-category="${category.id}" data-id="${subcategory.id}">
                     <div class="category">
                         <span>${subcategory.name}</span>
+                        <span class="subcategory-count">(${subCount})</span>
                     </div>
                 </li>
             `;
