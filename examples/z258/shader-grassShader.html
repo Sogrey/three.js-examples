@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>草地着色器 - Three.js r179</title>
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../../libs/three/r179/build/three.module.js",
+            "three/addons/": "../../libs/three/r179/jsm/"
+        }
+    }
+    </script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { overflow: hidden; background: #000; font-family: 'Microsoft YaHei', sans-serif; }
+        #canvas-container { width: 100vw; height: 100vh; }
+        #controls {
+            position: absolute;
+            top: 50px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            padding: 15px;
+            border-radius: 8px;
+            color: white;
+            font-size: 12px;
+            min-width: 200px;
+        }
+        #controls h3 { margin-bottom: 10px; font-size: 14px; color: #4CAF50; }
+        #controls .slider-container {
+            margin-bottom: 10px;
+        }
+        #controls label {
+            display: block;
+            margin-bottom: 5px;
+            color: #aaa;
+        }
+        #controls input[type="range"] {
+            width: 100%;
+        }
+        #info {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            color: rgba(255,255,255,0.6);
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+    <div id="controls">
+        <h3>草地着色器</h3>
+        <div class="slider-container">
+            <label>风速: <span id="windValue">1.0</span></label>
+            <input type="range" id="windSpeed" min="0" max="3" step="0.1" value="1.0">
+        </div>
+        <div class="slider-container">
+            <label>草高度: <span id="heightValue">0.8</span></label>
+            <input type="range" id="grassHeight" min="0.3" max="1.5" step="0.1" value="0.8">
+        </div>
+        <div class="slider-container">
+            <label>草密度: <span id="densityValue">50000</span></label>
+            <input type="range" id="grassDensity" min="10000" max="100000" step="10000" value="50000">
+        </div>
+    </div>
+    <div id="info">程序化草地 | 风力模拟 | 100000根草</div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // 场景设置
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x87CEEB);
+        scene.fog = new THREE.Fog(0x87CEEB, 20, 100);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 200);
+        camera.position.set(0, 8, 15);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        // 控制器
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.maxPolarAngle = Math.PI / 2 - 0.1;
+        controls.target.set(0, 0, 0);
+
+        // 草地参数
+        const BLADE_WIDTH = 0.08;
+        const BLADE_HEIGHT = 0.8;
+        const BLADE_HEIGHT_VARIATION = 0.4;
+        const BLADE_VERTEX_COUNT = 5;
+        const BLADE_TIP_OFFSET = 0.12;
+
+        // 草地几何体
+        class GrassGeometry extends THREE.BufferGeometry {
+            constructor(size, count) {
+                super();
+
+                const positions = [];
+                const uvs = [];
+                const indices = [];
+
+                for (let i = 0; i < count; i++) {
+                    const surfaceMin = (size / 2) * -1;
+                    const surfaceMax = size / 2;
+                    const radius = (size / 2) * Math.sqrt(Math.random());
+                    const theta = Math.random() * 2 * Math.PI;
+
+                    const x = radius * Math.cos(theta);
+                    const z = radius * Math.sin(theta);
+
+                    // UV坐标
+                    for (let j = 0; j < BLADE_VERTEX_COUNT; j++) {
+                        uvs.push(
+                            (x - surfaceMin) / (surfaceMax - surfaceMin),
+                            (z - surfaceMin) / (surfaceMax - surfaceMin)
+                        );
+                    }
+
+                    const blade = this.computeBlade([x, 0, z], i);
+                    positions.push(...blade.positions);
+                    indices.push(...blade.indices);
+                }
+
+                this.setAttribute('position', new THREE.BufferAttribute(new Float32Array(positions), 3));
+                this.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(uvs), 2));
+                this.setIndex(indices);
+                this.computeVertexNormals();
+            }
+
+            computeBlade(center, index = 0) {
+                const height = BLADE_HEIGHT + Math.random() * BLADE_HEIGHT_VARIATION;
+                const vIndex = index * BLADE_VERTEX_COUNT;
+
+                // 随机方向和弯曲
+                const yaw = Math.random() * Math.PI * 2;
+                const yawVec = [Math.sin(yaw), 0, -Math.cos(yaw)];
+                const bend = Math.random() * Math.PI * 2;
+                const bendVec = [Math.sin(bend), 0, -Math.cos(bend)];
+
+                // 计算顶点
+                const bl = yawVec.map((n, i) => n * (BLADE_WIDTH / 2) * 1 + center[i]);
+                const br = yawVec.map((n, i) => n * (BLADE_WIDTH / 2) * -1 + center[i]);
+                const tl = yawVec.map((n, i) => n * (BLADE_WIDTH / 4) * 1 + center[i]);
+                const tr = yawVec.map((n, i) => n * (BLADE_WIDTH / 4) * -1 + center[i]);
+                const tc = bendVec.map((n, i) => n * BLADE_TIP_OFFSET + center[i]);
+
+                // 设置高度
+                tl[1] += height / 2;
+                tr[1] += height / 2;
+                tc[1] += height;
+
+                return {
+                    positions: [...bl, ...br, ...tr, ...tl, ...tc],
+                    indices: [
+                        vIndex, vIndex + 1, vIndex + 2,
+                        vIndex + 2, vIndex + 4, vIndex + 3,
+                        vIndex + 3, vIndex, vIndex + 2
+                    ]
+                };
+            }
+        }
+
+        // 创建程序化云纹理
+        function createCloudTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+
+            // 填充天空蓝背景
+            const gradient = ctx.createLinearGradient(0, 0, 0, 512);
+            gradient.addColorStop(0, '#87CEEB');
+            gradient.addColorStop(1, '#E0F6FF');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 512, 512);
+
+            // 绘制云朵
+            for (let i = 0; i < 20; i++) {
+                const x = Math.random() * 512;
+                const y = Math.random() * 300;
+                const radius = 30 + Math.random() * 50;
+
+                const cloudGradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+                cloudGradient.addColorStop(0, 'rgba(255,255,255,0.8)');
+                cloudGradient.addColorStop(0.5, 'rgba(255,255,255,0.4)');
+                cloudGradient.addColorStop(1, 'rgba(255,255,255,0)');
+
+                ctx.fillStyle = cloudGradient;
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+            return texture;
+        }
+
+        const cloudTexture = createCloudTexture();
+
+        // 草地类
+        class Grass extends THREE.Mesh {
+            constructor(size, count) {
+                const geometry = new GrassGeometry(size, count);
+                const material = new THREE.ShaderMaterial({
+                    uniforms: {
+                        uCloud: { value: cloudTexture },
+                        uTime: { value: 0 },
+                        uWindSpeed: { value: 1.0 },
+                        uGrassHeight: { value: 0.8 }
+                    },
+                    side: THREE.DoubleSide,
+                    vertexShader: `
+                        uniform float uTime;
+                        uniform float uWindSpeed;
+                        uniform float uGrassHeight;
+                        varying vec3 vPosition;
+                        varying vec2 vUv;
+                        varying vec3 vNormal;
+
+                        float wave(float waveSize, float tipDistance, float centerDistance) {
+                            bool isTip = (gl_VertexID + 1) % 5 == 0;
+                            float waveDistance = isTip ? tipDistance : centerDistance;
+                            return sin((uTime * uWindSpeed * 0.001) + waveSize) * waveDistance;
+                        }
+
+                        void main() {
+                            vPosition = position;
+                            vUv = uv;
+                            vUv.x += uTime * 0.00005;
+                            vUv.y += uTime * 0.00003;
+
+                            vNormal = normalize(normalMatrix * normal);
+
+                            vec3 pos = position;
+                            if (pos.y > 0.0) {
+                                pos.x += wave(uv.x * 10.0, 0.3 * uWindSpeed, 0.1 * uWindSpeed);
+                                pos.z += wave(uv.y * 8.0, 0.2 * uWindSpeed, 0.05 * uWindSpeed);
+                            }
+
+                            gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+                        }
+                    `,
+                    fragmentShader: `
+                        uniform sampler2D uCloud;
+                        uniform float uTime;
+                        varying vec3 vPosition;
+                        varying vec2 vUv;
+                        varying vec3 vNormal;
+
+                        void main() {
+                            // 基础草绿色
+                            vec3 darkGreen = vec3(0.1, 0.4, 0.1);
+                            vec3 lightGreen = vec3(0.4, 0.7, 0.2);
+                            vec3 grassColor = mix(darkGreen, lightGreen, vPosition.y * 1.5);
+
+                            // 添加云影效果
+                            vec3 cloudColor = texture2D(uCloud, vUv).rgb;
+                            float cloudShadow = 1.0 - (cloudColor.r * 0.3);
+                            grassColor *= cloudShadow;
+
+                            // 简单光照
+                            vec3 lightDir = normalize(vec3(1.0, 1.0, 0.5));
+                            float diff = max(dot(vNormal, lightDir), 0.0);
+                            grassColor += diff * 0.1;
+
+                            gl_FragColor = vec4(grassColor, 1.0);
+                        }
+                    `
+                });
+
+                super(geometry, material);
+
+                // 地面
+                const floorGeometry = new THREE.CircleGeometry(size / 2, 32);
+                floorGeometry.rotateX(-Math.PI / 2);
+                const floorMaterial = new THREE.MeshStandardMaterial({
+                    color: 0x1a3d1a,
+                    roughness: 0.9
+                });
+                const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+                floor.position.y = -0.01;
+                this.add(floor);
+            }
+
+            update(time) {
+                this.material.uniforms.uTime.value = time;
+            }
+        }
+
+        // 创建草地
+        let grass = new Grass(40, 50000);
+        scene.add(grass);
+
+        // 添加阳光
+        const sunLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        sunLight.position.set(50, 100, 50);
+        scene.add(sunLight);
+
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+        scene.add(ambientLight);
+
+        // 动画循环
+        function animate(time) {
+            requestAnimationFrame(animate);
+            grass.update(time);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate(0);
+
+        // 事件监听
+        document.getElementById('windSpeed').addEventListener('input', function() {
+            document.getElementById('windValue').textContent = this.value;
+            grass.material.uniforms.uWindSpeed.value = parseFloat(this.value);
+        });
+
+        document.getElementById('grassHeight').addEventListener('input', function() {
+            document.getElementById('heightValue').textContent = this.value;
+            grass.material.uniforms.uGrassHeight.value = parseFloat(this.value);
+        });
+
+        document.getElementById('grassDensity').addEventListener('change', function() {
+            const density = parseInt(this.value);
+            document.getElementById('densityValue').textContent = density;
+            scene.remove(grass);
+            grass = new Grass(40, density);
+            scene.add(grass);
+        });
+
+        // 窗口大小调整
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // 暴露到window用于截图
+        window.scene = scene;
+        window.camera = camera;
+        window.renderer = renderer;
+    </script>
+
+    <!-- 截图支持脚本 -->
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

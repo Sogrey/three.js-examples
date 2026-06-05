@@ -1895,6 +1895,30 @@ const threejsData = {
               url: "examples/z258/shader-heatmapShader",
             },
             {
+              id: "shader-grassShader",
+              title: "草地着色器",
+              description: "使用顶点着色器实现程序化草地，包含风力摆动和云影效果",
+              thumbnail: "images/shader-grassShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-grassShader",
+            },
+            {
+              id: "shader-oceanShader",
+              title: "海面着色器",
+              description: "使用Three.js Water对象创建真实海面效果，包含反射、折射和波浪动画",
+              thumbnail: "images/shader-oceanShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-oceanShader",
+            },
+            {
+              id: "shader-tachnologyFloor",
+              title: "科技风地面",
+              description: "科技风格地面效果，包含网格、点阵和扩散光环着色器动画",
+              thumbnail: "images/shader-tachnologyFloor.jpg",
+              version: "r179",
+              url: "examples/z258/shader-tachnologyFloor",
+            },
+            {
               id: "shader-redRose",
               title: "红玫瑰",
               description:
