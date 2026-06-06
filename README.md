@@ -14,20 +14,20 @@
 
 A comprehensive collection of **221+ Three.js examples** covering a wide range of topics from basic geometries to advanced shaders, animations, and real-world applications. Built with **Three.js r179** using modern ES module imports.
 
-## 📊 Completion Statistics
+## 📊 Examples Statistics
 
-| Category | Total | Completed | Status |
-|----------|-------|-----------|--------|
-| Basic Examples | 36 | 36 | 100% ✅ |
-| Post-processing | 9 | 9 | 100% ✅ |
-| Particles | 22 | 19 | 86% |
-| Shaders | 84 | 71 | 85% |
-| Applications | 65 | 59 | 91% |
-| Animations | 15 | 13 | 87% |
-| Extensions | 11 | 11 | 100% ✅ |
-| Games | 3 | 1 | 33% |
-| Physics | 2 | 2 | 100% ✅ |
-| **Total** | **247** | **221** | **89%** |
+| Category | Count |
+|----------|-------|
+| Basic Examples | 36 |
+| Post-processing | 9 |
+| Particles | 19 |
+| Shaders | 71 |
+| Applications | 59 |
+| Animations | 13 |
+| Extensions | 11 |
+| Games | 1 |
+| Physics | 2 |
+| **Total** | **221** |
 
 ## 🚀 Quick Start
 
