@@ -29,7 +29,7 @@
         }
         #info {
             position: absolute;
-            top: 20px;
+            top: 180px;
             left: 20px;
             color: #fff;
             background: rgba(0, 0, 0, 0.7);
@@ -50,7 +50,7 @@
         }
         #controls {
             position: absolute;
-            top: 20px;
+            top: 50px;
             right: 20px;
             background: rgba(0, 0, 0, 0.8);
             padding: 20px;
@@ -100,8 +100,8 @@
 <body>
     <div id="canvas-container"></div>
     <div id="info">
-        <h1>高级着色器效果合集</h1>
-        <p>8种程序化着色器效果<br>使用 Simplex Noise、FBM、正弦波等技术<br>点击右侧面板切换效果</p>
+        <h1 id="effect-title">🔥 熔岩流体</h1>
+        <p id="effect-desc">基于 Simplex Noise 的程序化熔岩效果，顶点位移模拟岩浆涌动，裂缝发光增强真实感。三层噪声叠加产生自然纹理。</p>
     </div>
     <div id="controls">
         <h3>选择效果</h3>
@@ -226,6 +226,42 @@
                 return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
             }
         `;
+
+        // 效果描述数据
+        const effectDescriptions = {
+            lava: {
+                title: '🔥 熔岩流体',
+                desc: '基于 Simplex Noise 的程序化熔岩效果，顶点位移模拟岩浆涌动，裂缝发光增强真实感。三层噪声叠加产生自然纹理。'
+            },
+            aurora: {
+                title: '🌌 极光渐变',
+                desc: '多色极光流动效果，使用三角函数叠加实现色彩渐变，菲涅尔边缘光增强通透感，微光闪烁点缀表面。'
+            },
+            crystal: {
+                title: '💎 冰晶折射',
+                desc: '模拟冰晶内部折射效果，虹彩干涉着色配合闪烁高光，营造冰封宝石质感。透明度与霜冻边缘增强真实感。'
+            },
+            cyber: {
+                title: '⚡ 赛博朋克',
+                desc: '经典赛博朋克网格线，霓虹粉青配色，扫描线与电路纹脉冲动画。暗色基底上浮现闪烁的数字世界。'
+            },
+            plasma: {
+                title: '🌈 等离子体',
+                desc: '经典 Plasma 算法的三维化实现，多频正弦波叠加产生迷幻色彩流动，彩虹映射覆盖全色域。'
+            },
+            hologram: {
+                title: '✨ 全息水晶',
+                desc: '基于视角的全息彩虹着色，高密度闪烁粒子模拟水晶折射光斑，随视角改变颜色。'
+            },
+            rust: {
+                title: '🦾 金属锈蚀',
+                desc: 'FBM 分形噪声驱动锈蚀分布，金属高光与锈迹的混合 PBR 效果，缓慢演变的锈蚀扩散。'
+            },
+            nebula: {
+                title: '🌠 星云能量',
+                desc: '星云漫射与能量漩涡的融合，粒子星空点缀，深邃宇宙氛围渲染。多层噪声创造星云深度。'
+            }
+        };
 
         // 8种着色器效果
         const shaders = {
@@ -547,6 +583,13 @@
             currentMaterial = createMaterial(effectName);
             mesh = new THREE.Mesh(geometry, currentMaterial);
             scene.add(mesh);
+            
+            // 更新左侧面板描述
+            const info = effectDescriptions[effectName];
+            if (info) {
+                document.getElementById('effect-title').textContent = info.title;
+                document.getElementById('effect-desc').textContent = info.desc;
+            }
         }
 
         // 初始化
