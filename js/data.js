@@ -1991,6 +1991,15 @@ const threejsData = {
               url: "examples/z258/shader-modelBlendShader",
             },
             {
+              id: "shader-advancedEffects",
+              title: "高级着色器效果合集",
+              description:
+                "8种程序化着色器效果：熔岩流体、极光渐变、冰晶折射、赛博朋克、等离子体、全息水晶、金属锈蚀、星云能量，支持实时切换",
+              thumbnail: "images/shader-advancedEffects.jpg",
+              version: "r179",
+              url: "examples/z258/shader-advancedEffects",
+            },
+            {
               id: "particle-waveParticleShader",
               title: "波浪粒子",
               description: "展示波浪粒子效果，使用着色器实现动态波浪粒子动画",
