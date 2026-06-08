@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高级着色器效果合集 - Advanced Shader Effects</title>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../../libs/three/r179/build/three.module.js",
+                "three/addons/": "../../libs/three/r179/jsm/"
+            }
+        }
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            overflow: hidden;
+            background: #0a0a0a;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+        }
+        #info {
+            position: absolute;
+            top: 180px;
+            left: 20px;
+            width: 300px;
+            color: #fff;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px 20px;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        #info h1 {
+            font-size: 18px;
+            margin-bottom: 8px;
+            color: #00d4ff;
+        }
+        #info p {
+            font-size: 12px;
+            color: #aaa;
+            line-height: 1.5;
+        }
+        #controls {
+            position: absolute;
+            top: 50px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            min-width: 250px;
+        }
+        #controls h3 {
+            margin-bottom: 15px;
+            font-size: 14px;
+            color: #00d4ff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .effect-btn {
+            display: block;
+            width: 100%;
+            padding: 10px 15px;
+            margin-bottom: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 13px;
+            text-align: left;
+        }
+        .effect-btn:hover {
+            background: rgba(0, 212, 255, 0.2);
+            border-color: rgba(0, 212, 255, 0.5);
+        }
+        .effect-btn.active {
+            background: rgba(0, 212, 255, 0.3);
+            border-color: #00d4ff;
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+        }
+        .effect-btn .desc {
+            font-size: 10px;
+            color: #888;
+            margin-top: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+    <div id="info">
+        <h1 id="effect-title">🔥 熔岩流体</h1>
+        <p id="effect-desc">基于 Simplex Noise 的程序化熔岩效果，顶点位移模拟岩浆涌动，裂缝发光增强真实感。三层噪声叠加产生自然纹理。</p>
+    </div>
+    <div id="controls">
+        <h3>选择效果</h3>
+        <button class="effect-btn active" data-effect="lava">
+            🔥 熔岩流体
+            <div class="desc">Simplex Noise 驱动的岩浆涌动</div>
+        </button>
+        <button class="effect-btn" data-effect="aurora">
+            🌌 极光渐变
+            <div class="desc">多色流动与菲涅尔边缘光</div>
+        </button>
+        <button class="effect-btn" data-effect="crystal">
+            💎 冰晶折射
+            <div class="desc">虹彩干涉与闪烁高光</div>
+        </button>
+        <button class="effect-btn" data-effect="cyber">
+            ⚡ 赛博朋克
+            <div class="desc">霓虹网格与扫描线</div>
+        </button>
+        <button class="effect-btn" data-effect="plasma">
+            🌈 等离子体
+            <div class="desc">多频正弦波彩虹映射</div>
+        </button>
+        <button class="effect-btn" data-effect="hologram">
+            ✨ 全息水晶
+            <div class="desc">视角相关彩虹色</div>
+        </button>
+        <button class="effect-btn" data-effect="rust">
+            🦾 金属锈蚀
+            <div class="desc">FBM 分形噪声锈蚀</div>
+        </button>
+        <button class="effect-btn" data-effect="nebula">
+            🌠 星云能量
+            <div class="desc">星云漫射与能量漩涡</div>
+        </button>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // 场景设置
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a0a0a);
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 0, 3);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+
+        // Simplex Noise 3D 实现
+        const simplexNoise3D = `
+            vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+            vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+            vec4 permute(vec4 x) { return mod289(((x*34.0)+1.0)*x); }
+            vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
+
+            float snoise(vec3 v) {
+                const vec2 C = vec2(1.0/6.0, 1.0/3.0);
+                const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
+
+                vec3 i  = floor(v + dot(v, C.yyy));
+                vec3 x0 = v - i + dot(i, C.xxx);
+
+                vec3 g = step(x0.yzx, x0.xyz);
+                vec3 l = 1.0 - g;
+                vec3 i1 = min(g.xyz, l.zxy);
+                vec3 i2 = max(g.xyz, l.zxy);
+
+                vec3 x1 = x0 - i1 + C.xxx;
+                vec3 x2 = x0 - i2 + C.yyy;
+                vec3 x3 = x0 - D.yyy;
+
+                i = mod289(i);
+                vec4 p = permute(permute(permute(
+                    i.z + vec4(0.0, i1.z, i2.z, 1.0))
+                    + i.y + vec4(0.0, i1.y, i2.y, 1.0))
+                    + i.x + vec4(0.0, i1.x, i2.x, 1.0));
+
+                float n_ = 0.142857142857;
+                vec3 ns = n_ * D.wyz - D.xzx;
+
+                vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+
+                vec4 x_ = floor(j * ns.z);
+                vec4 y_ = floor(j - 7.0 * x_);
+
+                vec4 x = x_ *ns.x + ns.yyyy;
+                vec4 y = y_ *ns.x + ns.yyyy;
+                vec4 h = 1.0 - abs(x) - abs(y);
+
+                vec4 b0 = vec4(x.xy, y.xy);
+                vec4 b1 = vec4(x.zw, y.zw);
+
+                vec4 s0 = floor(b0)*2.0 + 1.0;
+                vec4 s1 = floor(b1)*2.0 + 1.0;
+                vec4 sh = -step(h, vec4(0.0));
+
+                vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy;
+                vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww;
+
+                vec3 p0 = vec3(a0.xy, h.x);
+                vec3 p1 = vec3(a0.zw, h.y);
+                vec3 p2 = vec3(a1.xy, h.z);
+                vec3 p3 = vec3(a1.zw, h.w);
+
+                vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2,p2), dot(p3,p3)));
+                p0 *= norm.x;
+                p1 *= norm.y;
+                p2 *= norm.z;
+                p3 *= norm.w;
+
+                vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+                m = m * m;
+                return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
+            }
+        `;
+
+        // 效果描述数据
+        const effectDescriptions = {
+            lava: {
+                title: '🔥 熔岩流体',
+                desc: '基于 Simplex Noise 的程序化熔岩效果，顶点位移模拟岩浆涌动，裂缝发光增强真实感。三层噪声叠加产生自然纹理。'
+            },
+            aurora: {
+                title: '🌌 极光渐变',
+                desc: '多色极光流动效果，使用三角函数叠加实现色彩渐变，菲涅尔边缘光增强通透感，微光闪烁点缀表面。'
+            },
+            crystal: {
+                title: '💎 冰晶折射',
+                desc: '模拟冰晶内部折射效果，虹彩干涉着色配合闪烁高光，营造冰封宝石质感。透明度与霜冻边缘增强真实感。'
+            },
+            cyber: {
+                title: '⚡ 赛博朋克',
+                desc: '经典赛博朋克网格线，霓虹粉青配色，扫描线与电路纹脉冲动画。暗色基底上浮现闪烁的数字世界。'
+            },
+            plasma: {
+                title: '🌈 等离子体',
+                desc: '经典 Plasma 算法的三维化实现，多频正弦波叠加产生迷幻色彩流动，彩虹映射覆盖全色域。'
+            },
+            hologram: {
+                title: '✨ 全息水晶',
+                desc: '基于视角的全息彩虹着色，高密度闪烁粒子模拟水晶折射光斑，随视角改变颜色。'
+            },
+            rust: {
+                title: '🦾 金属锈蚀',
+                desc: 'FBM 分形噪声驱动锈蚀分布，金属高光与锈迹的混合 PBR 效果，缓慢演变的锈蚀扩散。'
+            },
+            nebula: {
+                title: '🌠 星云能量',
+                desc: '星云漫射与能量漩涡的融合，粒子星空点缀，深邃宇宙氛围渲染。多层噪声创造星云深度。'
+            }
+        };
+
+        // 8种着色器效果
+        const shaders = {
+            // 1. 熔岩流体
+            lava: {
+                vertexShader: `
+                    uniform float uTime;
+                    varying vec3 vPosition;
+                    varying vec3 vNormal;
+                    ${simplexNoise3D}
+                    void main() {
+                        vPosition = position;
+                        vNormal = normal;
+                        float displacement = snoise(position * 1.5 + uTime * 0.3) * 0.15;
+                        vec3 newPos = position + normal * displacement;
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(newPos, 1.0);
+                    }
+                `,
+                fragmentShader: `
+                    uniform float uTime;
+                    varying vec3 vPosition;
+                    varying vec3 vNormal;
+                    ${simplexNoise3D}
+                    void main() {
+                        float n1 = snoise(vPosition * 2.0 + uTime * 0.2);
+                        float n2 = snoise(vPosition * 4.0 - uTime * 0.15);
+                        float n3 = snoise(vPosition * 8.0 + uTime * 0.1);
+                        float noise = n1 * 0.5 + n2 * 0.3 + n3 * 0.2;
+                        
+                        vec3 lavaColor = vec3(0.8, 0.2, 0.0);
+                        vec3 darkColor = vec3(0.2, 0.05, 0.0);
+                        vec3 color = mix(darkColor, lavaColor, noise * 0.5 + 0.5);
+                        
+                        float crack = abs(snoise(vPosition * 6.0 + uTime * 0.2));
+                        crack = smoothstep(0.02, 0.0, crack);
+                        color += vec3(1.0, 0.9, 0.5) * crack * 3.0;
+                        
+                        gl_FragColor = vec4(color, 1.0);
+                    }
+                `
+            },
+            // 2. 极光渐变
+            aurora: {
+                vertexShader: `
+                    varying vec3 vPosition;
+                    varying vec3 vNormal;
+                    void main() {
+                        vPosition = position;
+                        vNormal = normal;
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                    }
+                `,
+                fragmentShader: `
+                    uniform float uTime;
+                    varying vec3 vPosition;
+                    varying vec3 vNormal;
+                    ${simplexNoise3D}
+                    void main() {
+                        float n1 = snoise(vPosition * 3.0 + uTime * 0.2);
+                        float n2 = snoise(vPosition * 6.0 - uTime * 0.15);
+                        float n3 = snoise(vPosition * 12.0 + uTime * 0.1);
+                        
+                        vec3 color1 = vec3(0.0, 0.8, 0.4);
+                        vec3 color2 = vec3(0.0, 0.4, 1.0);
+                        vec3 color3 = vec3(0.8, 0.0, 0.8);
+                        
+                        float mixer = n1 * 0.4 + n2 * 0.3 + n3 * 0.3;
+                        vec3 color = mix(color1, color2, smoothstep(0.0, 0.33, mixer));
+                        color = mix(color, color3, smoothstep(0.33, 0.66, mixer));
+                        
+                        float shimmer = sin(vPosition.x * 20.0 + uTime * 3.0) 
+                                      * sin(vPosition.y * 20.0 + uTime * 2.0);
+                        color += shimmer * 0.1;
+                        
+                        gl_FragColor = vec4(color, 1.0);
+                    }
+                `
+            },
+            // 3. 冰晶折射
+            crystal: {
+                vertexShader: `
+                    varying vec3 vPosition;
+                    varying vec3 vNormal;
+                    void main() {
+                        vPosition = position;
+                        vNormal = normal;
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                    }
+                `,
+                fragmentShader: `
+                    uniform float uTime;
+                    uniform vec3 uCameraPosition;
+                    varying vec3 vPosition;
+                    varying vec3 vNormal;
+                    void main() {
+                        vec3 viewDir = normalize(uCameraPosition - vPosition);
+                        float iri = dot(vNormal, viewDir);
+                        
+                        vec3 iriColor = vec3(
+                            sin(iri * 6.0 + uTime) * 0.5 + 0.5,
+                            sin(iri * 6.0 + uTime + 2.094) * 0.5 + 0.5,
+                            sin(iri * 6.0 + uTime + 4.189) * 0.5 + 0.5
+                        );
+                        
+                        float sparkle = pow(max(
+                            sin(vPosition.x*50.0+uTime) * sin(vPosition.y*50.0-uTime) 
+                            * sin(vPosition.z*50.0+uTime), 0.0), 20.0);
+                        
+                        vec3 color = iriColor * 0.7 + vec3(sparkle);
+                        gl_FragColor = vec4(color, 0.9);
+                    }
+                `
+            },
+            // 4. 赛博朋克
+            cyber: {
+                vertexShader: `
+                    varying vec3 vPosition;
+                    void main() {
+                        vPosition = position;
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                    }
+                `,
+                fragmentShader: `
+                    uniform float uTime;
+                    varying vec3 vPosition;
+                    void main() {
+                        float gridX = abs(sin(vPosition.x * 20.0));
+                        float gridY = abs(sin(vPosition.y * 20.0));
+                        float gridZ = abs(sin(vPosition.z * 20.0));
+                        float gridLine = 1.0 - smoothstep(0.0, 0.05, min(gridX, min(gridY, gridZ)));
+                        
+                        float scanLine = smoothstep(0.48, 0.5, fract(vPosition.y * 5.0 - uTime * 0.5));
+                        scanLine *= smoothstep(0.52, 0.5, fract(vPosition.y * 5.0 - uTime * 0.5));
+                        
+                        vec3 gridColor = vec3(0.0, 1.0, 1.0);
+                        vec3 scanColor = vec3(1.0, 0.0, 0.5);
+                        
+                        vec3 color = vec3(0.05, 0.05, 0.1);
+                        color += gridColor * gridLine * 0.8;
+                        color += scanColor * scanLine;
+                        
+                        gl_FragColor = vec4(color, 1.0);
+                    }
+                `
+            },
+            // 5. 等离子体
+            plasma: {
+                vertexShader: `
+                    varying vec3 vPosition;
+                    void main() {
+                        vPosition = position;
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                    }
+                `,
+                fragmentShader: `
+                    uniform float uTime;
+                    varying vec3 vPosition;
+                    #define PI 3.14159265359
+                    void main() {
+                        float t = uTime;
+                        float v1 = sin(vPosition.x * 5.0 + t);
+                        float v2 = sin(vPosition.y * 5.0 + t * 1.1);
+                        float v3 = sin(vPosition.z * 5.0 + t * 0.9);
+                        float v4 = sin((vPosition.x+vPosition.y+vPosition.z) * 3.0 + t * 0.7);
+                        float v5 = sin(length(vPosition) * 8.0 - t * 2.0);
+                        float v = (v1+v2+v3+v4+v5) * 0.2;
+                        
+                        vec3 color;
+                        color.r = sin(v * PI + 0.0) * 0.5 + 0.5;
+                        color.g = sin(v * PI + 2.094) * 0.5 + 0.5;
+                        color.b = sin(v * PI + 4.189) * 0.5 + 0.5;
+                        
+                        gl_FragColor = vec4(color, 1.0);
+                    }
+                `
+            },
+            // 6. 全息水晶
+            hologram: {
+                vertexShader: `
+                    varying vec3 vPosition;
+                    varying vec3 vNormal;
+                    void main() {
+                        vPosition = position;
+                        vNormal = normal;
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                    }
+                `,
+                fragmentShader: `
+                    uniform float uTime;
+                    uniform vec3 uCameraPosition;
+                    varying vec3 vPosition;
+                    varying vec3 vNormal;
+                    void main() {
+                        vec3 viewDir = normalize(uCameraPosition - vPosition);
+                        float angle = dot(vNormal, viewDir);
+                        
+                        vec3 rainbow;
+                        rainbow.r = sin(angle * 8.0 + uTime * 2.0) * 0.5 + 0.5;
+                        rainbow.g = sin(angle * 8.0 + uTime * 2.0 + 2.094) * 0.5 + 0.5;
+                        rainbow.b = sin(angle * 8.0 + uTime * 2.0 + 4.189) * 0.5 + 0.5;
+                        
+                        float sparkle = pow(max(
+                            sin(vPosition.x*40.0+uTime*5.0) * sin(vPosition.y*40.0-uTime*3.0) 
+                            * sin(vPosition.z*40.0+uTime*4.0), 0.0), 30.0);
+                        
+                        vec3 color = rainbow * 0.6 + vec3(sparkle);
+                        gl_FragColor = vec4(color, 0.85);
+                    }
+                `
+            },
+            // 7. 金属锈蚀
+            rust: {
+                vertexShader: `
+                    varying vec3 vPosition;
+                    varying vec3 vNormal;
+                    void main() {
+                        vPosition = position;
+                        vNormal = normal;
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                    }
+                `,
+                fragmentShader: `
+                    uniform float uTime;
+                    varying vec3 vPosition;
+                    varying vec3 vNormal;
+                    ${simplexNoise3D}
+                    
+                    float fbm(vec3 p) {
+                        float f = 0.0;
+                        f += 0.5 * snoise(p); p *= 2.01;
+                        f += 0.25 * snoise(p); p *= 2.02;
+                        f += 0.125 * snoise(p); p *= 2.03;
+                        f += 0.0625 * snoise(p);
+                        return f;
+                    }
+                    
+                    void main() {
+                        float rustPattern = fbm(vPosition * 4.0 + uTime * 0.05);
+                        rustPattern = smoothstep(0.3, 0.7, rustPattern);
+                        
+                        vec3 metalColor = vec3(0.72, 0.73, 0.75);
+                        vec3 rustColor = vec3(0.55, 0.27, 0.07);
+                        
+                        vec3 color = mix(metalColor, rustColor, rustPattern);
+                        
+                        vec3 lightDir = normalize(vec3(1.0, 1.0, 1.0));
+                        float diff = max(dot(vNormal, lightDir), 0.0);
+                        color *= (0.3 + diff * 0.7);
+                        
+                        gl_FragColor = vec4(color, 1.0);
+                    }
+                `
+            },
+            // 8. 星云能量
+            nebula: {
+                vertexShader: `
+                    varying vec3 vPosition;
+                    void main() {
+                        vPosition = position;
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                    }
+                `,
+                fragmentShader: `
+                    uniform float uTime;
+                    varying vec3 vPosition;
+                    ${simplexNoise3D}
+                    void main() {
+                        float n1 = snoise(vPosition * 2.0 + uTime * 0.1);
+                        float n2 = snoise(vPosition * 4.0 - uTime * 0.15);
+                        float n3 = snoise(vPosition * 8.0 + uTime * 0.2);
+                        
+                        vec3 deepPurple = vec3(0.1, 0.0, 0.2);
+                        vec3 nebulaPink = vec3(0.8, 0.2, 0.6);
+                        vec3 nebulaBlue = vec3(0.2, 0.4, 1.0);
+                        
+                        float nebula = n1 * 0.5 + n2 * 0.3 + n3 * 0.2;
+                        vec3 color = mix(deepPurple, nebulaPink, 
+                            smoothstep(0.3, 0.6, nebula));
+                        color = mix(color, nebulaBlue, 
+                            smoothstep(0.4, 0.7, nebula) * 0.7);
+                        
+                        float swirl = sin(atan(vPosition.z, vPosition.x) * 5.0 
+                            + length(vPosition.xy) * 10.0 - uTime * 3.0);
+                        swirl = pow(max(swirl, 0.0), 3.0);
+                        color += vec3(0.5, 0.8, 1.0) * swirl;
+                        
+                        gl_FragColor = vec4(color, 1.0);
+                    }
+                `
+            }
+        };
+
+        // 创建球体
+        const geometry = new THREE.SphereGeometry(1.5, 128, 128);
+        let currentMaterial = null;
+        let mesh = null;
+
+        function createMaterial(effectName) {
+            const shader = shaders[effectName];
+            return new THREE.ShaderMaterial({
+                uniforms: {
+                    uTime: { value: 0 },
+                    uCameraPosition: { value: camera.position }
+                },
+                vertexShader: shader.vertexShader,
+                fragmentShader: shader.fragmentShader,
+                transparent: effectName === 'crystal' || effectName === 'hologram',
+                side: THREE.DoubleSide
+            });
+        }
+
+        function switchEffect(effectName) {
+            if (mesh) {
+                scene.remove(mesh);
+                mesh.geometry.dispose();
+                mesh.material.dispose();
+            }
+            
+            currentMaterial = createMaterial(effectName);
+            mesh = new THREE.Mesh(geometry, currentMaterial);
+            scene.add(mesh);
+            
+            // 更新左侧面板描述
+            const info = effectDescriptions[effectName];
+            if (info) {
+                document.getElementById('effect-title').textContent = info.title;
+                document.getElementById('effect-desc').textContent = info.desc;
+            }
+        }
+
+        // 初始化
+        switchEffect('lava');
+
+        // 按钮事件
+        document.querySelectorAll('.effect-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.effect-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                switchEffect(btn.dataset.effect);
+            });
+        });
+
+        // 动画循环
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            const elapsedTime = clock.getElapsedTime();
+            
+            if (currentMaterial) {
+                currentMaterial.uniforms.uTime.value = elapsedTime;
+                currentMaterial.uniforms.uCameraPosition.value = camera.position;
+            }
+            
+            if (mesh) {
+                mesh.rotation.y = elapsedTime * 0.1;
+            }
+            
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // 窗口大小调整
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // 暴露到 window 用于截图
+        window.scene = scene;
+        window.camera = camera;
+        window.renderer = renderer;
+
+        // 截图功能 - 监听来自父窗口的截图请求
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                try {
+                    // 强制渲染一帧
+                    if (window.scene && window.camera && window.renderer) {
+                        window.renderer.render(window.scene, window.camera);
+                    }
+                    
+                    const quality = event.data.quality || 0.8;
+                    const canvas = window.renderer.domElement;
+                    
+                    // 创建临时画布进行缩放
+                    const tempCanvas = document.createElement('canvas');
+                    const maxSize = 600;
+                    const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                    tempCanvas.width = Math.floor(canvas.width * scale);
+                    tempCanvas.height = Math.floor(canvas.height * scale);
+                    
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                    
+                    const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                    window.parent.postMessage({ type: 'screenshot-data', dataUrl: dataUrl }, '*');
+                } catch (error) {
+                    console.error('截图失败:', error);
+                    window.parent.postMessage({ type: 'screenshot-error', error: error.message }, '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
