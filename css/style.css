@@ -109,7 +109,9 @@ header {
 
 /* 左侧边栏 */
 .sidebar {
-    width: 280px;
+    width: 300px;
+    min-width: 300px;
+    max-width: 300px;
     background-color: var(--sidebar-bg);
     color: var(--text-light);
     padding: 1.5rem 1rem;
@@ -444,14 +446,29 @@ footer {
     .main-content {
         flex-direction: column;
     }
-    
+
     .sidebar {
         width: 100%;
         max-height: 300px;
     }
-    
+
     .examples-grid {
         grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* 平板横向布局 (769px - 992px) */
+@media (max-width: 992px) and (min-width: 769px) {
+    .main-content {
+        flex-direction: row;
+    }
+
+    .sidebar {
+        width: 260px;
+        min-width: 260px;
+        max-width: 260px;
+        max-height: none;
+        height: 100%;
     }
 }
 
