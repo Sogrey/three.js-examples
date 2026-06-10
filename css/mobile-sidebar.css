@@ -1,0 +1,264 @@
+/* 移动端侧边栏样式 */
+
+/* 移动端切换按钮 - 默认隐藏 */
+.sidebar-toggle {
+    display: none;
+    position: fixed;
+    left: 1rem;
+    bottom: 1.5rem;
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, var(--secondary-color), var(--accent-color));
+    color: white;
+    border: none;
+    border-radius: 50%;
+    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+    cursor: pointer;
+    z-index: 1001;
+    font-size: 1.5rem;
+    transition: all 0.3s ease;
+    align-items: center;
+    justify-content: center;
+}
+
+.sidebar-toggle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(52, 152, 219, 0.5);
+}
+
+.sidebar-toggle:active {
+    transform: scale(0.95);
+}
+
+/* 遮罩层 */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 998;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.sidebar-overlay.active {
+    display: block;
+    opacity: 1;
+}
+
+/* 侧边栏头部 */
+.sidebar-header {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 1rem;
+}
+
+.sidebar-header h3 {
+    color: var(--text-light);
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.sidebar-close {
+    background: transparent;
+    border: none;
+    color: var(--text-light);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: background-color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+}
+
+.sidebar-close:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+    /* 显示切换按钮 */
+    .sidebar-toggle {
+        display: flex;
+    }
+
+    /* 侧边栏改为悬浮抽屉样式 */
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 280px !important;
+        min-width: 280px !important;
+        max-width: 280px !important;
+        height: 100vh !important;
+        max-height: 100vh !important;
+        min-height: 100vh !important;
+        z-index: 999;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+        padding-top: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .sidebar.active {
+        transform: translateX(0);
+    }
+
+    /* 显示侧边栏头部 */
+    .sidebar-header {
+        display: flex;
+        flex-shrink: 0;
+    }
+
+    /* 分类树容器 */
+    .category-tree {
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+        height: calc(100vh - 70px);
+        margin-bottom: 0;
+        padding-bottom: 1rem;
+    }
+
+    /* 主内容区域占满全宽 */
+    .examples-container {
+        padding: 1rem;
+    }
+
+    /* 网格布局改为单列 */
+    .examples-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    /* 头部适配 */
+    header {
+        flex-direction: column;
+        padding: 0.75rem 1rem;
+        height: auto;
+        min-height: var(--header-height);
+    }
+
+    .logo {
+        margin-bottom: 0.75rem;
+    }
+
+    .logo h1 {
+        font-size: 1.4rem;
+    }
+
+    .search-bar {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    /* 调整主内容区域 */
+    .main-content {
+        margin-top: calc(var(--header-height) + 60px);
+    }
+
+    /* 分类标题调整 */
+    .category-title h2 {
+        font-size: 1.5rem;
+    }
+
+    /* 卡片样式调整 */
+    .example-card .thumbnail {
+        height: 180px;
+    }
+
+    /* 页脚调整 */
+    footer {
+        padding: 1rem;
+        font-size: 0.85rem;
+    }
+}
+
+/* 平板适配 (769px - 992px) */
+@media (max-width: 992px) and (min-width: 769px) {
+    .sidebar {
+        width: 260px;
+        min-width: 260px;
+        max-width: 260px;
+        height: 100%;
+        overflow-y: auto;
+    }
+
+    .category-tree {
+        margin-bottom: 0;
+        padding-bottom: 1rem;
+    }
+
+    .examples-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .main-content {
+        height: calc(100vh - var(--header-height));
+    }
+}
+
+/* 小屏手机适配 */
+@media (max-width: 480px) {
+    .sidebar {
+        width: 260px !important;
+        min-width: 260px !important;
+        max-width: 260px !important;
+    }
+
+    .logo h1 {
+        font-size: 1.2rem;
+    }
+
+    .category-title h2 {
+        font-size: 1.3rem;
+    }
+
+    .example-card .thumbnail {
+        height: 160px;
+    }
+
+    .example-card .title {
+        font-size: 1.1rem;
+    }
+
+    .example-card .description {
+        font-size: 0.85rem;
+    }
+}
+
+/* 防止 body 滚动当侧边栏打开时 */
+body.sidebar-open {
+    overflow: hidden;
+}
+
+/* 侧边栏滚动条样式 */
+.sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
