@@ -265,9 +265,25 @@ function hideLoading() {
     }
 }
 
+// 白名单路径 - 这些路径下的文件直接放行，不检查404
+const WHITELIST_PATHS = [
+    'codesandbox/'
+];
+
+// 检查是否为白名单路径
+function isWhitelistedPath(url) {
+    if (!url) return false;
+    return WHITELIST_PATHS.some(path => url.includes(path));
+}
+
 // 检查是否为404页面
 function checkIf404Page() {
     try {
+        // 如果是白名单路径，直接返回false（不视为404）
+        if (isWhitelistedPath(exampleUrl)) {
+            return false;
+        }
+        
         // 尝试访问iframe内容
         const iframeDoc = exampleFrame.contentDocument || exampleFrame.contentWindow.document;
         const title = iframeDoc.title || iframeDoc.querySelector('title')?.textContent || '';
