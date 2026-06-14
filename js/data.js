@@ -1,5 +1,5 @@
 // Three.js 示例数据
-// 
+//
 // 文件说明：
 // - 基于分类结果重新组织的分类结构
 // - 包含18个主要分类，按学习路径和技术领域组织
@@ -28,6467 +28,6211 @@
 // 生成时间: 2026-06-09T16:41:42.671Z
 
 const threejsData = {
-  "categories": [
+  categories: [
     {
-      "id": "基础入门",
-      "name": "1. 基础入门",
-      "icon": "bi-box",
-      "subcategories": [
+      id: "基础入门",
+      name: "1. 基础入门",
+      icon: "bi-box",
+      subcategories: [
         {
-          "id": "基础入门-1.1-几何体",
-          "name": "1.1 几何体",
-          "examples": [
+          id: "基础入门-1.1-几何体",
+          name: "1.1 几何体",
+          examples: [
             {
-              "id": "basic-geometry-cube",
-              "title": "立方体",
-              "description": "创建一个简单的立方体，并添加基本的旋转动画",
-              "thumbnail": "images/basic-geometry-cube.jpg",
-              "version": "r179",
-              "url": "examples/basic-geometry-cube",
-              "features": {
-                "coreTech": "BoxGeometry, MeshStandardMaterial, GUI参数控制",
-                "secondaryTech": "分段数控制, 材质属性(metalness/roughness), 线框模式",
-                "difficulty": "入门",
-                "actualFunction": "创建立方体,可调整尺寸/分段数/材质属性,支持线框模式",
-                "suggestedCategory": "1. 基础入门 > 1.2 几何体",
-                "filePath": "examples/basic-geometry-cube.html",
-                "notes": "最基础的几何体示例,代码结构清晰,注释详尽"
-              }
+              id: "basic-geometry-cube",
+              title: "立方体",
+              description: "创建一个简单的立方体，并添加基本的旋转动画",
+              thumbnail: "images/basic-geometry-cube.jpg",
+              version: "r179",
+              url: "examples/basic-geometry-cube",
+              features: {
+                coreTech: "BoxGeometry, MeshStandardMaterial, GUI参数控制",
+                secondaryTech:
+                  "分段数控制, 材质属性(metalness/roughness), 线框模式",
+                difficulty: "入门",
+                actualFunction:
+                  "创建立方体,可调整尺寸/分段数/材质属性,支持线框模式",
+                suggestedCategory: "1. 基础入门 > 1.2 几何体",
+                filePath: "examples/basic-geometry-cube.html",
+                notes: "最基础的几何体示例,代码结构清晰,注释详尽",
+              },
             },
             {
-              "id": "basic-geometry-sphere",
-              "title": "球体",
-              "description": "创建一个带有纹理的球体，模拟行星效果",
-              "thumbnail": "images/basic-geometry-sphere.jpg",
-              "version": "r179",
-              "url": "examples/basic-geometry-sphere",
-              "features": {
-                "coreTech": "SphereGeometry, TextureLoader, 纹理贴图",
-                "secondaryTech": "地球纹理加载, 材质与纹理混合, 自动旋转控制",
-                "difficulty": "入门",
-                "actualFunction": "创建带纹理的球体,模拟行星效果,使用真实地球纹理",
-                "suggestedCategory": "1. 基础入门 > 1.2 几何体",
-                "filePath": "examples/basic-geometry-sphere.html",
-                "notes": "展示了纹理加载和应用的完整流程"
-              }
+              id: "basic-geometry-sphere",
+              title: "球体",
+              description: "创建一个带有纹理的球体，模拟行星效果",
+              thumbnail: "images/basic-geometry-sphere.jpg",
+              version: "r179",
+              url: "examples/basic-geometry-sphere",
+              features: {
+                coreTech: "SphereGeometry, TextureLoader, 纹理贴图",
+                secondaryTech: "地球纹理加载, 材质与纹理混合, 自动旋转控制",
+                difficulty: "入门",
+                actualFunction:
+                  "创建带纹理的球体,模拟行星效果,使用真实地球纹理",
+                suggestedCategory: "1. 基础入门 > 1.2 几何体",
+                filePath: "examples/basic-geometry-sphere.html",
+                notes: "展示了纹理加载和应用的完整流程",
+              },
             },
             {
-              "id": "basic-geometry-cylinder",
-              "title": "圆柱体",
-              "description": "创建一个带有渐变材质的圆柱体，展示不同参数效果",
-              "thumbnail": "images/basic-geometry-cylinder.jpg",
-              "version": "r179",
-              "url": "examples/basic-geometry-cylinder",
-              "features": {
-                "coreTech": "CylinderGeometry, MeshStandardMaterial",
-                "secondaryTech": "双光源照明, 参数化控制(半径/高度/分段数/开放端)",
-                "difficulty": "入门",
-                "actualFunction": "创建圆柱体,可调整顶部/底部半径形成锥台,支持开放端",
-                "suggestedCategory": "1. 基础入门 > 1.2 几何体",
-                "filePath": "examples/basic-geometry-cylinder.html",
-                "notes": "展示了圆柱体的完整参数控制,包括锥台效果"
-              }
+              id: "basic-geometry-cylinder",
+              title: "圆柱体",
+              description: "创建一个带有渐变材质的圆柱体，展示不同参数效果",
+              thumbnail: "images/basic-geometry-cylinder.jpg",
+              version: "r179",
+              url: "examples/basic-geometry-cylinder",
+              features: {
+                coreTech: "CylinderGeometry, MeshStandardMaterial",
+                secondaryTech:
+                  "双光源照明, 参数化控制(半径/高度/分段数/开放端)",
+                difficulty: "入门",
+                actualFunction:
+                  "创建圆柱体,可调整顶部/底部半径形成锥台,支持开放端",
+                suggestedCategory: "1. 基础入门 > 1.2 几何体",
+                filePath: "examples/basic-geometry-cylinder.html",
+                notes: "展示了圆柱体的完整参数控制,包括锥台效果",
+              },
             },
             {
-              "id": "basic-geometry-torus",
-              "title": "圆环",
-              "description": "创建一个带有金属材质的圆环，展示光照效果",
-              "thumbnail": "images/basic-geometry-torus.jpg",
-              "version": "r179",
-              "url": "examples/basic-geometry-torus",
-              "features": {
-                "coreTech": "Geometry, MeshStandardMaterial",
-                "secondaryTech": "参数化控制, GUI交互",
-                "difficulty": "入门",
-                "actualFunction": "创建一个带有金属材质的圆环，展示光照效果",
-                "suggestedCategory": "1. 基础入门 > 1.2 几何体",
-                "filePath": "examples/examples/basic-geometry-torus",
-                "notes": "基础几何体示例 (自动推断)"
-              }
+              id: "basic-geometry-torus",
+              title: "圆环",
+              description: "创建一个带有金属材质的圆环，展示光照效果",
+              thumbnail: "images/basic-geometry-torus.jpg",
+              version: "r179",
+              url: "examples/basic-geometry-torus",
+              features: {
+                coreTech: "Geometry, MeshStandardMaterial",
+                secondaryTech: "参数化控制, GUI交互",
+                difficulty: "入门",
+                actualFunction: "创建一个带有金属材质的圆环，展示光照效果",
+                suggestedCategory: "1. 基础入门 > 1.2 几何体",
+                filePath: "examples/examples/basic-geometry-torus",
+                notes: "基础几何体示例 (自动推断)",
+              },
             },
             {
-              "id": "basic-geometry-tetrahedron",
-              "title": "正四面体",
-              "description": "创建一个正四面体，展示基本多面体几何形状",
-              "thumbnail": "images/basic-geometry-tetrahedron.jpg",
-              "version": "r179",
-              "url": "examples/basic-geometry-tetrahedron",
-              "features": {
-                "coreTech": "Geometry, MeshStandardMaterial",
-                "secondaryTech": "参数化控制, GUI交互",
-                "difficulty": "入门",
-                "actualFunction": "创建一个正四面体，展示基本多面体几何形状",
-                "suggestedCategory": "1. 基础入门 > 1.2 几何体",
-                "filePath": "examples/examples/basic-geometry-tetrahedron",
-                "notes": "基础几何体示例 (自动推断)"
-              }
+              id: "basic-geometry-tetrahedron",
+              title: "正四面体",
+              description: "创建一个正四面体，展示基本多面体几何形状",
+              thumbnail: "images/basic-geometry-tetrahedron.jpg",
+              version: "r179",
+              url: "examples/basic-geometry-tetrahedron",
+              features: {
+                coreTech: "Geometry, MeshStandardMaterial",
+                secondaryTech: "参数化控制, GUI交互",
+                difficulty: "入门",
+                actualFunction: "创建一个正四面体，展示基本多面体几何形状",
+                suggestedCategory: "1. 基础入门 > 1.2 几何体",
+                filePath: "examples/examples/basic-geometry-tetrahedron",
+                notes: "基础几何体示例 (自动推断)",
+              },
             },
             {
-              "id": "basic-geometry-octahedron",
-              "title": "正八面体",
-              "description": "创建一个正八面体，展示对称多面体结构",
-              "thumbnail": "images/basic-geometry-octahedron.jpg",
-              "version": "r179",
-              "url": "examples/basic-geometry-octahedron",
-              "features": {
-                "coreTech": "Geometry, MeshStandardMaterial",
-                "secondaryTech": "参数化控制, GUI交互",
-                "difficulty": "入门",
-                "actualFunction": "创建一个正八面体，展示对称多面体结构",
-                "suggestedCategory": "1. 基础入门 > 1.2 几何体",
-                "filePath": "examples/examples/basic-geometry-octahedron",
-                "notes": "基础几何体示例 (自动推断)"
-              }
+              id: "basic-geometry-octahedron",
+              title: "正八面体",
+              description: "创建一个正八面体，展示对称多面体结构",
+              thumbnail: "images/basic-geometry-octahedron.jpg",
+              version: "r179",
+              url: "examples/basic-geometry-octahedron",
+              features: {
+                coreTech: "Geometry, MeshStandardMaterial",
+                secondaryTech: "参数化控制, GUI交互",
+                difficulty: "入门",
+                actualFunction: "创建一个正八面体，展示对称多面体结构",
+                suggestedCategory: "1. 基础入门 > 1.2 几何体",
+                filePath: "examples/examples/basic-geometry-octahedron",
+                notes: "基础几何体示例 (自动推断)",
+              },
             },
             {
-              "id": "basic-geometry-dodecahedron",
-              "title": "正十二面体",
-              "description": "创建一个正十二面体，展示复杂多面体结构",
-              "thumbnail": "images/basic-geometry-dodecahedron.jpg",
-              "version": "r179",
-              "url": "examples/basic-geometry-dodecahedron",
-              "features": {
-                "coreTech": "Geometry, MeshStandardMaterial",
-                "secondaryTech": "参数化控制, GUI交互",
-                "difficulty": "入门",
-                "actualFunction": "创建一个正十二面体，展示复杂多面体结构",
-                "suggestedCategory": "1. 基础入门 > 1.2 几何体",
-                "filePath": "examples/examples/basic-geometry-dodecahedron",
-                "notes": "基础几何体示例 (自动推断)"
-              }
+              id: "basic-geometry-dodecahedron",
+              title: "正十二面体",
+              description: "创建一个正十二面体，展示复杂多面体结构",
+              thumbnail: "images/basic-geometry-dodecahedron.jpg",
+              version: "r179",
+              url: "examples/basic-geometry-dodecahedron",
+              features: {
+                coreTech: "Geometry, MeshStandardMaterial",
+                secondaryTech: "参数化控制, GUI交互",
+                difficulty: "入门",
+                actualFunction: "创建一个正十二面体，展示复杂多面体结构",
+                suggestedCategory: "1. 基础入门 > 1.2 几何体",
+                filePath: "examples/examples/basic-geometry-dodecahedron",
+                notes: "基础几何体示例 (自动推断)",
+              },
             },
             {
-              "id": "basic-geometry-icosahedron",
-              "title": "正二十面体",
-              "description": "创建一个正二十面体，展示高复杂度多面体",
-              "thumbnail": "images/basic-geometry-icosahedron.jpg",
-              "version": "r179",
-              "url": "examples/basic-geometry-icosahedron",
-              "features": {
-                "coreTech": "Geometry, MeshStandardMaterial",
-                "secondaryTech": "参数化控制, GUI交互",
-                "difficulty": "入门",
-                "actualFunction": "创建一个正二十面体，展示高复杂度多面体",
-                "suggestedCategory": "1. 基础入门 > 1.2 几何体",
-                "filePath": "examples/examples/basic-geometry-icosahedron",
-                "notes": "基础几何体示例 (自动推断)"
-              }
+              id: "basic-geometry-icosahedron",
+              title: "正二十面体",
+              description: "创建一个正二十面体，展示高复杂度多面体",
+              thumbnail: "images/basic-geometry-icosahedron.jpg",
+              version: "r179",
+              url: "examples/basic-geometry-icosahedron",
+              features: {
+                coreTech: "Geometry, MeshStandardMaterial",
+                secondaryTech: "参数化控制, GUI交互",
+                difficulty: "入门",
+                actualFunction: "创建一个正二十面体，展示高复杂度多面体",
+                suggestedCategory: "1. 基础入门 > 1.2 几何体",
+                filePath: "examples/examples/basic-geometry-icosahedron",
+                notes: "基础几何体示例 (自动推断)",
+              },
             },
             {
-              "id": "basic-geometry-ring",
-              "title": "环平面",
-              "description": "创建一个环形平面，可调整内外半径和分段数",
-              "thumbnail": "images/basic-geometry-ring.jpg",
-              "version": "r179",
-              "url": "examples/basic-geometry-ring",
-              "features": {
-                "coreTech": "Geometry, MeshStandardMaterial",
-                "secondaryTech": "参数化控制, GUI交互",
-                "difficulty": "入门",
-                "actualFunction": "创建一个环形平面，可调整内外半径和分段数",
-                "suggestedCategory": "1. 基础入门 > 1.2 几何体",
-                "filePath": "examples/examples/basic-geometry-ring",
-                "notes": "基础几何体示例 (自动推断)"
-              }
+              id: "basic-geometry-ring",
+              title: "环平面",
+              description: "创建一个环形平面，可调整内外半径和分段数",
+              thumbnail: "images/basic-geometry-ring.jpg",
+              version: "r179",
+              url: "examples/basic-geometry-ring",
+              features: {
+                coreTech: "Geometry, MeshStandardMaterial",
+                secondaryTech: "参数化控制, GUI交互",
+                difficulty: "入门",
+                actualFunction: "创建一个环形平面，可调整内外半径和分段数",
+                suggestedCategory: "1. 基础入门 > 1.2 几何体",
+                filePath: "examples/examples/basic-geometry-ring",
+                notes: "基础几何体示例 (自动推断)",
+              },
             },
             {
-              "id": "basic-geometry-plane",
-              "title": "矩形平面",
-              "description": "创建一个矩形平面，可调整宽度、高度和分段数",
-              "thumbnail": "images/basic-geometry-plane.jpg",
-              "version": "r179",
-              "url": "examples/basic-geometry-plane",
-              "features": {
-                "coreTech": "Geometry, MeshStandardMaterial",
-                "secondaryTech": "参数化控制, GUI交互",
-                "difficulty": "入门",
-                "actualFunction": "创建一个矩形平面，可调整宽度、高度和分段数",
-                "suggestedCategory": "1. 基础入门 > 1.2 几何体",
-                "filePath": "examples/examples/basic-geometry-plane",
-                "notes": "基础几何体示例 (自动推断)"
-              }
+              id: "basic-geometry-plane",
+              title: "矩形平面",
+              description: "创建一个矩形平面，可调整宽度、高度和分段数",
+              thumbnail: "images/basic-geometry-plane.jpg",
+              version: "r179",
+              url: "examples/basic-geometry-plane",
+              features: {
+                coreTech: "Geometry, MeshStandardMaterial",
+                secondaryTech: "参数化控制, GUI交互",
+                difficulty: "入门",
+                actualFunction: "创建一个矩形平面，可调整宽度、高度和分段数",
+                suggestedCategory: "1. 基础入门 > 1.2 几何体",
+                filePath: "examples/examples/basic-geometry-plane",
+                notes: "基础几何体示例 (自动推断)",
+              },
             },
             {
-              "id": "basic-geometry-circle",
-              "title": "圆平面",
-              "description": "创建一个圆形平面，可调整半径、分段数和扇形角度",
-              "thumbnail": "images/basic-geometry-circle.jpg",
-              "version": "r179",
-              "url": "examples/basic-geometry-circle",
-              "features": {
-                "coreTech": "Geometry, MeshStandardMaterial",
-                "secondaryTech": "参数化控制, GUI交互",
-                "difficulty": "入门",
-                "actualFunction": "创建一个圆形平面，可调整半径、分段数和扇形角度",
-                "suggestedCategory": "1. 基础入门 > 1.2 几何体",
-                "filePath": "examples/examples/basic-geometry-circle",
-                "notes": "基础几何体示例 (自动推断)"
-              }
+              id: "basic-geometry-circle",
+              title: "圆平面",
+              description: "创建一个圆形平面，可调整半径、分段数和扇形角度",
+              thumbnail: "images/basic-geometry-circle.jpg",
+              version: "r179",
+              url: "examples/basic-geometry-circle",
+              features: {
+                coreTech: "Geometry, MeshStandardMaterial",
+                secondaryTech: "参数化控制, GUI交互",
+                difficulty: "入门",
+                actualFunction:
+                  "创建一个圆形平面，可调整半径、分段数和扇形角度",
+                suggestedCategory: "1. 基础入门 > 1.2 几何体",
+                filePath: "examples/examples/basic-geometry-circle",
+                notes: "基础几何体示例 (自动推断)",
+              },
             },
             {
-              "id": "basic-geometry-extrude",
-              "title": "拉伸几何体",
-              "description": "通过拉伸二维形状创建三维几何体，展示ExtrudeGeometry的用法",
-              "thumbnail": "images/basic-geometry-extrude.jpg",
-              "version": "r179",
-              "url": "examples/basic-geometry-extrude",
-              "features": {
-                "coreTech": "Geometry, MeshStandardMaterial",
-                "secondaryTech": "参数化控制, GUI交互",
-                "difficulty": "入门",
-                "actualFunction": "通过拉伸二维形状创建三维几何体，展示ExtrudeGeometry的用法",
-                "suggestedCategory": "1. 基础入门 > 1.2 几何体",
-                "filePath": "examples/examples/basic-geometry-extrude",
-                "notes": "基础几何体示例 (自动推断)"
-              }
+              id: "basic-geometry-extrude",
+              title: "拉伸几何体",
+              description:
+                "通过拉伸二维形状创建三维几何体，展示ExtrudeGeometry的用法",
+              thumbnail: "images/basic-geometry-extrude.jpg",
+              version: "r179",
+              url: "examples/basic-geometry-extrude",
+              features: {
+                coreTech: "Geometry, MeshStandardMaterial",
+                secondaryTech: "参数化控制, GUI交互",
+                difficulty: "入门",
+                actualFunction:
+                  "通过拉伸二维形状创建三维几何体，展示ExtrudeGeometry的用法",
+                suggestedCategory: "1. 基础入门 > 1.2 几何体",
+                filePath: "examples/examples/basic-geometry-extrude",
+                notes: "基础几何体示例 (自动推断)",
+              },
             },
             {
-              "id": "basic-geometry-lathe",
-              "title": "旋转几何体",
-              "description": "通过旋转轮廓线创建三维几何体，如花瓶或杯子",
-              "thumbnail": "images/basic-geometry-lathe.jpg",
-              "version": "r179",
-              "url": "examples/basic-geometry-lathe",
-              "features": {
-                "coreTech": "Geometry, MeshStandardMaterial",
-                "secondaryTech": "参数化控制, GUI交互",
-                "difficulty": "入门",
-                "actualFunction": "通过旋转轮廓线创建三维几何体，如花瓶或杯子",
-                "suggestedCategory": "1. 基础入门 > 1.2 几何体",
-                "filePath": "examples/examples/basic-geometry-lathe",
-                "notes": "基础几何体示例 (自动推断)"
-              }
+              id: "basic-geometry-lathe",
+              title: "旋转几何体",
+              description: "通过旋转轮廓线创建三维几何体，如花瓶或杯子",
+              thumbnail: "images/basic-geometry-lathe.jpg",
+              version: "r179",
+              url: "examples/basic-geometry-lathe",
+              features: {
+                coreTech: "Geometry, MeshStandardMaterial",
+                secondaryTech: "参数化控制, GUI交互",
+                difficulty: "入门",
+                actualFunction: "通过旋转轮廓线创建三维几何体，如花瓶或杯子",
+                suggestedCategory: "1. 基础入门 > 1.2 几何体",
+                filePath: "examples/examples/basic-geometry-lathe",
+                notes: "基础几何体示例 (自动推断)",
+              },
             },
             {
-              "id": "basic-geometry-tube",
-              "title": "管道几何体",
-              "description": "沿着三维路径创建管道几何体，可调整管径和分段数",
-              "thumbnail": "images/basic-geometry-tube.jpg",
-              "version": "r179",
-              "url": "examples/basic-geometry-tube",
-              "features": {
-                "coreTech": "Geometry, MeshStandardMaterial",
-                "secondaryTech": "参数化控制, GUI交互",
-                "difficulty": "入门",
-                "actualFunction": "沿着三维路径创建管道几何体，可调整管径和分段数",
-                "suggestedCategory": "1. 基础入门 > 1.2 几何体",
-                "filePath": "examples/examples/basic-geometry-tube",
-                "notes": "基础几何体示例 (自动推断)"
-              }
+              id: "basic-geometry-tube",
+              title: "管道几何体",
+              description: "沿着三维路径创建管道几何体，可调整管径和分段数",
+              thumbnail: "images/basic-geometry-tube.jpg",
+              version: "r179",
+              url: "examples/basic-geometry-tube",
+              features: {
+                coreTech: "Geometry, MeshStandardMaterial",
+                secondaryTech: "参数化控制, GUI交互",
+                difficulty: "入门",
+                actualFunction:
+                  "沿着三维路径创建管道几何体，可调整管径和分段数",
+                suggestedCategory: "1. 基础入门 > 1.2 几何体",
+                filePath: "examples/examples/basic-geometry-tube",
+                notes: "基础几何体示例 (自动推断)",
+              },
             },
             {
-              "id": "basic-geometry-shape",
-              "title": "轮廓填充",
-              "description": "创建复杂的二维形状并进行填充，支持内部孔洞",
-              "thumbnail": "images/basic-geometry-shape.jpg",
-              "version": "r179",
-              "url": "examples/basic-geometry-shape",
-              "features": {
-                "coreTech": "Geometry, MeshStandardMaterial",
-                "secondaryTech": "参数化控制, GUI交互",
-                "difficulty": "入门",
-                "actualFunction": "创建复杂的二维形状并进行填充，支持内部孔洞",
-                "suggestedCategory": "1. 基础入门 > 1.2 几何体",
-                "filePath": "examples/examples/basic-geometry-shape",
-                "notes": "基础几何体示例 (自动推断)"
-              }
+              id: "basic-geometry-shape",
+              title: "轮廓填充",
+              description: "创建复杂的二维形状并进行填充，支持内部孔洞",
+              thumbnail: "images/basic-geometry-shape.jpg",
+              version: "r179",
+              url: "examples/basic-geometry-shape",
+              features: {
+                coreTech: "Geometry, MeshStandardMaterial",
+                secondaryTech: "参数化控制, GUI交互",
+                difficulty: "入门",
+                actualFunction: "创建复杂的二维形状并进行填充，支持内部孔洞",
+                suggestedCategory: "1. 基础入门 > 1.2 几何体",
+                filePath: "examples/examples/basic-geometry-shape",
+                notes: "基础几何体示例 (自动推断)",
+              },
             },
             {
-              "id": "basic-geometry-text",
-              "title": "文字几何体",
-              "description": "创建三维文字几何体，可调整字体、大小和厚度",
-              "thumbnail": "images/basic-geometry-text.jpg",
-              "version": "r179",
-              "url": "examples/basic-geometry-text",
-              "features": {
-                "coreTech": "Geometry, MeshStandardMaterial",
-                "secondaryTech": "参数化控制, GUI交互",
-                "difficulty": "入门",
-                "actualFunction": "创建三维文字几何体，可调整字体、大小和厚度",
-                "suggestedCategory": "1. 基础入门 > 1.2 几何体",
-                "filePath": "examples/examples/basic-geometry-text",
-                "notes": "基础几何体示例 (自动推断)"
-              }
+              id: "basic-geometry-text",
+              title: "文字几何体",
+              description: "创建三维文字几何体，可调整字体、大小和厚度",
+              thumbnail: "images/basic-geometry-text.jpg",
+              version: "r179",
+              url: "examples/basic-geometry-text",
+              features: {
+                coreTech: "Geometry, MeshStandardMaterial",
+                secondaryTech: "参数化控制, GUI交互",
+                difficulty: "入门",
+                actualFunction: "创建三维文字几何体，可调整字体、大小和厚度",
+                suggestedCategory: "1. 基础入门 > 1.2 几何体",
+                filePath: "examples/examples/basic-geometry-text",
+                notes: "基础几何体示例 (自动推断)",
+              },
             },
             {
-              "id": "basic-geometry-parametric",
-              "title": "参数化曲面",
-              "description": "通过数学函数创建参数化曲面，如波浪、螺旋等",
-              "thumbnail": "images/basic-geometry-parametric.jpg",
-              "version": "r179",
-              "url": "examples/basic-geometry-parametric",
-              "features": {
-                "coreTech": "Geometry, MeshStandardMaterial",
-                "secondaryTech": "参数化控制, GUI交互",
-                "difficulty": "入门",
-                "actualFunction": "通过数学函数创建参数化曲面，如波浪、螺旋等",
-                "suggestedCategory": "1. 基础入门 > 1.2 几何体",
-                "filePath": "examples/examples/basic-geometry-parametric",
-                "notes": "基础几何体示例 (自动推断)"
-              }
+              id: "basic-geometry-parametric",
+              title: "参数化曲面",
+              description: "通过数学函数创建参数化曲面，如波浪、螺旋等",
+              thumbnail: "images/basic-geometry-parametric.jpg",
+              version: "r179",
+              url: "examples/basic-geometry-parametric",
+              features: {
+                coreTech: "Geometry, MeshStandardMaterial",
+                secondaryTech: "参数化控制, GUI交互",
+                difficulty: "入门",
+                actualFunction: "通过数学函数创建参数化曲面，如波浪、螺旋等",
+                suggestedCategory: "1. 基础入门 > 1.2 几何体",
+                filePath: "examples/examples/basic-geometry-parametric",
+                notes: "基础几何体示例 (自动推断)",
+              },
             },
             {
-              "id": "basic-geometry-cone",
-              "title": "圆锥体",
-              "description": "创建一个圆锥体，可调整底部半径、高度和分段数",
-              "thumbnail": "images/basic-geometry-cone.jpg",
-              "version": "r179",
-              "url": "examples/basic-geometry-cone",
-              "features": {
-                "coreTech": "Geometry, MeshStandardMaterial",
-                "secondaryTech": "参数化控制, GUI交互",
-                "difficulty": "入门",
-                "actualFunction": "创建一个圆锥体，可调整底部半径、高度和分段数",
-                "suggestedCategory": "1. 基础入门 > 1.2 几何体",
-                "filePath": "examples/examples/basic-geometry-cone",
-                "notes": "基础几何体示例 (自动推断)"
-              }
+              id: "basic-geometry-cone",
+              title: "圆锥体",
+              description: "创建一个圆锥体，可调整底部半径、高度和分段数",
+              thumbnail: "images/basic-geometry-cone.jpg",
+              version: "r179",
+              url: "examples/basic-geometry-cone",
+              features: {
+                coreTech: "Geometry, MeshStandardMaterial",
+                secondaryTech: "参数化控制, GUI交互",
+                difficulty: "入门",
+                actualFunction: "创建一个圆锥体，可调整底部半径、高度和分段数",
+                suggestedCategory: "1. 基础入门 > 1.2 几何体",
+                filePath: "examples/examples/basic-geometry-cone",
+                notes: "基础几何体示例 (自动推断)",
+              },
             },
             {
-              "id": "basic-geometry-torusknot",
-              "title": "环形扭结",
-              "description": "创建一个环形扭结，展示复杂的参数化几何体",
-              "thumbnail": "images/basic-geometry-torusknot.jpg",
-              "version": "r179",
-              "url": "examples/basic-geometry-torusknot",
-              "features": {
-                "coreTech": "Geometry, MeshStandardMaterial",
-                "secondaryTech": "参数化控制, GUI交互",
-                "difficulty": "入门",
-                "actualFunction": "创建一个环形扭结，展示复杂的参数化几何体",
-                "suggestedCategory": "1. 基础入门 > 1.2 几何体",
-                "filePath": "examples/examples/basic-geometry-torusknot",
-                "notes": "基础几何体示例 (自动推断)"
-              }
+              id: "basic-geometry-torusknot",
+              title: "环形扭结",
+              description: "创建一个环形扭结，展示复杂的参数化几何体",
+              thumbnail: "images/basic-geometry-torusknot.jpg",
+              version: "r179",
+              url: "examples/basic-geometry-torusknot",
+              features: {
+                coreTech: "Geometry, MeshStandardMaterial",
+                secondaryTech: "参数化控制, GUI交互",
+                difficulty: "入门",
+                actualFunction: "创建一个环形扭结，展示复杂的参数化几何体",
+                suggestedCategory: "1. 基础入门 > 1.2 几何体",
+                filePath: "examples/examples/basic-geometry-torusknot",
+                notes: "基础几何体示例 (自动推断)",
+              },
             },
             {
-              "id": "basic-geometry-polyhedron",
-              "title": "多面体",
-              "description": "创建一个基于顶点和面的多面体，展示PolyhedronGeometry的用法。",
-              "thumbnail": "images/basic-geometry-polyhedron.jpg",
-              "version": "r179",
-              "url": "examples/basic-geometry-polyhedron",
-              "features": {
-                "coreTech": "Geometry, MeshStandardMaterial",
-                "secondaryTech": "参数化控制, GUI交互",
-                "difficulty": "入门",
-                "actualFunction": "创建一个基于顶点和面的多面体，展示PolyhedronGeometry的用法。",
-                "suggestedCategory": "1. 基础入门 > 1.2 几何体",
-                "filePath": "examples/examples/basic-geometry-polyhedron",
-                "notes": "基础几何体示例 (自动推断)"
-              }
+              id: "basic-geometry-polyhedron",
+              title: "多面体",
+              description:
+                "创建一个基于顶点和面的多面体，展示PolyhedronGeometry的用法。",
+              thumbnail: "images/basic-geometry-polyhedron.jpg",
+              version: "r179",
+              url: "examples/basic-geometry-polyhedron",
+              features: {
+                coreTech: "Geometry, MeshStandardMaterial",
+                secondaryTech: "参数化控制, GUI交互",
+                difficulty: "入门",
+                actualFunction:
+                  "创建一个基于顶点和面的多面体，展示PolyhedronGeometry的用法。",
+                suggestedCategory: "1. 基础入门 > 1.2 几何体",
+                filePath: "examples/examples/basic-geometry-polyhedron",
+                notes: "基础几何体示例 (自动推断)",
+              },
             },
             {
-              "id": "basic-geometry-gradientTriangle",
-              "title": "渐变三角形",
-              "description": "使用BufferGeometry创建自定义三角形几何体，通过顶点颜色实现RGB渐变效果",
-              "thumbnail": "images/basic-geometry-gradientTriangle.jpg",
-              "version": "r179",
-              "url": "examples/z258/basic-geometry-gradientTriangle",
-              "features": {
-                "coreTech": "Geometry, MeshStandardMaterial",
-                "secondaryTech": "参数化控制, GUI交互",
-                "difficulty": "入门",
-                "actualFunction": "使用BufferGeometry创建自定义三角形几何体，通过顶点颜色实现RGB渐变效果",
-                "suggestedCategory": "1. 基础入门 > 1.2 几何体",
-                "filePath": "examples/examples/z258/basic-geometry-gradientTriangle",
-                "notes": "基础几何体示例 (自动推断)"
-              }
+              id: "basic-geometry-gradientTriangle",
+              title: "渐变三角形",
+              description:
+                "使用BufferGeometry创建自定义三角形几何体，通过顶点颜色实现RGB渐变效果",
+              thumbnail: "images/basic-geometry-gradientTriangle.jpg",
+              version: "r179",
+              url: "examples/z258/basic-geometry-gradientTriangle",
+              features: {
+                coreTech: "Geometry, MeshStandardMaterial",
+                secondaryTech: "参数化控制, GUI交互",
+                difficulty: "入门",
+                actualFunction:
+                  "使用BufferGeometry创建自定义三角形几何体，通过顶点颜色实现RGB渐变效果",
+                suggestedCategory: "1. 基础入门 > 1.2 几何体",
+                filePath:
+                  "examples/examples/z258/basic-geometry-gradientTriangle",
+                notes: "基础几何体示例 (自动推断)",
+              },
             },
             {
-              "id": "basic-geometry-screenCoord",
-              "title": "三维转屏幕坐标",
-              "description": "展示三维坐标转屏幕坐标的方法，将3D物体位置映射到2D屏幕坐标",
-              "thumbnail": "images/basic-geometry-screenCoord.jpg",
-              "version": "r179",
-              "url": "examples/z258/basic-geometry-screenCoord",
-              "features": {
-                "coreTech": "Geometry, MeshStandardMaterial",
-                "secondaryTech": "参数化控制, GUI交互",
-                "difficulty": "入门",
-                "actualFunction": "展示三维坐标转屏幕坐标的方法，将3D物体位置映射到2D屏幕坐标",
-                "suggestedCategory": "1. 基础入门 > 1.2 几何体",
-                "filePath": "examples/examples/z258/basic-geometry-screenCoord",
-                "notes": "基础几何体示例 (自动推断)"
-              }
-            }
-          ]
+              id: "basic-geometry-screenCoord",
+              title: "三维转屏幕坐标",
+              description:
+                "展示三维坐标转屏幕坐标的方法，将3D物体位置映射到2D屏幕坐标",
+              thumbnail: "images/basic-geometry-screenCoord.jpg",
+              version: "r179",
+              url: "examples/z258/basic-geometry-screenCoord",
+              features: {
+                coreTech: "Geometry, MeshStandardMaterial",
+                secondaryTech: "参数化控制, GUI交互",
+                difficulty: "入门",
+                actualFunction:
+                  "展示三维坐标转屏幕坐标的方法，将3D物体位置映射到2D屏幕坐标",
+                suggestedCategory: "1. 基础入门 > 1.2 几何体",
+                filePath: "examples/examples/z258/basic-geometry-screenCoord",
+                notes: "基础几何体示例 (自动推断)",
+              },
+            },
+          ],
         },
         {
-          "id": "基础入门-1.2-材质",
-          "name": "1.2 材质",
-          "examples": [
+          id: "基础入门-1.2-材质",
+          name: "1.2 材质",
+          examples: [
             {
-              "id": "basic-materials-mesh",
-              "title": "网格材质对比",
-              "description": "展示和对比不同类型的网格材质效果",
-              "thumbnail": "images/basic-materials-mesh.jpg",
-              "version": "r179",
-              "url": "examples/basic-materials-mesh",
-              "features": {
-                "coreTech": "MeshBasicMaterial, MeshLambertMaterial, MeshPhongMaterial, MeshStandardMaterial, MeshPhysicalMaterial, MeshDepthMaterial, MeshNormalMaterial",
-                "secondaryTech": "材质参数对比(metalness/roughness/shininess/clearcoat), 多几何体支持",
-                "difficulty": "基础",
-                "actualFunction": "对比7种网格材质的效果差异,支持切换几何体形状",
-                "suggestedCategory": "1. 基础入门 > 1.3 材质",
-                "filePath": "examples/basic-materials-mesh.html",
-                "notes": "材质学习的核心示例,涵盖所有常用网格材质类型"
-              }
+              id: "basic-materials-mesh",
+              title: "网格材质对比",
+              description: "展示和对比不同类型的网格材质效果",
+              thumbnail: "images/basic-materials-mesh.jpg",
+              version: "r179",
+              url: "examples/basic-materials-mesh",
+              features: {
+                coreTech:
+                  "MeshBasicMaterial, MeshLambertMaterial, MeshPhongMaterial, MeshStandardMaterial, MeshPhysicalMaterial, MeshDepthMaterial, MeshNormalMaterial",
+                secondaryTech:
+                  "材质参数对比(metalness/roughness/shininess/clearcoat), 多几何体支持",
+                difficulty: "基础",
+                actualFunction: "对比7种网格材质的效果差异,支持切换几何体形状",
+                suggestedCategory: "1. 基础入门 > 1.3 材质",
+                filePath: "examples/basic-materials-mesh.html",
+                notes: "材质学习的核心示例,涵盖所有常用网格材质类型",
+              },
             },
             {
-              "id": "basic-materials-lines",
-              "title": "线材质",
-              "description": "展示LineBasicMaterial和LineDashedMaterial的使用方法和效果对比",
-              "thumbnail": "images/basic-materials-lines.jpg",
-              "version": "r179",
-              "url": "examples/basic-materials-lines",
-              "features": {
-                "coreTech": "LineBasicMaterial, LineDashedMaterial, BufferGeometry",
-                "secondaryTech": "多种线条形状(螺旋/螺旋线/扭结/波浪/圆形), 虚线参数控制",
-                "difficulty": "基础",
-                "actualFunction": "对比基础线材质和虚线材质,支持多种数学曲线形状",
-                "suggestedCategory": "1. 基础入门 > 1.3 材质",
-                "filePath": "examples/basic-materials-lines.html",
-                "notes": "展示了线条渲染的完整能力"
-              }
+              id: "basic-materials-lines",
+              title: "线材质",
+              description:
+                "展示LineBasicMaterial和LineDashedMaterial的使用方法和效果对比",
+              thumbnail: "images/basic-materials-lines.jpg",
+              version: "r179",
+              url: "examples/basic-materials-lines",
+              features: {
+                coreTech:
+                  "LineBasicMaterial, LineDashedMaterial, BufferGeometry",
+                secondaryTech:
+                  "多种线条形状(螺旋/螺旋线/扭结/波浪/圆形), 虚线参数控制",
+                difficulty: "基础",
+                actualFunction: "对比基础线材质和虚线材质,支持多种数学曲线形状",
+                suggestedCategory: "1. 基础入门 > 1.3 材质",
+                filePath: "examples/basic-materials-lines.html",
+                notes: "展示了线条渲染的完整能力",
+              },
             },
             {
-              "id": "basic-materials-raw-shader",
-              "title": "原始着色器材质",
-              "description": "使用RawShaderMaterial创建自定义着色器效果，展示GLSL着色器编程的基础知识",
-              "thumbnail": "images/basic-materials-raw-shader.jpg",
-              "version": "r179",
-              "url": "examples/basic-materials-raw-shader",
-              "features": {
-                "coreTech": "Material, Geometry",
-                "secondaryTech": "材质属性控制",
-                "difficulty": "基础",
-                "actualFunction": "使用RawShaderMaterial创建自定义着色器效果，展示GLSL着色器编程的基础知识",
-                "suggestedCategory": "1. 基础入门 > 1.3 材质",
-                "filePath": "examples/examples/basic-materials-raw-shader",
-                "notes": "材质示例 (自动推断)"
-              }
+              id: "basic-materials-raw-shader",
+              title: "原始着色器材质",
+              description:
+                "使用RawShaderMaterial创建自定义着色器效果，展示GLSL着色器编程的基础知识",
+              thumbnail: "images/basic-materials-raw-shader.jpg",
+              version: "r179",
+              url: "examples/basic-materials-raw-shader",
+              features: {
+                coreTech: "Material, Geometry",
+                secondaryTech: "材质属性控制",
+                difficulty: "基础",
+                actualFunction:
+                  "使用RawShaderMaterial创建自定义着色器效果，展示GLSL着色器编程的基础知识",
+                suggestedCategory: "1. 基础入门 > 1.3 材质",
+                filePath: "examples/examples/basic-materials-raw-shader",
+                notes: "材质示例 (自动推断)",
+              },
             },
             {
-              "id": "basic-materials-shader",
-              "title": "着色器材质",
-              "description": "使用ShaderMaterial创建自定义着色器效果，展示Three.js内置变量和着色器编程技术",
-              "thumbnail": "images/basic-materials-shader.jpg",
-              "version": "r179",
-              "url": "examples/basic-materials-shader",
-              "features": {
-                "coreTech": "Material, Geometry",
-                "secondaryTech": "材质属性控制",
-                "difficulty": "基础",
-                "actualFunction": "使用ShaderMaterial创建自定义着色器效果，展示Three.js内置变量和着色器编程技术",
-                "suggestedCategory": "1. 基础入门 > 1.3 材质",
-                "filePath": "examples/examples/basic-materials-shader",
-                "notes": "材质示例 (自动推断)"
-              }
-            }
-          ]
+              id: "basic-materials-shader",
+              title: "着色器材质",
+              description:
+                "使用ShaderMaterial创建自定义着色器效果，展示Three.js内置变量和着色器编程技术",
+              thumbnail: "images/basic-materials-shader.jpg",
+              version: "r179",
+              url: "examples/basic-materials-shader",
+              features: {
+                coreTech: "Material, Geometry",
+                secondaryTech: "材质属性控制",
+                difficulty: "基础",
+                actualFunction:
+                  "使用ShaderMaterial创建自定义着色器效果，展示Three.js内置变量和着色器编程技术",
+                suggestedCategory: "1. 基础入门 > 1.3 材质",
+                filePath: "examples/examples/basic-materials-shader",
+                notes: "材质示例 (自动推断)",
+              },
+            },
+          ],
         },
         {
-          "id": "基础入门-1.3-其他",
-          "name": "1.3 其他",
-          "examples": [
+          id: "基础入门-1.3-其他",
+          name: "1.3 其他",
+          examples: [
             {
-              "id": "basic-renderTarget",
-              "title": "渲染目标",
-              "description": "使用WebGLRenderTarget实现动态反射和纹理投影效果，展示实时渲染到纹理",
-              "thumbnail": "images/basic-renderTarget.jpg",
-              "version": "r179",
-              "url": "examples/z258/basic-renderTarget",
-              "features": {
-                "coreTech": "Three.js Core",
-                "secondaryTech": "基础功能",
-                "difficulty": "基础",
-                "actualFunction": "使用WebGLRenderTarget实现动态反射和纹理投影效果，展示实时渲染到纹理",
-                "suggestedCategory": "1. 基础入门",
-                "filePath": "examples/examples/z258/basic-renderTarget",
-                "notes": "基础功能示例 (自动推断)"
-              }
+              id: "basic-renderTarget",
+              title: "渲染目标",
+              description:
+                "使用WebGLRenderTarget实现动态反射和纹理投影效果，展示实时渲染到纹理",
+              thumbnail: "images/basic-renderTarget.jpg",
+              version: "r179",
+              url: "examples/z258/basic-renderTarget",
+              features: {
+                coreTech: "Three.js Core",
+                secondaryTech: "基础功能",
+                difficulty: "基础",
+                actualFunction:
+                  "使用WebGLRenderTarget实现动态反射和纹理投影效果，展示实时渲染到纹理",
+                suggestedCategory: "1. 基础入门",
+                filePath: "examples/examples/z258/basic-renderTarget",
+                notes: "基础功能示例 (自动推断)",
+              },
             },
             {
-              "id": "basic-sceneFog",
-              "title": "场景雾化",
-              "description": "展示Three.js场景雾化效果，支持线性雾和指数雾两种类型",
-              "thumbnail": "images/basic-sceneFog.jpg",
-              "version": "r179",
-              "url": "examples/z258/basic-sceneFog",
-              "features": {
-                "coreTech": "Three.js Core",
-                "secondaryTech": "基础功能",
-                "difficulty": "基础",
-                "actualFunction": "展示Three.js场景雾化效果，支持线性雾和指数雾两种类型",
-                "suggestedCategory": "1. 基础入门",
-                "filePath": "examples/examples/z258/basic-sceneFog",
-                "notes": "基础功能示例 (自动推断)"
-              }
+              id: "basic-sceneFog",
+              title: "场景雾化",
+              description:
+                "展示Three.js场景雾化效果，支持线性雾和指数雾两种类型",
+              thumbnail: "images/basic-sceneFog.jpg",
+              version: "r179",
+              url: "examples/z258/basic-sceneFog",
+              features: {
+                coreTech: "Three.js Core",
+                secondaryTech: "基础功能",
+                difficulty: "基础",
+                actualFunction:
+                  "展示Three.js场景雾化效果，支持线性雾和指数雾两种类型",
+                suggestedCategory: "1. 基础入门",
+                filePath: "examples/examples/z258/basic-sceneFog",
+                notes: "基础功能示例 (自动推断)",
+              },
             },
             {
-              "id": "basic-transformObject",
-              "title": "拖拽控制",
-              "description": "使用TransformControls实现物体的平移、旋转、缩放操作",
-              "thumbnail": "images/basic-transformObject.jpg",
-              "version": "r179",
-              "url": "examples/z258/basic-transformObject",
-              "features": {
-                "coreTech": "Three.js Core",
-                "secondaryTech": "基础功能",
-                "difficulty": "基础",
-                "actualFunction": "使用TransformControls实现物体的平移、旋转、缩放操作",
-                "suggestedCategory": "1. 基础入门",
-                "filePath": "examples/examples/z258/basic-transformObject",
-                "notes": "基础功能示例 (自动推断)"
-              }
+              id: "basic-transformObject",
+              title: "拖拽控制",
+              description:
+                "使用TransformControls实现物体的平移、旋转、缩放操作",
+              thumbnail: "images/basic-transformObject.jpg",
+              version: "r179",
+              url: "examples/z258/basic-transformObject",
+              features: {
+                coreTech: "Three.js Core",
+                secondaryTech: "基础功能",
+                difficulty: "基础",
+                actualFunction:
+                  "使用TransformControls实现物体的平移、旋转、缩放操作",
+                suggestedCategory: "1. 基础入门",
+                filePath: "examples/examples/z258/basic-transformObject",
+                notes: "基础功能示例 (自动推断)",
+              },
             },
             {
-              "id": "basic-screenShot",
-              "title": "截图",
-              "description": "展示Three.js场景截图功能，支持辉光效果，可下载PNG图片",
-              "thumbnail": "images/basic-screenShot.jpg",
-              "version": "r179",
-              "url": "examples/z258/basic-screenShot",
-              "features": {
-                "coreTech": "Three.js Core",
-                "secondaryTech": "基础功能",
-                "difficulty": "基础",
-                "actualFunction": "展示Three.js场景截图功能，支持辉光效果，可下载PNG图片",
-                "suggestedCategory": "1. 基础入门",
-                "filePath": "examples/examples/z258/basic-screenShot",
-                "notes": "基础功能示例 (自动推断)"
-              }
+              id: "basic-screenShot",
+              title: "截图",
+              description:
+                "展示Three.js场景截图功能，支持辉光效果，可下载PNG图片",
+              thumbnail: "images/basic-screenShot.jpg",
+              version: "r179",
+              url: "examples/z258/basic-screenShot",
+              features: {
+                coreTech: "Three.js Core",
+                secondaryTech: "基础功能",
+                difficulty: "基础",
+                actualFunction:
+                  "展示Three.js场景截图功能，支持辉光效果，可下载PNG图片",
+                suggestedCategory: "1. 基础入门",
+                filePath: "examples/examples/z258/basic-screenShot",
+                notes: "基础功能示例 (自动推断)",
+              },
             },
             {
-              "id": "basic-modelAnimation",
-              "title": "模型动画",
-              "description": "展示GLTF模型动画加载与混合，支持待机、行走、跑步三种动作状态切换和过渡",
-              "thumbnail": "images/basic-modelAnimation.jpg",
-              "version": "r179",
-              "url": "examples/z258/basic-modelAnimation",
-              "features": {
-                "coreTech": "Three.js Core",
-                "secondaryTech": "基础功能",
-                "difficulty": "基础",
-                "actualFunction": "展示GLTF模型动画加载与混合，支持待机、行走、跑步三种动作状态切换和过渡",
-                "suggestedCategory": "1. 基础入门",
-                "filePath": "examples/examples/z258/basic-modelAnimation",
-                "notes": "基础功能示例 (自动推断)"
-              }
+              id: "basic-modelAnimation",
+              title: "模型动画",
+              description:
+                "展示GLTF模型动画加载与混合，支持待机、行走、跑步三种动作状态切换和过渡",
+              thumbnail: "images/basic-modelAnimation.jpg",
+              version: "r179",
+              url: "examples/z258/basic-modelAnimation",
+              features: {
+                coreTech: "Three.js Core",
+                secondaryTech: "基础功能",
+                difficulty: "基础",
+                actualFunction:
+                  "展示GLTF模型动画加载与混合，支持待机、行走、跑步三种动作状态切换和过渡",
+                suggestedCategory: "1. 基础入门",
+                filePath: "examples/examples/z258/basic-modelAnimation",
+                notes: "基础功能示例 (自动推断)",
+              },
             },
             {
-              "id": "basic-modelLoad",
-              "title": "模型加载",
-              "description": "展示多种3D模型格式加载，包括GLTF/GLB、FBX、OBJ格式，支持加载进度显示",
-              "thumbnail": "images/basic-modelLoad.jpg",
-              "version": "r179",
-              "url": "examples/z258/basic-modelLoad",
-              "features": {
-                "coreTech": "Three.js Core",
-                "secondaryTech": "基础功能",
-                "difficulty": "基础",
-                "actualFunction": "展示多种3D模型格式加载，包括GLTF/GLB、FBX、OBJ格式，支持加载进度显示",
-                "suggestedCategory": "1. 基础入门",
-                "filePath": "examples/examples/z258/basic-modelLoad",
-                "notes": "基础功能示例 (自动推断)"
-              }
+              id: "basic-modelLoad",
+              title: "模型加载",
+              description:
+                "展示多种3D模型格式加载，包括GLTF/GLB、FBX、OBJ格式，支持加载进度显示",
+              thumbnail: "images/basic-modelLoad.jpg",
+              version: "r179",
+              url: "examples/z258/basic-modelLoad",
+              features: {
+                coreTech: "Three.js Core",
+                secondaryTech: "基础功能",
+                difficulty: "基础",
+                actualFunction:
+                  "展示多种3D模型格式加载，包括GLTF/GLB、FBX、OBJ格式，支持加载进度显示",
+                suggestedCategory: "1. 基础入门",
+                filePath: "examples/examples/z258/basic-modelLoad",
+                notes: "基础功能示例 (自动推断)",
+              },
             },
             {
-              "id": "basic-modelShadow",
-              "title": "模型阴影",
-              "description": "展示Three.js阴影系统，支持光源位置调整、阴影模糊度和透明度控制",
-              "thumbnail": "images/basic-modelShadow.jpg",
-              "version": "r179",
-              "url": "examples/z258/basic-modelShadow",
-              "features": {
-                "coreTech": "Three.js Core",
-                "secondaryTech": "基础功能",
-                "difficulty": "基础",
-                "actualFunction": "展示Three.js阴影系统，支持光源位置调整、阴影模糊度和透明度控制",
-                "suggestedCategory": "1. 基础入门",
-                "filePath": "examples/examples/z258/basic-modelShadow",
-                "notes": "基础功能示例 (自动推断)"
-              }
+              id: "basic-modelShadow",
+              title: "模型阴影",
+              description:
+                "展示Three.js阴影系统，支持光源位置调整、阴影模糊度和透明度控制",
+              thumbnail: "images/basic-modelShadow.jpg",
+              version: "r179",
+              url: "examples/z258/basic-modelShadow",
+              features: {
+                coreTech: "Three.js Core",
+                secondaryTech: "基础功能",
+                difficulty: "基础",
+                actualFunction:
+                  "展示Three.js阴影系统，支持光源位置调整、阴影模糊度和透明度控制",
+                suggestedCategory: "1. 基础入门",
+                filePath: "examples/examples/z258/basic-modelShadow",
+                notes: "基础功能示例 (自动推断)",
+              },
             },
             {
-              "id": "basic-loadingAnimate",
-              "title": "加载动画",
-              "description": "展示模型加载进度动画和GLTF骨骼动画播放控制，支持暂停和继续",
-              "thumbnail": "images/basic-loadingAnimate.jpg",
-              "version": "r179",
-              "url": "examples/z258/basic-loadingAnimate",
-              "features": {
-                "coreTech": "Three.js Core",
-                "secondaryTech": "基础功能",
-                "difficulty": "基础",
-                "actualFunction": "展示模型加载进度动画和GLTF骨骼动画播放控制，支持暂停和继续",
-                "suggestedCategory": "1. 基础入门",
-                "filePath": "examples/examples/z258/basic-loadingAnimate",
-                "notes": "基础功能示例 (自动推断)"
-              }
+              id: "basic-loadingAnimate",
+              title: "加载动画",
+              description:
+                "展示模型加载进度动画和GLTF骨骼动画播放控制，支持暂停和继续",
+              thumbnail: "images/basic-loadingAnimate.jpg",
+              version: "r179",
+              url: "examples/z258/basic-loadingAnimate",
+              features: {
+                coreTech: "Three.js Core",
+                secondaryTech: "基础功能",
+                difficulty: "基础",
+                actualFunction:
+                  "展示模型加载进度动画和GLTF骨骼动画播放控制，支持暂停和继续",
+                suggestedCategory: "1. 基础入门",
+                filePath: "examples/examples/z258/basic-loadingAnimate",
+                notes: "基础功能示例 (自动推断)",
+              },
             },
             {
-              "id": "basic-cameraAnimate",
-              "title": "相机动画",
-              "description": "展示多种相机动画效果，包括环绕运动、飞行穿梭、镜头抖动、缩放聚焦",
-              "thumbnail": "images/basic-cameraAnimate.jpg",
-              "version": "r179",
-              "url": "examples/z258/basic-cameraAnimate",
-              "features": {
-                "coreTech": "Three.js Core",
-                "secondaryTech": "基础功能",
-                "difficulty": "基础",
-                "actualFunction": "展示多种相机动画效果，包括环绕运动、飞行穿梭、镜头抖动、缩放聚焦",
-                "suggestedCategory": "1. 基础入门",
-                "filePath": "examples/examples/z258/basic-cameraAnimate",
-                "notes": "基础功能示例 (自动推断)"
-              }
+              id: "basic-cameraAnimate",
+              title: "相机动画",
+              description:
+                "展示多种相机动画效果，包括环绕运动、飞行穿梭、镜头抖动、缩放聚焦",
+              thumbnail: "images/basic-cameraAnimate.jpg",
+              version: "r179",
+              url: "examples/z258/basic-cameraAnimate",
+              features: {
+                coreTech: "Three.js Core",
+                secondaryTech: "基础功能",
+                difficulty: "基础",
+                actualFunction:
+                  "展示多种相机动画效果，包括环绕运动、飞行穿梭、镜头抖动、缩放聚焦",
+                suggestedCategory: "1. 基础入门",
+                filePath: "examples/examples/z258/basic-cameraAnimate",
+                notes: "基础功能示例 (自动推断)",
+              },
             },
             {
-              "id": "basic-skyAndEnv",
-              "title": "天空盒与环境",
-              "description": "展示程序化天空盒和环境贴图效果，支持多种天空主题和材质参数调节",
-              "thumbnail": "images/basic-skyAndEnv.jpg",
-              "version": "r179",
-              "url": "examples/z258/basic-skyAndEnv",
-              "features": {
-                "coreTech": "Three.js Core",
-                "secondaryTech": "基础功能",
-                "difficulty": "基础",
-                "actualFunction": "展示程序化天空盒和环境贴图效果，支持多种天空主题和材质参数调节",
-                "suggestedCategory": "1. 基础入门",
-                "filePath": "examples/examples/z258/basic-skyAndEnv",
-                "notes": "基础功能示例 (自动推断)"
-              }
+              id: "basic-skyAndEnv",
+              title: "天空盒与环境",
+              description:
+                "展示程序化天空盒和环境贴图效果，支持多种天空主题和材质参数调节",
+              thumbnail: "images/basic-skyAndEnv.jpg",
+              version: "r179",
+              url: "examples/z258/basic-skyAndEnv",
+              features: {
+                coreTech: "Three.js Core",
+                secondaryTech: "基础功能",
+                difficulty: "基础",
+                actualFunction:
+                  "展示程序化天空盒和环境贴图效果，支持多种天空主题和材质参数调节",
+                suggestedCategory: "1. 基础入门",
+                filePath: "examples/examples/z258/basic-skyAndEnv",
+                notes: "基础功能示例 (自动推断)",
+              },
             },
             {
-              "id": "basic-gsapAnimate",
-              "title": "GSAP动画",
-              "description": "使用GSAP库控制相机和物体动画，实现平滑的视角过渡效果",
-              "thumbnail": "images/basic-gsapAnimate.jpg",
-              "version": "r179",
-              "url": "examples/z258/basic-gsapAnimate",
-              "features": {
-                "coreTech": "Three.js Core",
-                "secondaryTech": "基础功能",
-                "difficulty": "基础",
-                "actualFunction": "使用GSAP库控制相机和物体动画，实现平滑的视角过渡效果",
-                "suggestedCategory": "1. 基础入门",
-                "filePath": "examples/examples/z258/basic-gsapAnimate",
-                "notes": "基础功能示例 (自动推断)"
-              }
+              id: "basic-gsapAnimate",
+              title: "GSAP动画",
+              description:
+                "使用GSAP库控制相机和物体动画，实现平滑的视角过渡效果",
+              thumbnail: "images/basic-gsapAnimate.jpg",
+              version: "r179",
+              url: "examples/z258/basic-gsapAnimate",
+              features: {
+                coreTech: "Three.js Core",
+                secondaryTech: "基础功能",
+                difficulty: "基础",
+                actualFunction:
+                  "使用GSAP库控制相机和物体动画，实现平滑的视角过渡效果",
+                suggestedCategory: "1. 基础入门",
+                filePath: "examples/examples/z258/basic-gsapAnimate",
+                notes: "基础功能示例 (自动推断)",
+              },
             },
             {
-              "id": "basic-createScene",
-              "title": "创建场景",
-              "description": "Three.js基础场景创建示例，包含场景、相机、渲染器",
-              "thumbnail": "images/basic-createScene.jpg",
-              "version": "r179",
-              "url": "examples/z258/basic-createScene",
-              "features": {
-                "coreTech": "Three.js Core",
-                "secondaryTech": "基础功能",
-                "difficulty": "基础",
-                "actualFunction": "Three.js基础场景创建示例，包含场景、相机、渲染器",
-                "suggestedCategory": "1. 基础入门",
-                "filePath": "examples/examples/z258/basic-createScene",
-                "notes": "基础功能示例 (自动推断)"
-              }
+              id: "basic-createScene",
+              title: "创建场景",
+              description: "Three.js基础场景创建示例，包含场景、相机、渲染器",
+              thumbnail: "images/basic-createScene.jpg",
+              version: "r179",
+              url: "examples/z258/basic-createScene",
+              features: {
+                coreTech: "Three.js Core",
+                secondaryTech: "基础功能",
+                difficulty: "基础",
+                actualFunction:
+                  "Three.js基础场景创建示例，包含场景、相机、渲染器",
+                suggestedCategory: "1. 基础入门",
+                filePath: "examples/examples/z258/basic-createScene",
+                notes: "基础功能示例 (自动推断)",
+              },
             },
             {
-              "id": "basic-changeMaterial",
-              "title": "材质修改动画",
-              "description": "材质过渡动画，支持颜色、粗糙度、金属度平滑过渡",
-              "thumbnail": "images/basic-changeMaterial.jpg",
-              "version": "r179",
-              "url": "examples/z258/basic-changeMaterial",
-              "features": {
-                "coreTech": "Three.js Core",
-                "secondaryTech": "基础功能",
-                "difficulty": "基础",
-                "actualFunction": "材质过渡动画，支持颜色、粗糙度、金属度平滑过渡",
-                "suggestedCategory": "1. 基础入门",
-                "filePath": "examples/examples/z258/basic-changeMaterial",
-                "notes": "基础功能示例 (自动推断)"
-              }
+              id: "basic-changeMaterial",
+              title: "材质修改动画",
+              description: "材质过渡动画，支持颜色、粗糙度、金属度平滑过渡",
+              thumbnail: "images/basic-changeMaterial.jpg",
+              version: "r179",
+              url: "examples/z258/basic-changeMaterial",
+              features: {
+                coreTech: "Three.js Core",
+                secondaryTech: "基础功能",
+                difficulty: "基础",
+                actualFunction:
+                  "材质过渡动画，支持颜色、粗糙度、金属度平滑过渡",
+                suggestedCategory: "1. 基础入门",
+                filePath: "examples/examples/z258/basic-changeMaterial",
+                notes: "基础功能示例 (自动推断)",
+              },
             },
             {
-              "id": "basic-transformBox3",
-              "title": "变换Box3",
-              "description": "Box3包围盒计算和可视化，支持缩放旋转变换",
-              "thumbnail": "images/basic-transformBox3.jpg",
-              "version": "r179",
-              "url": "examples/z258/basic-transformBox3",
-              "features": {
-                "coreTech": "Three.js Core",
-                "secondaryTech": "基础功能",
-                "difficulty": "基础",
-                "actualFunction": "Box3包围盒计算和可视化，支持缩放旋转变换",
-                "suggestedCategory": "1. 基础入门",
-                "filePath": "examples/examples/z258/basic-transformBox3",
-                "notes": "基础功能示例 (自动推断)"
-              }
+              id: "basic-transformBox3",
+              title: "变换Box3",
+              description: "Box3包围盒计算和可视化，支持缩放旋转变换",
+              thumbnail: "images/basic-transformBox3.jpg",
+              version: "r179",
+              url: "examples/z258/basic-transformBox3",
+              features: {
+                coreTech: "Three.js Core",
+                secondaryTech: "基础功能",
+                difficulty: "基础",
+                actualFunction: "Box3包围盒计算和可视化，支持缩放旋转变换",
+                suggestedCategory: "1. 基础入门",
+                filePath: "examples/examples/z258/basic-transformBox3",
+                notes: "基础功能示例 (自动推断)",
+              },
             },
             {
-              "id": "basic-modelAnimates",
-              "title": "单/多模型动画",
-              "description": "多种模型动画类型，支持独立控制和全局控制",
-              "thumbnail": "images/basic-modelAnimates.jpg",
-              "version": "r179",
-              "url": "examples/z258/basic-modelAnimates",
-              "features": {
-                "coreTech": "Three.js Core",
-                "secondaryTech": "基础功能",
-                "difficulty": "基础",
-                "actualFunction": "多种模型动画类型，支持独立控制和全局控制",
-                "suggestedCategory": "1. 基础入门",
-                "filePath": "examples/examples/z258/basic-modelAnimates",
-                "notes": "基础功能示例 (自动推断)"
-              }
+              id: "basic-modelAnimates",
+              title: "单/多模型动画",
+              description: "多种模型动画类型，支持独立控制和全局控制",
+              thumbnail: "images/basic-modelAnimates.jpg",
+              version: "r179",
+              url: "examples/z258/basic-modelAnimates",
+              features: {
+                coreTech: "Three.js Core",
+                secondaryTech: "基础功能",
+                difficulty: "基础",
+                actualFunction: "多种模型动画类型，支持独立控制和全局控制",
+                suggestedCategory: "1. 基础入门",
+                filePath: "examples/examples/z258/basic-modelAnimates",
+                notes: "基础功能示例 (自动推断)",
+              },
             },
             {
-              "id": "basic-diffusionCircle",
-              "title": "扩散圈",
-              "description": "波纹扩散效果，支持点击触发和自动触发",
-              "thumbnail": "images/basic-diffusionCircle.jpg",
-              "version": "r179",
-              "url": "examples/z258/basic-diffusionCircle",
-              "features": {
-                "coreTech": "Three.js Core",
-                "secondaryTech": "基础功能",
-                "difficulty": "基础",
-                "actualFunction": "波纹扩散效果，支持点击触发和自动触发",
-                "suggestedCategory": "1. 基础入门",
-                "filePath": "examples/examples/z258/basic-diffusionCircle",
-                "notes": "基础功能示例 (自动推断)"
-              }
+              id: "basic-diffusionCircle",
+              title: "扩散圈",
+              description: "波纹扩散效果，支持点击触发和自动触发",
+              thumbnail: "images/basic-diffusionCircle.jpg",
+              version: "r179",
+              url: "examples/z258/basic-diffusionCircle",
+              features: {
+                coreTech: "Three.js Core",
+                secondaryTech: "基础功能",
+                difficulty: "基础",
+                actualFunction: "波纹扩散效果，支持点击触发和自动触发",
+                suggestedCategory: "1. 基础入门",
+                filePath: "examples/examples/z258/basic-diffusionCircle",
+                notes: "基础功能示例 (自动推断)",
+              },
             },
             {
-              "id": "basic-gltfOptLoader",
-              "title": "GLTF Opt解压",
-              "description": "支持Draco和KTX2压缩格式的GLTF模型加载",
-              "thumbnail": "images/basic-gltfOptLoader.jpg",
-              "version": "r179",
-              "url": "examples/z258/basic-gltfOptLoader",
-              "features": {
-                "coreTech": "Three.js Core",
-                "secondaryTech": "基础功能",
-                "difficulty": "基础",
-                "actualFunction": "支持Draco和KTX2压缩格式的GLTF模型加载",
-                "suggestedCategory": "1. 基础入门",
-                "filePath": "examples/examples/z258/basic-gltfOptLoader",
-                "notes": "基础功能示例 (自动推断)"
-              }
+              id: "basic-gltfOptLoader",
+              title: "GLTF Opt解压",
+              description: "支持Draco和KTX2压缩格式的GLTF模型加载",
+              thumbnail: "images/basic-gltfOptLoader.jpg",
+              version: "r179",
+              url: "examples/z258/basic-gltfOptLoader",
+              features: {
+                coreTech: "Three.js Core",
+                secondaryTech: "基础功能",
+                difficulty: "基础",
+                actualFunction: "支持Draco和KTX2压缩格式的GLTF模型加载",
+                suggestedCategory: "1. 基础入门",
+                filePath: "examples/examples/z258/basic-gltfOptLoader",
+                notes: "基础功能示例 (自动推断)",
+              },
             },
             {
-              "id": "basic-domDisplay",
-              "title": "DOM遮挡",
-              "description": "展示3D场景中DOM元素与WebGL物体的遮挡关系处理",
-              "thumbnail": "images/basic-domDisplay.jpg",
-              "version": "r179",
-              "url": "examples/z258/basic-domDisplay",
-              "features": {
-                "coreTech": "Three.js Core",
-                "secondaryTech": "基础功能",
-                "difficulty": "基础",
-                "actualFunction": "展示3D场景中DOM元素与WebGL物体的遮挡关系处理",
-                "suggestedCategory": "1. 基础入门",
-                "filePath": "examples/examples/z258/basic-domDisplay",
-                "notes": "基础功能示例 (自动推断)"
-              }
+              id: "basic-domDisplay",
+              title: "DOM遮挡",
+              description: "展示3D场景中DOM元素与WebGL物体的遮挡关系处理",
+              thumbnail: "images/basic-domDisplay.jpg",
+              version: "r179",
+              url: "examples/z258/basic-domDisplay",
+              features: {
+                coreTech: "Three.js Core",
+                secondaryTech: "基础功能",
+                difficulty: "基础",
+                actualFunction: "展示3D场景中DOM元素与WebGL物体的遮挡关系处理",
+                suggestedCategory: "1. 基础入门",
+                filePath: "examples/examples/z258/basic-domDisplay",
+                notes: "基础功能示例 (自动推断)",
+              },
             },
             {
-              "id": "basic-renderFrame",
-              "title": "帧率控制",
-              "description": "展示如何控制Three.js渲染帧率，支持固定FPS和自适应帧率",
-              "thumbnail": "images/basic-renderFrame.jpg",
-              "version": "r179",
-              "url": "examples/z258/basic-renderFrame",
-              "features": {
-                "coreTech": "Three.js Core",
-                "secondaryTech": "基础功能",
-                "difficulty": "基础",
-                "actualFunction": "展示如何控制Three.js渲染帧率，支持固定FPS和自适应帧率",
-                "suggestedCategory": "1. 基础入门",
-                "filePath": "examples/examples/z258/basic-renderFrame",
-                "notes": "基础功能示例 (自动推断)"
-              }
+              id: "basic-renderFrame",
+              title: "帧率控制",
+              description:
+                "展示如何控制Three.js渲染帧率，支持固定FPS和自适应帧率",
+              thumbnail: "images/basic-renderFrame.jpg",
+              version: "r179",
+              url: "examples/z258/basic-renderFrame",
+              features: {
+                coreTech: "Three.js Core",
+                secondaryTech: "基础功能",
+                difficulty: "基础",
+                actualFunction:
+                  "展示如何控制Three.js渲染帧率，支持固定FPS和自适应帧率",
+                suggestedCategory: "1. 基础入门",
+                filePath: "examples/examples/z258/basic-renderFrame",
+                notes: "基础功能示例 (自动推断)",
+              },
             },
             {
-              "id": "basic-modelExport",
-              "title": "模型导出",
-              "description": "展示如何将Three.js场景导出为多种3D格式",
-              "thumbnail": "images/basic-modelExport.jpg",
-              "version": "r179",
-              "url": "examples/z258/basic-modelExport",
-              "features": {
-                "coreTech": "Three.js Core",
-                "secondaryTech": "基础功能",
-                "difficulty": "基础",
-                "actualFunction": "展示如何将Three.js场景导出为多种3D格式",
-                "suggestedCategory": "1. 基础入门",
-                "filePath": "examples/examples/z258/basic-modelExport",
-                "notes": "基础功能示例 (自动推断)"
-              }
+              id: "basic-modelExport",
+              title: "模型导出",
+              description: "展示如何将Three.js场景导出为多种3D格式",
+              thumbnail: "images/basic-modelExport.jpg",
+              version: "r179",
+              url: "examples/z258/basic-modelExport",
+              features: {
+                coreTech: "Three.js Core",
+                secondaryTech: "基础功能",
+                difficulty: "基础",
+                actualFunction: "展示如何将Three.js场景导出为多种3D格式",
+                suggestedCategory: "1. 基础入门",
+                filePath: "examples/examples/z258/basic-modelExport",
+                notes: "基础功能示例 (自动推断)",
+              },
             },
             {
-              "id": "basic-fileChunks",
-              "title": "文件分片",
-              "description": "展示大文件分片加载和进度追踪",
-              "thumbnail": "images/basic-fileChunks.jpg",
-              "version": "r179",
-              "url": "examples/z258/basic-fileChunks",
-              "features": {
-                "coreTech": "Three.js Core",
-                "secondaryTech": "基础功能",
-                "difficulty": "基础",
-                "actualFunction": "展示大文件分片加载和进度追踪",
-                "suggestedCategory": "1. 基础入门",
-                "filePath": "examples/examples/z258/basic-fileChunks",
-                "notes": "基础功能示例 (自动推断)"
-              }
-            }
-          ]
-        }
-      ]
+              id: "basic-fileChunks",
+              title: "文件分片",
+              description: "展示大文件分片加载和进度追踪",
+              thumbnail: "images/basic-fileChunks.jpg",
+              version: "r179",
+              url: "examples/z258/basic-fileChunks",
+              features: {
+                coreTech: "Three.js Core",
+                secondaryTech: "基础功能",
+                difficulty: "基础",
+                actualFunction: "展示大文件分片加载和进度追踪",
+                suggestedCategory: "1. 基础入门",
+                filePath: "examples/examples/z258/basic-fileChunks",
+                notes: "基础功能示例 (自动推断)",
+              },
+            },
+          ],
+        },
+      ],
     },
     {
-      "id": "相机与控制",
-      "name": "2. 相机与控制",
-      "icon": "bi-camera",
-      "subcategories": [
+      id: "相机与控制",
+      name: "2. 相机与控制",
+      icon: "bi-camera",
+      subcategories: [
         {
-          "id": "相机与控制-2.1-控制器",
-          "name": "2.1 控制器",
-          "examples": [
+          id: "相机与控制-2.1-控制器",
+          name: "2.1 控制器",
+          examples: [
             {
-              "id": "basic-camera-cameraAttribute",
-              "title": "相机属性",
-              "description": "展示PerspectiveCamera的各种属性，包括视角、近平面、远平面、缩放、图层等参数的调整",
-              "thumbnail": "images/basic-camera-cameraAttribute.jpg",
-              "version": "r179",
-              "url": "examples/z258/basic-camera-cameraAttribute",
-              "features": {
-                "coreTech": "Camera, Controls",
-                "secondaryTech": "相机参数, 交互控制",
-                "difficulty": "基础",
-                "actualFunction": "展示PerspectiveCamera的各种属性，包括视角、近平面、远平面、缩放、图层等参数的调整",
-                "suggestedCategory": "2. 相机与控制 > 2.2 控制器",
-                "filePath": "examples/examples/z258/basic-camera-cameraAttribute",
-                "notes": "相机控制示例 (自动推断)"
-              }
+              id: "basic-camera-cameraAttribute",
+              title: "相机属性",
+              description:
+                "展示PerspectiveCamera的各种属性，包括视角、近平面、远平面、缩放、图层等参数的调整",
+              thumbnail: "images/basic-camera-cameraAttribute.jpg",
+              version: "r179",
+              url: "examples/z258/basic-camera-cameraAttribute",
+              features: {
+                coreTech: "Camera, Controls",
+                secondaryTech: "相机参数, 交互控制",
+                difficulty: "基础",
+                actualFunction:
+                  "展示PerspectiveCamera的各种属性，包括视角、近平面、远平面、缩放、图层等参数的调整",
+                suggestedCategory: "2. 相机与控制 > 2.2 控制器",
+                filePath: "examples/examples/z258/basic-camera-cameraAttribute",
+                notes: "相机控制示例 (自动推断)",
+              },
             },
             {
-              "id": "basic-camera-orbControls",
-              "title": "轨道控制器",
-              "description": "展示OrbitControls的各种控制参数，包括旋转、缩放、平移、阻尼、角度限制等",
-              "thumbnail": "images/basic-camera-orbControls.jpg",
-              "version": "r179",
-              "url": "examples/z258/basic-camera-orbControls",
-              "features": {
-                "coreTech": "Camera, Controls",
-                "secondaryTech": "相机参数, 交互控制",
-                "difficulty": "基础",
-                "actualFunction": "展示OrbitControls的各种控制参数，包括旋转、缩放、平移、阻尼、角度限制等",
-                "suggestedCategory": "2. 相机与控制 > 2.2 控制器",
-                "filePath": "examples/examples/z258/basic-camera-orbControls",
-                "notes": "相机控制示例 (自动推断)"
-              }
+              id: "basic-camera-orbControls",
+              title: "轨道控制器",
+              description:
+                "展示OrbitControls的各种控制参数，包括旋转、缩放、平移、阻尼、角度限制等",
+              thumbnail: "images/basic-camera-orbControls.jpg",
+              version: "r179",
+              url: "examples/z258/basic-camera-orbControls",
+              features: {
+                coreTech: "Camera, Controls",
+                secondaryTech: "相机参数, 交互控制",
+                difficulty: "基础",
+                actualFunction:
+                  "展示OrbitControls的各种控制参数，包括旋转、缩放、平移、阻尼、角度限制等",
+                suggestedCategory: "2. 相机与控制 > 2.2 控制器",
+                filePath: "examples/examples/z258/basic-camera-orbControls",
+                notes: "相机控制示例 (自动推断)",
+              },
             },
             {
-              "id": "basic-camera-viewHelper",
-              "title": "视图辅助",
-              "description": "展示ViewHelper的使用，提供场景视角切换的可视化辅助工具",
-              "thumbnail": "images/basic-camera-viewHelper.jpg",
-              "version": "r179",
-              "url": "examples/z258/basic-camera-viewHelper",
-              "features": {
-                "coreTech": "Camera, Controls",
-                "secondaryTech": "相机参数, 交互控制",
-                "difficulty": "基础",
-                "actualFunction": "展示ViewHelper的使用，提供场景视角切换的可视化辅助工具",
-                "suggestedCategory": "2. 相机与控制 > 2.2 控制器",
-                "filePath": "examples/examples/z258/basic-camera-viewHelper",
-                "notes": "相机控制示例 (自动推断)"
-              }
+              id: "basic-camera-viewHelper",
+              title: "视图辅助",
+              description:
+                "展示ViewHelper的使用，提供场景视角切换的可视化辅助工具",
+              thumbnail: "images/basic-camera-viewHelper.jpg",
+              version: "r179",
+              url: "examples/z258/basic-camera-viewHelper",
+              features: {
+                coreTech: "Camera, Controls",
+                secondaryTech: "相机参数, 交互控制",
+                difficulty: "基础",
+                actualFunction:
+                  "展示ViewHelper的使用，提供场景视角切换的可视化辅助工具",
+                suggestedCategory: "2. 相机与控制 > 2.2 控制器",
+                filePath: "examples/examples/z258/basic-camera-viewHelper",
+                notes: "相机控制示例 (自动推断)",
+              },
             },
             {
-              "id": "animation-drag",
-              "title": "拖拽控制",
-              "description": "实现3D对象的拖拽和放置功能",
-              "thumbnail": "images/animation-drag.jpg",
-              "version": "r179",
-              "url": "examples/animation-drag",
-              "features": {
-                "coreTech": "Raycaster射线检测, 拖拽交互, 平面投影计算",
-                "secondaryTech": "鼠标事件处理, 材质切换反馈, 网格吸附, 拖拽平面可视化",
-                "difficulty": "进阶",
-                "actualFunction": "实现3D对象的拖拽和放置功能，支持Shift垂直移动、双击重置、网格吸附",
-                "suggestedCategory": "2. 相机与控制 > 2.2 控制器 或 9. 交互与射线检测",
-                "filePath": "examples/animation-drag.html",
-                "notes": "涉及射线检测和交互逻辑，更偏向交互分类"
-              }
-            }
-          ]
-        }
-      ]
+              id: "animation-drag",
+              title: "拖拽控制",
+              description: "实现3D对象的拖拽和放置功能",
+              thumbnail: "images/animation-drag.jpg",
+              version: "r179",
+              url: "examples/animation-drag",
+              features: {
+                coreTech: "Raycaster射线检测, 拖拽交互, 平面投影计算",
+                secondaryTech:
+                  "鼠标事件处理, 材质切换反馈, 网格吸附, 拖拽平面可视化",
+                difficulty: "进阶",
+                actualFunction:
+                  "实现3D对象的拖拽和放置功能，支持Shift垂直移动、双击重置、网格吸附",
+                suggestedCategory:
+                  "2. 相机与控制 > 2.2 控制器 或 9. 交互与射线检测",
+                filePath: "examples/animation-drag.html",
+                notes: "涉及射线检测和交互逻辑，更偏向交互分类",
+              },
+            },
+          ],
+        },
+      ],
     },
     {
-      "id": "光照与阴影",
-      "name": "3. 光照与阴影",
-      "icon": "bi-lightbulb",
-      "subcategories": [
+      id: "光照与阴影",
+      name: "3. 光照与阴影",
+      icon: "bi-lightbulb",
+      subcategories: [
         {
-          "id": "光照与阴影-3.1-光源类型",
-          "name": "3.1 光源类型",
-          "examples": [
+          id: "光照与阴影-3.1-光源类型",
+          name: "3.1 光源类型",
+          examples: [
             {
-              "id": "lighting-point",
-              "title": "点光源",
-              "description": "展示点光源的效果和阴影",
-              "thumbnail": "images/lighting-point.jpg",
-              "version": "r179",
-              "url": "examples/lighting-point",
-              "features": {
-                "coreTech": "PointLight, 点光源参数(color/intensity/distance/decay), 阴影配置",
-                "secondaryTech": "PointLightHelper辅助显示, 光源动画(圆周运动), 多几何体展示",
-                "difficulty": "基础",
-                "actualFunction": "展示点光源的效果和阴影，支持GUI调整所有参数，光源自动环绕运动",
-                "suggestedCategory": "3. 光照与阴影 > 3.1 光源类型",
-                "filePath": "examples/lighting-point.html",
-                "notes": "全面的点光源演示，包含阴影和辅助显示"
-              }
+              id: "lighting-point",
+              title: "点光源",
+              description: "展示点光源的效果和阴影",
+              thumbnail: "images/lighting-point.jpg",
+              version: "r179",
+              url: "examples/lighting-point",
+              features: {
+                coreTech:
+                  "PointLight, 点光源参数(color/intensity/distance/decay), 阴影配置",
+                secondaryTech:
+                  "PointLightHelper辅助显示, 光源动画(圆周运动), 多几何体展示",
+                difficulty: "基础",
+                actualFunction:
+                  "展示点光源的效果和阴影，支持GUI调整所有参数，光源自动环绕运动",
+                suggestedCategory: "3. 光照与阴影 > 3.1 光源类型",
+                filePath: "examples/lighting-point.html",
+                notes: "全面的点光源演示，包含阴影和辅助显示",
+              },
             },
             {
-              "id": "lighting-spot",
-              "title": "聚光灯",
-              "description": "使用聚光灯创建舞台照明效果，展示聚光灯的特性和阴影",
-              "thumbnail": "images/lighting-spot.jpg",
-              "version": "r179",
-              "url": "examples/lighting-spot",
-              "features": {
-                "coreTech": "SpotLight, 聚光灯特有参数(angle/penumbra/target), 阴影映射",
-                "secondaryTech": "SpotLightHelper辅助显示, 目标跟随动画, 圆锥体可视化",
-                "difficulty": "基础",
-                "actualFunction": "展示聚光灯的效果和阴影，包含角度、半影衰减、目标控制等参数",
-                "suggestedCategory": "3. 光照与阴影 > 3.1 光源类型",
-                "filePath": "examples/lighting-spot.html",
-                "notes": "聚光灯特有的target和penumbra参数演示完整"
-              }
+              id: "lighting-spot",
+              title: "聚光灯",
+              description: "使用聚光灯创建舞台照明效果，展示聚光灯的特性和阴影",
+              thumbnail: "images/lighting-spot.jpg",
+              version: "r179",
+              url: "examples/lighting-spot",
+              features: {
+                coreTech:
+                  "SpotLight, 聚光灯特有参数(angle/penumbra/target), 阴影映射",
+                secondaryTech:
+                  "SpotLightHelper辅助显示, 目标跟随动画, 圆锥体可视化",
+                difficulty: "基础",
+                actualFunction:
+                  "展示聚光灯的效果和阴影，包含角度、半影衰减、目标控制等参数",
+                suggestedCategory: "3. 光照与阴影 > 3.1 光源类型",
+                filePath: "examples/lighting-spot.html",
+                notes: "聚光灯特有的target和penumbra参数演示完整",
+              },
             },
             {
-              "id": "lighting-directional",
-              "title": "平行光",
-              "description": "模拟太阳光的平行光效果，展示平行光的特性和阴影",
-              "thumbnail": "images/lighting-directional.jpg",
-              "version": "r179",
-              "url": "examples/lighting-directional",
-              "features": {
-                "coreTech": "DirectionalLight, 平行光阴影相机(OrthographicCamera), 阴影参数",
-                "secondaryTech": "DirectionalLightHelper, CameraHelper, 太阳位置动画",
-                "difficulty": "基础",
-                "actualFunction": "模拟太阳光的平行光效果，展示阴影相机参数调整",
-                "suggestedCategory": "3. 光照与阴影 > 3.1 光源类型",
-                "filePath": "examples/lighting-directional.html",
-                "notes": "平行光阴影相机的配置是关键知识点"
-              }
-            }
-          ]
+              id: "lighting-directional",
+              title: "平行光",
+              description: "模拟太阳光的平行光效果，展示平行光的特性和阴影",
+              thumbnail: "images/lighting-directional.jpg",
+              version: "r179",
+              url: "examples/lighting-directional",
+              features: {
+                coreTech:
+                  "DirectionalLight, 平行光阴影相机(OrthographicCamera), 阴影参数",
+                secondaryTech:
+                  "DirectionalLightHelper, CameraHelper, 太阳位置动画",
+                difficulty: "基础",
+                actualFunction: "模拟太阳光的平行光效果，展示阴影相机参数调整",
+                suggestedCategory: "3. 光照与阴影 > 3.1 光源类型",
+                filePath: "examples/lighting-directional.html",
+                notes: "平行光阴影相机的配置是关键知识点",
+              },
+            },
+          ],
         },
         {
-          "id": "光照与阴影-3.2-阴影系统",
-          "name": "3.2 阴影系统",
-          "examples": [
+          id: "光照与阴影-3.2-阴影系统",
+          name: "3.2 阴影系统",
+          examples: [
             {
-              "id": "lighting-shadows",
-              "title": "阴影效果",
-              "description": "展示不同类型的阴影映射技术",
-              "thumbnail": "images/lighting-shadows.jpg",
-              "version": "r179",
-              "url": "examples/lighting-shadows",
-              "features": {
-                "coreTech": "三种光源阴影对比, 阴影映射类型(PCF/PCFSoft/VSM), 阴影参数",
-                "secondaryTech": "光源切换系统, 阴影bias/radius调整, 辅助显示控制",
-                "difficulty": "进阶",
-                "actualFunction": "展示不同类型的阴影映射技术，支持方向光/聚光灯/点光源切换对比",
-                "suggestedCategory": "3. 光照与阴影 > 3.2 阴影系统",
-                "filePath": "examples/lighting-shadows.html",
-                "notes": "非常实用的阴影系统对比示例，涵盖所有阴影相关技术"
-              }
-            }
-          ]
-        }
-      ]
+              id: "lighting-shadows",
+              title: "阴影效果",
+              description: "展示不同类型的阴影映射技术",
+              thumbnail: "images/lighting-shadows.jpg",
+              version: "r179",
+              url: "examples/lighting-shadows",
+              features: {
+                coreTech:
+                  "三种光源阴影对比, 阴影映射类型(PCF/PCFSoft/VSM), 阴影参数",
+                secondaryTech:
+                  "光源切换系统, 阴影bias/radius调整, 辅助显示控制",
+                difficulty: "进阶",
+                actualFunction:
+                  "展示不同类型的阴影映射技术，支持方向光/聚光灯/点光源切换对比",
+                suggestedCategory: "3. 光照与阴影 > 3.2 阴影系统",
+                filePath: "examples/lighting-shadows.html",
+                notes: "非常实用的阴影系统对比示例，涵盖所有阴影相关技术",
+              },
+            },
+          ],
+        },
+      ],
     },
     {
-      "id": "模型加载",
-      "name": "4. 模型加载",
-      "icon": "bi-cloud-download",
-      "subcategories": [
+      id: "模型加载",
+      name: "4. 模型加载",
+      icon: "bi-cloud-download",
+      subcategories: [
         {
-          "id": "模型加载-4.1-模型格式",
-          "name": "4.1 模型格式",
-          "examples": [
+          id: "模型加载-4.1-模型格式",
+          name: "4.1 模型格式",
+          examples: [
             {
-              "id": "loaders-model-gltf",
-              "title": "GLTF 模型加载器",
-              "description": "加载和显示 GLTF/GLB 格式的 3D 模型",
-              "thumbnail": "images/loaders-model-gltf.jpg",
-              "version": "r179",
-              "url": "examples/loaders-model-gltf",
-              "features": {
-                "coreTech": "GLTFLoader, DRACOLoader, LoadingManager, AnimationMixer",
-                "secondaryTech": "加载进度显示, 动画播放控制, 模型遍历处理, 色调映射",
-                "difficulty": "基础",
-                "actualFunction": "加载GLTF/GLB格式模型，支持Draco压缩，动画播放，加载进度显示",
-                "suggestedCategory": "4. 模型加载 > 4.1 模型格式",
-                "filePath": "examples/loaders-model-gltf.html",
-                "notes": "完整的GLTF加载示例，包含Draco解压和动画系统"
-              }
+              id: "loaders-model-gltf",
+              title: "GLTF 模型加载器",
+              description: "加载和显示 GLTF/GLB 格式的 3D 模型",
+              thumbnail: "images/loaders-model-gltf.jpg",
+              version: "r179",
+              url: "examples/loaders-model-gltf",
+              features: {
+                coreTech:
+                  "GLTFLoader, DRACOLoader, LoadingManager, AnimationMixer",
+                secondaryTech:
+                  "加载进度显示, 动画播放控制, 模型遍历处理, 色调映射",
+                difficulty: "基础",
+                actualFunction:
+                  "加载GLTF/GLB格式模型，支持Draco压缩，动画播放，加载进度显示",
+                suggestedCategory: "4. 模型加载 > 4.1 模型格式",
+                filePath: "examples/loaders-model-gltf.html",
+                notes: "完整的GLTF加载示例，包含Draco解压和动画系统",
+              },
             },
             {
-              "id": "loaders-model-obj",
-              "title": "OBJ 模型加载器",
-              "description": "加载和显示 OBJ 格式的 3D 模型及其材质",
-              "thumbnail": "images/loaders-model-obj.jpg",
-              "version": "r179",
-              "url": "examples/loaders-model-obj",
-              "features": {
-                "coreTech": "OBJLoader, MTLLoader, LoadingManager",
-                "secondaryTech": "材质加载切换, 线框模式, 加载进度显示",
-                "difficulty": "基础",
-                "actualFunction": "加载OBJ格式模型及其MTL材质文件，支持材质切换和线框模式",
-                "suggestedCategory": "4. 模型加载 > 4.1 模型格式",
-                "filePath": "examples/loaders-model-obj.html",
-                "notes": "展示了OBJ+MTL的完整加载流程"
-              }
+              id: "loaders-model-obj",
+              title: "OBJ 模型加载器",
+              description: "加载和显示 OBJ 格式的 3D 模型及其材质",
+              thumbnail: "images/loaders-model-obj.jpg",
+              version: "r179",
+              url: "examples/loaders-model-obj",
+              features: {
+                coreTech: "OBJLoader, MTLLoader, LoadingManager",
+                secondaryTech: "材质加载切换, 线框模式, 加载进度显示",
+                difficulty: "基础",
+                actualFunction:
+                  "加载OBJ格式模型及其MTL材质文件，支持材质切换和线框模式",
+                suggestedCategory: "4. 模型加载 > 4.1 模型格式",
+                filePath: "examples/loaders-model-obj.html",
+                notes: "展示了OBJ+MTL的完整加载流程",
+              },
             },
             {
-              "id": "loaders-model-fbx",
-              "title": "FBX 模型加载器",
-              "description": "加载和显示 FBX 格式的 3D 模型及其动画",
-              "thumbnail": "images/loaders-model-fbx.jpg",
-              "version": "r179",
-              "url": "examples/loaders-model-fbx",
-              "features": {
-                "coreTech": "FBXLoader, AnimationMixer, LoadingManager",
-                "secondaryTech": "动画播放控制, 多动画切换, 加载进度显示",
-                "difficulty": "基础",
-                "actualFunction": "加载FBX格式模型及其动画，支持动画播放和切换",
-                "suggestedCategory": "4. 模型加载 > 4.1 模型格式",
-                "filePath": "examples/loaders-model-fbx.html",
-                "notes": "FBX动画加载的完整示例"
-              }
-            }
-          ]
+              id: "loaders-model-fbx",
+              title: "FBX 模型加载器",
+              description: "加载和显示 FBX 格式的 3D 模型及其动画",
+              thumbnail: "images/loaders-model-fbx.jpg",
+              version: "r179",
+              url: "examples/loaders-model-fbx",
+              features: {
+                coreTech: "FBXLoader, AnimationMixer, LoadingManager",
+                secondaryTech: "动画播放控制, 多动画切换, 加载进度显示",
+                difficulty: "基础",
+                actualFunction: "加载FBX格式模型及其动画，支持动画播放和切换",
+                suggestedCategory: "4. 模型加载 > 4.1 模型格式",
+                filePath: "examples/loaders-model-fbx.html",
+                notes: "FBX动画加载的完整示例",
+              },
+            },
+          ],
         },
         {
-          "id": "模型加载-4.2-纹理加载",
-          "name": "4.2 纹理加载",
-          "examples": [
+          id: "模型加载-4.2-纹理加载",
+          name: "4.2 纹理加载",
+          examples: [
             {
-              "id": "loaders-texture-basic",
-              "title": "基础纹理加载器",
-              "description": "加载和应用各种图像格式的纹理",
-              "thumbnail": "images/loaders-texture-basic.jpg",
-              "version": "r179",
-              "url": "examples/loaders-texture-basic",
-              "features": {
-                "coreTech": "TextureLoader, LoadingManager, 纹理参数配置",
-                "secondaryTech": "纹理环绕模式(wrapS/wrapT), 过滤模式(magFilter/minFilter), 重复/偏移/旋转",
-                "difficulty": "基础",
-                "actualFunction": "加载和应用各种图像格式的纹理，展示纹理参数控制",
-                "suggestedCategory": "4. 模型加载 > 4.2 纹理加载",
-                "filePath": "examples/loaders-texture-basic.html",
-                "notes": "全面的纹理参数演示，包含程序化生成纹理"
-              }
+              id: "loaders-texture-basic",
+              title: "基础纹理加载器",
+              description: "加载和应用各种图像格式的纹理",
+              thumbnail: "images/loaders-texture-basic.jpg",
+              version: "r179",
+              url: "examples/loaders-texture-basic",
+              features: {
+                coreTech: "TextureLoader, LoadingManager, 纹理参数配置",
+                secondaryTech:
+                  "纹理环绕模式(wrapS/wrapT), 过滤模式(magFilter/minFilter), 重复/偏移/旋转",
+                difficulty: "基础",
+                actualFunction:
+                  "加载和应用各种图像格式的纹理，展示纹理参数控制",
+                suggestedCategory: "4. 模型加载 > 4.2 纹理加载",
+                filePath: "examples/loaders-texture-basic.html",
+                notes: "全面的纹理参数演示，包含程序化生成纹理",
+              },
             },
             {
-              "id": "loaders-texture-cube",
-              "title": "立方体纹理加载器",
-              "description": "加载和应用立方体贴图纹理",
-              "thumbnail": "images/loaders-texture-cube.jpg",
-              "version": "r179",
-              "url": "examples/loaders-texture-cube",
-              "features": {
-                "coreTech": "CubeTextureLoader, 环境贴图, 反射/折射材质",
-                "secondaryTech": "程序化生成立方体纹理, 天空盒, 材质反射率控制",
-                "difficulty": "进阶",
-                "actualFunction": "加载和应用立方体贴图纹理，展示反射和折射效果",
-                "suggestedCategory": "4. 模型加载 > 4.2 纹理加载 或 18. 环境与环境贴图",
-                "filePath": "examples/loaders-texture-cube.html",
-                "notes": "环境贴图技术，与天空盒相关"
-              }
-            }
-          ]
+              id: "loaders-texture-cube",
+              title: "立方体纹理加载器",
+              description: "加载和应用立方体贴图纹理",
+              thumbnail: "images/loaders-texture-cube.jpg",
+              version: "r179",
+              url: "examples/loaders-texture-cube",
+              features: {
+                coreTech: "CubeTextureLoader, 环境贴图, 反射/折射材质",
+                secondaryTech: "程序化生成立方体纹理, 天空盒, 材质反射率控制",
+                difficulty: "进阶",
+                actualFunction: "加载和应用立方体贴图纹理，展示反射和折射效果",
+                suggestedCategory:
+                  "4. 模型加载 > 4.2 纹理加载 或 18. 环境与环境贴图",
+                filePath: "examples/loaders-texture-cube.html",
+                notes: "环境贴图技术，与天空盒相关",
+              },
+            },
+          ],
         },
         {
-          "id": "模型加载-4.3-字体加载",
-          "name": "4.3 字体加载",
-          "examples": [
+          id: "模型加载-4.3-字体加载",
+          name: "4.3 字体加载",
+          examples: [
             {
-              "id": "loaders-font",
-              "title": "字体加载器",
-              "description": "加载和使用 3D 文本字体",
-              "thumbnail": "images/loaders-font.jpg",
-              "version": "r179",
-              "url": "examples/loaders-font",
-              "features": {
-                "coreTech": "FontLoader, TextGeometry, 3D文字创建",
-                "secondaryTech": "字体切换, 文字参数控制(size/height/bevel), 多字体支持",
-                "difficulty": "基础",
-                "actualFunction": "加载3D字体并创建文字几何体，支持多种字体和参数调整",
-                "suggestedCategory": "4. 模型加载 > 4.3 字体加载",
-                "filePath": "examples/loaders-font.html",
-                "notes": "3D文字创建的完整示例"
-              }
-            }
-          ]
+              id: "loaders-font",
+              title: "字体加载器",
+              description: "加载和使用 3D 文本字体",
+              thumbnail: "images/loaders-font.jpg",
+              version: "r179",
+              url: "examples/loaders-font",
+              features: {
+                coreTech: "FontLoader, TextGeometry, 3D文字创建",
+                secondaryTech:
+                  "字体切换, 文字参数控制(size/height/bevel), 多字体支持",
+                difficulty: "基础",
+                actualFunction:
+                  "加载3D字体并创建文字几何体，支持多种字体和参数调整",
+                suggestedCategory: "4. 模型加载 > 4.3 字体加载",
+                filePath: "examples/loaders-font.html",
+                notes: "3D文字创建的完整示例",
+              },
+            },
+          ],
         },
         {
-          "id": "模型加载-4.4-其他",
-          "name": "4.4 其他",
-          "examples": [
+          id: "模型加载-4.4-其他",
+          name: "4.4 其他",
+          examples: [
             {
-              "id": "loaders-model-stl",
-              "title": "STL 模型加载器",
-              "description": "加载和显示 STL 格式的 3D 模型",
-              "thumbnail": "images/loaders-model-stl.jpg",
-              "version": "r179",
-              "url": "examples/loaders-model-stl",
-              "features": {
-                "coreTech": "Loader, LoadingManager",
-                "secondaryTech": "异步加载, 进度控制",
-                "difficulty": "进阶",
-                "actualFunction": "加载和显示 STL 格式的 3D 模型",
-                "suggestedCategory": "4. 模型加载",
-                "filePath": "examples/examples/loaders-model-stl",
-                "notes": "资源加载示例 (自动推断)"
-              }
+              id: "loaders-model-stl",
+              title: "STL 模型加载器",
+              description: "加载和显示 STL 格式的 3D 模型",
+              thumbnail: "images/loaders-model-stl.jpg",
+              version: "r179",
+              url: "examples/loaders-model-stl",
+              features: {
+                coreTech: "Loader, LoadingManager",
+                secondaryTech: "异步加载, 进度控制",
+                difficulty: "进阶",
+                actualFunction: "加载和显示 STL 格式的 3D 模型",
+                suggestedCategory: "4. 模型加载",
+                filePath: "examples/examples/loaders-model-stl",
+                notes: "资源加载示例 (自动推断)",
+              },
             },
             {
-              "id": "loaders-model-dae",
-              "title": "DAE/COLLADA 模型加载器",
-              "description": "加载和显示 DAE/COLLADA 格式的 3D 模型",
-              "thumbnail": "images/loaders-model-dae.jpg",
-              "version": "r179",
-              "url": "examples/loaders-model-dae",
-              "features": {
-                "coreTech": "Loader, LoadingManager",
-                "secondaryTech": "异步加载, 进度控制",
-                "difficulty": "进阶",
-                "actualFunction": "加载和显示 DAE/COLLADA 格式的 3D 模型",
-                "suggestedCategory": "4. 模型加载",
-                "filePath": "examples/examples/loaders-model-dae",
-                "notes": "资源加载示例 (自动推断)"
-              }
+              id: "loaders-model-dae",
+              title: "DAE/COLLADA 模型加载器",
+              description: "加载和显示 DAE/COLLADA 格式的 3D 模型",
+              thumbnail: "images/loaders-model-dae.jpg",
+              version: "r179",
+              url: "examples/loaders-model-dae",
+              features: {
+                coreTech: "Loader, LoadingManager",
+                secondaryTech: "异步加载, 进度控制",
+                difficulty: "进阶",
+                actualFunction: "加载和显示 DAE/COLLADA 格式的 3D 模型",
+                suggestedCategory: "4. 模型加载",
+                filePath: "examples/examples/loaders-model-dae",
+                notes: "资源加载示例 (自动推断)",
+              },
             },
             {
-              "id": "loaders-model-vtk",
-              "title": "VTK 模型加载器",
-              "description": "加载和显示 VTK 格式的 3D 模型",
-              "thumbnail": "images/loaders-model-vtk.jpg",
-              "version": "r179",
-              "url": "examples/loaders-model-vtk",
-              "features": {
-                "coreTech": "Loader, LoadingManager",
-                "secondaryTech": "异步加载, 进度控制",
-                "difficulty": "进阶",
-                "actualFunction": "加载和显示 VTK 格式的 3D 模型",
-                "suggestedCategory": "4. 模型加载",
-                "filePath": "examples/examples/loaders-model-vtk",
-                "notes": "资源加载示例 (自动推断)"
-              }
+              id: "loaders-model-vtk",
+              title: "VTK 模型加载器",
+              description: "加载和显示 VTK 格式的 3D 模型",
+              thumbnail: "images/loaders-model-vtk.jpg",
+              version: "r179",
+              url: "examples/loaders-model-vtk",
+              features: {
+                coreTech: "Loader, LoadingManager",
+                secondaryTech: "异步加载, 进度控制",
+                difficulty: "进阶",
+                actualFunction: "加载和显示 VTK 格式的 3D 模型",
+                suggestedCategory: "4. 模型加载",
+                filePath: "examples/examples/loaders-model-vtk",
+                notes: "资源加载示例 (自动推断)",
+              },
             },
             {
-              "id": "loaders-model-pcd",
-              "title": "PCD 点云模型加载器",
-              "description": "加载和显示 PCD 格式的点云模型",
-              "thumbnail": "images/loaders-model-pcd.jpg",
-              "version": "r179",
-              "url": "examples/loaders-model-pcd",
-              "features": {
-                "coreTech": "Loader, LoadingManager",
-                "secondaryTech": "异步加载, 进度控制",
-                "difficulty": "进阶",
-                "actualFunction": "加载和显示 PCD 格式的点云模型",
-                "suggestedCategory": "4. 模型加载",
-                "filePath": "examples/examples/loaders-model-pcd",
-                "notes": "资源加载示例 (自动推断)"
-              }
+              id: "loaders-model-pcd",
+              title: "PCD 点云模型加载器",
+              description: "加载和显示 PCD 格式的点云模型",
+              thumbnail: "images/loaders-model-pcd.jpg",
+              version: "r179",
+              url: "examples/loaders-model-pcd",
+              features: {
+                coreTech: "Loader, LoadingManager",
+                secondaryTech: "异步加载, 进度控制",
+                difficulty: "进阶",
+                actualFunction: "加载和显示 PCD 格式的点云模型",
+                suggestedCategory: "4. 模型加载",
+                filePath: "examples/examples/loaders-model-pcd",
+                notes: "资源加载示例 (自动推断)",
+              },
             },
             {
-              "id": "loaders-model-3ds",
-              "title": "3DS 模型加载器",
-              "description": "加载和显示 3DS 格式的 3D 模型",
-              "thumbnail": "images/loaders-model-3ds.jpg",
-              "version": "r179",
-              "url": "examples/loaders-model-3ds",
-              "features": {
-                "coreTech": "Loader, LoadingManager",
-                "secondaryTech": "异步加载, 进度控制",
-                "difficulty": "进阶",
-                "actualFunction": "加载和显示 3DS 格式的 3D 模型",
-                "suggestedCategory": "4. 模型加载",
-                "filePath": "examples/examples/loaders-model-3ds",
-                "notes": "资源加载示例 (自动推断)"
-              }
+              id: "loaders-model-3ds",
+              title: "3DS 模型加载器",
+              description: "加载和显示 3DS 格式的 3D 模型",
+              thumbnail: "images/loaders-model-3ds.jpg",
+              version: "r179",
+              url: "examples/loaders-model-3ds",
+              features: {
+                coreTech: "Loader, LoadingManager",
+                secondaryTech: "异步加载, 进度控制",
+                difficulty: "进阶",
+                actualFunction: "加载和显示 3DS 格式的 3D 模型",
+                suggestedCategory: "4. 模型加载",
+                filePath: "examples/examples/loaders-model-3ds",
+                notes: "资源加载示例 (自动推断)",
+              },
             },
             {
-              "id": "loaders-model-amf",
-              "title": "AMF 模型加载器",
-              "description": "加载和显示 AMF 格式的 3D 模型",
-              "thumbnail": "images/loaders-model-amf.jpg",
-              "version": "r179",
-              "url": "examples/loaders-model-amf",
-              "features": {
-                "coreTech": "Loader, LoadingManager",
-                "secondaryTech": "异步加载, 进度控制",
-                "difficulty": "进阶",
-                "actualFunction": "加载和显示 AMF 格式的 3D 模型",
-                "suggestedCategory": "4. 模型加载",
-                "filePath": "examples/examples/loaders-model-amf",
-                "notes": "资源加载示例 (自动推断)"
-              }
+              id: "loaders-model-amf",
+              title: "AMF 模型加载器",
+              description: "加载和显示 AMF 格式的 3D 模型",
+              thumbnail: "images/loaders-model-amf.jpg",
+              version: "r179",
+              url: "examples/loaders-model-amf",
+              features: {
+                coreTech: "Loader, LoadingManager",
+                secondaryTech: "异步加载, 进度控制",
+                difficulty: "进阶",
+                actualFunction: "加载和显示 AMF 格式的 3D 模型",
+                suggestedCategory: "4. 模型加载",
+                filePath: "examples/examples/loaders-model-amf",
+                notes: "资源加载示例 (自动推断)",
+              },
             },
             {
-              "id": "loaders-model-gcode",
-              "title": "GCODE 模型加载器",
-              "description": "加载和显示 GCODE 格式的 3D 打印模型",
-              "thumbnail": "images/loaders-model-gcode.jpg",
-              "version": "r179",
-              "url": "examples/loaders-model-gcode",
-              "features": {
-                "coreTech": "Loader, LoadingManager",
-                "secondaryTech": "异步加载, 进度控制",
-                "difficulty": "进阶",
-                "actualFunction": "加载和显示 GCODE 格式的 3D 打印模型",
-                "suggestedCategory": "4. 模型加载",
-                "filePath": "examples/examples/loaders-model-gcode",
-                "notes": "资源加载示例 (自动推断)"
-              }
+              id: "loaders-model-gcode",
+              title: "GCODE 模型加载器",
+              description: "加载和显示 GCODE 格式的 3D 打印模型",
+              thumbnail: "images/loaders-model-gcode.jpg",
+              version: "r179",
+              url: "examples/loaders-model-gcode",
+              features: {
+                coreTech: "Loader, LoadingManager",
+                secondaryTech: "异步加载, 进度控制",
+                difficulty: "进阶",
+                actualFunction: "加载和显示 GCODE 格式的 3D 打印模型",
+                suggestedCategory: "4. 模型加载",
+                filePath: "examples/examples/loaders-model-gcode",
+                notes: "资源加载示例 (自动推断)",
+              },
             },
             {
-              "id": "loaders-model-multi",
-              "title": "多格式模型加载器",
-              "description": "使用统一接口加载多种格式的 3D 模型",
-              "thumbnail": "images/loaders-model-multi.jpg",
-              "version": "r179",
-              "url": "examples/loaders-model-multi",
-              "features": {
-                "coreTech": "Loader, LoadingManager",
-                "secondaryTech": "异步加载, 进度控制",
-                "difficulty": "进阶",
-                "actualFunction": "使用统一接口加载多种格式的 3D 模型",
-                "suggestedCategory": "4. 模型加载",
-                "filePath": "examples/examples/loaders-model-multi",
-                "notes": "资源加载示例 (自动推断)"
-              }
+              id: "loaders-model-multi",
+              title: "多格式模型加载器",
+              description: "使用统一接口加载多种格式的 3D 模型",
+              thumbnail: "images/loaders-model-multi.jpg",
+              version: "r179",
+              url: "examples/loaders-model-multi",
+              features: {
+                coreTech: "Loader, LoadingManager",
+                secondaryTech: "异步加载, 进度控制",
+                difficulty: "进阶",
+                actualFunction: "使用统一接口加载多种格式的 3D 模型",
+                suggestedCategory: "4. 模型加载",
+                filePath: "examples/examples/loaders-model-multi",
+                notes: "资源加载示例 (自动推断)",
+              },
             },
             {
-              "id": "loaders-texture-hdr",
-              "title": "HDR 纹理加载器",
-              "description": "加载和应用高动态范围(HDR)纹理",
-              "thumbnail": "images/loaders-texture-hdr.jpg",
-              "version": "r179",
-              "url": "examples/loaders-texture-hdr",
-              "features": {
-                "coreTech": "Loader, LoadingManager",
-                "secondaryTech": "异步加载, 进度控制",
-                "difficulty": "进阶",
-                "actualFunction": "加载和应用高动态范围(HDR)纹理",
-                "suggestedCategory": "4. 模型加载",
-                "filePath": "examples/examples/loaders-texture-hdr",
-                "notes": "资源加载示例 (自动推断)"
-              }
+              id: "loaders-texture-hdr",
+              title: "HDR 纹理加载器",
+              description: "加载和应用高动态范围(HDR)纹理",
+              thumbnail: "images/loaders-texture-hdr.jpg",
+              version: "r179",
+              url: "examples/loaders-texture-hdr",
+              features: {
+                coreTech: "Loader, LoadingManager",
+                secondaryTech: "异步加载, 进度控制",
+                difficulty: "进阶",
+                actualFunction: "加载和应用高动态范围(HDR)纹理",
+                suggestedCategory: "4. 模型加载",
+                filePath: "examples/examples/loaders-texture-hdr",
+                notes: "资源加载示例 (自动推断)",
+              },
             },
             {
-              "id": "loaders-audio",
-              "title": "音频加载器",
-              "description": "加载和播放 3D 场景中的音频",
-              "thumbnail": "images/loaders-audio.jpg",
-              "version": "r179",
-              "url": "examples/loaders-audio",
-              "features": {
-                "coreTech": "Loader, LoadingManager",
-                "secondaryTech": "异步加载, 进度控制",
-                "difficulty": "进阶",
-                "actualFunction": "加载和播放 3D 场景中的音频",
-                "suggestedCategory": "4. 模型加载",
-                "filePath": "examples/examples/loaders-audio",
-                "notes": "资源加载示例 (自动推断)"
-              }
-            }
-          ]
-        }
-      ]
+              id: "loaders-audio",
+              title: "音频加载器",
+              description: "加载和播放 3D 场景中的音频",
+              thumbnail: "images/loaders-audio.jpg",
+              version: "r179",
+              url: "examples/loaders-audio",
+              features: {
+                coreTech: "Loader, LoadingManager",
+                secondaryTech: "异步加载, 进度控制",
+                difficulty: "进阶",
+                actualFunction: "加载和播放 3D 场景中的音频",
+                suggestedCategory: "4. 模型加载",
+                filePath: "examples/examples/loaders-audio",
+                notes: "资源加载示例 (自动推断)",
+              },
+            },
+          ],
+        },
+      ],
     },
     {
-      "id": "动画系统",
-      "name": "5. 动画系统",
-      "icon": "bi-film",
-      "subcategories": [
+      id: "动画系统",
+      name: "5. 动画系统",
+      icon: "bi-film",
+      subcategories: [
         {
-          "id": "动画系统-5.1-three.js原生动画",
-          "name": "5.1 Three.js原生动画",
-          "examples": [
+          id: "动画系统-5.1-three.js原生动画",
+          name: "5.1 Three.js原生动画",
+          examples: [
             {
-              "id": "animation-keyframes",
-              "title": "关键帧动画",
-              "description": "使用关键帧创建复杂的动画序列",
-              "thumbnail": "images/animation-keyframes.jpg",
-              "version": "r179",
-              "url": "examples/animation-keyframes",
-              "features": {
-                "coreTech": "KeyframeTrack, AnimationClip, AnimationMixer, AnimationAction",
-                "secondaryTech": "关键帧插值, 动画循环控制, 时间缩放(timeScale)",
-                "difficulty": "进阶",
-                "actualFunction": "使用关键帧创建复杂的动画序列，支持位置/旋转/缩放动画",
-                "suggestedCategory": "5. 动画系统 > 5.1 Three.js原生动画",
-                "filePath": "examples/animation-keyframes.html",
-                "notes": "Three.js动画系统的核心示例，展示了完整的动画管线"
-              }
+              id: "animation-keyframes",
+              title: "关键帧动画",
+              description: "使用关键帧创建复杂的动画序列",
+              thumbnail: "images/animation-keyframes.jpg",
+              version: "r179",
+              url: "examples/animation-keyframes",
+              features: {
+                coreTech:
+                  "KeyframeTrack, AnimationClip, AnimationMixer, AnimationAction",
+                secondaryTech: "关键帧插值, 动画循环控制, 时间缩放(timeScale)",
+                difficulty: "进阶",
+                actualFunction:
+                  "使用关键帧创建复杂的动画序列，支持位置/旋转/缩放动画",
+                suggestedCategory: "5. 动画系统 > 5.1 Three.js原生动画",
+                filePath: "examples/animation-keyframes.html",
+                notes: "Three.js动画系统的核心示例，展示了完整的动画管线",
+              },
             },
             {
-              "id": "animation-morph",
-              "title": "变形动画",
-              "description": "在不同几何体之间平滑过渡的变形效果",
-              "thumbnail": "images/animation-morph.jpg",
-              "version": "r179",
-              "url": "examples/animation-morph",
-              "features": {
-                "coreTech": "几何体变形, 顶点插值, 程序化几何体生成",
-                "secondaryTech": "多几何体切换, 平滑过渡算法, 变形速度控制",
-                "difficulty": "进阶",
-                "actualFunction": "在不同几何体之间平滑过渡的变形效果",
-                "suggestedCategory": "5. 动画系统 > 5.1 Three.js原生动画 或 1. 基础入门 > 几何体",
-                "filePath": "examples/animation-morph.html",
-                "notes": "实际是几何体变形而非MorphTarget动画，分类可调整"
-              }
-            }
-          ]
+              id: "animation-morph",
+              title: "变形动画",
+              description: "在不同几何体之间平滑过渡的变形效果",
+              thumbnail: "images/animation-morph.jpg",
+              version: "r179",
+              url: "examples/animation-morph",
+              features: {
+                coreTech: "几何体变形, 顶点插值, 程序化几何体生成",
+                secondaryTech: "多几何体切换, 平滑过渡算法, 变形速度控制",
+                difficulty: "进阶",
+                actualFunction: "在不同几何体之间平滑过渡的变形效果",
+                suggestedCategory:
+                  "5. 动画系统 > 5.1 Three.js原生动画 或 1. 基础入门 > 几何体",
+                filePath: "examples/animation-morph.html",
+                notes: "实际是几何体变形而非MorphTarget动画，分类可调整",
+              },
+            },
+          ],
         },
         {
-          "id": "动画系统-5.2-其他",
-          "name": "5.2 其他",
-          "examples": [
+          id: "动画系统-5.2-其他",
+          name: "5.2 其他",
+          examples: [
             {
-              "id": "animation-animejsBasic",
-              "title": "animejs使用",
-              "description": "使用animejs库实现Three.js动画效果，包括旋转、缩放、颜色渐变等",
-              "thumbnail": "images/animation-animejsBasic.jpg",
-              "version": "r179",
-              "url": "examples/z258/animation-animejsBasic",
-              "features": {
-                "coreTech": "Animation, Keyframe",
-                "secondaryTech": "动画控制, 时间轴",
-                "difficulty": "进阶",
-                "actualFunction": "使用animejs库实现Three.js动画效果，包括旋转、缩放、颜色渐变等",
-                "suggestedCategory": "5. 动画系统",
-                "filePath": "examples/examples/z258/animation-animejsBasic",
-                "notes": "动画示例 (自动推断)"
-              }
+              id: "animation-animejsBasic",
+              title: "animejs使用",
+              description:
+                "使用animejs库实现Three.js动画效果，包括旋转、缩放、颜色渐变等",
+              thumbnail: "images/animation-animejsBasic.jpg",
+              version: "r179",
+              url: "examples/z258/animation-animejsBasic",
+              features: {
+                coreTech: "Animation, Keyframe",
+                secondaryTech: "动画控制, 时间轴",
+                difficulty: "进阶",
+                actualFunction:
+                  "使用animejs库实现Three.js动画效果，包括旋转、缩放、颜色渐变等",
+                suggestedCategory: "5. 动画系统",
+                filePath: "examples/examples/z258/animation-animejsBasic",
+                notes: "动画示例 (自动推断)",
+              },
             },
             {
-              "id": "animation-gsapBasic",
-              "title": "gsap使用",
-              "description": "使用GSAP库实现Three.js高级动画效果，支持时间线、关键帧、嵌套动画等",
-              "thumbnail": "images/animation-gsapBasic.jpg",
-              "version": "r179",
-              "url": "examples/z258/animation-gsapBasic",
-              "features": {
-                "coreTech": "Animation, Keyframe",
-                "secondaryTech": "动画控制, 时间轴",
-                "difficulty": "进阶",
-                "actualFunction": "使用GSAP库实现Three.js高级动画效果，支持时间线、关键帧、嵌套动画等",
-                "suggestedCategory": "5. 动画系统",
-                "filePath": "examples/examples/z258/animation-gsapBasic",
-                "notes": "动画示例 (自动推断)"
-              }
+              id: "animation-gsapBasic",
+              title: "gsap使用",
+              description:
+                "使用GSAP库实现Three.js高级动画效果，支持时间线、关键帧、嵌套动画等",
+              thumbnail: "images/animation-gsapBasic.jpg",
+              version: "r179",
+              url: "examples/z258/animation-gsapBasic",
+              features: {
+                coreTech: "Animation, Keyframe",
+                secondaryTech: "动画控制, 时间轴",
+                difficulty: "进阶",
+                actualFunction:
+                  "使用GSAP库实现Three.js高级动画效果，支持时间线、关键帧、嵌套动画等",
+                suggestedCategory: "5. 动画系统",
+                filePath: "examples/examples/z258/animation-gsapBasic",
+                notes: "动画示例 (自动推断)",
+              },
             },
             {
-              "id": "animation-theatrejs",
-              "title": "Theatrejs",
-              "description": "使用Theatre.js实现交互式动画编辑，支持实时调整物体属性和关键帧动画",
-              "thumbnail": "images/animation-theatrejs.jpg",
-              "version": "r179",
-              "url": "examples/z258/animation-theatrejs",
-              "features": {
-                "coreTech": "Animation, Keyframe",
-                "secondaryTech": "动画控制, 时间轴",
-                "difficulty": "进阶",
-                "actualFunction": "使用Theatre.js实现交互式动画编辑，支持实时调整物体属性和关键帧动画",
-                "suggestedCategory": "5. 动画系统",
-                "filePath": "examples/examples/z258/animation-theatrejs",
-                "notes": "动画示例 (自动推断)"
-              }
+              id: "animation-theatrejs",
+              title: "Theatrejs",
+              description:
+                "使用Theatre.js实现交互式动画编辑，支持实时调整物体属性和关键帧动画",
+              thumbnail: "images/animation-theatrejs.jpg",
+              version: "r179",
+              url: "examples/z258/animation-theatrejs",
+              features: {
+                coreTech: "Animation, Keyframe",
+                secondaryTech: "动画控制, 时间轴",
+                difficulty: "进阶",
+                actualFunction:
+                  "使用Theatre.js实现交互式动画编辑，支持实时调整物体属性和关键帧动画",
+                suggestedCategory: "5. 动画系统",
+                filePath: "examples/examples/z258/animation-theatrejs",
+                notes: "动画示例 (自动推断)",
+              },
             },
             {
-              "id": "animation-personAnimation",
-              "title": "点击第三人称移动",
-              "description": "点击地面控制角色移动，相机自动跟随，展示第三人称角色控制",
-              "thumbnail": "images/animation-personAnimation.jpg",
-              "version": "r179",
-              "url": "examples/z258/animation-personAnimation",
-              "features": {
-                "coreTech": "Animation, Keyframe",
-                "secondaryTech": "动画控制, 时间轴",
-                "difficulty": "进阶",
-                "actualFunction": "点击地面控制角色移动，相机自动跟随，展示第三人称角色控制",
-                "suggestedCategory": "5. 动画系统",
-                "filePath": "examples/examples/z258/animation-personAnimation",
-                "notes": "动画示例 (自动推断)"
-              }
+              id: "animation-personAnimation",
+              title: "点击第三人称移动",
+              description:
+                "点击地面控制角色移动，相机自动跟随，展示第三人称角色控制",
+              thumbnail: "images/animation-personAnimation.jpg",
+              version: "r179",
+              url: "examples/z258/animation-personAnimation",
+              features: {
+                coreTech: "Animation, Keyframe",
+                secondaryTech: "动画控制, 时间轴",
+                difficulty: "进阶",
+                actualFunction:
+                  "点击地面控制角色移动，相机自动跟随，展示第三人称角色控制",
+                suggestedCategory: "5. 动画系统",
+                filePath: "examples/examples/z258/animation-personAnimation",
+                notes: "动画示例 (自动推断)",
+              },
             },
             {
-              "id": "animation-inspectionView",
-              "title": "巡检",
-              "description": "相机沿预设路径自动巡检场景，展示城市夜景建筑群效果",
-              "thumbnail": "images/animation-inspectionView.jpg",
-              "version": "r179",
-              "url": "examples/z258/animation-inspectionView",
-              "features": {
-                "coreTech": "Animation, Keyframe",
-                "secondaryTech": "动画控制, 时间轴",
-                "difficulty": "进阶",
-                "actualFunction": "相机沿预设路径自动巡检场景，展示城市夜景建筑群效果",
-                "suggestedCategory": "5. 动画系统",
-                "filePath": "examples/examples/z258/animation-inspectionView",
-                "notes": "动画示例 (自动推断)"
-              }
+              id: "animation-inspectionView",
+              title: "巡检",
+              description: "相机沿预设路径自动巡检场景，展示城市夜景建筑群效果",
+              thumbnail: "images/animation-inspectionView.jpg",
+              version: "r179",
+              url: "examples/z258/animation-inspectionView",
+              features: {
+                coreTech: "Animation, Keyframe",
+                secondaryTech: "动画控制, 时间轴",
+                difficulty: "进阶",
+                actualFunction:
+                  "相机沿预设路径自动巡检场景，展示城市夜景建筑群效果",
+                suggestedCategory: "5. 动画系统",
+                filePath: "examples/examples/z258/animation-inspectionView",
+                notes: "动画示例 (自动推断)",
+              },
             },
             {
-              "id": "animation-curlAnimate",
-              "title": "卷曲动画",
-              "description": "展示钢带卷绕效果的物理动画，支持参数调节",
-              "thumbnail": "images/animation-curlAnimate.jpg",
-              "version": "r179",
-              "url": "examples/z258/animation-curlAnimate",
-              "features": {
-                "coreTech": "Animation, Keyframe",
-                "secondaryTech": "动画控制, 时间轴",
-                "difficulty": "进阶",
-                "actualFunction": "展示钢带卷绕效果的物理动画，支持参数调节",
-                "suggestedCategory": "5. 动画系统",
-                "filePath": "examples/examples/z258/animation-curlAnimate",
-                "notes": "动画示例 (自动推断)"
-              }
+              id: "animation-curlAnimate",
+              title: "卷曲动画",
+              description: "展示钢带卷绕效果的物理动画，支持参数调节",
+              thumbnail: "images/animation-curlAnimate.jpg",
+              version: "r179",
+              url: "examples/z258/animation-curlAnimate",
+              features: {
+                coreTech: "Animation, Keyframe",
+                secondaryTech: "动画控制, 时间轴",
+                difficulty: "进阶",
+                actualFunction: "展示钢带卷绕效果的物理动画，支持参数调节",
+                suggestedCategory: "5. 动画系统",
+                filePath: "examples/examples/z258/animation-curlAnimate",
+                notes: "动画示例 (自动推断)",
+              },
             },
             {
-              "id": "animation-clipAnimation",
-              "title": "裁剪动画",
-              "description": "使用裁剪平面实现物体剖切动画效果，支持交互控制",
-              "thumbnail": "images/animation-clipAnimation.jpg",
-              "version": "r179",
-              "url": "examples/z258/animation-clipAnimation",
-              "features": {
-                "coreTech": "Animation, Keyframe",
-                "secondaryTech": "动画控制, 时间轴",
-                "difficulty": "进阶",
-                "actualFunction": "使用裁剪平面实现物体剖切动画效果，支持交互控制",
-                "suggestedCategory": "5. 动画系统",
-                "filePath": "examples/examples/z258/animation-clipAnimation",
-                "notes": "动画示例 (自动推断)"
-              }
+              id: "animation-clipAnimation",
+              title: "裁剪动画",
+              description: "使用裁剪平面实现物体剖切动画效果，支持交互控制",
+              thumbnail: "images/animation-clipAnimation.jpg",
+              version: "r179",
+              url: "examples/z258/animation-clipAnimation",
+              features: {
+                coreTech: "Animation, Keyframe",
+                secondaryTech: "动画控制, 时间轴",
+                difficulty: "进阶",
+                actualFunction:
+                  "使用裁剪平面实现物体剖切动画效果，支持交互控制",
+                suggestedCategory: "5. 动画系统",
+                filePath: "examples/examples/z258/animation-clipAnimation",
+                notes: "动画示例 (自动推断)",
+              },
             },
             {
-              "id": "animation-raycaster",
-              "title": "射线检测",
-              "description": "使用射线检测实现对象选择和交互",
-              "thumbnail": "images/animation-raycaster.jpg",
-              "version": "r179",
-              "url": "examples/animation-raycaster",
-              "features": {
-                "coreTech": "Animation, Keyframe",
-                "secondaryTech": "动画控制, 时间轴",
-                "difficulty": "进阶",
-                "actualFunction": "使用射线检测实现对象选择和交互",
-                "suggestedCategory": "5. 动画系统",
-                "filePath": "examples/examples/animation-raycaster",
-                "notes": "动画示例 (自动推断)"
-              }
+              id: "animation-raycaster",
+              title: "射线检测",
+              description: "使用射线检测实现对象选择和交互",
+              thumbnail: "images/animation-raycaster.jpg",
+              version: "r179",
+              url: "examples/animation-raycaster",
+              features: {
+                coreTech: "Animation, Keyframe",
+                secondaryTech: "动画控制, 时间轴",
+                difficulty: "进阶",
+                actualFunction: "使用射线检测实现对象选择和交互",
+                suggestedCategory: "5. 动画系统",
+                filePath: "examples/examples/animation-raycaster",
+                notes: "动画示例 (自动推断)",
+              },
             },
             {
-              "id": "animation-modelUnpack",
-              "title": "模型拆解动画",
-              "description": "模型拆解动画，展示3D模型拆解和组装效果",
-              "thumbnail": "images/animation-modelUnpack.jpg",
-              "version": "r179",
-              "url": "examples/z258/animation-modelUnpack",
-              "features": {
-                "coreTech": "Animation, Keyframe",
-                "secondaryTech": "动画控制, 时间轴",
-                "difficulty": "进阶",
-                "actualFunction": "模型拆解动画，展示3D模型拆解和组装效果",
-                "suggestedCategory": "5. 动画系统",
-                "filePath": "examples/examples/z258/animation-modelUnpack",
-                "notes": "动画示例 (自动推断)"
-              }
+              id: "animation-modelUnpack",
+              title: "模型拆解动画",
+              description: "模型拆解动画，展示3D模型拆解和组装效果",
+              thumbnail: "images/animation-modelUnpack.jpg",
+              version: "r179",
+              url: "examples/z258/animation-modelUnpack",
+              features: {
+                coreTech: "Animation, Keyframe",
+                secondaryTech: "动画控制, 时间轴",
+                difficulty: "进阶",
+                actualFunction: "模型拆解动画，展示3D模型拆解和组装效果",
+                suggestedCategory: "5. 动画系统",
+                filePath: "examples/examples/z258/animation-modelUnpack",
+                notes: "动画示例 (自动推断)",
+              },
             },
             {
-              "id": "animation-transformAnimate",
-              "title": "Mesh变换动画",
-              "description": "Mesh变换动画，展示平移、旋转、缩放等变换效果",
-              "thumbnail": "images/animation-transformAnimate.jpg",
-              "version": "r179",
-              "url": "examples/z258/animation-transformAnimate",
-              "features": {
-                "coreTech": "Animation, Keyframe",
-                "secondaryTech": "动画控制, 时间轴",
-                "difficulty": "进阶",
-                "actualFunction": "Mesh变换动画，展示平移、旋转、缩放等变换效果",
-                "suggestedCategory": "5. 动画系统",
-                "filePath": "examples/examples/z258/animation-transformAnimate",
-                "notes": "动画示例 (自动推断)"
-              }
+              id: "animation-transformAnimate",
+              title: "Mesh变换动画",
+              description: "Mesh变换动画，展示平移、旋转、缩放等变换效果",
+              thumbnail: "images/animation-transformAnimate.jpg",
+              version: "r179",
+              url: "examples/z258/animation-transformAnimate",
+              features: {
+                coreTech: "Animation, Keyframe",
+                secondaryTech: "动画控制, 时间轴",
+                difficulty: "进阶",
+                actualFunction: "Mesh变换动画，展示平移、旋转、缩放等变换效果",
+                suggestedCategory: "5. 动画系统",
+                filePath: "examples/examples/z258/animation-transformAnimate",
+                notes: "动画示例 (自动推断)",
+              },
             },
             {
-              "id": "animation-curveAnimate",
-              "title": "曲线动画",
-              "description": "曲线动画，展示沿曲线运动的动画效果",
-              "thumbnail": "images/animation-curveAnimate.jpg",
-              "version": "r179",
-              "url": "examples/z258/animation-curveAnimate",
-              "features": {
-                "coreTech": "Animation, Keyframe",
-                "secondaryTech": "动画控制, 时间轴",
-                "difficulty": "进阶",
-                "actualFunction": "曲线动画，展示沿曲线运动的动画效果",
-                "suggestedCategory": "5. 动画系统",
-                "filePath": "examples/examples/z258/animation-curveAnimate",
-                "notes": "动画示例 (自动推断)"
-              }
+              id: "animation-curveAnimate",
+              title: "曲线动画",
+              description: "曲线动画，展示沿曲线运动的动画效果",
+              thumbnail: "images/animation-curveAnimate.jpg",
+              version: "r179",
+              url: "examples/z258/animation-curveAnimate",
+              features: {
+                coreTech: "Animation, Keyframe",
+                secondaryTech: "动画控制, 时间轴",
+                difficulty: "进阶",
+                actualFunction: "曲线动画，展示沿曲线运动的动画效果",
+                suggestedCategory: "5. 动画系统",
+                filePath: "examples/examples/z258/animation-curveAnimate",
+                notes: "动画示例 (自动推断)",
+              },
             },
             {
-              "id": "animation-gsapCollection",
-              "title": "GSAP动画合集",
-              "description": "GSAP动画合集，展示多种GSAP动画效果",
-              "thumbnail": "images/animation-gsapCollection.jpg",
-              "version": "r179",
-              "url": "examples/z258/animation-gsapCollection",
-              "features": {
-                "coreTech": "Animation, Keyframe",
-                "secondaryTech": "动画控制, 时间轴",
-                "difficulty": "进阶",
-                "actualFunction": "GSAP动画合集，展示多种GSAP动画效果",
-                "suggestedCategory": "5. 动画系统",
-                "filePath": "examples/examples/z258/animation-gsapCollection",
-                "notes": "动画示例 (自动推断)"
-              }
+              id: "animation-gsapCollection",
+              title: "GSAP动画合集",
+              description: "GSAP动画合集，展示多种GSAP动画效果",
+              thumbnail: "images/animation-gsapCollection.jpg",
+              version: "r179",
+              url: "examples/z258/animation-gsapCollection",
+              features: {
+                coreTech: "Animation, Keyframe",
+                secondaryTech: "动画控制, 时间轴",
+                difficulty: "进阶",
+                actualFunction: "GSAP动画合集，展示多种GSAP动画效果",
+                suggestedCategory: "5. 动画系统",
+                filePath: "examples/examples/z258/animation-gsapCollection",
+                notes: "动画示例 (自动推断)",
+              },
             },
             {
-              "id": "animation-personThirdMove",
-              "title": "第三人称移动",
-              "description": "程序化角色模型，WASD移动和鼠标控制视角",
-              "thumbnail": "images/animation-personThirdMove.jpg",
-              "version": "r179",
-              "url": "examples/z258/animation-personThirdMove",
-              "features": {
-                "coreTech": "Animation, Keyframe",
-                "secondaryTech": "动画控制, 时间轴",
-                "difficulty": "进阶",
-                "actualFunction": "程序化角色模型，WASD移动和鼠标控制视角",
-                "suggestedCategory": "5. 动画系统",
-                "filePath": "examples/examples/z258/animation-personThirdMove",
-                "notes": "动画示例 (自动推断)"
-              }
-            }
-          ]
-        }
-      ]
+              id: "animation-personThirdMove",
+              title: "第三人称移动",
+              description: "程序化角色模型，WASD移动和鼠标控制视角",
+              thumbnail: "images/animation-personThirdMove.jpg",
+              version: "r179",
+              url: "examples/z258/animation-personThirdMove",
+              features: {
+                coreTech: "Animation, Keyframe",
+                secondaryTech: "动画控制, 时间轴",
+                difficulty: "进阶",
+                actualFunction: "程序化角色模型，WASD移动和鼠标控制视角",
+                suggestedCategory: "5. 动画系统",
+                filePath: "examples/examples/z258/animation-personThirdMove",
+                notes: "动画示例 (自动推断)",
+              },
+            },
+          ],
+        },
+      ],
     },
     {
-      "id": "粒子系统",
-      "name": "6. 粒子系统",
-      "icon": "bi-stars",
-      "subcategories": [
+      id: "粒子系统",
+      name: "6. 粒子系统",
+      icon: "bi-stars",
+      subcategories: [
         {
-          "id": "粒子系统-6.1-基础粒子",
-          "name": "6.1 基础粒子",
-          "examples": [
+          id: "粒子系统-6.1-基础粒子",
+          name: "6.1 基础粒子",
+          examples: [
             {
-              "id": "basic-materials-points",
-              "title": "点材质",
-              "description": "展示PointsMaterial的使用方法和效果，创建各种分布的粒子系统",
-              "thumbnail": "images/basic-materials-points.jpg",
-              "version": "r179",
-              "url": "examples/basic-materials-points",
-              "features": {
-                "coreTech": "Points, PointsMaterial, BufferGeometry, Float32BufferAttribute",
-                "secondaryTech": "点云分布(sphere/cube/plane/line), 大小衰减(sizeAttenuation), 动画更新",
-                "difficulty": "基础",
-                "actualFunction": "展示PointsMaterial的使用方法和效果，支持多种点云分布方式",
-                "suggestedCategory": "6. 粒子系统 > 6.1 基础粒子",
-                "filePath": "examples/basic-materials-points.html",
-                "notes": "点云基础示例，展示了Points的核心用法"
-              }
+              id: "basic-materials-points",
+              title: "点材质",
+              description:
+                "展示PointsMaterial的使用方法和效果，创建各种分布的粒子系统",
+              thumbnail: "images/basic-materials-points.jpg",
+              version: "r179",
+              url: "examples/basic-materials-points",
+              features: {
+                coreTech:
+                  "Points, PointsMaterial, BufferGeometry, Float32BufferAttribute",
+                secondaryTech:
+                  "点云分布(sphere/cube/plane/line), 大小衰减(sizeAttenuation), 动画更新",
+                difficulty: "基础",
+                actualFunction:
+                  "展示PointsMaterial的使用方法和效果，支持多种点云分布方式",
+                suggestedCategory: "6. 粒子系统 > 6.1 基础粒子",
+                filePath: "examples/basic-materials-points.html",
+                notes: "点云基础示例，展示了Points的核心用法",
+              },
             },
             {
-              "id": "basic-materials-sprite",
-              "title": "精灵材质",
-              "description": "展示SpriteMaterial的使用方法和效果，创建各种分布的精灵系统",
-              "thumbnail": "images/basic-materials-sprite.jpg",
-              "version": "r179",
-              "url": "examples/basic-materials-sprite",
-              "features": {
-                "coreTech": "Sprite, SpriteMaterial, CanvasTexture, 程序化纹理生成",
-                "secondaryTech": "精灵分布, 纹理类型(circle/star/glow), 动画旋转, 大小衰减",
-                "difficulty": "基础",
-                "actualFunction": "展示SpriteMaterial的使用方法和效果，支持多种精灵纹理",
-                "suggestedCategory": "6. 粒子系统 > 6.1 基础粒子",
-                "filePath": "examples/basic-materials-sprite.html",
-                "notes": "精灵基础示例，使用Canvas生成纹理"
-              }
-            }
-          ]
+              id: "basic-materials-sprite",
+              title: "精灵材质",
+              description:
+                "展示SpriteMaterial的使用方法和效果，创建各种分布的精灵系统",
+              thumbnail: "images/basic-materials-sprite.jpg",
+              version: "r179",
+              url: "examples/basic-materials-sprite",
+              features: {
+                coreTech:
+                  "Sprite, SpriteMaterial, CanvasTexture, 程序化纹理生成",
+                secondaryTech:
+                  "精灵分布, 纹理类型(circle/star/glow), 动画旋转, 大小衰减",
+                difficulty: "基础",
+                actualFunction:
+                  "展示SpriteMaterial的使用方法和效果，支持多种精灵纹理",
+                suggestedCategory: "6. 粒子系统 > 6.1 基础粒子",
+                filePath: "examples/basic-materials-sprite.html",
+                notes: "精灵基础示例，使用Canvas生成纹理",
+              },
+            },
+          ],
         },
         {
-          "id": "粒子系统-6.2-特效粒子",
-          "name": "6.2 特效粒子",
-          "examples": [
+          id: "粒子系统-6.2-特效粒子",
+          name: "6.2 特效粒子",
+          examples: [
             {
-              "id": "particle-snow",
-              "title": "雪花",
-              "description": "雪花粒子效果，模拟下雪场景",
-              "thumbnail": "images/particle-snow.jpg",
-              "version": "r179",
-              "url": "examples/z258/particle-snow",
-              "features": {
-                "coreTech": "Points, ShaderMaterial, 自定义着色器, BufferAttribute",
-                "secondaryTech": "粒子物理模拟(速度/位置更新), 雪花飘落效果, 边界重置",
-                "difficulty": "进阶",
-                "actualFunction": "使用着色器实现雪花粒子效果，支持参数调节",
-                "suggestedCategory": "6. 粒子系统 > 6.2 特效粒子",
-                "filePath": "examples/z258/particle-snow.html",
-                "notes": "完整的雪花效果，包含顶点着色器和片元着色器"
-              }
-            }
-          ]
+              id: "particle-snow",
+              title: "雪花",
+              description: "雪花粒子效果，模拟下雪场景",
+              thumbnail: "images/particle-snow.jpg",
+              version: "r179",
+              url: "examples/z258/particle-snow",
+              features: {
+                coreTech:
+                  "Points, ShaderMaterial, 自定义着色器, BufferAttribute",
+                secondaryTech:
+                  "粒子物理模拟(速度/位置更新), 雪花飘落效果, 边界重置",
+                difficulty: "进阶",
+                actualFunction: "使用着色器实现雪花粒子效果，支持参数调节",
+                suggestedCategory: "6. 粒子系统 > 6.2 特效粒子",
+                filePath: "examples/z258/particle-snow.html",
+                notes: "完整的雪花效果，包含顶点着色器和片元着色器",
+              },
+            },
+          ],
         },
         {
-          "id": "粒子系统-6.3-其他",
-          "name": "6.3 其他",
-          "examples": [
+          id: "粒子系统-6.3-其他",
+          name: "6.3 其他",
+          examples: [
             {
-              "id": "particle-particleLine",
-              "title": "粒子连线效果",
-              "description": "使用BufferGeometry创建粒子系统，鼠标交互时粒子与鼠标位置连线，支持辉光后期处理",
-              "thumbnail": "images/particle-particleLine.jpg",
-              "version": "r179",
-              "url": "examples/z258/particle-particleLine",
-              "features": {
-                "coreTech": "Particle System, Points",
-                "secondaryTech": "粒子动画, 特效",
-                "difficulty": "进阶",
-                "actualFunction": "使用BufferGeometry创建粒子系统，鼠标交互时粒子与鼠标位置连线，支持辉光后期处理",
-                "suggestedCategory": "6. 粒子系统",
-                "filePath": "examples/examples/z258/particle-particleLine",
-                "notes": "粒子系统示例 (自动推断)"
-              }
+              id: "particle-particleLine",
+              title: "粒子连线效果",
+              description:
+                "使用BufferGeometry创建粒子系统，鼠标交互时粒子与鼠标位置连线，支持辉光后期处理",
+              thumbnail: "images/particle-particleLine.jpg",
+              version: "r179",
+              url: "examples/z258/particle-particleLine",
+              features: {
+                coreTech: "Particle System, Points",
+                secondaryTech: "粒子动画, 特效",
+                difficulty: "进阶",
+                actualFunction:
+                  "使用BufferGeometry创建粒子系统，鼠标交互时粒子与鼠标位置连线，支持辉光后期处理",
+                suggestedCategory: "6. 粒子系统",
+                filePath: "examples/examples/z258/particle-particleLine",
+                notes: "粒子系统示例 (自动推断)",
+              },
             },
             {
-              "id": "particle-waveParticleShader",
-              "title": "波浪粒子",
-              "description": "展示波浪粒子效果，使用着色器实现动态波浪粒子动画",
-              "thumbnail": "images/particle-waveParticleShader.jpg",
-              "version": "r179",
-              "url": "examples/z258/particle-waveParticleShader",
-              "features": {
-                "coreTech": "Particle System, Points",
-                "secondaryTech": "粒子动画, 特效",
-                "difficulty": "进阶",
-                "actualFunction": "展示波浪粒子效果，使用着色器实现动态波浪粒子动画",
-                "suggestedCategory": "6. 粒子系统",
-                "filePath": "examples/examples/z258/particle-waveParticleShader",
-                "notes": "粒子系统示例 (自动推断)"
-              }
+              id: "particle-waveParticleShader",
+              title: "波浪粒子",
+              description: "展示波浪粒子效果，使用着色器实现动态波浪粒子动画",
+              thumbnail: "images/particle-waveParticleShader.jpg",
+              version: "r179",
+              url: "examples/z258/particle-waveParticleShader",
+              features: {
+                coreTech: "Particle System, Points",
+                secondaryTech: "粒子动画, 特效",
+                difficulty: "进阶",
+                actualFunction:
+                  "展示波浪粒子效果，使用着色器实现动态波浪粒子动画",
+                suggestedCategory: "6. 粒子系统",
+                filePath: "examples/examples/z258/particle-waveParticleShader",
+                notes: "粒子系统示例 (自动推断)",
+              },
             },
             {
-              "id": "particle-sphereLine",
-              "title": "球体线条",
-              "description": "展示球体粒子连线效果，粒子在球面上随机运动，距离近的粒子之间自动连线",
-              "thumbnail": "images/particle-sphereLine.jpg",
-              "version": "r179",
-              "url": "examples/z258/particle-sphereLine",
-              "features": {
-                "coreTech": "Particle System, Points",
-                "secondaryTech": "粒子动画, 特效",
-                "difficulty": "进阶",
-                "actualFunction": "展示球体粒子连线效果，粒子在球面上随机运动，距离近的粒子之间自动连线",
-                "suggestedCategory": "6. 粒子系统",
-                "filePath": "examples/examples/z258/particle-sphereLine",
-                "notes": "粒子系统示例 (自动推断)"
-              }
+              id: "particle-sphereLine",
+              title: "球体线条",
+              description:
+                "展示球体粒子连线效果，粒子在球面上随机运动，距离近的粒子之间自动连线",
+              thumbnail: "images/particle-sphereLine.jpg",
+              version: "r179",
+              url: "examples/z258/particle-sphereLine",
+              features: {
+                coreTech: "Particle System, Points",
+                secondaryTech: "粒子动画, 特效",
+                difficulty: "进阶",
+                actualFunction:
+                  "展示球体粒子连线效果，粒子在球面上随机运动，距离近的粒子之间自动连线",
+                suggestedCategory: "6. 粒子系统",
+                filePath: "examples/examples/z258/particle-sphereLine",
+                notes: "粒子系统示例 (自动推断)",
+              },
             },
             {
-              "id": "particle-particleWire",
-              "title": "粒子线",
-              "description": "展示粒子连线效果，粒子随机运动，距离近的粒子之间自动连线，支持鼠标交互",
-              "thumbnail": "images/particle-particleWire.jpg",
-              "version": "r179",
-              "url": "examples/z258/particle-particleWire",
-              "features": {
-                "coreTech": "Particle System, Points",
-                "secondaryTech": "粒子动画, 特效",
-                "difficulty": "进阶",
-                "actualFunction": "展示粒子连线效果，粒子随机运动，距离近的粒子之间自动连线，支持鼠标交互",
-                "suggestedCategory": "6. 粒子系统",
-                "filePath": "examples/examples/z258/particle-particleWire",
-                "notes": "粒子系统示例 (自动推断)"
-              }
+              id: "particle-particleWire",
+              title: "粒子线",
+              description:
+                "展示粒子连线效果，粒子随机运动，距离近的粒子之间自动连线，支持鼠标交互",
+              thumbnail: "images/particle-particleWire.jpg",
+              version: "r179",
+              url: "examples/z258/particle-particleWire",
+              features: {
+                coreTech: "Particle System, Points",
+                secondaryTech: "粒子动画, 特效",
+                difficulty: "进阶",
+                actualFunction:
+                  "展示粒子连线效果，粒子随机运动，距离近的粒子之间自动连线，支持鼠标交互",
+                suggestedCategory: "6. 粒子系统",
+                filePath: "examples/examples/z258/particle-particleWire",
+                notes: "粒子系统示例 (自动推断)",
+              },
             },
             {
-              "id": "particle-starrySky",
-              "title": "粒子星空",
-              "description": "展示粒子星空效果，使用着色器实现动态星空隧道效果",
-              "thumbnail": "images/particle-starrySky.jpg",
-              "version": "r179",
-              "url": "examples/z258/particle-starrySky",
-              "features": {
-                "coreTech": "Particle System, Points",
-                "secondaryTech": "粒子动画, 特效",
-                "difficulty": "进阶",
-                "actualFunction": "展示粒子星空效果，使用着色器实现动态星空隧道效果",
-                "suggestedCategory": "6. 粒子系统",
-                "filePath": "examples/examples/z258/particle-starrySky",
-                "notes": "粒子系统示例 (自动推断)"
-              }
+              id: "particle-starrySky",
+              title: "粒子星空",
+              description: "展示粒子星空效果，使用着色器实现动态星空隧道效果",
+              thumbnail: "images/particle-starrySky.jpg",
+              version: "r179",
+              url: "examples/z258/particle-starrySky",
+              features: {
+                coreTech: "Particle System, Points",
+                secondaryTech: "粒子动画, 特效",
+                difficulty: "进阶",
+                actualFunction:
+                  "展示粒子星空效果，使用着色器实现动态星空隧道效果",
+                suggestedCategory: "6. 粒子系统",
+                filePath: "examples/examples/z258/particle-starrySky",
+                notes: "粒子系统示例 (自动推断)",
+              },
             },
             {
-              "id": "particle-particleFire",
-              "title": "粒子烟花",
-              "description": "粒子烟花效果，自动生成彩色烟花爆炸动画",
-              "thumbnail": "images/particle-particleFire.jpg",
-              "version": "r179",
-              "url": "examples/z258/particle-particleFire",
-              "features": {
-                "coreTech": "Particle System, Points",
-                "secondaryTech": "粒子动画, 特效",
-                "difficulty": "进阶",
-                "actualFunction": "粒子烟花效果，自动生成彩色烟花爆炸动画",
-                "suggestedCategory": "6. 粒子系统",
-                "filePath": "examples/examples/z258/particle-particleFire",
-                "notes": "粒子系统示例 (自动推断)"
-              }
+              id: "particle-particleFire",
+              title: "粒子烟花",
+              description: "粒子烟花效果，自动生成彩色烟花爆炸动画",
+              thumbnail: "images/particle-particleFire.jpg",
+              version: "r179",
+              url: "examples/z258/particle-particleFire",
+              features: {
+                coreTech: "Particle System, Points",
+                secondaryTech: "粒子动画, 特效",
+                difficulty: "进阶",
+                actualFunction: "粒子烟花效果，自动生成彩色烟花爆炸动画",
+                suggestedCategory: "6. 粒子系统",
+                filePath: "examples/examples/z258/particle-particleFire",
+                notes: "粒子系统示例 (自动推断)",
+              },
             },
             {
-              "id": "particle-scattered",
-              "title": "粒子聚散",
-              "description": "粒子聚散动画效果，可在聚集和分散状态之间切换",
-              "thumbnail": "images/particle-scattered.jpg",
-              "version": "r179",
-              "url": "examples/z258/particle-scattered",
-              "features": {
-                "coreTech": "Particle System, Points",
-                "secondaryTech": "粒子动画, 特效",
-                "difficulty": "进阶",
-                "actualFunction": "粒子聚散动画效果，可在聚集和分散状态之间切换",
-                "suggestedCategory": "6. 粒子系统",
-                "filePath": "examples/examples/z258/particle-scattered",
-                "notes": "粒子系统示例 (自动推断)"
-              }
+              id: "particle-scattered",
+              title: "粒子聚散",
+              description: "粒子聚散动画效果，可在聚集和分散状态之间切换",
+              thumbnail: "images/particle-scattered.jpg",
+              version: "r179",
+              url: "examples/z258/particle-scattered",
+              features: {
+                coreTech: "Particle System, Points",
+                secondaryTech: "粒子动画, 特效",
+                difficulty: "进阶",
+                actualFunction: "粒子聚散动画效果，可在聚集和分散状态之间切换",
+                suggestedCategory: "6. 粒子系统",
+                filePath: "examples/examples/z258/particle-scattered",
+                notes: "粒子系统示例 (自动推断)",
+              },
             },
             {
-              "id": "particle-galaxyStar",
-              "title": "星系",
-              "description": "星系粒子效果，带有旋臂结构可调节",
-              "thumbnail": "images/particle-galaxyStar.jpg",
-              "version": "r179",
-              "url": "examples/z258/particle-galaxyStar",
-              "features": {
-                "coreTech": "Particle System, Points",
-                "secondaryTech": "粒子动画, 特效",
-                "difficulty": "进阶",
-                "actualFunction": "星系粒子效果，带有旋臂结构可调节",
-                "suggestedCategory": "6. 粒子系统",
-                "filePath": "examples/examples/z258/particle-galaxyStar",
-                "notes": "粒子系统示例 (自动推断)"
-              }
+              id: "particle-galaxyStar",
+              title: "星系",
+              description: "星系粒子效果，带有旋臂结构可调节",
+              thumbnail: "images/particle-galaxyStar.jpg",
+              version: "r179",
+              url: "examples/z258/particle-galaxyStar",
+              features: {
+                coreTech: "Particle System, Points",
+                secondaryTech: "粒子动画, 特效",
+                difficulty: "进阶",
+                actualFunction: "星系粒子效果，带有旋臂结构可调节",
+                suggestedCategory: "6. 粒子系统",
+                filePath: "examples/examples/z258/particle-galaxyStar",
+                notes: "粒子系统示例 (自动推断)",
+              },
             },
             {
-              "id": "particle-pointsEarth",
-              "title": "粒子地球",
-              "description": "粒子组成的地球效果，带有大气层和光晕",
-              "thumbnail": "images/particle-pointsEarth.jpg",
-              "version": "r179",
-              "url": "examples/z258/particle-pointsEarth",
-              "features": {
-                "coreTech": "Particle System, Points",
-                "secondaryTech": "粒子动画, 特效",
-                "difficulty": "进阶",
-                "actualFunction": "粒子组成的地球效果，带有大气层和光晕",
-                "suggestedCategory": "6. 粒子系统",
-                "filePath": "examples/examples/z258/particle-pointsEarth",
-                "notes": "粒子系统示例 (自动推断)"
-              }
+              id: "particle-pointsEarth",
+              title: "粒子地球",
+              description: "粒子组成的地球效果，带有大气层和光晕",
+              thumbnail: "images/particle-pointsEarth.jpg",
+              version: "r179",
+              url: "examples/z258/particle-pointsEarth",
+              features: {
+                coreTech: "Particle System, Points",
+                secondaryTech: "粒子动画, 特效",
+                difficulty: "进阶",
+                actualFunction: "粒子组成的地球效果，带有大气层和光晕",
+                suggestedCategory: "6. 粒子系统",
+                filePath: "examples/examples/z258/particle-pointsEarth",
+                notes: "粒子系统示例 (自动推断)",
+              },
             },
             {
-              "id": "particle-blendShader",
-              "title": "粒子混合着色器",
-              "description": "高级粒子混合着色器效果，支持多种运动模式和参数调节",
-              "thumbnail": "images/particle-blendShader.jpg",
-              "version": "r179",
-              "url": "examples/z258/particle-blendShader",
-              "features": {
-                "coreTech": "Particle System, Points",
-                "secondaryTech": "粒子动画, 特效",
-                "difficulty": "进阶",
-                "actualFunction": "高级粒子混合着色器效果，支持多种运动模式和参数调节",
-                "suggestedCategory": "6. 粒子系统",
-                "filePath": "examples/examples/z258/particle-blendShader",
-                "notes": "粒子系统示例 (自动推断)"
-              }
+              id: "particle-blendShader",
+              title: "粒子混合着色器",
+              description: "高级粒子混合着色器效果，支持多种运动模式和参数调节",
+              thumbnail: "images/particle-blendShader.jpg",
+              version: "r179",
+              url: "examples/z258/particle-blendShader",
+              features: {
+                coreTech: "Particle System, Points",
+                secondaryTech: "粒子动画, 特效",
+                difficulty: "进阶",
+                actualFunction:
+                  "高级粒子混合着色器效果，支持多种运动模式和参数调节",
+                suggestedCategory: "6. 粒子系统",
+                filePath: "examples/examples/z258/particle-blendShader",
+                notes: "粒子系统示例 (自动推断)",
+              },
             },
             {
-              "id": "particle-fireParticles",
-              "title": "火焰粒子",
-              "description": "火焰粒子效果，带有颜色渐变和粒子更新动画",
-              "thumbnail": "images/particle-fireParticles.jpg",
-              "version": "r179",
-              "url": "examples/z258/particle-fireParticles",
-              "features": {
-                "coreTech": "Particle System, Points",
-                "secondaryTech": "粒子动画, 特效",
-                "difficulty": "进阶",
-                "actualFunction": "火焰粒子效果，带有颜色渐变和粒子更新动画",
-                "suggestedCategory": "6. 粒子系统",
-                "filePath": "examples/examples/z258/particle-fireParticles",
-                "notes": "粒子系统示例 (自动推断)"
-              }
+              id: "particle-fireParticles",
+              title: "火焰粒子",
+              description: "火焰粒子效果，带有颜色渐变和粒子更新动画",
+              thumbnail: "images/particle-fireParticles.jpg",
+              version: "r179",
+              url: "examples/z258/particle-fireParticles",
+              features: {
+                coreTech: "Particle System, Points",
+                secondaryTech: "粒子动画, 特效",
+                difficulty: "进阶",
+                actualFunction: "火焰粒子效果，带有颜色渐变和粒子更新动画",
+                suggestedCategory: "6. 粒子系统",
+                filePath: "examples/examples/z258/particle-fireParticles",
+                notes: "粒子系统示例 (自动推断)",
+              },
             },
             {
-              "id": "particle-realFire",
-              "title": "真实火焰",
-              "description": "真实火焰粒子效果，使用着色器实现颜色渐变和烟雾效果",
-              "thumbnail": "images/particle-realFire.jpg",
-              "version": "r179",
-              "url": "examples/z258/particle-realFire",
-              "features": {
-                "coreTech": "Particle System, Points",
-                "secondaryTech": "粒子动画, 特效",
-                "difficulty": "进阶",
-                "actualFunction": "真实火焰粒子效果，使用着色器实现颜色渐变和烟雾效果",
-                "suggestedCategory": "6. 粒子系统",
-                "filePath": "examples/examples/z258/particle-realFire",
-                "notes": "粒子系统示例 (自动推断)"
-              }
+              id: "particle-realFire",
+              title: "真实火焰",
+              description: "真实火焰粒子效果，使用着色器实现颜色渐变和烟雾效果",
+              thumbnail: "images/particle-realFire.jpg",
+              version: "r179",
+              url: "examples/z258/particle-realFire",
+              features: {
+                coreTech: "Particle System, Points",
+                secondaryTech: "粒子动画, 特效",
+                difficulty: "进阶",
+                actualFunction:
+                  "真实火焰粒子效果，使用着色器实现颜色渐变和烟雾效果",
+                suggestedCategory: "6. 粒子系统",
+                filePath: "examples/examples/z258/particle-realFire",
+                notes: "粒子系统示例 (自动推断)",
+              },
             },
             {
-              "id": "particle-globeParticle",
-              "title": "地球粒子",
-              "description": "地球粒子效果，带有Bloom后处理和脉冲动画",
-              "thumbnail": "images/particle-globeParticle.jpg",
-              "version": "r179",
-              "url": "examples/z258/particle-globeParticle",
-              "features": {
-                "coreTech": "Particle System, Points",
-                "secondaryTech": "粒子动画, 特效",
-                "difficulty": "进阶",
-                "actualFunction": "地球粒子效果，带有Bloom后处理和脉冲动画",
-                "suggestedCategory": "6. 粒子系统",
-                "filePath": "examples/examples/z258/particle-globeParticle",
-                "notes": "粒子系统示例 (自动推断)"
-              }
+              id: "particle-globeParticle",
+              title: "地球粒子",
+              description: "地球粒子效果，带有Bloom后处理和脉冲动画",
+              thumbnail: "images/particle-globeParticle.jpg",
+              version: "r179",
+              url: "examples/z258/particle-globeParticle",
+              features: {
+                coreTech: "Particle System, Points",
+                secondaryTech: "粒子动画, 特效",
+                difficulty: "进阶",
+                actualFunction: "地球粒子效果，带有Bloom后处理和脉冲动画",
+                suggestedCategory: "6. 粒子系统",
+                filePath: "examples/examples/z258/particle-globeParticle",
+                notes: "粒子系统示例 (自动推断)",
+              },
             },
             {
-              "id": "particle-waterLeakage",
-              "title": "水流粒子",
-              "description": "水流粒子效果，带有水花飞溅物理模拟",
-              "thumbnail": "images/particle-waterLeakage.jpg",
-              "version": "r179",
-              "url": "examples/z258/particle-waterLeakage",
-              "features": {
-                "coreTech": "Particle System, Points",
-                "secondaryTech": "粒子动画, 特效",
-                "difficulty": "进阶",
-                "actualFunction": "水流粒子效果，带有水花飞溅物理模拟",
-                "suggestedCategory": "6. 粒子系统",
-                "filePath": "examples/examples/z258/particle-waterLeakage",
-                "notes": "粒子系统示例 (自动推断)"
-              }
+              id: "particle-waterLeakage",
+              title: "水流粒子",
+              description: "水流粒子效果，带有水花飞溅物理模拟",
+              thumbnail: "images/particle-waterLeakage.jpg",
+              version: "r179",
+              url: "examples/z258/particle-waterLeakage",
+              features: {
+                coreTech: "Particle System, Points",
+                secondaryTech: "粒子动画, 特效",
+                difficulty: "进阶",
+                actualFunction: "水流粒子效果，带有水花飞溅物理模拟",
+                suggestedCategory: "6. 粒子系统",
+                filePath: "examples/examples/z258/particle-waterLeakage",
+                notes: "粒子系统示例 (自动推断)",
+              },
             },
             {
-              "id": "particle-waterFlow",
-              "title": "喷泉水流",
-              "description": "喷泉水流粒子效果，带有抛物线运动轨迹",
-              "thumbnail": "images/particle-waterFlow.jpg",
-              "version": "r179",
-              "url": "examples/z258/particle-waterFlow",
-              "features": {
-                "coreTech": "Particle System, Points",
-                "secondaryTech": "粒子动画, 特效",
-                "difficulty": "进阶",
-                "actualFunction": "喷泉水流粒子效果，带有抛物线运动轨迹",
-                "suggestedCategory": "6. 粒子系统",
-                "filePath": "examples/examples/z258/particle-waterFlow",
-                "notes": "粒子系统示例 (自动推断)"
-              }
+              id: "particle-waterFlow",
+              title: "喷泉水流",
+              description: "喷泉水流粒子效果，带有抛物线运动轨迹",
+              thumbnail: "images/particle-waterFlow.jpg",
+              version: "r179",
+              url: "examples/z258/particle-waterFlow",
+              features: {
+                coreTech: "Particle System, Points",
+                secondaryTech: "粒子动画, 特效",
+                difficulty: "进阶",
+                actualFunction: "喷泉水流粒子效果，带有抛物线运动轨迹",
+                suggestedCategory: "6. 粒子系统",
+                filePath: "examples/examples/z258/particle-waterFlow",
+                notes: "粒子系统示例 (自动推断)",
+              },
             },
             {
-              "id": "particle-steamParticle",
-              "title": "蒸汽粒子",
-              "description": "蒸汽粒子效果，带有上升、湍流和浓度控制",
-              "thumbnail": "images/particle-steamParticle.jpg",
-              "version": "r179",
-              "url": "examples/z258/particle-steamParticle",
-              "features": {
-                "coreTech": "Particle System, Points",
-                "secondaryTech": "粒子动画, 特效",
-                "difficulty": "进阶",
-                "actualFunction": "蒸汽粒子效果，带有上升、湍流和浓度控制",
-                "suggestedCategory": "6. 粒子系统",
-                "filePath": "examples/examples/z258/particle-steamParticle",
-                "notes": "粒子系统示例 (自动推断)"
-              }
+              id: "particle-steamParticle",
+              title: "蒸汽粒子",
+              description: "蒸汽粒子效果，带有上升、湍流和浓度控制",
+              thumbnail: "images/particle-steamParticle.jpg",
+              version: "r179",
+              url: "examples/z258/particle-steamParticle",
+              features: {
+                coreTech: "Particle System, Points",
+                secondaryTech: "粒子动画, 特效",
+                difficulty: "进阶",
+                actualFunction: "蒸汽粒子效果，带有上升、湍流和浓度控制",
+                suggestedCategory: "6. 粒子系统",
+                filePath: "examples/examples/z258/particle-steamParticle",
+                notes: "粒子系统示例 (自动推断)",
+              },
             },
             {
-              "id": "particle-textParticle",
-              "title": "文字采集成粒子",
-              "description": "将文字转换为粒子效果，支持爆炸散开和聚集动画",
-              "thumbnail": "images/particle-textParticle.jpg",
-              "version": "r179",
-              "url": "examples/z258/particle-textParticle",
-              "features": {
-                "coreTech": "Particle System, Points",
-                "secondaryTech": "粒子动画, 特效",
-                "difficulty": "进阶",
-                "actualFunction": "将文字转换为粒子效果，支持爆炸散开和聚集动画",
-                "suggestedCategory": "6. 粒子系统",
-                "filePath": "examples/examples/z258/particle-textParticle",
-                "notes": "粒子系统示例 (自动推断)"
-              }
+              id: "particle-textParticle",
+              title: "文字采集成粒子",
+              description: "将文字转换为粒子效果，支持爆炸散开和聚集动画",
+              thumbnail: "images/particle-textParticle.jpg",
+              version: "r179",
+              url: "examples/z258/particle-textParticle",
+              features: {
+                coreTech: "Particle System, Points",
+                secondaryTech: "粒子动画, 特效",
+                difficulty: "进阶",
+                actualFunction: "将文字转换为粒子效果，支持爆炸散开和聚集动画",
+                suggestedCategory: "6. 粒子系统",
+                filePath: "examples/examples/z258/particle-textParticle",
+                notes: "粒子系统示例 (自动推断)",
+              },
             },
             {
-              "id": "particle-particlesCursorAnimation",
-              "title": "鼠标轨迹粒子",
-              "description": "鼠标移动产生粒子轨迹，支持多种颜色主题和发光效果",
-              "thumbnail": "images/particle-particlesCursorAnimation.jpg",
-              "version": "r179",
-              "url": "examples/z258/particle-particlesCursorAnimation",
-              "features": {
-                "coreTech": "Particle System, Points",
-                "secondaryTech": "粒子动画, 特效",
-                "difficulty": "进阶",
-                "actualFunction": "鼠标移动产生粒子轨迹，支持多种颜色主题和发光效果",
-                "suggestedCategory": "6. 粒子系统",
-                "filePath": "examples/examples/z258/particle-particlesCursorAnimation",
-                "notes": "粒子系统示例 (自动推断)"
-              }
-            }
-          ]
-        }
-      ]
+              id: "particle-particlesCursorAnimation",
+              title: "鼠标轨迹粒子",
+              description: "鼠标移动产生粒子轨迹，支持多种颜色主题和发光效果",
+              thumbnail: "images/particle-particlesCursorAnimation.jpg",
+              version: "r179",
+              url: "examples/z258/particle-particlesCursorAnimation",
+              features: {
+                coreTech: "Particle System, Points",
+                secondaryTech: "粒子动画, 特效",
+                difficulty: "进阶",
+                actualFunction:
+                  "鼠标移动产生粒子轨迹，支持多种颜色主题和发光效果",
+                suggestedCategory: "6. 粒子系统",
+                filePath:
+                  "examples/examples/z258/particle-particlesCursorAnimation",
+                notes: "粒子系统示例 (自动推断)",
+              },
+            },
+          ],
+        },
+      ],
     },
     {
-      "id": "着色器编程",
-      "name": "7. 着色器编程",
-      "icon": "bi-code-square",
-      "subcategories": [
+      id: "着色器编程",
+      name: "7. 着色器编程",
+      icon: "bi-code-square",
+      subcategories: [
         {
-          "id": "着色器编程-7.1-入门着色器",
-          "name": "7.1 入门着色器",
-          "examples": [
+          id: "着色器编程-7.1-入门着色器",
+          name: "7.1 入门着色器",
+          examples: [
             {
-              "id": "shaderbook-shaderexamples-01",
-              "title": "UV位置渐变",
-              "description": "使用UV坐标生成渐变色彩和透明度效果",
-              "thumbnail": "images/shaderbook-shaderexamples-01.jpg",
-              "version": "r179",
-              "url": "examples/shaderbook-shaderexamples-01",
-              "features": {
-                "secondaryTech": "着色器编程, 数学函数",
-                "difficulty": "进阶",
-                "actualFunction": "使用UV坐标生成渐变色彩和透明度效果",
-                "suggestedCategory": "7. 着色器编程 > 入门着色器",
-                "filePath": "examples/examples/shaderbook-shaderexamples-01",
-                "notes": "Shader Book 教程示例 (自动推断)"
-              }
+              id: "shaderbook-shaderexamples-01",
+              title: "UV位置渐变",
+              description: "使用UV坐标生成渐变色彩和透明度效果",
+              thumbnail: "images/shaderbook-shaderexamples-01.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-01",
+              features: {
+                secondaryTech: "着色器编程, 数学函数",
+                difficulty: "进阶",
+                actualFunction: "使用UV坐标生成渐变色彩和透明度效果",
+                suggestedCategory: "7. 着色器编程 > 入门着色器",
+                filePath: "examples/examples/shaderbook-shaderexamples-01",
+                notes: "Shader Book 教程示例 (自动推断)",
+              },
             },
             {
-              "id": "shaderbook-shaderexamples-02",
-              "title": "正弦彩色图案",
-              "description": "使用sin函数生成动态彩色图案",
-              "thumbnail": "images/shaderbook-shaderexamples-02.jpg",
-              "version": "r179",
-              "url": "examples/shaderbook-shaderexamples-02",
-              "features": {
-                "secondaryTech": "着色器编程, 数学函数",
-                "difficulty": "进阶",
-                "actualFunction": "使用sin函数生成动态彩色图案",
-                "suggestedCategory": "7. 着色器编程 > 入门着色器",
-                "filePath": "examples/examples/shaderbook-shaderexamples-02",
-                "notes": "Shader Book 教程示例 (自动推断)"
-              }
+              id: "shaderbook-shaderexamples-02",
+              title: "正弦彩色图案",
+              description: "使用sin函数生成动态彩色图案",
+              thumbnail: "images/shaderbook-shaderexamples-02.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-02",
+              features: {
+                secondaryTech: "着色器编程, 数学函数",
+                difficulty: "进阶",
+                actualFunction: "使用sin函数生成动态彩色图案",
+                suggestedCategory: "7. 着色器编程 > 入门着色器",
+                filePath: "examples/examples/shaderbook-shaderexamples-02",
+                notes: "Shader Book 教程示例 (自动推断)",
+              },
             },
             {
-              "id": "shaderbook-shaderexamples-03",
-              "title": "数学曲线绘制",
-              "description": "使用plot函数绘制y=x³数学曲线",
-              "thumbnail": "images/shaderbook-shaderexamples-03.jpg",
-              "version": "r179",
-              "url": "examples/shaderbook-shaderexamples-03",
-              "features": {
-                "secondaryTech": "着色器编程, 数学函数",
-                "difficulty": "进阶",
-                "actualFunction": "使用plot函数绘制y=x³数学曲线",
-                "suggestedCategory": "7. 着色器编程 > 入门着色器",
-                "filePath": "examples/examples/shaderbook-shaderexamples-03",
-                "notes": "Shader Book 教程示例 (自动推断)"
-              }
+              id: "shaderbook-shaderexamples-03",
+              title: "数学曲线绘制",
+              description: "使用plot函数绘制y=x³数学曲线",
+              thumbnail: "images/shaderbook-shaderexamples-03.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-03",
+              features: {
+                secondaryTech: "着色器编程, 数学函数",
+                difficulty: "进阶",
+                actualFunction: "使用plot函数绘制y=x³数学曲线",
+                suggestedCategory: "7. 着色器编程 > 入门着色器",
+                filePath: "examples/examples/shaderbook-shaderexamples-03",
+                notes: "Shader Book 教程示例 (自动推断)",
+              },
             },
             {
-              "id": "shaderbook-shaderexamples-04a",
-              "title": "圆形波纹效果",
-              "description": "使用circ函数生成正弦波纹图案",
-              "thumbnail": "images/shaderbook-shaderexamples-04a.jpg",
-              "version": "r179",
-              "url": "examples/shaderbook-shaderexamples-04a",
-              "features": {
-                "secondaryTech": "着色器编程, 数学函数",
-                "difficulty": "进阶",
-                "actualFunction": "使用circ函数生成正弦波纹图案",
-                "suggestedCategory": "7. 着色器编程 > 入门着色器",
-                "filePath": "examples/examples/shaderbook-shaderexamples-04a",
-                "notes": "Shader Book 教程示例 (自动推断)"
-              }
+              id: "shaderbook-shaderexamples-04a",
+              title: "圆形波纹效果",
+              description: "使用circ函数生成正弦波纹图案",
+              thumbnail: "images/shaderbook-shaderexamples-04a.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-04a",
+              features: {
+                secondaryTech: "着色器编程, 数学函数",
+                difficulty: "进阶",
+                actualFunction: "使用circ函数生成正弦波纹图案",
+                suggestedCategory: "7. 着色器编程 > 入门着色器",
+                filePath: "examples/examples/shaderbook-shaderexamples-04a",
+                notes: "Shader Book 教程示例 (自动推断)",
+              },
             },
             {
-              "id": "shaderbook-shaderexamples-04b",
-              "title": "彩色圆形渐变",
-              "description": "使用circ函数和clamp限制颜色范围",
-              "thumbnail": "images/shaderbook-shaderexamples-04b.jpg",
-              "version": "r179",
-              "url": "examples/shaderbook-shaderexamples-04b",
-              "features": {
-                "secondaryTech": "着色器编程, 数学函数",
-                "difficulty": "进阶",
-                "actualFunction": "使用circ函数和clamp限制颜色范围",
-                "suggestedCategory": "7. 着色器编程 > 入门着色器",
-                "filePath": "examples/examples/shaderbook-shaderexamples-04b",
-                "notes": "Shader Book 教程示例 (自动推断)"
-              }
+              id: "shaderbook-shaderexamples-04b",
+              title: "彩色圆形渐变",
+              description: "使用circ函数和clamp限制颜色范围",
+              thumbnail: "images/shaderbook-shaderexamples-04b.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-04b",
+              features: {
+                secondaryTech: "着色器编程, 数学函数",
+                difficulty: "进阶",
+                actualFunction: "使用circ函数和clamp限制颜色范围",
+                suggestedCategory: "7. 着色器编程 > 入门着色器",
+                filePath: "examples/examples/shaderbook-shaderexamples-04b",
+                notes: "Shader Book 教程示例 (自动推断)",
+              },
             },
             {
-              "id": "shaderbook-shaderexamples-04c",
-              "title": "双色渐变",
-              "description": "使用mix函数实现红色到紫色的渐变效果",
-              "thumbnail": "images/shaderbook-shaderexamples-04c.jpg",
-              "version": "r179",
-              "url": "examples/shaderbook-shaderexamples-04c",
-              "features": {
-                "secondaryTech": "着色器编程, 数学函数",
-                "difficulty": "进阶",
-                "actualFunction": "使用mix函数实现红色到紫色的渐变效果",
-                "suggestedCategory": "7. 着色器编程 > 入门着色器",
-                "filePath": "examples/examples/shaderbook-shaderexamples-04c",
-                "notes": "Shader Book 教程示例 (自动推断)"
-              }
+              id: "shaderbook-shaderexamples-04c",
+              title: "双色渐变",
+              description: "使用mix函数实现红色到紫色的渐变效果",
+              thumbnail: "images/shaderbook-shaderexamples-04c.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-04c",
+              features: {
+                secondaryTech: "着色器编程, 数学函数",
+                difficulty: "进阶",
+                actualFunction: "使用mix函数实现红色到紫色的渐变效果",
+                suggestedCategory: "7. 着色器编程 > 入门着色器",
+                filePath: "examples/examples/shaderbook-shaderexamples-04c",
+                notes: "Shader Book 教程示例 (自动推断)",
+              },
             },
             {
-              "id": "shaderbook-shaderexamples-05",
-              "title": "抛物线绘制",
-              "description": "使用plot函数绘制y=x²抛物线并添加边界裁剪效果",
-              "thumbnail": "images/shaderbook-shaderexamples-05.jpg",
-              "version": "r179",
-              "url": "examples/shaderbook-shaderexamples-05",
-              "features": {
-                "secondaryTech": "着色器编程, 数学函数",
-                "difficulty": "进阶",
-                "actualFunction": "使用plot函数绘制y=x²抛物线并添加边界裁剪效果",
-                "suggestedCategory": "7. 着色器编程 > 入门着色器",
-                "filePath": "examples/examples/shaderbook-shaderexamples-05",
-                "notes": "Shader Book 教程示例 (自动推断)"
-              }
+              id: "shaderbook-shaderexamples-05",
+              title: "抛物线绘制",
+              description: "使用plot函数绘制y=x²抛物线并添加边界裁剪效果",
+              thumbnail: "images/shaderbook-shaderexamples-05.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-05",
+              features: {
+                secondaryTech: "着色器编程, 数学函数",
+                difficulty: "进阶",
+                actualFunction: "使用plot函数绘制y=x²抛物线并添加边界裁剪效果",
+                suggestedCategory: "7. 着色器编程 > 入门着色器",
+                filePath: "examples/examples/shaderbook-shaderexamples-05",
+                notes: "Shader Book 教程示例 (自动推断)",
+              },
             },
             {
-              "id": "shaderbook-shaderexamples-06",
-              "title": "圆形混合效果",
-              "description": "使用circle函数绘制圆形并混合两种颜色",
-              "thumbnail": "images/shaderbook-shaderexamples-06.jpg",
-              "version": "r179",
-              "url": "examples/shaderbook-shaderexamples-06",
-              "features": {
-                "secondaryTech": "着色器编程, 数学函数",
-                "difficulty": "进阶",
-                "actualFunction": "使用circle函数绘制圆形并混合两种颜色",
-                "suggestedCategory": "7. 着色器编程 > 入门着色器",
-                "filePath": "examples/examples/shaderbook-shaderexamples-06",
-                "notes": "Shader Book 教程示例 (自动推断)"
-              }
+              id: "shaderbook-shaderexamples-06",
+              title: "圆形混合效果",
+              description: "使用circle函数绘制圆形并混合两种颜色",
+              thumbnail: "images/shaderbook-shaderexamples-06.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-06",
+              features: {
+                secondaryTech: "着色器编程, 数学函数",
+                difficulty: "进阶",
+                actualFunction: "使用circle函数绘制圆形并混合两种颜色",
+                suggestedCategory: "7. 着色器编程 > 入门着色器",
+                filePath: "examples/examples/shaderbook-shaderexamples-06",
+                notes: "Shader Book 教程示例 (自动推断)",
+              },
             },
             {
-              "id": "shaderbook-shaderexamples-07",
-              "title": "鼠标跟随圆形",
-              "description": "使用raycaster检测鼠标位置，绘制跟随的绿色圆形",
-              "thumbnail": "images/shaderbook-shaderexamples-07.jpg",
-              "version": "r179",
-              "url": "examples/shaderbook-shaderexamples-07",
-              "features": {
-                "secondaryTech": "着色器编程, 数学函数",
-                "difficulty": "进阶",
-                "actualFunction": "使用raycaster检测鼠标位置，绘制跟随的绿色圆形",
-                "suggestedCategory": "7. 着色器编程 > 入门着色器",
-                "filePath": "examples/examples/shaderbook-shaderexamples-07",
-                "notes": "Shader Book 教程示例 (自动推断)"
-              }
+              id: "shaderbook-shaderexamples-07",
+              title: "鼠标跟随圆形",
+              description: "使用raycaster检测鼠标位置，绘制跟随的绿色圆形",
+              thumbnail: "images/shaderbook-shaderexamples-07.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-07",
+              features: {
+                secondaryTech: "着色器编程, 数学函数",
+                difficulty: "进阶",
+                actualFunction: "使用raycaster检测鼠标位置，绘制跟随的绿色圆形",
+                suggestedCategory: "7. 着色器编程 > 入门着色器",
+                filePath: "examples/examples/shaderbook-shaderexamples-07",
+                notes: "Shader Book 教程示例 (自动推断)",
+              },
             },
             {
-              "id": "shaderbook-shaderexamples-08",
-              "title": "纹理叠加动画",
-              "description": "在纹理上叠加随时间移动的圆形效果",
-              "thumbnail": "images/shaderbook-shaderexamples-08.jpg",
-              "version": "r179",
-              "url": "examples/shaderbook-shaderexamples-08",
-              "features": {
-                "secondaryTech": "着色器编程, 数学函数",
-                "difficulty": "进阶",
-                "actualFunction": "在纹理上叠加随时间移动的圆形效果",
-                "suggestedCategory": "7. 着色器编程 > 入门着色器",
-                "filePath": "examples/examples/shaderbook-shaderexamples-08",
-                "notes": "Shader Book 教程示例 (自动推断)"
-              }
+              id: "shaderbook-shaderexamples-08",
+              title: "纹理叠加动画",
+              description: "在纹理上叠加随时间移动的圆形效果",
+              thumbnail: "images/shaderbook-shaderexamples-08.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-08",
+              features: {
+                secondaryTech: "着色器编程, 数学函数",
+                difficulty: "进阶",
+                actualFunction: "在纹理上叠加随时间移动的圆形效果",
+                suggestedCategory: "7. 着色器编程 > 入门着色器",
+                filePath: "examples/examples/shaderbook-shaderexamples-08",
+                notes: "Shader Book 教程示例 (自动推断)",
+              },
             },
             {
-              "id": "shaderbook-shaderexamples-09",
-              "title": "周期性开合盒子",
-              "description": "立方体表面创建多个动态开合的圆形孔洞",
-              "thumbnail": "images/shaderbook-shaderexamples-09.jpg",
-              "version": "r179",
-              "url": "examples/shaderbook-shaderexamples-09",
-              "features": {
-                "secondaryTech": "着色器编程, 数学函数",
-                "difficulty": "进阶",
-                "actualFunction": "立方体表面创建多个动态开合的圆形孔洞",
-                "suggestedCategory": "7. 着色器编程 > 入门着色器",
-                "filePath": "examples/examples/shaderbook-shaderexamples-09",
-                "notes": "Shader Book 教程示例 (自动推断)"
-              }
+              id: "shaderbook-shaderexamples-09",
+              title: "周期性开合盒子",
+              description: "立方体表面创建多个动态开合的圆形孔洞",
+              thumbnail: "images/shaderbook-shaderexamples-09.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-09",
+              features: {
+                secondaryTech: "着色器编程, 数学函数",
+                difficulty: "进阶",
+                actualFunction: "立方体表面创建多个动态开合的圆形孔洞",
+                suggestedCategory: "7. 着色器编程 > 入门着色器",
+                filePath: "examples/examples/shaderbook-shaderexamples-09",
+                notes: "Shader Book 教程示例 (自动推断)",
+              },
             },
             {
-              "id": "shaderbook-shaderexamples-09a",
-              "title": "动态孔洞效果",
-              "description": "在立方体表面创建随时间变化的圆形孔洞",
-              "thumbnail": "images/shaderbook-shaderexamples-09a.jpg",
-              "version": "r179",
-              "url": "examples/shaderbook-shaderexamples-09a",
-              "features": {
-                "secondaryTech": "着色器编程, 数学函数",
-                "difficulty": "进阶",
-                "actualFunction": "在立方体表面创建随时间变化的圆形孔洞",
-                "suggestedCategory": "7. 着色器编程 > 入门着色器",
-                "filePath": "examples/examples/shaderbook-shaderexamples-09a",
-                "notes": "Shader Book 教程示例 (自动推断)"
-              }
+              id: "shaderbook-shaderexamples-09a",
+              title: "动态孔洞效果",
+              description: "在立方体表面创建随时间变化的圆形孔洞",
+              thumbnail: "images/shaderbook-shaderexamples-09a.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-09a",
+              features: {
+                secondaryTech: "着色器编程, 数学函数",
+                difficulty: "进阶",
+                actualFunction: "在立方体表面创建随时间变化的圆形孔洞",
+                suggestedCategory: "7. 着色器编程 > 入门着色器",
+                filePath: "examples/examples/shaderbook-shaderexamples-09a",
+                notes: "Shader Book 教程示例 (自动推断)",
+              },
             },
             {
-              "id": "shaderbook-shaderexamples-10a",
-              "title": "交互式圆形绘制",
-              "description": "点击创建圆形遮罩，最多支持100个圆形",
-              "thumbnail": "images/shaderbook-shaderexamples-10a.jpg",
-              "version": "r179",
-              "url": "examples/shaderbook-shaderexamples-10a",
-              "features": {
-                "secondaryTech": "着色器编程, 数学函数",
-                "difficulty": "进阶",
-                "actualFunction": "点击创建圆形遮罩，最多支持100个圆形",
-                "suggestedCategory": "7. 着色器编程 > 入门着色器",
-                "filePath": "examples/examples/shaderbook-shaderexamples-10a",
-                "notes": "Shader Book 教程示例 (自动推断)"
-              }
+              id: "shaderbook-shaderexamples-10a",
+              title: "交互式圆形绘制",
+              description: "点击创建圆形遮罩，最多支持100个圆形",
+              thumbnail: "images/shaderbook-shaderexamples-10a.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-10a",
+              features: {
+                secondaryTech: "着色器编程, 数学函数",
+                difficulty: "进阶",
+                actualFunction: "点击创建圆形遮罩，最多支持100个圆形",
+                suggestedCategory: "7. 着色器编程 > 入门着色器",
+                filePath: "examples/examples/shaderbook-shaderexamples-10a",
+                notes: "Shader Book 教程示例 (自动推断)",
+              },
             },
             {
-              "id": "shaderbook-shaderexamples-10b",
-              "title": "纹理切换遮罩",
-              "description": "点击切换纹理，圆形遮罩显示不同纹理",
-              "thumbnail": "images/shaderbook-shaderexamples-10b.jpg",
-              "version": "r179",
-              "url": "examples/shaderbook-shaderexamples-10b",
-              "features": {
-                "secondaryTech": "着色器编程, 数学函数",
-                "difficulty": "进阶",
-                "actualFunction": "点击切换纹理，圆形遮罩显示不同纹理",
-                "suggestedCategory": "7. 着色器编程 > 入门着色器",
-                "filePath": "examples/examples/shaderbook-shaderexamples-10b",
-                "notes": "Shader Book 教程示例 (自动推断)"
-              }
+              id: "shaderbook-shaderexamples-10b",
+              title: "纹理切换遮罩",
+              description: "点击切换纹理，圆形遮罩显示不同纹理",
+              thumbnail: "images/shaderbook-shaderexamples-10b.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-10b",
+              features: {
+                secondaryTech: "着色器编程, 数学函数",
+                difficulty: "进阶",
+                actualFunction: "点击切换纹理，圆形遮罩显示不同纹理",
+                suggestedCategory: "7. 着色器编程 > 入门着色器",
+                filePath: "examples/examples/shaderbook-shaderexamples-10b",
+                notes: "Shader Book 教程示例 (自动推断)",
+              },
             },
             {
-              "id": "shaderbook-shaderexamples-11",
-              "title": "网格筛子效果",
-              "description": "使用step函数创建网格图案",
-              "thumbnail": "images/shaderbook-shaderexamples-11.jpg",
-              "version": "r179",
-              "url": "examples/shaderbook-shaderexamples-11",
-              "features": {
-                "secondaryTech": "着色器编程, 数学函数",
-                "difficulty": "进阶",
-                "actualFunction": "使用step函数创建网格图案",
-                "suggestedCategory": "7. 着色器编程 > 入门着色器",
-                "filePath": "examples/examples/shaderbook-shaderexamples-11",
-                "notes": "Shader Book 教程示例 (自动推断)"
-              }
+              id: "shaderbook-shaderexamples-11",
+              title: "网格筛子效果",
+              description: "使用step函数创建网格图案",
+              thumbnail: "images/shaderbook-shaderexamples-11.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-11",
+              features: {
+                secondaryTech: "着色器编程, 数学函数",
+                difficulty: "进阶",
+                actualFunction: "使用step函数创建网格图案",
+                suggestedCategory: "7. 着色器编程 > 入门着色器",
+                filePath: "examples/examples/shaderbook-shaderexamples-11",
+                notes: "Shader Book 教程示例 (自动推断)",
+              },
             },
             {
-              "id": "shaderbook-shaderexamples-12",
-              "title": "圆形交集遮罩",
-              "description": "使用circle函数创建多个圆形边框并求交集",
-              "thumbnail": "images/shaderbook-shaderexamples-12.jpg",
-              "version": "r179",
-              "url": "examples/shaderbook-shaderexamples-12",
-              "features": {
-                "secondaryTech": "着色器编程, 数学函数",
-                "difficulty": "进阶",
-                "actualFunction": "使用circle函数创建多个圆形边框并求交集",
-                "suggestedCategory": "7. 着色器编程 > 入门着色器",
-                "filePath": "examples/examples/shaderbook-shaderexamples-12",
-                "notes": "Shader Book 教程示例 (自动推断)"
-              }
+              id: "shaderbook-shaderexamples-12",
+              title: "圆形交集遮罩",
+              description: "使用circle函数创建多个圆形边框并求交集",
+              thumbnail: "images/shaderbook-shaderexamples-12.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-12",
+              features: {
+                secondaryTech: "着色器编程, 数学函数",
+                difficulty: "进阶",
+                actualFunction: "使用circle函数创建多个圆形边框并求交集",
+                suggestedCategory: "7. 着色器编程 > 入门着色器",
+                filePath: "examples/examples/shaderbook-shaderexamples-12",
+                notes: "Shader Book 教程示例 (自动推断)",
+              },
             },
             {
-              "id": "shaderbook-shaderexamples-13",
-              "title": "正多边形绘制",
-              "description": "使用极坐标公式绘制正多边形",
-              "thumbnail": "images/shaderbook-shaderexamples-13.jpg",
-              "version": "r179",
-              "url": "examples/shaderbook-shaderexamples-13",
-              "features": {
-                "secondaryTech": "着色器编程, 数学函数",
-                "difficulty": "进阶",
-                "actualFunction": "使用极坐标公式绘制正多边形",
-                "suggestedCategory": "7. 着色器编程 > 入门着色器",
-                "filePath": "examples/examples/shaderbook-shaderexamples-13",
-                "notes": "Shader Book 教程示例 (自动推断)"
-              }
+              id: "shaderbook-shaderexamples-13",
+              title: "正多边形绘制",
+              description: "使用极坐标公式绘制正多边形",
+              thumbnail: "images/shaderbook-shaderexamples-13.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-13",
+              features: {
+                secondaryTech: "着色器编程, 数学函数",
+                difficulty: "进阶",
+                actualFunction: "使用极坐标公式绘制正多边形",
+                suggestedCategory: "7. 着色器编程 > 入门着色器",
+                filePath: "examples/examples/shaderbook-shaderexamples-13",
+                notes: "Shader Book 教程示例 (自动推断)",
+              },
             },
             {
-              "id": "shaderbook-shaderexamples-14",
-              "title": "3D波浪效果",
-              "description": "使用顶点着色器创建动态波浪效果",
-              "thumbnail": "images/shaderbook-shaderexamples-14.jpg",
-              "version": "r179",
-              "url": "examples/shaderbook-shaderexamples-14",
-              "features": {
-                "secondaryTech": "着色器编程, 数学函数",
-                "difficulty": "进阶",
-                "actualFunction": "使用顶点着色器创建动态波浪效果",
-                "suggestedCategory": "7. 着色器编程 > 入门着色器",
-                "filePath": "examples/examples/shaderbook-shaderexamples-14",
-                "notes": "Shader Book 教程示例 (自动推断)"
-              }
+              id: "shaderbook-shaderexamples-14",
+              title: "3D波浪效果",
+              description: "使用顶点着色器创建动态波浪效果",
+              thumbnail: "images/shaderbook-shaderexamples-14.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-14",
+              features: {
+                secondaryTech: "着色器编程, 数学函数",
+                difficulty: "进阶",
+                actualFunction: "使用顶点着色器创建动态波浪效果",
+                suggestedCategory: "7. 着色器编程 > 入门着色器",
+                filePath: "examples/examples/shaderbook-shaderexamples-14",
+                notes: "Shader Book 教程示例 (自动推断)",
+              },
             },
             {
-              "id": "shaderbook-shaderexamples-15",
-              "title": "材质着色器修改",
-              "description": "使用onBeforeCompile修改标准材质创建动态效果",
-              "thumbnail": "images/shaderbook-shaderexamples-15.jpg",
-              "version": "r179",
-              "url": "examples/shaderbook-shaderexamples-15",
-              "features": {
-                "secondaryTech": "着色器编程, 数学函数",
-                "difficulty": "进阶",
-                "actualFunction": "使用onBeforeCompile修改标准材质创建动态效果",
-                "suggestedCategory": "7. 着色器编程 > 入门着色器",
-                "filePath": "examples/examples/shaderbook-shaderexamples-15",
-                "notes": "Shader Book 教程示例 (自动推断)"
-              }
+              id: "shaderbook-shaderexamples-15",
+              title: "材质着色器修改",
+              description: "使用onBeforeCompile修改标准材质创建动态效果",
+              thumbnail: "images/shaderbook-shaderexamples-15.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-15",
+              features: {
+                secondaryTech: "着色器编程, 数学函数",
+                difficulty: "进阶",
+                actualFunction: "使用onBeforeCompile修改标准材质创建动态效果",
+                suggestedCategory: "7. 着色器编程 > 入门着色器",
+                filePath: "examples/examples/shaderbook-shaderexamples-15",
+                notes: "Shader Book 教程示例 (自动推断)",
+              },
             },
             {
-              "id": "shaderbook-shaderexamples-16",
-              "title": "可变形圆形着色器",
-              "description": "使用onBeforeCompile和自定义法线计算创建动态变形效果",
-              "thumbnail": "images/shaderbook-shaderexamples-16.jpg",
-              "version": "r179",
-              "url": "examples/shaderbook-shaderexamples-16",
-              "features": {
-                "secondaryTech": "着色器编程, 数学函数",
-                "difficulty": "进阶",
-                "actualFunction": "使用onBeforeCompile和自定义法线计算创建动态变形效果",
-                "suggestedCategory": "7. 着色器编程 > 入门着色器",
-                "filePath": "examples/examples/shaderbook-shaderexamples-16",
-                "notes": "Shader Book 教程示例 (自动推断)"
-              }
+              id: "shaderbook-shaderexamples-16",
+              title: "可变形圆形着色器",
+              description:
+                "使用onBeforeCompile和自定义法线计算创建动态变形效果",
+              thumbnail: "images/shaderbook-shaderexamples-16.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-16",
+              features: {
+                secondaryTech: "着色器编程, 数学函数",
+                difficulty: "进阶",
+                actualFunction:
+                  "使用onBeforeCompile和自定义法线计算创建动态变形效果",
+                suggestedCategory: "7. 着色器编程 > 入门着色器",
+                filePath: "examples/examples/shaderbook-shaderexamples-16",
+                notes: "Shader Book 教程示例 (自动推断)",
+              },
             },
             {
-              "id": "shaderbook-shaderexamples-A",
-              "title": "旋转盒子",
-              "description": "使用顶点着色器旋转矩阵实现立方体旋转动画",
-              "thumbnail": "images/shaderbook-shaderexamples-A.jpg",
-              "version": "r179",
-              "url": "examples/shaderbook-shaderexamples-A",
-              "features": {
-                "secondaryTech": "着色器编程, 数学函数",
-                "difficulty": "进阶",
-                "actualFunction": "使用顶点着色器旋转矩阵实现立方体旋转动画",
-                "suggestedCategory": "7. 着色器编程 > 入门着色器",
-                "filePath": "examples/examples/shaderbook-shaderexamples-A",
-                "notes": "Shader Book 教程示例 (自动推断)"
-              }
+              id: "shaderbook-shaderexamples-A",
+              title: "旋转盒子",
+              description: "使用顶点着色器旋转矩阵实现立方体旋转动画",
+              thumbnail: "images/shaderbook-shaderexamples-A.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-A",
+              features: {
+                secondaryTech: "着色器编程, 数学函数",
+                difficulty: "进阶",
+                actualFunction: "使用顶点着色器旋转矩阵实现立方体旋转动画",
+                suggestedCategory: "7. 着色器编程 > 入门着色器",
+                filePath: "examples/examples/shaderbook-shaderexamples-A",
+                notes: "Shader Book 教程示例 (自动推断)",
+              },
             },
             {
-              "id": "shaderbook-shaderexamples-B",
-              "title": "阶梯图案着色器",
-              "description": "使用step函数创建阶梯效果",
-              "thumbnail": "images/shaderbook-shaderexamples-B.jpg",
-              "version": "r179",
-              "url": "examples/shaderbook-shaderexamples-B",
-              "features": {
-                "secondaryTech": "着色器编程, 数学函数",
-                "difficulty": "进阶",
-                "actualFunction": "使用step函数创建阶梯效果",
-                "suggestedCategory": "7. 着色器编程 > 入门着色器",
-                "filePath": "examples/examples/shaderbook-shaderexamples-B",
-                "notes": "Shader Book 教程示例 (自动推断)"
-              }
+              id: "shaderbook-shaderexamples-B",
+              title: "阶梯图案着色器",
+              description: "使用step函数创建阶梯效果",
+              thumbnail: "images/shaderbook-shaderexamples-B.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-B",
+              features: {
+                secondaryTech: "着色器编程, 数学函数",
+                difficulty: "进阶",
+                actualFunction: "使用step函数创建阶梯效果",
+                suggestedCategory: "7. 着色器编程 > 入门着色器",
+                filePath: "examples/examples/shaderbook-shaderexamples-B",
+                notes: "Shader Book 教程示例 (自动推断)",
+              },
             },
             {
-              "id": "shaderbook-shaderexamples-C",
-              "title": "2D云彩着色器",
-              "description": "使用噪声函数和fbm创建云彩效果",
-              "thumbnail": "images/shaderbook-shaderexamples-C.jpg",
-              "version": "r179",
-              "url": "examples/shaderbook-shaderexamples-C",
-              "features": {
-                "secondaryTech": "着色器编程, 数学函数",
-                "difficulty": "进阶",
-                "actualFunction": "使用噪声函数和fbm创建云彩效果",
-                "suggestedCategory": "7. 着色器编程 > 入门着色器",
-                "filePath": "examples/examples/shaderbook-shaderexamples-C",
-                "notes": "Shader Book 教程示例 (自动推断)"
-              }
+              id: "shaderbook-shaderexamples-C",
+              title: "2D云彩着色器",
+              description: "使用噪声函数和fbm创建云彩效果",
+              thumbnail: "images/shaderbook-shaderexamples-C.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-C",
+              features: {
+                secondaryTech: "着色器编程, 数学函数",
+                difficulty: "进阶",
+                actualFunction: "使用噪声函数和fbm创建云彩效果",
+                suggestedCategory: "7. 着色器编程 > 入门着色器",
+                filePath: "examples/examples/shaderbook-shaderexamples-C",
+                notes: "Shader Book 教程示例 (自动推断)",
+              },
             },
             {
-              "id": "shaderbook-shaderexamples-D",
-              "title": "平面水效果着色器",
-              "description": "使用波浪函数和反射效果模拟水面",
-              "thumbnail": "images/shaderbook-shaderexamples-D.jpg",
-              "version": "r179",
-              "url": "examples/shaderbook-shaderexamples-D",
-              "features": {
-                "secondaryTech": "着色器编程, 数学函数",
-                "difficulty": "进阶",
-                "actualFunction": "使用波浪函数和反射效果模拟水面",
-                "suggestedCategory": "7. 着色器编程 > 入门着色器",
-                "filePath": "examples/examples/shaderbook-shaderexamples-D",
-                "notes": "Shader Book 教程示例 (自动推断)"
-              }
+              id: "shaderbook-shaderexamples-D",
+              title: "平面水效果着色器",
+              description: "使用波浪函数和反射效果模拟水面",
+              thumbnail: "images/shaderbook-shaderexamples-D.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-D",
+              features: {
+                secondaryTech: "着色器编程, 数学函数",
+                difficulty: "进阶",
+                actualFunction: "使用波浪函数和反射效果模拟水面",
+                suggestedCategory: "7. 着色器编程 > 入门着色器",
+                filePath: "examples/examples/shaderbook-shaderexamples-D",
+                notes: "Shader Book 教程示例 (自动推断)",
+              },
             },
             {
-              "id": "shaderbook-shaderexamples-E",
-              "title": "云彩着色器",
-              "description": "使用多层噪声混合创建云朵效果",
-              "thumbnail": "images/shaderbook-shaderexamples-E.jpg",
-              "version": "r179",
-              "url": "examples/shaderbook-shaderexamples-E",
-              "features": {
-                "secondaryTech": "着色器编程, 数学函数",
-                "difficulty": "进阶",
-                "actualFunction": "使用多层噪声混合创建云朵效果",
-                "suggestedCategory": "7. 着色器编程 > 入门着色器",
-                "filePath": "examples/examples/shaderbook-shaderexamples-E",
-                "notes": "Shader Book 教程示例 (自动推断)"
-              }
+              id: "shaderbook-shaderexamples-E",
+              title: "云彩着色器",
+              description: "使用多层噪声混合创建云朵效果",
+              thumbnail: "images/shaderbook-shaderexamples-E.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-E",
+              features: {
+                secondaryTech: "着色器编程, 数学函数",
+                difficulty: "进阶",
+                actualFunction: "使用多层噪声混合创建云朵效果",
+                suggestedCategory: "7. 着色器编程 > 入门着色器",
+                filePath: "examples/examples/shaderbook-shaderexamples-E",
+                notes: "Shader Book 教程示例 (自动推断)",
+              },
             },
             {
-              "id": "shaderbook-shaderexamples-F",
-              "title": "大气散射着色器",
-              "description": "模拟逼真的天空和太阳效果",
-              "thumbnail": "images/shaderbook-shaderexamples-F.jpg",
-              "version": "r179",
-              "url": "examples/shaderbook-shaderexamples-F",
-              "features": {
-                "secondaryTech": "着色器编程, 数学函数",
-                "difficulty": "进阶",
-                "actualFunction": "模拟逼真的天空和太阳效果",
-                "suggestedCategory": "7. 着色器编程 > 入门着色器",
-                "filePath": "examples/examples/shaderbook-shaderexamples-F",
-                "notes": "Shader Book 教程示例 (自动推断)"
-              }
+              id: "shaderbook-shaderexamples-F",
+              title: "大气散射着色器",
+              description: "模拟逼真的天空和太阳效果",
+              thumbnail: "images/shaderbook-shaderexamples-F.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-F",
+              features: {
+                secondaryTech: "着色器编程, 数学函数",
+                difficulty: "进阶",
+                actualFunction: "模拟逼真的天空和太阳效果",
+                suggestedCategory: "7. 着色器编程 > 入门着色器",
+                filePath: "examples/examples/shaderbook-shaderexamples-F",
+                notes: "Shader Book 教程示例 (自动推断)",
+              },
             },
             {
-              "id": "shaderbook-shaderexamples-G",
-              "title": "快速鱼群着色器",
-              "description": "模拟水下场景中有鱼、水草和气泡",
-              "thumbnail": "images/shaderbook-shaderexamples-G.jpg",
-              "version": "r179",
-              "url": "examples/shaderbook-shaderexamples-G",
-              "features": {
-                "secondaryTech": "着色器编程, 数学函数",
-                "difficulty": "进阶",
-                "actualFunction": "模拟水下场景中有鱼、水草和气泡",
-                "suggestedCategory": "7. 着色器编程 > 入门着色器",
-                "filePath": "examples/examples/shaderbook-shaderexamples-G",
-                "notes": "Shader Book 教程示例 (自动推断)"
-              }
-            }
-          ]
+              id: "shaderbook-shaderexamples-G",
+              title: "快速鱼群着色器",
+              description: "模拟水下场景中有鱼、水草和气泡",
+              thumbnail: "images/shaderbook-shaderexamples-G.jpg",
+              version: "r179",
+              url: "examples/shaderbook-shaderexamples-G",
+              features: {
+                secondaryTech: "着色器编程, 数学函数",
+                difficulty: "进阶",
+                actualFunction: "模拟水下场景中有鱼、水草和气泡",
+                suggestedCategory: "7. 着色器编程 > 入门着色器",
+                filePath: "examples/examples/shaderbook-shaderexamples-G",
+                notes: "Shader Book 教程示例 (自动推断)",
+              },
+            },
+          ],
         },
         {
-          "id": "着色器编程-7.2-基础着色器",
-          "name": "7.2 基础着色器",
-          "examples": [
+          id: "着色器编程-7.2-基础着色器",
+          name: "7.2 基础着色器",
+          examples: [
             {
-              "id": "shader-hologram",
-              "title": "全息投影",
-              "description": "展示全息投影效果，使用自定义着色器实现扫描线和菲涅尔反射效果",
-              "thumbnail": "images/shader-hologram.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-hologram",
-              "features": {
-                "coreTech": "ShaderMaterial, 菲涅尔效应(Fresnel), 扫描线效果, 顶点动画",
-                "secondaryTech": "随机函数, 平滑步函数(smoothstep), 加法混合(AdditiveBlending)",
-                "difficulty": "进阶",
-                "actualFunction": "使用自定义着色器实现全息投影效果，包含扫描线、菲涅尔反射和故障效果",
-                "suggestedCategory": "7. 着色器编程 > 7.1 基础着色器",
-                "filePath": "examples/z258/shader-hologram.html",
-                "notes": "视觉效果出色，展示了多种着色器技术的组合"
-              }
-            }
-          ]
+              id: "shader-hologram",
+              title: "全息投影",
+              description:
+                "展示全息投影效果，使用自定义着色器实现扫描线和菲涅尔反射效果",
+              thumbnail: "images/shader-hologram.jpg",
+              version: "r179",
+              url: "examples/z258/shader-hologram",
+              features: {
+                coreTech:
+                  "ShaderMaterial, 菲涅尔效应(Fresnel), 扫描线效果, 顶点动画",
+                secondaryTech:
+                  "随机函数, 平滑步函数(smoothstep), 加法混合(AdditiveBlending)",
+                difficulty: "进阶",
+                actualFunction:
+                  "使用自定义着色器实现全息投影效果，包含扫描线、菲涅尔反射和故障效果",
+                suggestedCategory: "7. 着色器编程 > 7.1 基础着色器",
+                filePath: "examples/z258/shader-hologram.html",
+                notes: "视觉效果出色，展示了多种着色器技术的组合",
+              },
+            },
+          ],
         },
         {
-          "id": "着色器编程-7.3-高级着色器效果",
-          "name": "7.3 高级着色器效果",
-          "examples": [
+          id: "着色器编程-7.3-高级着色器效果",
+          name: "7.3 高级着色器效果",
+          examples: [
             {
-              "id": "shader-blackhole",
-              "title": "黑洞效果",
-              "description": "展示黑洞效果的着色器实现，使用光线追踪模拟引力透镜效应和吸积盘",
-              "thumbnail": "images/shader-blackhole.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-blackhole",
-              "features": {
-                "coreTech": "RawShaderMaterial, GLSL3, 光线追踪, 引力透镜效应",
-                "secondaryTech": "结构体(Struct), 矩阵变换, 步进算法(ray marching)",
-                "difficulty": "高级",
-                "actualFunction": "使用光线追踪模拟引力透镜效应和吸积盘，纯着色器实现",
-                "suggestedCategory": "7. 着色器编程 > 7.2 高级着色器效果",
-                "filePath": "examples/z258/shader-blackhole.html",
-                "notes": "技术难度最高的示例之一，完全基于片元着色器的光线追踪"
-              }
-            }
-          ]
+              id: "shader-blackhole",
+              title: "黑洞效果",
+              description:
+                "展示黑洞效果的着色器实现，使用光线追踪模拟引力透镜效应和吸积盘",
+              thumbnail: "images/shader-blackhole.jpg",
+              version: "r179",
+              url: "examples/z258/shader-blackhole",
+              features: {
+                coreTech: "RawShaderMaterial, GLSL3, 光线追踪, 引力透镜效应",
+                secondaryTech:
+                  "结构体(Struct), 矩阵变换, 步进算法(ray marching)",
+                difficulty: "高级",
+                actualFunction:
+                  "使用光线追踪模拟引力透镜效应和吸积盘，纯着色器实现",
+                suggestedCategory: "7. 着色器编程 > 7.2 高级着色器效果",
+                filePath: "examples/z258/shader-blackhole.html",
+                notes: "技术难度最高的示例之一，完全基于片元着色器的光线追踪",
+              },
+            },
+          ],
         },
         {
-          "id": "着色器编程-7.4-其他",
-          "name": "7.4 其他",
-          "examples": [
-            {
-              "id": "cyberpunk-lightning-tunnel",
-              "title": "赛博朋克闪电隧道",
-              "description": "使用自定义着色器和后处理实现高速飞行的赛博朋克数据隧道效果",
-              "thumbnail": "images/cyberpunk-lightning-tunnel.jpg",
-              "version": "r179",
-              "url": "examples/cyberpunk-lightning-tunnel",
-              "features": {
-                "coreTech": "Shader, Post-processing",
-                "secondaryTech": "特效, 风格化渲染",
-                "difficulty": "高级",
-                "actualFunction": "使用自定义着色器和后处理实现高速飞行的赛博朋克数据隧道效果",
-                "suggestedCategory": "7. 着色器编程 > 特效",
-                "filePath": "examples/examples/cyberpunk-lightning-tunnel",
-                "notes": "赛博朋克风格示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-abstract-art",
-              "title": "抽象艺术动画",
-              "description": "动态抽象艺术作品，旋转流动的光影图案，支持鼠标交互",
-              "thumbnail": "images/shader-abstract-art.jpg",
-              "version": "r179",
-              "url": "examples/shader-abstract-art",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "动态抽象艺术作品，旋转流动的光影图案，支持鼠标交互",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/shader-abstract-art",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-raymarching-fire",
-              "title": "光线追踪火花特效",
-              "description": "使用光线追踪(Ray Marching)技术结合Perlin噪声实现逼真的动态火花/火焰效果",
-              "thumbnail": "images/shader-raymarching-fire.jpg",
-              "version": "r179",
-              "url": "examples/shader-raymarching-fire",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "使用光线追踪(Ray Marching)技术结合Perlin噪声实现逼真的动态火花/火焰效果",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/shader-raymarching-fire",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-transparentGradient",
-              "title": "透明渐变",
-              "description": "展示多边形透明渐变效果，使用ShaderMaterial实现从中心向外的渐变透明效果",
-              "thumbnail": "images/shader-transparentGradient.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-transparentGradient",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示多边形透明渐变效果，使用ShaderMaterial实现从中心向外的渐变透明效果",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-transparentGradient",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-audioDance",
-              "title": "音乐舞动",
-              "description": "音频可视化效果，随着音乐节奏舞动的柱状图，使用本地音频文件桥边姑娘.mp3",
-              "thumbnail": "images/shader-audioDance.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-audioDance",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "音频可视化效果，随着音乐节奏舞动的柱状图，使用本地音频文件桥边姑娘.mp3",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-audioDance",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-magicalSphere",
-              "title": "魔法球体",
-              "description": "使用Raymarching和KIFS分形算法创建的发光魔法球体",
-              "thumbnail": "images/shader-magicalSphere.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-magicalSphere",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "使用Raymarching和KIFS分形算法创建的发光魔法球体",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-magicalSphere",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-cartoonOcean",
-              "title": "卡通海面",
-              "description": "使用自定义着色器实现的卡通风格海面，带有多层波浪和泡沫效果",
-              "thumbnail": "images/shader-cartoonOcean.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-cartoonOcean",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "使用自定义着色器实现的卡通风格海面，带有多层波浪和泡沫效果",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-cartoonOcean",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-audioSolutions",
-              "title": "音乐可视化",
-              "description": "3D球体音频可视化效果，使用Simplex噪声根据音频频率实时变形球体表面",
-              "thumbnail": "images/shader-audioSolutions.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-audioSolutions",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "3D球体音频可视化效果，使用Simplex噪声根据音频频率实时变形球体表面",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-audioSolutions",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-circleWave",
-              "title": "圆波扫光",
-              "description": "展示圆形波纹扫描效果，使用着色器实现动态圆波扫光动画",
-              "thumbnail": "images/shader-circleWave.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-circleWave",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示圆形波纹扫描效果，使用着色器实现动态圆波扫光动画",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-circleWave",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-fenceWall",
-              "title": "围墙着色器",
-              "description": "展示动态波浪围墙效果，使用圆柱体和着色器实现波浪形围墙",
-              "thumbnail": "images/shader-fenceWall.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-fenceWall",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示动态波浪围墙效果，使用圆柱体和着色器实现波浪形围墙",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-fenceWall",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-fenceShader",
-              "title": "围栏着色器",
-              "description": "展示动态渐变围栏效果，使用着色器实现渐变和波纹动画",
-              "thumbnail": "images/shader-fenceShader.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-fenceShader",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示动态渐变围栏效果，使用着色器实现渐变和波纹动画",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-fenceShader",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-planeScan",
-              "title": "平面扫描",
-              "description": "展示圆形扫描线效果，使用着色器实现动态扫描动画",
-              "thumbnail": "images/shader-planeScan.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-planeScan",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示圆形扫描线效果，使用着色器实现动态扫描动画",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-planeScan",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-wallShader",
-              "title": "扩散圆墙",
-              "description": "展示圆柱形扩散动画效果，使用着色器实现从下向上的渐变透明",
-              "thumbnail": "images/shader-wallShader.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-wallShader",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示圆柱形扩散动画效果，使用着色器实现从下向上的渐变透明",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-wallShader",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-radarShader",
-              "title": "雷达着色器",
-              "description": "展示雷达扫描效果，包含圆形、十字、动态扫描线等复杂着色器效果",
-              "thumbnail": "images/shader-radarShader.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-radarShader",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示雷达扫描效果，包含圆形、十字、动态扫描线等复杂着色器效果",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-radarShader",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-candleShader",
-              "title": "蜡烛着色器",
-              "description": "展示3D蜡烛和火焰效果，使用着色器实现火焰摇曳动画",
-              "thumbnail": "images/shader-candleShader.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-candleShader",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示3D蜡烛和火焰效果，使用着色器实现火焰摇曳动画",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-candleShader",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-ringShader",
-              "title": "环形着色器",
-              "description": "展示环形火焰效果，使用极坐标映射和噪声函数实现动态火焰动画",
-              "thumbnail": "images/shader-ringShader.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-ringShader",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示环形火焰效果，使用极坐标映射和噪声函数实现动态火焰动画",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-ringShader",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-smokeCircle",
-              "title": "圆泡吸附",
-              "description": "展示粒子吸附效果，120个二十面体粒子跟随引导粒子运动",
-              "thumbnail": "images/shader-smokeCircle.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-smokeCircle",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示粒子吸附效果，120个二十面体粒子跟随引导粒子运动",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-smokeCircle",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-radarScan",
-              "title": "雷达扫描",
-              "description": "展示雷达扫描效果，使用着色器实现动态扫描线和尾焰效果",
-              "thumbnail": "images/shader-radarScan.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-radarScan",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示雷达扫描效果，使用着色器实现动态扫描线和尾焰效果",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-radarScan",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-imageParticle",
-              "title": "颗粒图像",
-              "description": "展示图像粒子破碎效果，使用贝塞尔曲线实现三角面分离动画",
-              "thumbnail": "images/shader-imageParticle.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-imageParticle",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示图像粒子破碎效果，使用贝塞尔曲线实现三角面分离动画",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-imageParticle",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-gaussianBlur",
-              "title": "高斯模糊",
-              "description": "展示高斯模糊着色器效果，支持通过GUI调节模糊程度",
-              "thumbnail": "images/shader-gaussianBlur.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-gaussianBlur",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示高斯模糊着色器效果，支持通过GUI调节模糊程度",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-gaussianBlur",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-gridShader",
-              "title": "网格着色器",
-              "description": "展示动态网格效果，带有脉冲动画和随机哈希函数",
-              "thumbnail": "images/shader-gridShader.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-gridShader",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示动态网格效果，带有脉冲动画和随机哈希函数",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-gridShader",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-compassShader",
-              "title": "罗盘",
-              "description": "展示罗盘效果着色器，带有多层同心圆和旋转动画",
-              "thumbnail": "images/shader-compassShader.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-compassShader",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示罗盘效果着色器，带有多层同心圆和旋转动画",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-compassShader",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-halfCircle",
-              "title": "半圆",
-              "description": "展示半圆效果着色器，带有旋转动画和渐变透明度",
-              "thumbnail": "images/shader-halfCircle.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-halfCircle",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示半圆效果着色器，带有旋转动画和渐变透明度",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-halfCircle",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-vortexShader",
-              "title": "扭曲",
-              "description": "展示漩涡扭曲效果着色器，支持通过GUI调节扭曲强度和半径",
-              "thumbnail": "images/shader-vortexShader.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-vortexShader",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示漩涡扭曲效果着色器，支持通过GUI调节扭曲强度和半径",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-vortexShader",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-ringsShader",
-              "title": "环彩虹着色器",
-              "description": "展示环形彩虹效果，带有旋转动画和颜色渐变",
-              "thumbnail": "images/shader-ringsShader.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-ringsShader",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示环形彩虹效果，带有旋转动画和颜色渐变",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-ringsShader",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-videoShader",
-              "title": "视频着色器",
-              "description": "展示动态纹理与着色器混合效果，支持多种混合运算类型",
-              "thumbnail": "images/shader-videoShader.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-videoShader",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示动态纹理与着色器混合效果，支持多种混合运算类型",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-videoShader",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-steamWaveSun",
-              "title": "蒸汽波太阳",
-              "description": "展示蒸汽波风格太阳效果，带有渐变色彩和动态扫描线",
-              "thumbnail": "images/shader-steamWaveSun.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-steamWaveSun",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示蒸汽波风格太阳效果，带有渐变色彩和动态扫描线",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-steamWaveSun",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-groundglass",
-              "title": "毛玻璃",
-              "description": "展示毛玻璃马赛克效果，支持通过GUI调节模糊程度",
-              "thumbnail": "images/shader-groundglass.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-groundglass",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示毛玻璃马赛克效果，支持通过GUI调节模糊程度",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-groundglass",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-infiniteGrid",
-              "title": "无限网格",
-              "description": "展示无限延伸的网格效果，基于相机位置动态渲染",
-              "thumbnail": "images/shader-infiniteGrid.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-infiniteGrid",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示无限延伸的网格效果，基于相机位置动态渲染",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-infiniteGrid",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-cobwebBox",
-              "title": "蛛网箱子",
-              "description": "展示蛛网纹理效果，使用极坐标转换实现圆环和线条图案",
-              "thumbnail": "images/shader-cobwebBox.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-cobwebBox",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示蛛网纹理效果，使用极坐标转换实现圆环和线条图案",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-cobwebBox",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-jumpHeart",
-              "title": "跳动的心",
-              "description": "展示跳动的心形动画效果，使用数学公式绘制心形曲线",
-              "thumbnail": "images/shader-jumpHeart.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-jumpHeart",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示跳动的心形动画效果，使用数学公式绘制心形曲线",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-jumpHeart",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-rasterGrid",
-              "title": "栅格网格",
-              "description": "展示动态栅格网格效果，使用分形和调色板函数创建绚丽的网格图案",
-              "thumbnail": "images/shader-rasterGrid.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-rasterGrid",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示动态栅格网格效果，使用分形和调色板函数创建绚丽的网格图案",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-rasterGrid",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-flowLight",
-              "title": "流光",
-              "description": "展示流光效果，使用环面结几何体配合后期处理bloom效果",
-              "thumbnail": "images/shader-flowLight.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-flowLight",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示流光效果，使用环面结几何体配合后期处理bloom效果",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-flowLight",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-grayShader",
-              "title": "灰度",
-              "description": "展示灰度着色器效果，将彩色图像转换为灰度",
-              "thumbnail": "images/shader-grayShader.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-grayShader",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示灰度着色器效果，将彩色图像转换为灰度",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-grayShader",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-waveShader",
-              "title": "图像波动",
-              "description": "展示图像波动效果，使用正弦波使平面产生波动动画",
-              "thumbnail": "images/shader-waveShader.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-waveShader",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示图像波动效果，使用正弦波使平面产生波动动画",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-waveShader",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-dissolve",
-              "title": "溶解",
-              "description": "展示溶解效果，通过Clip参数控制溶解程度",
-              "thumbnail": "images/shader-dissolve.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-dissolve",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示溶解效果，通过Clip参数控制溶解程度",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-dissolve",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-changeShaderToy",
-              "title": "切换ShaderToy",
-              "description": "展示多个内置的ShaderToy效果，可以通过GUI切换不同的着色器效果",
-              "thumbnail": "images/shader-changeShaderToy.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-changeShaderToy",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示多个内置的ShaderToy效果，可以通过GUI切换不同的着色器效果",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-changeShaderToy",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-reliefImage",
-              "title": "浮雕图像",
-              "description": "展示浮雕效果，通过边缘检测算法将图像转换为浮雕样式",
-              "thumbnail": "images/shader-reliefImage.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-reliefImage",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示浮雕效果，通过边缘检测算法将图像转换为浮雕样式",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-reliefImage",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-dissolveAnimate",
-              "title": "溶解动画",
-              "description": "展示基于Y轴的溶解效果，支持正向和反向动画切换",
-              "thumbnail": "images/shader-dissolveAnimate.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-dissolveAnimate",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示基于Y轴的溶解效果，支持正向和反向动画切换",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-dissolveAnimate",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-threeLogo",
-              "title": "Three.js Logo",
-              "description": "展示three.js标志的3D渲染效果，具有动态渐变和边缘发光效果",
-              "thumbnail": "images/shader-threeLogo.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-threeLogo",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示three.js标志的3D渲染效果，具有动态渐变和边缘发光效果",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-threeLogo",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-loveShader",
-              "title": "爱心",
-              "description": "粒子组成的心形动画效果，支持多种配色方案切换",
-              "thumbnail": "images/shader-loveShader.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-loveShader",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "粒子组成的心形动画效果，支持多种配色方案切换",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-loveShader",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-raningSea",
-              "title": "波涛海浪",
-              "description": "使用Perlin噪声实现逼真的海浪效果，支持多种参数调节",
-              "thumbnail": "images/shader-raningSea.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-raningSea",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "使用Perlin噪声实现逼真的海浪效果，支持多种参数调节",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-raningSea",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-textStarShader",
-              "title": "点星感谢",
-              "description": "文字粒子动画效果，展示感谢信息的波浪发光效果",
-              "thumbnail": "images/shader-textStarShader.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-textStarShader",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "文字粒子动画效果，展示感谢信息的波浪发光效果",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-textStarShader",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-heartShader",
-              "title": "心形着色器",
-              "description": "展示心形曲线着色器效果，使用TubeGeometry创建心形并添加渐变色动画",
-              "thumbnail": "images/shader-heartShader.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-heartShader",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示心形曲线着色器效果，使用TubeGeometry创建心形并添加渐变色动画",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-heartShader",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-chinaFlag",
-              "title": "中国旗帜",
-              "description": "飘动的中国红旗，使用程序化生成的红旗纹理",
-              "thumbnail": "images/shader-chinaFlag.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-chinaFlag",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "飘动的中国红旗，使用程序化生成的红旗纹理",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-chinaFlag",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-blobShader",
-              "title": "Blob着色器",
-              "description": "展示动态变形的几何体效果，使用Perlin噪声实现一团揉动的视觉效果",
-              "thumbnail": "images/shader-blobShader.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-blobShader",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示动态变形的几何体效果，使用Perlin噪声实现一团揉动的视觉效果",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-blobShader",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-circleRotate",
-              "title": "旋转的圆",
-              "description": "展示旋转的圆着色器效果，使用同心圆和三角形噪声创建动态视觉效果",
-              "thumbnail": "images/shader-circleRotate.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-circleRotate",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示旋转的圆着色器效果，使用同心圆和三角形噪声创建动态视觉效果",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-circleRotate",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-shaderLight",
-              "title": "着色器光效",
-              "description": "展示着色器光效，使用自定义着色器创建动态发光的灯光效果",
-              "thumbnail": "images/shader-shaderLight.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-shaderLight",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示着色器光效，使用自定义着色器创建动态发光的灯光效果",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-shaderLight",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-whiteCloud",
-              "title": "白云",
-              "description": "展示白云效果，使用光线追踪技术渲染云层",
-              "thumbnail": "images/shader-whiteCloud.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-whiteCloud",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示白云效果，使用光线追踪技术渲染云层",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-whiteCloud",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-waterSky",
-              "title": "水天一色",
-              "description": "展示水天一色效果，使用光线追踪技术渲染水面和天空",
-              "thumbnail": "images/shader-waterSky.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-waterSky",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示水天一色效果，使用光线追踪技术渲染水面和天空",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-waterSky",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-cloudShader",
-              "title": "天空云",
-              "description": "展示天空云效果，使用实例化网格渲染大量云朵",
-              "thumbnail": "images/shader-cloudShader.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-cloudShader",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示天空云效果，使用实例化网格渲染大量云朵",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-cloudShader",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-darkClouds",
-              "title": "乌云",
-              "description": "展示乌云效果，使用光线追踪技术渲染动态的乌云",
-              "thumbnail": "images/shader-darkClouds.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-darkClouds",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示乌云效果，使用光线追踪技术渲染动态的乌云",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-darkClouds",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-cellShader",
-              "title": "细胞",
-              "description": "展示细胞效果，使用光线追踪技术渲染动态的细胞结构",
-              "thumbnail": "images/shader-cellShader.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-cellShader",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示细胞效果，使用光线追踪技术渲染动态的细胞结构",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-cellShader",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-mushroom",
-              "title": "蘑菇",
-              "description": "展示蘑菇效果，使用光线追踪技术渲染动态的蘑菇",
-              "thumbnail": "images/shader-mushroom.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-mushroom",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示蘑菇效果，使用光线追踪技术渲染动态的蘑菇",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-mushroom",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-mosaicShader",
-              "title": "马赛克",
-              "description": "展示马赛克效果，使用着色器实现图片马赛克化",
-              "thumbnail": "images/shader-mosaicShader.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-mosaicShader",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示马赛克效果，使用着色器实现图片马赛克化",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-mosaicShader",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-contour",
-              "title": "魔幻山体",
-              "description": "展示魔幻山体效果，使用着色器实现等高线示意",
-              "thumbnail": "images/shader-contour.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-contour",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示魔幻山体效果，使用着色器实现等高线示意",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-contour",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-softLight",
-              "title": "柔光",
-              "description": "展示柔光效果，使用着色器实现柔和的光影效果",
-              "thumbnail": "images/shader-softLight.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-softLight",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示柔光效果，使用着色器实现柔和的光影效果",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-softLight",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-waveScan",
-              "title": "波扫描",
-              "description": "展示波扫描效果，使用着色器实现动态波纹扫描",
-              "thumbnail": "images/shader-waveScan.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-waveScan",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示波扫描效果，使用着色器实现动态波纹扫描",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-waveScan",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-innerGlow",
-              "title": "内发光",
-              "description": "展示内发光效果，使用菲涅尔反射实现物体边缘发光",
-              "thumbnail": "images/shader-innerGlow.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-innerGlow",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示内发光效果，使用菲涅尔反射实现物体边缘发光",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-innerGlow",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-fireShader",
-              "title": "火焰",
-              "description": "展示火焰效果，使用着色器实现动态火焰",
-              "thumbnail": "images/shader-fireShader.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-fireShader",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示火焰效果，使用着色器实现动态火焰",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-fireShader",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-emitShader",
-              "title": "发散着色器",
-              "description": "展示发散着色器效果，使用着色器实现动态发散图案",
-              "thumbnail": "images/shader-emitShader.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-emitShader",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示发散着色器效果，使用着色器实现动态发散图案",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-emitShader",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-ephemeralFlower",
-              "title": "幻影花烟",
-              "description": "展示幻影花烟效果，使用4D Simplex噪声实现动态烟雾花朵",
-              "thumbnail": "images/shader-ephemeralFlower.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-ephemeralFlower",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示幻影花烟效果，使用4D Simplex噪声实现动态烟雾花朵",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-ephemeralFlower",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-fishShader",
-              "title": "鱼",
-              "description": "展示鱼游动效果，使用着色器实现动态鱼和水草动画",
-              "thumbnail": "images/shader-fishShader.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-fishShader",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示鱼游动效果，使用着色器实现动态鱼和水草动画",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-fishShader",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-energyBallShader",
-              "title": "能量球",
-              "description": "展示能量球效果，使用着色器实现动态能量球脉冲动画",
-              "thumbnail": "images/shader-energyBallShader.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-energyBallShader",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示能量球效果，使用着色器实现动态能量球脉冲动画",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-energyBallShader",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-girdFloor",
-              "title": "网格地板",
-              "description": "展示网格地板效果，使用自定义着色器实现带有抗锯齿的网格线",
-              "thumbnail": "images/shader-girdFloor.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-girdFloor",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示网格地板效果，使用自定义着色器实现带有抗锯齿的网格线",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-girdFloor",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-smoke",
-              "title": "燃烧烟雾",
-              "description": "展示燃烧烟雾效果，使用实例化渲染大量粒子实现烟雾粒子系统",
-              "thumbnail": "images/shader-smoke.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-smoke",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示燃烧烟雾效果，使用实例化渲染大量粒子实现烟雾粒子系统",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-smoke",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-fireMaterial",
-              "title": "火焰材质",
-              "description": "展示火焰材质效果，使用自定义着色器实现燃烧的火焰动画",
-              "thumbnail": "images/shader-fireMaterial.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-fireMaterial",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示火焰材质效果，使用自定义着色器实现燃烧的火焰动画",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-fireMaterial",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-contourLine",
-              "title": "等高线",
-              "description": "展示等高线效果，使用Perlin噪声生成地形并通过着色器绘制动态等高线",
-              "thumbnail": "images/shader-contourLine.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-contourLine",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示等高线效果，使用Perlin噪声生成地形并通过着色器绘制动态等高线",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-contourLine",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-heatmapShader",
-              "title": "热力图",
-              "description": "展示热力图效果，使用着色器实现动态变化的热力图",
-              "thumbnail": "images/shader-heatmapShader.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-heatmapShader",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示热力图效果，使用着色器实现动态变化的热力图",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-heatmapShader",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-grassShader",
-              "title": "草地着色器",
-              "description": "使用顶点着色器实现程序化草地，包含风力摆动和云影效果",
-              "thumbnail": "images/shader-grassShader.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-grassShader",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "使用顶点着色器实现程序化草地，包含风力摆动和云影效果",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-grassShader",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-oceanShader",
-              "title": "海面着色器",
-              "description": "使用Three.js Water对象创建真实海面效果，包含反射、折射和波浪动画",
-              "thumbnail": "images/shader-oceanShader.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-oceanShader",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "使用Three.js Water对象创建真实海面效果，包含反射、折射和波浪动画",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-oceanShader",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-tachnologyFloor",
-              "title": "科技风地面",
-              "description": "科技风格地面效果，包含网格、点阵和扩散光环着色器动画",
-              "thumbnail": "images/shader-tachnologyFloor.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-tachnologyFloor",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "科技风格地面效果，包含网格、点阵和扩散光环着色器动画",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-tachnologyFloor",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-redRose",
-              "title": "红玫瑰",
-              "description": "展示红玫瑰效果，使用raymarching技术渲染动态的红玫瑰",
-              "thumbnail": "images/shader-redRose.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-redRose",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "展示红玫瑰效果，使用raymarching技术渲染动态的红玫瑰",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-redRose",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-cityEffect",
-              "title": "城市光效",
-              "description": "FBX城市模型加载，展示建筑生长、流动上升、扩散波、扫光等Shader特效",
-              "thumbnail": "images/shader-cityEffect.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-cityEffect",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "FBX城市模型加载，展示建筑生长、流动上升、扩散波、扫光等Shader特效",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-cityEffect",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-cityBlendLight",
-              "title": "城市混合扫光",
-              "description": "FBX城市模型加载，展示混合着色扫光效果，可调整光圈参数和颜色",
-              "thumbnail": "images/shader-cityBlendLight.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-cityBlendLight",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "FBX城市模型加载，展示混合着色扫光效果，可调整光圈参数和颜色",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-cityBlendLight",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-cityMixShader",
-              "title": "城市混合Shader",
-              "description": "FBX城市模型加载，展示Raymarching光线行进着色器特效",
-              "thumbnail": "images/shader-cityMixShader.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-cityMixShader",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "FBX城市模型加载，展示Raymarching光线行进着色器特效",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-cityMixShader",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-cityMoveLight",
-              "title": "智慧城市扫光",
-              "description": "FBX城市模型加载，展示自定义ShaderMaterial扫光效果",
-              "thumbnail": "images/shader-cityMoveLight.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-cityMoveLight",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "FBX城市模型加载，展示自定义ShaderMaterial扫光效果",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-cityMoveLight",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-cityLine",
-              "title": "城市线条",
-              "description": "FBX城市模型加载，展示EdgesGeometry边缘线效果",
-              "thumbnail": "images/shader-cityLine.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-cityLine",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "FBX城市模型加载，展示EdgesGeometry边缘线效果",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-cityLine",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-cityLight",
-              "title": "城市光影",
-              "description": "GLB和FBX双模型加载，展示渐变颜色、扩散波、光线条、上升线等多种光影效果",
-              "thumbnail": "images/shader-cityLight.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-cityLight",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "GLB和FBX双模型加载，展示渐变颜色、扩散波、光线条、上升线等多种光影效果",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-cityLight",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-modelBlendShader",
-              "title": "模型混合着色器",
-              "description": "GLTF汽车模型加载，展示混合着色器特效",
-              "thumbnail": "images/shader-modelBlendShader.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-modelBlendShader",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "GLTF汽车模型加载，展示混合着色器特效",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-modelBlendShader",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-advancedEffects",
-              "title": "高级着色器效果合集",
-              "description": "8种程序化着色器效果：熔岩流体、极光渐变、冰晶折射、赛博朋克、等离子体、全息水晶、金属锈蚀、星云能量，支持实时切换",
-              "thumbnail": "images/shader-advancedEffects.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-advancedEffects",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "8种程序化着色器效果：熔岩流体、极光渐变、冰晶折射、赛博朋克、等离子体、全息水晶、金属锈蚀、星云能量，支持实时切换",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-advancedEffects",
-                "notes": "着色器示例 (自动推断)"
-              }
-            },
-            {
-              "id": "shader-heatmapShader",
-              "title": "热力图着色器",
-              "description": "使用Three.js创建热力图着色器效果，通过自定义着色器实现动态热力图",
-              "thumbnail": "images/shader-heatmapShader.jpg",
-              "version": "r179",
-              "url": "examples/z258/shader-heatmapShader",
-              "features": {
-                "coreTech": "ShaderMaterial, GLSL",
-                "secondaryTech": "顶点着色器, 片元着色器",
-                "difficulty": "高级",
-                "actualFunction": "使用Three.js创建热力图着色器效果，通过自定义着色器实现动态热力图",
-                "suggestedCategory": "7. 着色器编程",
-                "filePath": "examples/examples/z258/shader-heatmapShader",
-                "notes": "着色器示例 (自动推断)"
-              }
-            }
-          ]
-        }
-      ]
+          id: "着色器编程-7.4-其他",
+          name: "7.4 其他",
+          examples: [
+            {
+              id: "cyberpunk-lightning-tunnel",
+              title: "赛博朋克闪电隧道",
+              description:
+                "使用自定义着色器和后处理实现高速飞行的赛博朋克数据隧道效果",
+              thumbnail: "images/cyberpunk-lightning-tunnel.jpg",
+              version: "r179",
+              url: "examples/cyberpunk-lightning-tunnel",
+              features: {
+                coreTech: "Shader, Post-processing",
+                secondaryTech: "特效, 风格化渲染",
+                difficulty: "高级",
+                actualFunction:
+                  "使用自定义着色器和后处理实现高速飞行的赛博朋克数据隧道效果",
+                suggestedCategory: "7. 着色器编程 > 特效",
+                filePath: "examples/examples/cyberpunk-lightning-tunnel",
+                notes: "赛博朋克风格示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-abstract-art",
+              title: "抽象艺术动画",
+              description: "动态抽象艺术作品，旋转流动的光影图案，支持鼠标交互",
+              thumbnail: "images/shader-abstract-art.jpg",
+              version: "r179",
+              url: "examples/shader-abstract-art",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "动态抽象艺术作品，旋转流动的光影图案，支持鼠标交互",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/shader-abstract-art",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-raymarching-fire",
+              title: "光线追踪火花特效",
+              description:
+                "使用光线追踪(Ray Marching)技术结合Perlin噪声实现逼真的动态火花/火焰效果",
+              thumbnail: "images/shader-raymarching-fire.jpg",
+              version: "r179",
+              url: "examples/shader-raymarching-fire",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "使用光线追踪(Ray Marching)技术结合Perlin噪声实现逼真的动态火花/火焰效果",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/shader-raymarching-fire",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-transparentGradient",
+              title: "透明渐变",
+              description:
+                "展示多边形透明渐变效果，使用ShaderMaterial实现从中心向外的渐变透明效果",
+              thumbnail: "images/shader-transparentGradient.jpg",
+              version: "r179",
+              url: "examples/z258/shader-transparentGradient",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "展示多边形透明渐变效果，使用ShaderMaterial实现从中心向外的渐变透明效果",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-transparentGradient",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-audioDance",
+              title: "音乐舞动",
+              description:
+                "音频可视化效果，随着音乐节奏舞动的柱状图，使用本地音频文件桥边姑娘.mp3",
+              thumbnail: "images/shader-audioDance.jpg",
+              version: "r179",
+              url: "examples/z258/shader-audioDance",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "音频可视化效果，随着音乐节奏舞动的柱状图，使用本地音频文件桥边姑娘.mp3",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-audioDance",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-magicalSphere",
+              title: "魔法球体",
+              description: "使用Raymarching和KIFS分形算法创建的发光魔法球体",
+              thumbnail: "images/shader-magicalSphere.jpg",
+              version: "r179",
+              url: "examples/z258/shader-magicalSphere",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "使用Raymarching和KIFS分形算法创建的发光魔法球体",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-magicalSphere",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-cartoonOcean",
+              title: "卡通海面",
+              description:
+                "使用自定义着色器实现的卡通风格海面，带有多层波浪和泡沫效果",
+              thumbnail: "images/shader-cartoonOcean.jpg",
+              version: "r179",
+              url: "examples/z258/shader-cartoonOcean",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "使用自定义着色器实现的卡通风格海面，带有多层波浪和泡沫效果",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-cartoonOcean",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-audioSolutions",
+              title: "音乐可视化",
+              description:
+                "3D球体音频可视化效果，使用Simplex噪声根据音频频率实时变形球体表面",
+              thumbnail: "images/shader-audioSolutions.jpg",
+              version: "r179",
+              url: "examples/z258/shader-audioSolutions",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "3D球体音频可视化效果，使用Simplex噪声根据音频频率实时变形球体表面",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-audioSolutions",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-circleWave",
+              title: "圆波扫光",
+              description:
+                "展示圆形波纹扫描效果，使用着色器实现动态圆波扫光动画",
+              thumbnail: "images/shader-circleWave.jpg",
+              version: "r179",
+              url: "examples/z258/shader-circleWave",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "展示圆形波纹扫描效果，使用着色器实现动态圆波扫光动画",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-circleWave",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-fenceWall",
+              title: "围墙着色器",
+              description:
+                "展示动态波浪围墙效果，使用圆柱体和着色器实现波浪形围墙",
+              thumbnail: "images/shader-fenceWall.jpg",
+              version: "r179",
+              url: "examples/z258/shader-fenceWall",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "展示动态波浪围墙效果，使用圆柱体和着色器实现波浪形围墙",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-fenceWall",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-fenceShader",
+              title: "围栏着色器",
+              description: "展示动态渐变围栏效果，使用着色器实现渐变和波纹动画",
+              thumbnail: "images/shader-fenceShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-fenceShader",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "展示动态渐变围栏效果，使用着色器实现渐变和波纹动画",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-fenceShader",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-planeScan",
+              title: "平面扫描",
+              description: "展示圆形扫描线效果，使用着色器实现动态扫描动画",
+              thumbnail: "images/shader-planeScan.jpg",
+              version: "r179",
+              url: "examples/z258/shader-planeScan",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "展示圆形扫描线效果，使用着色器实现动态扫描动画",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-planeScan",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-wallShader",
+              title: "扩散圆墙",
+              description:
+                "展示圆柱形扩散动画效果，使用着色器实现从下向上的渐变透明",
+              thumbnail: "images/shader-wallShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-wallShader",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "展示圆柱形扩散动画效果，使用着色器实现从下向上的渐变透明",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-wallShader",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-radarShader",
+              title: "雷达着色器",
+              description:
+                "展示雷达扫描效果，包含圆形、十字、动态扫描线等复杂着色器效果",
+              thumbnail: "images/shader-radarShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-radarShader",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "展示雷达扫描效果，包含圆形、十字、动态扫描线等复杂着色器效果",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-radarShader",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-candleShader",
+              title: "蜡烛着色器",
+              description: "展示3D蜡烛和火焰效果，使用着色器实现火焰摇曳动画",
+              thumbnail: "images/shader-candleShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-candleShader",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "展示3D蜡烛和火焰效果，使用着色器实现火焰摇曳动画",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-candleShader",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-ringShader",
+              title: "环形着色器",
+              description:
+                "展示环形火焰效果，使用极坐标映射和噪声函数实现动态火焰动画",
+              thumbnail: "images/shader-ringShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-ringShader",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "展示环形火焰效果，使用极坐标映射和噪声函数实现动态火焰动画",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-ringShader",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-smokeCircle",
+              title: "圆泡吸附",
+              description:
+                "展示粒子吸附效果，120个二十面体粒子跟随引导粒子运动",
+              thumbnail: "images/shader-smokeCircle.jpg",
+              version: "r179",
+              url: "examples/z258/shader-smokeCircle",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "展示粒子吸附效果，120个二十面体粒子跟随引导粒子运动",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-smokeCircle",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-radarScan",
+              title: "雷达扫描",
+              description:
+                "展示雷达扫描效果，使用着色器实现动态扫描线和尾焰效果",
+              thumbnail: "images/shader-radarScan.jpg",
+              version: "r179",
+              url: "examples/z258/shader-radarScan",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "展示雷达扫描效果，使用着色器实现动态扫描线和尾焰效果",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-radarScan",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-imageParticle",
+              title: "颗粒图像",
+              description:
+                "展示图像粒子破碎效果，使用贝塞尔曲线实现三角面分离动画",
+              thumbnail: "images/shader-imageParticle.jpg",
+              version: "r179",
+              url: "examples/z258/shader-imageParticle",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "展示图像粒子破碎效果，使用贝塞尔曲线实现三角面分离动画",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-imageParticle",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-gaussianBlur",
+              title: "高斯模糊",
+              description: "展示高斯模糊着色器效果，支持通过GUI调节模糊程度",
+              thumbnail: "images/shader-gaussianBlur.jpg",
+              version: "r179",
+              url: "examples/z258/shader-gaussianBlur",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "展示高斯模糊着色器效果，支持通过GUI调节模糊程度",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-gaussianBlur",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-gridShader",
+              title: "网格着色器",
+              description: "展示动态网格效果，带有脉冲动画和随机哈希函数",
+              thumbnail: "images/shader-gridShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-gridShader",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction: "展示动态网格效果，带有脉冲动画和随机哈希函数",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-gridShader",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-compassShader",
+              title: "罗盘",
+              description: "展示罗盘效果着色器，带有多层同心圆和旋转动画",
+              thumbnail: "images/shader-compassShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-compassShader",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction: "展示罗盘效果着色器，带有多层同心圆和旋转动画",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-compassShader",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-halfCircle",
+              title: "半圆",
+              description: "展示半圆效果着色器，带有旋转动画和渐变透明度",
+              thumbnail: "images/shader-halfCircle.jpg",
+              version: "r179",
+              url: "examples/z258/shader-halfCircle",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction: "展示半圆效果着色器，带有旋转动画和渐变透明度",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-halfCircle",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-vortexShader",
+              title: "扭曲",
+              description:
+                "展示漩涡扭曲效果着色器，支持通过GUI调节扭曲强度和半径",
+              thumbnail: "images/shader-vortexShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-vortexShader",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "展示漩涡扭曲效果着色器，支持通过GUI调节扭曲强度和半径",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-vortexShader",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-ringsShader",
+              title: "环彩虹着色器",
+              description: "展示环形彩虹效果，带有旋转动画和颜色渐变",
+              thumbnail: "images/shader-ringsShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-ringsShader",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction: "展示环形彩虹效果，带有旋转动画和颜色渐变",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-ringsShader",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-videoShader",
+              title: "视频着色器",
+              description: "展示动态纹理与着色器混合效果，支持多种混合运算类型",
+              thumbnail: "images/shader-videoShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-videoShader",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "展示动态纹理与着色器混合效果，支持多种混合运算类型",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-videoShader",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-steamWaveSun",
+              title: "蒸汽波太阳",
+              description: "展示蒸汽波风格太阳效果，带有渐变色彩和动态扫描线",
+              thumbnail: "images/shader-steamWaveSun.jpg",
+              version: "r179",
+              url: "examples/z258/shader-steamWaveSun",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "展示蒸汽波风格太阳效果，带有渐变色彩和动态扫描线",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-steamWaveSun",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-groundglass",
+              title: "毛玻璃",
+              description: "展示毛玻璃马赛克效果，支持通过GUI调节模糊程度",
+              thumbnail: "images/shader-groundglass.jpg",
+              version: "r179",
+              url: "examples/z258/shader-groundglass",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction: "展示毛玻璃马赛克效果，支持通过GUI调节模糊程度",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-groundglass",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-infiniteGrid",
+              title: "无限网格",
+              description: "展示无限延伸的网格效果，基于相机位置动态渲染",
+              thumbnail: "images/shader-infiniteGrid.jpg",
+              version: "r179",
+              url: "examples/z258/shader-infiniteGrid",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction: "展示无限延伸的网格效果，基于相机位置动态渲染",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-infiniteGrid",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-cobwebBox",
+              title: "蛛网箱子",
+              description: "展示蛛网纹理效果，使用极坐标转换实现圆环和线条图案",
+              thumbnail: "images/shader-cobwebBox.jpg",
+              version: "r179",
+              url: "examples/z258/shader-cobwebBox",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "展示蛛网纹理效果，使用极坐标转换实现圆环和线条图案",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-cobwebBox",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-jumpHeart",
+              title: "跳动的心",
+              description: "展示跳动的心形动画效果，使用数学公式绘制心形曲线",
+              thumbnail: "images/shader-jumpHeart.jpg",
+              version: "r179",
+              url: "examples/z258/shader-jumpHeart",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "展示跳动的心形动画效果，使用数学公式绘制心形曲线",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-jumpHeart",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-rasterGrid",
+              title: "栅格网格",
+              description:
+                "展示动态栅格网格效果，使用分形和调色板函数创建绚丽的网格图案",
+              thumbnail: "images/shader-rasterGrid.jpg",
+              version: "r179",
+              url: "examples/z258/shader-rasterGrid",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "展示动态栅格网格效果，使用分形和调色板函数创建绚丽的网格图案",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-rasterGrid",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-flowLight",
+              title: "流光",
+              description:
+                "展示流光效果，使用环面结几何体配合后期处理bloom效果",
+              thumbnail: "images/shader-flowLight.jpg",
+              version: "r179",
+              url: "examples/z258/shader-flowLight",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "展示流光效果，使用环面结几何体配合后期处理bloom效果",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-flowLight",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-grayShader",
+              title: "灰度",
+              description: "展示灰度着色器效果，将彩色图像转换为灰度",
+              thumbnail: "images/shader-grayShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-grayShader",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction: "展示灰度着色器效果，将彩色图像转换为灰度",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-grayShader",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-waveShader",
+              title: "图像波动",
+              description: "展示图像波动效果，使用正弦波使平面产生波动动画",
+              thumbnail: "images/shader-waveShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-waveShader",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "展示图像波动效果，使用正弦波使平面产生波动动画",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-waveShader",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-dissolve",
+              title: "溶解",
+              description: "展示溶解效果，通过Clip参数控制溶解程度",
+              thumbnail: "images/shader-dissolve.jpg",
+              version: "r179",
+              url: "examples/z258/shader-dissolve",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction: "展示溶解效果，通过Clip参数控制溶解程度",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-dissolve",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-changeShaderToy",
+              title: "切换ShaderToy",
+              description:
+                "展示多个内置的ShaderToy效果，可以通过GUI切换不同的着色器效果",
+              thumbnail: "images/shader-changeShaderToy.jpg",
+              version: "r179",
+              url: "examples/z258/shader-changeShaderToy",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "展示多个内置的ShaderToy效果，可以通过GUI切换不同的着色器效果",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-changeShaderToy",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-reliefImage",
+              title: "浮雕图像",
+              description: "展示浮雕效果，通过边缘检测算法将图像转换为浮雕样式",
+              thumbnail: "images/shader-reliefImage.jpg",
+              version: "r179",
+              url: "examples/z258/shader-reliefImage",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "展示浮雕效果，通过边缘检测算法将图像转换为浮雕样式",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-reliefImage",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-dissolveAnimate",
+              title: "溶解动画",
+              description: "展示基于Y轴的溶解效果，支持正向和反向动画切换",
+              thumbnail: "images/shader-dissolveAnimate.jpg",
+              version: "r179",
+              url: "examples/z258/shader-dissolveAnimate",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction: "展示基于Y轴的溶解效果，支持正向和反向动画切换",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-dissolveAnimate",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-threeLogo",
+              title: "Three.js Logo",
+              description:
+                "展示three.js标志的3D渲染效果，具有动态渐变和边缘发光效果",
+              thumbnail: "images/shader-threeLogo.jpg",
+              version: "r179",
+              url: "examples/z258/shader-threeLogo",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "展示three.js标志的3D渲染效果，具有动态渐变和边缘发光效果",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-threeLogo",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-loveShader",
+              title: "爱心",
+              description: "粒子组成的心形动画效果，支持多种配色方案切换",
+              thumbnail: "images/shader-loveShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-loveShader",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction: "粒子组成的心形动画效果，支持多种配色方案切换",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-loveShader",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-raningSea",
+              title: "波涛海浪",
+              description: "使用Perlin噪声实现逼真的海浪效果，支持多种参数调节",
+              thumbnail: "images/shader-raningSea.jpg",
+              version: "r179",
+              url: "examples/z258/shader-raningSea",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "使用Perlin噪声实现逼真的海浪效果，支持多种参数调节",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-raningSea",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-textStarShader",
+              title: "点星感谢",
+              description: "文字粒子动画效果，展示感谢信息的波浪发光效果",
+              thumbnail: "images/shader-textStarShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-textStarShader",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction: "文字粒子动画效果，展示感谢信息的波浪发光效果",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-textStarShader",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-heartShader",
+              title: "心形着色器",
+              description:
+                "展示心形曲线着色器效果，使用TubeGeometry创建心形并添加渐变色动画",
+              thumbnail: "images/shader-heartShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-heartShader",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "展示心形曲线着色器效果，使用TubeGeometry创建心形并添加渐变色动画",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-heartShader",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-chinaFlag",
+              title: "中国旗帜",
+              description: "飘动的中国红旗，使用程序化生成的红旗纹理",
+              thumbnail: "images/shader-chinaFlag.jpg",
+              version: "r179",
+              url: "examples/z258/shader-chinaFlag",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction: "飘动的中国红旗，使用程序化生成的红旗纹理",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-chinaFlag",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-blobShader",
+              title: "Blob着色器",
+              description:
+                "展示动态变形的几何体效果，使用Perlin噪声实现一团揉动的视觉效果",
+              thumbnail: "images/shader-blobShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-blobShader",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "展示动态变形的几何体效果，使用Perlin噪声实现一团揉动的视觉效果",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-blobShader",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-circleRotate",
+              title: "旋转的圆",
+              description:
+                "展示旋转的圆着色器效果，使用同心圆和三角形噪声创建动态视觉效果",
+              thumbnail: "images/shader-circleRotate.jpg",
+              version: "r179",
+              url: "examples/z258/shader-circleRotate",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "展示旋转的圆着色器效果，使用同心圆和三角形噪声创建动态视觉效果",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-circleRotate",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-shaderLight",
+              title: "着色器光效",
+              description:
+                "展示着色器光效，使用自定义着色器创建动态发光的灯光效果",
+              thumbnail: "images/shader-shaderLight.jpg",
+              version: "r179",
+              url: "examples/z258/shader-shaderLight",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "展示着色器光效，使用自定义着色器创建动态发光的灯光效果",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-shaderLight",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-whiteCloud",
+              title: "白云",
+              description: "展示白云效果，使用光线追踪技术渲染云层",
+              thumbnail: "images/shader-whiteCloud.jpg",
+              version: "r179",
+              url: "examples/z258/shader-whiteCloud",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction: "展示白云效果，使用光线追踪技术渲染云层",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-whiteCloud",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-waterSky",
+              title: "水天一色",
+              description: "展示水天一色效果，使用光线追踪技术渲染水面和天空",
+              thumbnail: "images/shader-waterSky.jpg",
+              version: "r179",
+              url: "examples/z258/shader-waterSky",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "展示水天一色效果，使用光线追踪技术渲染水面和天空",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-waterSky",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-cloudShader",
+              title: "天空云",
+              description: "展示天空云效果，使用实例化网格渲染大量云朵",
+              thumbnail: "images/shader-cloudShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-cloudShader",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction: "展示天空云效果，使用实例化网格渲染大量云朵",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-cloudShader",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-darkClouds",
+              title: "乌云",
+              description: "展示乌云效果，使用光线追踪技术渲染动态的乌云",
+              thumbnail: "images/shader-darkClouds.jpg",
+              version: "r179",
+              url: "examples/z258/shader-darkClouds",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction: "展示乌云效果，使用光线追踪技术渲染动态的乌云",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-darkClouds",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-cellShader",
+              title: "细胞",
+              description: "展示细胞效果，使用光线追踪技术渲染动态的细胞结构",
+              thumbnail: "images/shader-cellShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-cellShader",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "展示细胞效果，使用光线追踪技术渲染动态的细胞结构",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-cellShader",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-mushroom",
+              title: "蘑菇",
+              description: "展示蘑菇效果，使用光线追踪技术渲染动态的蘑菇",
+              thumbnail: "images/shader-mushroom.jpg",
+              version: "r179",
+              url: "examples/z258/shader-mushroom",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction: "展示蘑菇效果，使用光线追踪技术渲染动态的蘑菇",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-mushroom",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-mosaicShader",
+              title: "马赛克",
+              description: "展示马赛克效果，使用着色器实现图片马赛克化",
+              thumbnail: "images/shader-mosaicShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-mosaicShader",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction: "展示马赛克效果，使用着色器实现图片马赛克化",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-mosaicShader",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-contour",
+              title: "魔幻山体",
+              description: "展示魔幻山体效果，使用着色器实现等高线示意",
+              thumbnail: "images/shader-contour.jpg",
+              version: "r179",
+              url: "examples/z258/shader-contour",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction: "展示魔幻山体效果，使用着色器实现等高线示意",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-contour",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-softLight",
+              title: "柔光",
+              description: "展示柔光效果，使用着色器实现柔和的光影效果",
+              thumbnail: "images/shader-softLight.jpg",
+              version: "r179",
+              url: "examples/z258/shader-softLight",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction: "展示柔光效果，使用着色器实现柔和的光影效果",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-softLight",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-waveScan",
+              title: "波扫描",
+              description: "展示波扫描效果，使用着色器实现动态波纹扫描",
+              thumbnail: "images/shader-waveScan.jpg",
+              version: "r179",
+              url: "examples/z258/shader-waveScan",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction: "展示波扫描效果，使用着色器实现动态波纹扫描",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-waveScan",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-innerGlow",
+              title: "内发光",
+              description: "展示内发光效果，使用菲涅尔反射实现物体边缘发光",
+              thumbnail: "images/shader-innerGlow.jpg",
+              version: "r179",
+              url: "examples/z258/shader-innerGlow",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "展示内发光效果，使用菲涅尔反射实现物体边缘发光",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-innerGlow",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-fireShader",
+              title: "火焰",
+              description: "展示火焰效果，使用着色器实现动态火焰",
+              thumbnail: "images/shader-fireShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-fireShader",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction: "展示火焰效果，使用着色器实现动态火焰",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-fireShader",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-emitShader",
+              title: "发散着色器",
+              description: "展示发散着色器效果，使用着色器实现动态发散图案",
+              thumbnail: "images/shader-emitShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-emitShader",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "展示发散着色器效果，使用着色器实现动态发散图案",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-emitShader",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-ephemeralFlower",
+              title: "幻影花烟",
+              description:
+                "展示幻影花烟效果，使用4D Simplex噪声实现动态烟雾花朵",
+              thumbnail: "images/shader-ephemeralFlower.jpg",
+              version: "r179",
+              url: "examples/z258/shader-ephemeralFlower",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "展示幻影花烟效果，使用4D Simplex噪声实现动态烟雾花朵",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-ephemeralFlower",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-fishShader",
+              title: "鱼",
+              description: "展示鱼游动效果，使用着色器实现动态鱼和水草动画",
+              thumbnail: "images/shader-fishShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-fishShader",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "展示鱼游动效果，使用着色器实现动态鱼和水草动画",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-fishShader",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-energyBallShader",
+              title: "能量球",
+              description: "展示能量球效果，使用着色器实现动态能量球脉冲动画",
+              thumbnail: "images/shader-energyBallShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-energyBallShader",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "展示能量球效果，使用着色器实现动态能量球脉冲动画",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-energyBallShader",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-girdFloor",
+              title: "网格地板",
+              description:
+                "展示网格地板效果，使用自定义着色器实现带有抗锯齿的网格线",
+              thumbnail: "images/shader-girdFloor.jpg",
+              version: "r179",
+              url: "examples/z258/shader-girdFloor",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "展示网格地板效果，使用自定义着色器实现带有抗锯齿的网格线",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-girdFloor",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-smoke",
+              title: "燃烧烟雾",
+              description:
+                "展示燃烧烟雾效果，使用实例化渲染大量粒子实现烟雾粒子系统",
+              thumbnail: "images/shader-smoke.jpg",
+              version: "r179",
+              url: "examples/z258/shader-smoke",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "展示燃烧烟雾效果，使用实例化渲染大量粒子实现烟雾粒子系统",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-smoke",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-fireMaterial",
+              title: "火焰材质",
+              description:
+                "展示火焰材质效果，使用自定义着色器实现燃烧的火焰动画",
+              thumbnail: "images/shader-fireMaterial.jpg",
+              version: "r179",
+              url: "examples/z258/shader-fireMaterial",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "展示火焰材质效果，使用自定义着色器实现燃烧的火焰动画",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-fireMaterial",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-contourLine",
+              title: "等高线",
+              description:
+                "展示等高线效果，使用Perlin噪声生成地形并通过着色器绘制动态等高线",
+              thumbnail: "images/shader-contourLine.jpg",
+              version: "r179",
+              url: "examples/z258/shader-contourLine",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "展示等高线效果，使用Perlin噪声生成地形并通过着色器绘制动态等高线",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-contourLine",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-heatmapShader",
+              title: "热力图",
+              description: "展示热力图效果，使用着色器实现动态变化的热力图",
+              thumbnail: "images/shader-heatmapShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-heatmapShader",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "展示热力图效果，使用着色器实现动态变化的热力图",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-heatmapShader",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-grassShader",
+              title: "草地着色器",
+              description:
+                "使用顶点着色器实现程序化草地，包含风力摆动和云影效果",
+              thumbnail: "images/shader-grassShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-grassShader",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "使用顶点着色器实现程序化草地，包含风力摆动和云影效果",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-grassShader",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-oceanShader",
+              title: "海面着色器",
+              description:
+                "使用Three.js Water对象创建真实海面效果，包含反射、折射和波浪动画",
+              thumbnail: "images/shader-oceanShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-oceanShader",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "使用Three.js Water对象创建真实海面效果，包含反射、折射和波浪动画",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-oceanShader",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-tachnologyFloor",
+              title: "科技风地面",
+              description:
+                "科技风格地面效果，包含网格、点阵和扩散光环着色器动画",
+              thumbnail: "images/shader-tachnologyFloor.jpg",
+              version: "r179",
+              url: "examples/z258/shader-tachnologyFloor",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "科技风格地面效果，包含网格、点阵和扩散光环着色器动画",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-tachnologyFloor",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-redRose",
+              title: "红玫瑰",
+              description:
+                "展示红玫瑰效果，使用raymarching技术渲染动态的红玫瑰",
+              thumbnail: "images/shader-redRose.jpg",
+              version: "r179",
+              url: "examples/z258/shader-redRose",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "展示红玫瑰效果，使用raymarching技术渲染动态的红玫瑰",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-redRose",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-cityEffect",
+              title: "城市光效",
+              description:
+                "FBX城市模型加载，展示建筑生长、流动上升、扩散波、扫光等Shader特效",
+              thumbnail: "images/shader-cityEffect.jpg",
+              version: "r179",
+              url: "examples/z258/shader-cityEffect",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "FBX城市模型加载，展示建筑生长、流动上升、扩散波、扫光等Shader特效",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-cityEffect",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-cityBlendLight",
+              title: "城市混合扫光",
+              description:
+                "FBX城市模型加载，展示混合着色扫光效果，可调整光圈参数和颜色",
+              thumbnail: "images/shader-cityBlendLight.jpg",
+              version: "r179",
+              url: "examples/z258/shader-cityBlendLight",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "FBX城市模型加载，展示混合着色扫光效果，可调整光圈参数和颜色",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-cityBlendLight",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-cityMixShader",
+              title: "城市混合Shader",
+              description: "FBX城市模型加载，展示Raymarching光线行进着色器特效",
+              thumbnail: "images/shader-cityMixShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-cityMixShader",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "FBX城市模型加载，展示Raymarching光线行进着色器特效",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-cityMixShader",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-cityMoveLight",
+              title: "智慧城市扫光",
+              description: "FBX城市模型加载，展示自定义ShaderMaterial扫光效果",
+              thumbnail: "images/shader-cityMoveLight.jpg",
+              version: "r179",
+              url: "examples/z258/shader-cityMoveLight",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "FBX城市模型加载，展示自定义ShaderMaterial扫光效果",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-cityMoveLight",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-cityLine",
+              title: "城市线条",
+              description: "FBX城市模型加载，展示EdgesGeometry边缘线效果",
+              thumbnail: "images/shader-cityLine.jpg",
+              version: "r179",
+              url: "examples/z258/shader-cityLine",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction: "FBX城市模型加载，展示EdgesGeometry边缘线效果",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-cityLine",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-cityLight",
+              title: "城市光影",
+              description:
+                "GLB和FBX双模型加载，展示渐变颜色、扩散波、光线条、上升线等多种光影效果",
+              thumbnail: "images/shader-cityLight.jpg",
+              version: "r179",
+              url: "examples/z258/shader-cityLight",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "GLB和FBX双模型加载，展示渐变颜色、扩散波、光线条、上升线等多种光影效果",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-cityLight",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-modelBlendShader",
+              title: "模型混合着色器",
+              description: "GLTF汽车模型加载，展示混合着色器特效",
+              thumbnail: "images/shader-modelBlendShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-modelBlendShader",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction: "GLTF汽车模型加载，展示混合着色器特效",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-modelBlendShader",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-advancedEffects",
+              title: "高级着色器效果合集",
+              description:
+                "8种程序化着色器效果：熔岩流体、极光渐变、冰晶折射、赛博朋克、等离子体、全息水晶、金属锈蚀、星云能量，支持实时切换",
+              thumbnail: "images/shader-advancedEffects.jpg",
+              version: "r179",
+              url: "examples/z258/shader-advancedEffects",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "8种程序化着色器效果：熔岩流体、极光渐变、冰晶折射、赛博朋克、等离子体、全息水晶、金属锈蚀、星云能量，支持实时切换",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-advancedEffects",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+            {
+              id: "shader-heatmapShader",
+              title: "热力图着色器",
+              description:
+                "使用Three.js创建热力图着色器效果，通过自定义着色器实现动态热力图",
+              thumbnail: "images/shader-heatmapShader.jpg",
+              version: "r179",
+              url: "examples/z258/shader-heatmapShader",
+              features: {
+                coreTech: "ShaderMaterial, GLSL",
+                secondaryTech: "顶点着色器, 片元着色器",
+                difficulty: "高级",
+                actualFunction:
+                  "使用Three.js创建热力图着色器效果，通过自定义着色器实现动态热力图",
+                suggestedCategory: "7. 着色器编程",
+                filePath: "examples/examples/z258/shader-heatmapShader",
+                notes: "着色器示例 (自动推断)",
+              },
+            },
+          ],
+        },
+      ],
     },
     {
-      "id": "后处理效果",
-      "name": "8. 后处理效果",
-      "icon": "bi-magic",
-      "subcategories": [
+      id: "后处理效果",
+      name: "8. 后处理效果",
+      icon: "bi-magic",
+      subcategories: [
         {
-          "id": "后处理效果-8.1-基础后处理",
-          "name": "8.1 基础后处理",
-          "examples": [
+          id: "后处理效果-8.1-基础后处理",
+          name: "8.1 基础后处理",
+          examples: [
             {
-              "id": "postprocessing-bloom",
-              "title": "物体发光效果",
-              "description": "使用EffectComposer和UnrealBloomPass实现物体的辉光发光效果，支持参数调节",
-              "thumbnail": "images/postprocessing-bloom.jpg",
-              "version": "r179",
-              "url": "examples/postprocessing-bloom",
-              "features": {
-                "coreTech": "EffectComposer, RenderPass, UnrealBloomPass, OutputPass",
-                "secondaryTech": "色调映射(ReinhardToneMapping), GLTF模型加载, 动画混合器",
-                "difficulty": "基础",
-                "actualFunction": "使用EffectComposer和UnrealBloomPass实现物体发光效果，支持阈值、强度、半径调节",
-                "suggestedCategory": "8. 后处理效果 > 8.1 基础后处理",
-                "filePath": "examples/postprocessing-bloom.html",
-                "notes": "后处理入门示例，展示了完整的EffectComposer使用流程"
-              }
+              id: "postprocessing-bloom",
+              title: "物体发光效果",
+              description:
+                "使用EffectComposer和UnrealBloomPass实现物体的辉光发光效果，支持参数调节",
+              thumbnail: "images/postprocessing-bloom.jpg",
+              version: "r179",
+              url: "examples/postprocessing-bloom",
+              features: {
+                coreTech:
+                  "EffectComposer, RenderPass, UnrealBloomPass, OutputPass",
+                secondaryTech:
+                  "色调映射(ReinhardToneMapping), GLTF模型加载, 动画混合器",
+                difficulty: "基础",
+                actualFunction:
+                  "使用EffectComposer和UnrealBloomPass实现物体发光效果，支持阈值、强度、半径调节",
+                suggestedCategory: "8. 后处理效果 > 8.1 基础后处理",
+                filePath: "examples/postprocessing-bloom.html",
+                notes: "后处理入门示例，展示了完整的EffectComposer使用流程",
+              },
             },
             {
-              "id": "postprocessing-bloom",
-              "title": "物体发光效果",
-              "description": "使用EffectComposer和UnrealBloomPass实现物体的辉光发光效果，支持参数调节",
-              "thumbnail": "images/postprocessing-bloom.jpg",
-              "version": "r179",
-              "url": "examples/postprocessing-bloom",
-              "features": {
-                "coreTech": "EffectComposer, RenderPass, UnrealBloomPass, OutputPass",
-                "secondaryTech": "色调映射(ReinhardToneMapping), GLTF模型加载, 动画混合器",
-                "difficulty": "基础",
-                "actualFunction": "使用EffectComposer和UnrealBloomPass实现物体发光效果，支持阈值、强度、半径调节",
-                "suggestedCategory": "8. 后处理效果 > 8.1 基础后处理",
-                "filePath": "examples/postprocessing-bloom.html",
-                "notes": "后处理入门示例，展示了完整的EffectComposer使用流程"
-              }
-            }
-          ]
+              id: "postprocessing-bloom",
+              title: "物体发光效果",
+              description:
+                "使用EffectComposer和UnrealBloomPass实现物体的辉光发光效果，支持参数调节",
+              thumbnail: "images/postprocessing-bloom.jpg",
+              version: "r179",
+              url: "examples/postprocessing-bloom",
+              features: {
+                coreTech:
+                  "EffectComposer, RenderPass, UnrealBloomPass, OutputPass",
+                secondaryTech:
+                  "色调映射(ReinhardToneMapping), GLTF模型加载, 动画混合器",
+                difficulty: "基础",
+                actualFunction:
+                  "使用EffectComposer和UnrealBloomPass实现物体发光效果，支持阈值、强度、半径调节",
+                suggestedCategory: "8. 后处理效果 > 8.1 基础后处理",
+                filePath: "examples/postprocessing-bloom.html",
+                notes: "后处理入门示例，展示了完整的EffectComposer使用流程",
+              },
+            },
+          ],
         },
         {
-          "id": "后处理效果-8.2-其他",
-          "name": "8.2 其他",
-          "examples": [
+          id: "后处理效果-8.2-其他",
+          name: "8.2 其他",
+          examples: [
             {
-              "id": "postprocessing-customMaskPass",
-              "title": "自定义遮罩通道",
-              "description": "自定义遮罩通道，展示后期处理遮罩效果",
-              "thumbnail": "images/postprocessing-customMaskPass.jpg",
-              "version": "r179",
-              "url": "examples/z258/postprocessing-customMaskPass",
-              "features": {
-                "coreTech": "EffectComposer, Post-processing",
-                "secondaryTech": "渲染通道, 特效叠加",
-                "difficulty": "进阶",
-                "actualFunction": "自定义遮罩通道，展示后期处理遮罩效果",
-                "suggestedCategory": "8. 后处理效果",
-                "filePath": "examples/examples/z258/postprocessing-customMaskPass",
-                "notes": "后处理示例 (自动推断)"
-              }
+              id: "postprocessing-customMaskPass",
+              title: "自定义遮罩通道",
+              description: "自定义遮罩通道，展示后期处理遮罩效果",
+              thumbnail: "images/postprocessing-customMaskPass.jpg",
+              version: "r179",
+              url: "examples/z258/postprocessing-customMaskPass",
+              features: {
+                coreTech: "EffectComposer, Post-processing",
+                secondaryTech: "渲染通道, 特效叠加",
+                difficulty: "进阶",
+                actualFunction: "自定义遮罩通道，展示后期处理遮罩效果",
+                suggestedCategory: "8. 后处理效果",
+                filePath:
+                  "examples/examples/z258/postprocessing-customMaskPass",
+                notes: "后处理示例 (自动推断)",
+              },
             },
             {
-              "id": "postprocessing-uvTransformation",
-              "title": "UV图像变换",
-              "description": "UV图像变换，展示UV坐标变换效果",
-              "thumbnail": "images/postprocessing-uvTransformation.jpg",
-              "version": "r179",
-              "url": "examples/z258/postprocessing-uvTransformation",
-              "features": {
-                "coreTech": "EffectComposer, Post-processing",
-                "secondaryTech": "渲染通道, 特效叠加",
-                "difficulty": "进阶",
-                "actualFunction": "UV图像变换，展示UV坐标变换效果",
-                "suggestedCategory": "8. 后处理效果",
-                "filePath": "examples/examples/z258/postprocessing-uvTransformation",
-                "notes": "后处理示例 (自动推断)"
-              }
+              id: "postprocessing-uvTransformation",
+              title: "UV图像变换",
+              description: "UV图像变换，展示UV坐标变换效果",
+              thumbnail: "images/postprocessing-uvTransformation.jpg",
+              version: "r179",
+              url: "examples/z258/postprocessing-uvTransformation",
+              features: {
+                coreTech: "EffectComposer, Post-processing",
+                secondaryTech: "渲染通道, 特效叠加",
+                difficulty: "进阶",
+                actualFunction: "UV图像变换，展示UV坐标变换效果",
+                suggestedCategory: "8. 后处理效果",
+                filePath:
+                  "examples/examples/z258/postprocessing-uvTransformation",
+                notes: "后处理示例 (自动推断)",
+              },
             },
             {
-              "id": "postprocessing-afterimagePass",
-              "title": "残影效果",
-              "description": "残影效果，展示运动残影和拖尾效果",
-              "thumbnail": "images/postprocessing-afterimagePass.jpg",
-              "version": "r179",
-              "url": "examples/z258/postprocessing-afterimagePass",
-              "features": {
-                "coreTech": "EffectComposer, Post-processing",
-                "secondaryTech": "渲染通道, 特效叠加",
-                "difficulty": "进阶",
-                "actualFunction": "残影效果，展示运动残影和拖尾效果",
-                "suggestedCategory": "8. 后处理效果",
-                "filePath": "examples/examples/z258/postprocessing-afterimagePass",
-                "notes": "后处理示例 (自动推断)"
-              }
+              id: "postprocessing-afterimagePass",
+              title: "残影效果",
+              description: "残影效果，展示运动残影和拖尾效果",
+              thumbnail: "images/postprocessing-afterimagePass.jpg",
+              version: "r179",
+              url: "examples/z258/postprocessing-afterimagePass",
+              features: {
+                coreTech: "EffectComposer, Post-processing",
+                secondaryTech: "渲染通道, 特效叠加",
+                difficulty: "进阶",
+                actualFunction: "残影效果，展示运动残影和拖尾效果",
+                suggestedCategory: "8. 后处理效果",
+                filePath:
+                  "examples/examples/z258/postprocessing-afterimagePass",
+                notes: "后处理示例 (自动推断)",
+              },
             },
             {
-              "id": "postprocessing-deferredLighting",
-              "title": "延迟光照",
-              "description": "延迟光照效果，展示多光源渲染",
-              "thumbnail": "images/postprocessing-deferredLighting.jpg",
-              "version": "r179",
-              "url": "examples/z258/postprocessing-deferredLighting",
-              "features": {
-                "coreTech": "EffectComposer, Post-processing",
-                "secondaryTech": "渲染通道, 特效叠加",
-                "difficulty": "进阶",
-                "actualFunction": "延迟光照效果，展示多光源渲染",
-                "suggestedCategory": "8. 后处理效果",
-                "filePath": "examples/examples/z258/postprocessing-deferredLighting",
-                "notes": "后处理示例 (自动推断)"
-              }
+              id: "postprocessing-deferredLighting",
+              title: "延迟光照",
+              description: "延迟光照效果，展示多光源渲染",
+              thumbnail: "images/postprocessing-deferredLighting.jpg",
+              version: "r179",
+              url: "examples/z258/postprocessing-deferredLighting",
+              features: {
+                coreTech: "EffectComposer, Post-processing",
+                secondaryTech: "渲染通道, 特效叠加",
+                difficulty: "进阶",
+                actualFunction: "延迟光照效果，展示多光源渲染",
+                suggestedCategory: "8. 后处理效果",
+                filePath:
+                  "examples/examples/z258/postprocessing-deferredLighting",
+                notes: "后处理示例 (自动推断)",
+              },
             },
             {
-              "id": "postprocessing-sceneSnowEffect",
-              "title": "场景雪",
-              "description": "场景雪景效果，展示粒子系统模拟下雪",
-              "thumbnail": "images/postprocessing-sceneSnowEffect.jpg",
-              "version": "r179",
-              "url": "examples/z258/postprocessing-sceneSnowEffect",
-              "features": {
-                "coreTech": "EffectComposer, Post-processing",
-                "secondaryTech": "渲染通道, 特效叠加",
-                "difficulty": "进阶",
-                "actualFunction": "场景雪景效果，展示粒子系统模拟下雪",
-                "suggestedCategory": "8. 后处理效果",
-                "filePath": "examples/examples/z258/postprocessing-sceneSnowEffect",
-                "notes": "后处理示例 (自动推断)"
-              }
-            }
-          ]
-        }
-      ]
+              id: "postprocessing-sceneSnowEffect",
+              title: "场景雪",
+              description: "场景雪景效果，展示粒子系统模拟下雪",
+              thumbnail: "images/postprocessing-sceneSnowEffect.jpg",
+              version: "r179",
+              url: "examples/z258/postprocessing-sceneSnowEffect",
+              features: {
+                coreTech: "EffectComposer, Post-processing",
+                secondaryTech: "渲染通道, 特效叠加",
+                difficulty: "进阶",
+                actualFunction: "场景雪景效果，展示粒子系统模拟下雪",
+                suggestedCategory: "8. 后处理效果",
+                filePath:
+                  "examples/examples/z258/postprocessing-sceneSnowEffect",
+                notes: "后处理示例 (自动推断)",
+              },
+            },
+          ],
+        },
+      ],
     },
     {
-      "id": "交互与射线检测",
-      "name": "9. 交互与射线检测",
-      "icon": "bi-cursor",
-      "subcategories": [
+      id: "交互与射线检测",
+      name: "9. 交互与射线检测",
+      icon: "bi-cursor",
+      subcategories: [
         {
-          "id": "交互与射线检测-9.1-射线检测基础",
-          "name": "9.1 射线检测基础",
-          "examples": [
+          id: "交互与射线检测-9.1-射线检测基础",
+          name: "9.1 射线检测基础",
+          examples: [
             {
-              "id": "visualization-interactive-globe",
-              "title": "交互式地球",
-              "description": "可旋转缩放的3D地球仪，带有大气光晕效果和GUI控制面板",
-              "thumbnail": "images/visualization-interactive-globe.jpg",
-              "version": "r179",
-              "url": "examples/visualization-interactive-globe",
-              "features": {
-                "coreTech": "Raycaster, 国家悬停检测, SVG路径数据, 颜色高亮",
-                "secondaryTech": "地理数据可视化, 鼠标悬停交互, 信息提示",
-                "difficulty": "高级",
-                "actualFunction": "支持国家悬停检测和颜色高亮的交互式3D地球",
-                "suggestedCategory": "9. 交互与射线检测 > 9.1 射线检测基础 或 17. 数据可视化",
-                "filePath": "examples/visualization-interactive-globe.html",
-                "notes": "复杂的数据可视化示例，结合了射线检测和地理数据"
-              }
-            }
-          ]
-        }
-      ]
+              id: "visualization-interactive-globe",
+              title: "交互式地球",
+              description:
+                "可旋转缩放的3D地球仪，带有大气光晕效果和GUI控制面板",
+              thumbnail: "images/visualization-interactive-globe.jpg",
+              version: "r179",
+              url: "examples/visualization-interactive-globe",
+              features: {
+                coreTech: "Raycaster, 国家悬停检测, SVG路径数据, 颜色高亮",
+                secondaryTech: "地理数据可视化, 鼠标悬停交互, 信息提示",
+                difficulty: "高级",
+                actualFunction: "支持国家悬停检测和颜色高亮的交互式3D地球",
+                suggestedCategory:
+                  "9. 交互与射线检测 > 9.1 射线检测基础 或 17. 数据可视化",
+                filePath: "examples/visualization-interactive-globe.html",
+                notes: "复杂的数据可视化示例，结合了射线检测和地理数据",
+              },
+            },
+          ],
+        },
+      ],
     },
     {
-      "id": "物理引擎",
-      "name": "10. 物理引擎",
-      "icon": "bi-gear",
-      "subcategories": [
+      id: "物理引擎",
+      name: "10. 物理引擎",
+      icon: "bi-gear",
+      subcategories: [
         {
-          "id": "物理引擎-10.1-其他",
-          "name": "10.1 其他",
-          "examples": [
+          id: "物理引擎-10.1-其他",
+          name: "10.1 其他",
+          examples: [
             {
-              "id": "physics-ammoPhysics",
-              "title": "物理Ammo",
-              "description": "使用Three.js内置AmmoPhysics实现物理模拟，展示物体下落和碰撞",
-              "thumbnail": "images/physics-ammoPhysics.jpg",
-              "version": "r179",
-              "url": "examples/z258/physics-ammoPhysics"
+              id: "physics-ammoPhysics",
+              title: "物理Ammo",
+              description:
+                "使用Three.js内置AmmoPhysics实现物理模拟，展示物体下落和碰撞",
+              thumbnail: "images/physics-ammoPhysics.jpg",
+              version: "r179",
+              url: "examples/z258/physics-ammoPhysics",
             },
             {
-              "id": "physics-physicsMesh",
-              "title": "Cannon-es物理",
-              "description": "使用Cannon-es物理引擎实现刚体动力学模拟，支持重力调节和动态添加物体",
-              "thumbnail": "images/physics-physicsMesh.jpg",
-              "version": "r179",
-              "url": "examples/z258/physics-physicsMesh"
-            }
-          ]
-        }
-      ]
+              id: "physics-physicsMesh",
+              title: "Cannon-es物理",
+              description:
+                "使用Cannon-es物理引擎实现刚体动力学模拟，支持重力调节和动态添加物体",
+              thumbnail: "images/physics-physicsMesh.jpg",
+              version: "r179",
+              url: "examples/z258/physics-physicsMesh",
+            },
+          ],
+        },
+      ],
     },
     {
-      "id": "可视化与数据",
-      "name": "11. 可视化与数据",
-      "icon": "bi-graph-up",
-      "subcategories": [
+      id: "可视化与数据",
+      name: "11. 可视化与数据",
+      icon: "bi-graph-up",
+      subcategories: [
         {
-          "id": "可视化与数据-11.1-风场与建筑",
-          "name": "11.1 风场与建筑",
-          "examples": [
+          id: "可视化与数据-11.1-风场与建筑",
+          name: "11.1 风场与建筑",
+          examples: [
             {
-              "id": "visualization-windfield-canvas-texture",
-              "title": "Canvas贴图3D风场图",
-              "description": "风场流渲染到Canvas并贴图在球体上，支持展开收起动画",
-              "thumbnail": "images/visualization-windfield-canvas-texture.jpg",
-              "version": "r179",
-              "url": "examples/visualization-windfield-canvas-texture",
-              "features": {
-                "coreTech": "CanvasTexture, PlaneGeometry, 纹理更新",
-                "secondaryTech": "Canvas绘制转纹理, 动态纹理更新, 风场动画",
-                "difficulty": "进阶",
-                "actualFunction": "将Canvas 2D风场转为Three.js纹理，实现3D风场效果",
-                "suggestedCategory": "11.3 风场与建筑 > 11.3.1 风场可视化 > 纹理风场",
-                "filePath": "examples/visualization-windfield-canvas-texture.html",
-                "notes": "Canvas与Three.js结合的方案"
-              }
+              id: "visualization-windfield-canvas-texture",
+              title: "Canvas贴图3D风场图",
+              description: "风场流渲染到Canvas并贴图在球体上，支持展开收起动画",
+              thumbnail: "images/visualization-windfield-canvas-texture.jpg",
+              version: "r179",
+              url: "examples/visualization-windfield-canvas-texture",
+              features: {
+                coreTech: "CanvasTexture, PlaneGeometry, 纹理更新",
+                secondaryTech: "Canvas绘制转纹理, 动态纹理更新, 风场动画",
+                difficulty: "进阶",
+                actualFunction:
+                  "将Canvas 2D风场转为Three.js纹理，实现3D风场效果",
+                suggestedCategory:
+                  "11.3 风场与建筑 > 11.3.1 风场可视化 > 纹理风场",
+                filePath:
+                  "examples/visualization-windfield-canvas-texture.html",
+                notes: "Canvas与Three.js结合的方案",
+              },
             },
             {
-              "id": "visualization-windfield-3d-plane",
-              "title": "平面3D风场图",
-              "description": "平面上的风场粒子流动效果，带参数控制面板",
-              "thumbnail": "images/visualization-windfield-3d-plane.jpg",
-              "version": "r179",
-              "url": "examples/visualization-windfield-3d-plane",
-              "features": {
-                "coreTech": "Points, BufferGeometry, 向量场计算",
-                "secondaryTech": "3D向量场, 粒子运动, 风向可视化",
-                "difficulty": "进阶",
-                "actualFunction": "在3D平面上展示风场向量，使用粒子表示风向风速",
-                "suggestedCategory": "11.3 风场与建筑 > 11.3.1 风场可视化 > 3D向量风场",
-                "filePath": "examples/visualization-windfield-3d-plane.html",
-                "notes": "纯Three.js实现的风场效果"
-              }
+              id: "visualization-windfield-3d-plane",
+              title: "平面3D风场图",
+              description: "平面上的风场粒子流动效果，带参数控制面板",
+              thumbnail: "images/visualization-windfield-3d-plane.jpg",
+              version: "r179",
+              url: "examples/visualization-windfield-3d-plane",
+              features: {
+                coreTech: "Points, BufferGeometry, 向量场计算",
+                secondaryTech: "3D向量场, 粒子运动, 风向可视化",
+                difficulty: "进阶",
+                actualFunction: "在3D平面上展示风场向量，使用粒子表示风向风速",
+                suggestedCategory:
+                  "11.3 风场与建筑 > 11.3.1 风场可视化 > 3D向量风场",
+                filePath: "examples/visualization-windfield-3d-plane.html",
+                notes: "纯Three.js实现的风场效果",
+              },
             },
             {
-              "id": "visualization-windfield-3d-globe",
-              "title": "地球3D风场图",
-              "description": "地球上的风场粒子流动效果，带参数控制面板",
-              "thumbnail": "images/visualization-windfield-3d-globe.jpg",
-              "version": "r179",
-              "url": "examples/visualization-windfield-3d-globe",
-              "features": {
-                "coreTech": "SphereGeometry, 球面向量场, 地理坐标转换",
-                "secondaryTech": "全球风场数据, 球面运动, 大气环流",
-                "difficulty": "高级",
-                "actualFunction": "在3D地球表面展示全球风场分布",
-                "suggestedCategory": "11.3 风场与建筑 > 11.3.1 风场可视化 > 全球风场",
-                "filePath": "examples/visualization-windfield-3d-globe.html",
-                "notes": "结合地球可视化的风场应用"
-              }
+              id: "visualization-windfield-3d-globe",
+              title: "地球3D风场图",
+              description: "地球上的风场粒子流动效果，带参数控制面板",
+              thumbnail: "images/visualization-windfield-3d-globe.jpg",
+              version: "r179",
+              url: "examples/visualization-windfield-3d-globe",
+              features: {
+                coreTech: "SphereGeometry, 球面向量场, 地理坐标转换",
+                secondaryTech: "全球风场数据, 球面运动, 大气环流",
+                difficulty: "高级",
+                actualFunction: "在3D地球表面展示全球风场分布",
+                suggestedCategory:
+                  "11.3 风场与建筑 > 11.3.1 风场可视化 > 全球风场",
+                filePath: "examples/visualization-windfield-3d-globe.html",
+                notes: "结合地球可视化的风场应用",
+              },
             },
             {
-              "id": "visualization-windfield-canvas2d",
-              "title": "canvas 2D风场图",
-              "description": "使用canvas绘制的2D风场流向图",
-              "thumbnail": "images/visualization-windfield-canvas2d.jpg",
-              "url": "examples/visualization-windfield-canvas2d",
-              "features": {
-                "coreTech": "Canvas 2D API, Windy.js库, 粒子系统",
-                "secondaryTech": "风场数据解析, 粒子轨迹, 颜色映射",
-                "difficulty": "基础",
-                "actualFunction": "使用Canvas 2D绘制的风场流向图，非Three.js实现",
-                "suggestedCategory": "11.3 风场与建筑 > 11.3.1 风场可视化 > Canvas风场",
-                "filePath": "examples/visualization-windfield-canvas2d.html",
-                "notes": "⚠️ 注意：此示例使用纯Canvas 2D，不是Three.js示例"
-              }
+              id: "visualization-windfield-canvas2d",
+              title: "canvas 2D风场图",
+              description: "使用canvas绘制的2D风场流向图",
+              thumbnail: "images/visualization-windfield-canvas2d.jpg",
+              url: "examples/visualization-windfield-canvas2d",
+              features: {
+                coreTech: "Canvas 2D API, Windy.js库, 粒子系统",
+                secondaryTech: "风场数据解析, 粒子轨迹, 颜色映射",
+                difficulty: "基础",
+                actualFunction: "使用Canvas 2D绘制的风场流向图，非Three.js实现",
+                suggestedCategory:
+                  "11.3 风场与建筑 > 11.3.1 风场可视化 > Canvas风场",
+                filePath: "examples/visualization-windfield-canvas2d.html",
+                notes: "⚠️ 注意：此示例使用纯Canvas 2D，不是Three.js示例",
+              },
             },
             {
-              "id": "visualization-procedural-buildings",
-              "title": "程序化生成随机建筑",
-              "description": "程序化生成随机建筑模型，俯视视角城市建筑群",
-              "thumbnail": "images/visualization-procedural-buildings.jpg",
-              "version": "r179",
-              "url": "examples/visualization-procedural-buildings",
-              "features": {
-                "coreTech": "BufferGeometryUtils.mergeGeometries, 程序化生成",
-                "secondaryTech": "建筑高度随机, 几何体合并优化, onBeforeCompile着色器修改",
-                "difficulty": "进阶",
-                "actualFunction": "程序化生成100个随机高度建筑，使用几何体合并优化性能",
-                "suggestedCategory": "11.3 风场与建筑 > 11.3.2 程序化建筑 > 基础建筑生成",
-                "filePath": "examples/visualization-procedural-buildings.html",
-                "notes": "展示了大规模静态物体的性能优化方案"
-              }
-            }
-          ]
+              id: "visualization-procedural-buildings",
+              title: "程序化生成随机建筑",
+              description: "程序化生成随机建筑模型，俯视视角城市建筑群",
+              thumbnail: "images/visualization-procedural-buildings.jpg",
+              version: "r179",
+              url: "examples/visualization-procedural-buildings",
+              features: {
+                coreTech: "BufferGeometryUtils.mergeGeometries, 程序化生成",
+                secondaryTech:
+                  "建筑高度随机, 几何体合并优化, onBeforeCompile着色器修改",
+                difficulty: "进阶",
+                actualFunction:
+                  "程序化生成100个随机高度建筑，使用几何体合并优化性能",
+                suggestedCategory:
+                  "11.3 风场与建筑 > 11.3.2 程序化建筑 > 基础建筑生成",
+                filePath: "examples/visualization-procedural-buildings.html",
+                notes: "展示了大规模静态物体的性能优化方案",
+              },
+            },
+          ],
         },
         {
-          "id": "可视化与数据-11.2-网络与特效",
-          "name": "11.2 网络与特效",
-          "examples": [
+          id: "可视化与数据-11.2-网络与特效",
+          name: "11.2 网络与特效",
+          examples: [
             {
-              "id": "visualization-custom-shader-lines",
-              "title": "自定义shader线元素",
-              "description": "使用自定义着色器实现渐变色和流光效果的线元素",
-              "thumbnail": "images/visualization-custom-shader-lines.jpg",
-              "version": "r179",
-              "url": "examples/visualization-custom-shader-lines",
-              "features": {
-                "coreTech": "ShaderMaterial, 线条着色器, 顶点动画",
-                "secondaryTech": "自定义线条效果, 颜色渐变, 动态线条",
-                "difficulty": "进阶",
-                "actualFunction": "使用自定义着色器实现特效线条，用于网络连接展示",
-                "suggestedCategory": "11.4 网络与特效 > 11.4.1 网络可视化 > 特效线条",
-                "filePath": "examples/visualization-custom-shader-lines.html",
-                "notes": "展示了着色器在连线可视化中的应用"
-              }
+              id: "visualization-custom-shader-lines",
+              title: "自定义shader线元素",
+              description: "使用自定义着色器实现渐变色和流光效果的线元素",
+              thumbnail: "images/visualization-custom-shader-lines.jpg",
+              version: "r179",
+              url: "examples/visualization-custom-shader-lines",
+              features: {
+                coreTech: "ShaderMaterial, 线条着色器, 顶点动画",
+                secondaryTech: "自定义线条效果, 颜色渐变, 动态线条",
+                difficulty: "进阶",
+                actualFunction:
+                  "使用自定义着色器实现特效线条，用于网络连接展示",
+                suggestedCategory:
+                  "11.4 网络与特效 > 11.4.1 网络可视化 > 特效线条",
+                filePath: "examples/visualization-custom-shader-lines.html",
+                notes: "展示了着色器在连线可视化中的应用",
+              },
             },
             {
-              "id": "application-punk",
-              "title": "朋克风",
-              "description": "使用Three.js创建朋克风城市效果，通过CanvasTexture创建环绕文字和程序化生成建筑",
-              "thumbnail": "images/application-punk.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-punk",
-              "features": {
-                "coreTech": "赛博朋克风格, 霓虹效果, 网络节点",
-                "secondaryTech": "风格化渲染, 发光效果, 城市网络",
-                "difficulty": "高级",
-                "actualFunction": "赛博朋克风格的网络城市可视化",
-                "suggestedCategory": "11.4 网络与特效 > 11.4.1 网络可视化 > 风格化网络",
-                "filePath": "examples/z258/application-punk.html",
-                "notes": "艺术风格与数据可视化的结合"
-              }
+              id: "application-punk",
+              title: "朋克风",
+              description:
+                "使用Three.js创建朋克风城市效果，通过CanvasTexture创建环绕文字和程序化生成建筑",
+              thumbnail: "images/application-punk.jpg",
+              version: "r179",
+              url: "examples/z258/application-punk",
+              features: {
+                coreTech: "赛博朋克风格, 霓虹效果, 网络节点",
+                secondaryTech: "风格化渲染, 发光效果, 城市网络",
+                difficulty: "高级",
+                actualFunction: "赛博朋克风格的网络城市可视化",
+                suggestedCategory:
+                  "11.4 网络与特效 > 11.4.1 网络可视化 > 风格化网络",
+                filePath: "examples/z258/application-punk.html",
+                notes: "艺术风格与数据可视化的结合",
+              },
             },
             {
-              "id": "visualization-neural-network",
-              "title": "交互式神经网络可视化",
-              "description": "四种不同结构的神经网络可视化，支持主题切换和密度调整",
-              "thumbnail": "images/visualization-neural-network.jpg",
-              "version": "r179",
-              "url": "examples/visualization-neural-network",
-              "features": {
-                "coreTech": "节点-连线系统, 动画曲线, 主题切换",
-                "secondaryTech": "四种神经网络结构, 密度控制, 交互式UI",
-                "difficulty": "高级",
-                "actualFunction": "交互式神经网络可视化，支持主题切换和密度调整",
-                "suggestedCategory": "11.4 网络与特效 > 11.4.1 网络可视化 > 神经网络",
-                "filePath": "examples/visualization-neural-network.html",
-                "notes": "复杂的数据可视化示例，展示了网络结构可视化"
-              }
+              id: "visualization-neural-network",
+              title: "交互式神经网络可视化",
+              description:
+                "四种不同结构的神经网络可视化，支持主题切换和密度调整",
+              thumbnail: "images/visualization-neural-network.jpg",
+              version: "r179",
+              url: "examples/visualization-neural-network",
+              features: {
+                coreTech: "节点-连线系统, 动画曲线, 主题切换",
+                secondaryTech: "四种神经网络结构, 密度控制, 交互式UI",
+                difficulty: "高级",
+                actualFunction: "交互式神经网络可视化，支持主题切换和密度调整",
+                suggestedCategory:
+                  "11.4 网络与特效 > 11.4.1 网络可视化 > 神经网络",
+                filePath: "examples/visualization-neural-network.html",
+                notes: "复杂的数据可视化示例，展示了网络结构可视化",
+              },
             },
             {
-              "id": "visualization-gradient-fence",
-              "title": "渐变围栏 3D 区块",
-              "description": "带渐变色的围栏效果",
-              "thumbnail": "images/visualization-gradient-fence.jpg",
-              "version": "r179",
-              "url": "examples/visualization-gradient-fence",
-              "features": {
-                "coreTech": "PlaneGeometry, ShaderMaterial(渐变), 围栏效果",
-                "secondaryTech": "渐变着色器, 围栏动画, 范围标记",
-                "difficulty": "进阶",
-                "actualFunction": "渐变效果的围栏，用于标记区域边界",
-                "suggestedCategory": "11.4 网络与特效 > 11.4.2 围栏与光束 > 渐变围栏",
-                "filePath": "examples/visualization-gradient-fence.html",
-                "notes": "常用的区域标记效果"
-              }
+              id: "visualization-gradient-fence",
+              title: "渐变围栏 3D 区块",
+              description: "带渐变色的围栏效果",
+              thumbnail: "images/visualization-gradient-fence.jpg",
+              version: "r179",
+              url: "examples/visualization-gradient-fence",
+              features: {
+                coreTech: "PlaneGeometry, ShaderMaterial(渐变), 围栏效果",
+                secondaryTech: "渐变着色器, 围栏动画, 范围标记",
+                difficulty: "进阶",
+                actualFunction: "渐变效果的围栏，用于标记区域边界",
+                suggestedCategory:
+                  "11.4 网络与特效 > 11.4.2 围栏与光束 > 渐变围栏",
+                filePath: "examples/visualization-gradient-fence.html",
+                notes: "常用的区域标记效果",
+              },
             },
             {
-              "id": "visualization-multi-gradient-fence",
-              "title": "多重渐变围栏",
-              "description": "多层渐变围栏组合效果",
-              "thumbnail": "images/visualization-multi-gradient-fence.jpg",
-              "version": "r179",
-              "url": "examples/visualization-multi-gradient-fence",
-              "features": {
-                "coreTech": "多色渐变, 围栏分段, 颜色混合",
-                "secondaryTech": "复杂渐变, 分段控制, 动态颜色",
-                "difficulty": "进阶",
-                "actualFunction": "多色渐变围栏，更丰富的视觉效果",
-                "suggestedCategory": "11.4 网络与特效 > 11.4.2 围栏与光束 > 多色围栏",
-                "filePath": "examples/visualization-multi-gradient-fence.html",
-                "notes": "渐变围栏的增强版"
-              }
+              id: "visualization-multi-gradient-fence",
+              title: "多重渐变围栏",
+              description: "多层渐变围栏组合效果",
+              thumbnail: "images/visualization-multi-gradient-fence.jpg",
+              version: "r179",
+              url: "examples/visualization-multi-gradient-fence",
+              features: {
+                coreTech: "多色渐变, 围栏分段, 颜色混合",
+                secondaryTech: "复杂渐变, 分段控制, 动态颜色",
+                difficulty: "进阶",
+                actualFunction: "多色渐变围栏，更丰富的视觉效果",
+                suggestedCategory:
+                  "11.4 网络与特效 > 11.4.2 围栏与光束 > 多色围栏",
+                filePath: "examples/visualization-multi-gradient-fence.html",
+                notes: "渐变围栏的增强版",
+              },
             },
             {
-              "id": "visualization-light-beam",
-              "title": "基础光束流动",
-              "description": "沿直线流动的光束效果，使用TubeGeometry和着色器实现光效动画",
-              "thumbnail": "images/visualization-light-beam.jpg",
-              "version": "r179",
-              "url": "examples/visualization-light-beam",
-              "features": {
-                "coreTech": "CylinderGeometry, ShaderMaterial(光束), 体积光",
-                "secondaryTech": "光束效果, 体积渲染, 光源模拟",
-                "difficulty": "进阶",
-                "actualFunction": "3D光束效果，模拟聚光灯或能量束",
-                "suggestedCategory": "11.4 网络与特效 > 11.4.2 围栏与光束 > 光束",
-                "filePath": "examples/visualization-light-beam.html",
-                "notes": "常用的特效元素"
-              }
+              id: "visualization-light-beam",
+              title: "基础光束流动",
+              description:
+                "沿直线流动的光束效果，使用TubeGeometry和着色器实现光效动画",
+              thumbnail: "images/visualization-light-beam.jpg",
+              version: "r179",
+              url: "examples/visualization-light-beam",
+              features: {
+                coreTech: "CylinderGeometry, ShaderMaterial(光束), 体积光",
+                secondaryTech: "光束效果, 体积渲染, 光源模拟",
+                difficulty: "进阶",
+                actualFunction: "3D光束效果，模拟聚光灯或能量束",
+                suggestedCategory: "11.4 网络与特效 > 11.4.2 围栏与光束 > 光束",
+                filePath: "examples/visualization-light-beam.html",
+                notes: "常用的特效元素",
+              },
             },
             {
-              "id": "visualization-path-beam",
-              "title": "波浪路径光束",
-              "description": "沿波浪路径流动的光束效果，带有地面波动效果",
-              "thumbnail": "images/visualization-path-beam.jpg",
-              "version": "r179",
-              "url": "examples/visualization-path-beam",
-              "features": {
-                "coreTech": "路径光束, 沿线光束, 流动光束",
-                "secondaryTech": "路径定义, 光束跟随, 动态光束",
-                "difficulty": "进阶",
-                "actualFunction": "沿路径流动的光束效果",
-                "suggestedCategory": "11.4 网络与特效 > 11.4.2 围栏与光束 > 路径光束",
-                "filePath": "examples/visualization-path-beam.html",
-                "notes": "适合展示路径或轨迹"
-              }
+              id: "visualization-path-beam",
+              title: "波浪路径光束",
+              description: "沿波浪路径流动的光束效果，带有地面波动效果",
+              thumbnail: "images/visualization-path-beam.jpg",
+              version: "r179",
+              url: "examples/visualization-path-beam",
+              features: {
+                coreTech: "路径光束, 沿线光束, 流动光束",
+                secondaryTech: "路径定义, 光束跟随, 动态光束",
+                difficulty: "进阶",
+                actualFunction: "沿路径流动的光束效果",
+                suggestedCategory:
+                  "11.4 网络与特效 > 11.4.2 围栏与光束 > 路径光束",
+                filePath: "examples/visualization-path-beam.html",
+                notes: "适合展示路径或轨迹",
+              },
             },
             {
-              "id": "visualization-heart-beam",
-              "title": "心形流动光束",
-              "description": "心形路径的流动光效果，带有双色调光效",
-              "thumbnail": "images/visualization-heart-beam.jpg",
-              "version": "r179",
-              "url": "examples/visualization-heart-beam",
-              "features": {
-                "coreTech": "心形路径, 形状光束, 特效渲染",
-                "secondaryTech": "心形曲线, 浪漫效果, 特殊形状",
-                "difficulty": "基础",
-                "actualFunction": "心形光束效果，常用于特殊场合",
-                "suggestedCategory": "11.4 网络与特效 > 11.4.2 围栏与光束 > 形状光束",
-                "filePath": "examples/visualization-heart-beam.html",
-                "notes": "特殊形状的光束应用"
-              }
+              id: "visualization-heart-beam",
+              title: "心形流动光束",
+              description: "心形路径的流动光效果，带有双色调光效",
+              thumbnail: "images/visualization-heart-beam.jpg",
+              version: "r179",
+              url: "examples/visualization-heart-beam",
+              features: {
+                coreTech: "心形路径, 形状光束, 特效渲染",
+                secondaryTech: "心形曲线, 浪漫效果, 特殊形状",
+                difficulty: "基础",
+                actualFunction: "心形光束效果，常用于特殊场合",
+                suggestedCategory:
+                  "11.4 网络与特效 > 11.4.2 围栏与光束 > 形状光束",
+                filePath: "examples/visualization-heart-beam.html",
+                notes: "特殊形状的光束应用",
+              },
             },
             {
-              "id": "visualization-neon-flow",
-              "title": "流动霓虹效果",
-              "description": "炫酷的流动霓虹视觉动画，支持鼠标交互效果",
-              "thumbnail": "images/visualization-neon-flow.jpg",
-              "version": "r179",
-              "url": "examples/visualization-neon-flow",
-              "features": {
-                "coreTech": "霓虹效果, 流动动画, 发光材质",
-                "secondaryTech": "赛博朋克风格, 霓虹颜色, 流动路径",
-                "difficulty": "进阶",
-                "actualFunction": "霓虹风格的流动效果，科技感强烈",
-                "suggestedCategory": "11.4 网络与特效 > 11.4.3 发光与特效 > 霓虹效果",
-                "filePath": "examples/visualization-neon-flow.html",
-                "notes": "赛博朋克风格的典型元素"
-              }
+              id: "visualization-neon-flow",
+              title: "流动霓虹效果",
+              description: "炫酷的流动霓虹视觉动画，支持鼠标交互效果",
+              thumbnail: "images/visualization-neon-flow.jpg",
+              version: "r179",
+              url: "examples/visualization-neon-flow",
+              features: {
+                coreTech: "霓虹效果, 流动动画, 发光材质",
+                secondaryTech: "赛博朋克风格, 霓虹颜色, 流动路径",
+                difficulty: "进阶",
+                actualFunction: "霓虹风格的流动效果，科技感强烈",
+                suggestedCategory:
+                  "11.4 网络与特效 > 11.4.3 发光与特效 > 霓虹效果",
+                filePath: "examples/visualization-neon-flow.html",
+                notes: "赛博朋克风格的典型元素",
+              },
             },
             {
-              "id": "visualization-energy-bubble",
-              "title": "漂流的3D能量球",
-              "description": "交互式能量气泡效果，点击产生能量波纹和闪电分支，带折射和色散效果",
-              "thumbnail": "images/visualization-energy-bubble.jpg",
-              "version": "r179",
-              "url": "examples/visualization-energy-bubble",
-              "features": {
-                "coreTech": "SphereGeometry, ShaderMaterial(能量), 波动效果",
-                "secondaryTech": "能量效果, 波动动画, 发光球体",
-                "difficulty": "进阶",
-                "actualFunction": "能量气泡效果，保护罩或能量场可视化",
-                "suggestedCategory": "11.4 网络与特效 > 11.4.3 发光与特效 > 能量效果",
-                "filePath": "examples/visualization-energy-bubble.html",
-                "notes": "游戏和科幻场景常用"
-              }
+              id: "visualization-energy-bubble",
+              title: "漂流的3D能量球",
+              description:
+                "交互式能量气泡效果，点击产生能量波纹和闪电分支，带折射和色散效果",
+              thumbnail: "images/visualization-energy-bubble.jpg",
+              version: "r179",
+              url: "examples/visualization-energy-bubble",
+              features: {
+                coreTech: "SphereGeometry, ShaderMaterial(能量), 波动效果",
+                secondaryTech: "能量效果, 波动动画, 发光球体",
+                difficulty: "进阶",
+                actualFunction: "能量气泡效果，保护罩或能量场可视化",
+                suggestedCategory:
+                  "11.4 网络与特效 > 11.4.3 发光与特效 > 能量效果",
+                filePath: "examples/visualization-energy-bubble.html",
+                notes: "游戏和科幻场景常用",
+              },
             },
             {
-              "id": "visualization-hologram",
-              "title": "全息影像效果",
-              "description": "动态切换的几何体全息投影，带故障效果和扫描线",
-              "thumbnail": "images/visualization-hologram.jpg",
-              "version": "r179",
-              "url": "examples/visualization-hologram",
-              "features": {
-                "coreTech": "ShaderMaterial(全息), 扫描线, 透明度",
-                "secondaryTech": "全息效果, 科技风格, 投影效果",
-                "difficulty": "进阶",
-                "actualFunction": "全息投影效果，常用于科幻场景",
-                "suggestedCategory": "11.4 网络与特效 > 11.4.3 发光与特效 > 全息效果",
-                "filePath": "examples/visualization-hologram.html",
-                "notes": "经典的科幻视觉效果"
-              }
+              id: "visualization-hologram",
+              title: "全息影像效果",
+              description: "动态切换的几何体全息投影，带故障效果和扫描线",
+              thumbnail: "images/visualization-hologram.jpg",
+              version: "r179",
+              url: "examples/visualization-hologram",
+              features: {
+                coreTech: "ShaderMaterial(全息), 扫描线, 透明度",
+                secondaryTech: "全息效果, 科技风格, 投影效果",
+                difficulty: "进阶",
+                actualFunction: "全息投影效果，常用于科幻场景",
+                suggestedCategory:
+                  "11.4 网络与特效 > 11.4.3 发光与特效 > 全息效果",
+                filePath: "examples/visualization-hologram.html",
+                notes: "经典的科幻视觉效果",
+              },
             },
             {
-              "id": "visualization-glow-blocks",
-              "title": "泛光3D区块",
-              "description": "带泛光效果的发光方块组合",
-              "thumbnail": "images/visualization-glow-blocks.jpg",
-              "version": "r179",
-              "url": "examples/visualization-glow-blocks",
-              "features": {
-                "coreTech": "BoxGeometry, 发光材质, 后期处理",
-                "secondaryTech": "发光效果, 方块阵列, 颜色变化",
-                "difficulty": "基础",
-                "actualFunction": "发光方块阵列，展示数据或状态",
-                "suggestedCategory": "11.4 网络与特效 > 11.4.3 发光与特效 > 发光方块",
-                "filePath": "examples/visualization-glow-blocks.html",
-                "notes": "简洁的数据可视化元素"
-              }
+              id: "visualization-glow-blocks",
+              title: "泛光3D区块",
+              description: "带泛光效果的发光方块组合",
+              thumbnail: "images/visualization-glow-blocks.jpg",
+              version: "r179",
+              url: "examples/visualization-glow-blocks",
+              features: {
+                coreTech: "BoxGeometry, 发光材质, 后期处理",
+                secondaryTech: "发光效果, 方块阵列, 颜色变化",
+                difficulty: "基础",
+                actualFunction: "发光方块阵列，展示数据或状态",
+                suggestedCategory:
+                  "11.4 网络与特效 > 11.4.3 发光与特效 > 发光方块",
+                filePath: "examples/visualization-glow-blocks.html",
+                notes: "简洁的数据可视化元素",
+              },
             },
             {
-              "id": "visualization-glow-blocks-outline",
-              "title": "泛光轮廓3D区块",
-              "description": "带轮廓描边和泛光效果的3D方块组合",
-              "thumbnail": "images/visualization-glow-blocks-outline.jpg",
-              "version": "r179",
-              "url": "examples/visualization-glow-blocks-outline",
-              "features": {
-                "coreTech": "发光方块+轮廓, 描边效果, 复合材质",
-                "secondaryTech": "轮廓渲染, 发光+描边, 层次效果",
-                "difficulty": "进阶",
-                "actualFunction": "带轮廓的发光方块，增强视觉层次",
-                "suggestedCategory": "11.4 网络与特效 > 11.4.3 发光与特效 > 发光轮廓",
-                "filePath": "examples/visualization-glow-blocks-outline.html",
-                "notes": "发光方块的增强版"
-              }
-            }
-          ]
+              id: "visualization-glow-blocks-outline",
+              title: "泛光轮廓3D区块",
+              description: "带轮廓描边和泛光效果的3D方块组合",
+              thumbnail: "images/visualization-glow-blocks-outline.jpg",
+              version: "r179",
+              url: "examples/visualization-glow-blocks-outline",
+              features: {
+                coreTech: "发光方块+轮廓, 描边效果, 复合材质",
+                secondaryTech: "轮廓渲染, 发光+描边, 层次效果",
+                difficulty: "进阶",
+                actualFunction: "带轮廓的发光方块，增强视觉层次",
+                suggestedCategory:
+                  "11.4 网络与特效 > 11.4.3 发光与特效 > 发光轮廓",
+                filePath: "examples/visualization-glow-blocks-outline.html",
+                notes: "发光方块的增强版",
+              },
+            },
+          ],
         },
         {
-          "id": "可视化与数据-11.3-其他",
-          "name": "11.3 其他",
-          "examples": [
+          id: "可视化与数据-11.3-其他",
+          name: "11.3 其他",
+          examples: [
             {
-              "id": "visualization-water-shader",
-              "title": "水着色器效果",
-              "description": "带有水面反射和动态光照的场景，使用Water和Sky对象",
-              "thumbnail": "images/visualization-water-shader.jpg",
-              "version": "r179",
-              "url": "examples/visualization-water-shader",
-              "features": {
-                "coreTech": "Data Visualization, Shader",
-                "secondaryTech": "数据处理, 特效渲染",
-                "difficulty": "进阶",
-                "actualFunction": "带有水面反射和动态光照的场景，使用Water和Sky对象",
-                "suggestedCategory": "11. 可视化与数据",
-                "filePath": "examples/examples/visualization-water-shader",
-                "notes": "数据可视化示例 (自动推断)"
-              }
+              id: "visualization-water-shader",
+              title: "水着色器效果",
+              description: "带有水面反射和动态光照的场景，使用Water和Sky对象",
+              thumbnail: "images/visualization-water-shader.jpg",
+              version: "r179",
+              url: "examples/visualization-water-shader",
+              features: {
+                coreTech: "Data Visualization, Shader",
+                secondaryTech: "数据处理, 特效渲染",
+                difficulty: "进阶",
+                actualFunction:
+                  "带有水面反射和动态光照的场景，使用Water和Sky对象",
+                suggestedCategory: "11. 可视化与数据",
+                filePath: "examples/examples/visualization-water-shader",
+                notes: "数据可视化示例 (自动推断)",
+              },
             },
             {
-              "id": "visualization-wind-terrain",
-              "title": "流过地形的风线",
-              "description": "使用SimplexNoise生成地形，并让风线流过起伏的地形表面",
-              "thumbnail": "images/visualization-wind-terrain.jpg",
-              "version": "r179",
-              "url": "examples/visualization-wind-terrain",
-              "features": {
-                "coreTech": "Data Visualization, Shader",
-                "secondaryTech": "数据处理, 特效渲染",
-                "difficulty": "进阶",
-                "actualFunction": "使用SimplexNoise生成地形，并让风线流过起伏的地形表面",
-                "suggestedCategory": "11. 可视化与数据",
-                "filePath": "examples/examples/visualization-wind-terrain",
-                "notes": "数据可视化示例 (自动推断)"
-              }
+              id: "visualization-wind-terrain",
+              title: "流过地形的风线",
+              description:
+                "使用SimplexNoise生成地形，并让风线流过起伏的地形表面",
+              thumbnail: "images/visualization-wind-terrain.jpg",
+              version: "r179",
+              url: "examples/visualization-wind-terrain",
+              features: {
+                coreTech: "Data Visualization, Shader",
+                secondaryTech: "数据处理, 特效渲染",
+                difficulty: "进阶",
+                actualFunction:
+                  "使用SimplexNoise生成地形，并让风线流过起伏的地形表面",
+                suggestedCategory: "11. 可视化与数据",
+                filePath: "examples/examples/visualization-wind-terrain",
+                notes: "数据可视化示例 (自动推断)",
+              },
             },
             {
-              "id": "visualization-aurora",
-              "title": "星空极光动效",
-              "description": "绚丽的极光与星空背景Shader效果，支持多种参数调节",
-              "thumbnail": "images/visualization-aurora.jpg",
-              "version": "r179",
-              "url": "examples/visualization-aurora",
-              "features": {
-                "coreTech": "Data Visualization, Shader",
-                "secondaryTech": "数据处理, 特效渲染",
-                "difficulty": "进阶",
-                "actualFunction": "绚丽的极光与星空背景Shader效果，支持多种参数调节",
-                "suggestedCategory": "11. 可视化与数据",
-                "filePath": "examples/examples/visualization-aurora",
-                "notes": "数据可视化示例 (自动推断)"
-              }
+              id: "visualization-aurora",
+              title: "星空极光动效",
+              description: "绚丽的极光与星空背景Shader效果，支持多种参数调节",
+              thumbnail: "images/visualization-aurora.jpg",
+              version: "r179",
+              url: "examples/visualization-aurora",
+              features: {
+                coreTech: "Data Visualization, Shader",
+                secondaryTech: "数据处理, 特效渲染",
+                difficulty: "进阶",
+                actualFunction:
+                  "绚丽的极光与星空背景Shader效果，支持多种参数调节",
+                suggestedCategory: "11. 可视化与数据",
+                filePath: "examples/examples/visualization-aurora",
+                notes: "数据可视化示例 (自动推断)",
+              },
             },
             {
-              "id": "visualization-shader-transform",
-              "title": "着色器变形",
-              "description": "圆环与方块之间的动态变形效果，支持鼠标交互和按钮切换",
-              "thumbnail": "images/visualization-shader-transform.jpg",
-              "version": "r179",
-              "url": "examples/visualization-shader-transform",
-              "features": {
-                "coreTech": "Data Visualization, Shader",
-                "secondaryTech": "数据处理, 特效渲染",
-                "difficulty": "进阶",
-                "actualFunction": "圆环与方块之间的动态变形效果，支持鼠标交互和按钮切换",
-                "suggestedCategory": "11. 可视化与数据",
-                "filePath": "examples/examples/visualization-shader-transform",
-                "notes": "数据可视化示例 (自动推断)"
-              }
+              id: "visualization-shader-transform",
+              title: "着色器变形",
+              description:
+                "圆环与方块之间的动态变形效果，支持鼠标交互和按钮切换",
+              thumbnail: "images/visualization-shader-transform.jpg",
+              version: "r179",
+              url: "examples/visualization-shader-transform",
+              features: {
+                coreTech: "Data Visualization, Shader",
+                secondaryTech: "数据处理, 特效渲染",
+                difficulty: "进阶",
+                actualFunction:
+                  "圆环与方块之间的动态变形效果，支持鼠标交互和按钮切换",
+                suggestedCategory: "11. 可视化与数据",
+                filePath: "examples/examples/visualization-shader-transform",
+                notes: "数据可视化示例 (自动推断)",
+              },
             },
             {
-              "id": "visualization-particle-transform",
-              "title": "变形粒子艺术",
-              "description": "多种粒子形态动态切换变形效果，支持超新星螺旋、量子晶格、恒星环面、天体螺旋",
-              "thumbnail": "images/visualization-particle-transform.jpg",
-              "version": "r179",
-              "url": "examples/visualization-particle-transform",
-              "features": {
-                "coreTech": "Data Visualization, Shader",
-                "secondaryTech": "数据处理, 特效渲染",
-                "difficulty": "进阶",
-                "actualFunction": "多种粒子形态动态切换变形效果，支持超新星螺旋、量子晶格、恒星环面、天体螺旋",
-                "suggestedCategory": "11. 可视化与数据",
-                "filePath": "examples/examples/visualization-particle-transform",
-                "notes": "数据可视化示例 (自动推断)"
-              }
+              id: "visualization-particle-transform",
+              title: "变形粒子艺术",
+              description:
+                "多种粒子形态动态切换变形效果，支持超新星螺旋、量子晶格、恒星环面、天体螺旋",
+              thumbnail: "images/visualization-particle-transform.jpg",
+              version: "r179",
+              url: "examples/visualization-particle-transform",
+              features: {
+                coreTech: "Data Visualization, Shader",
+                secondaryTech: "数据处理, 特效渲染",
+                difficulty: "进阶",
+                actualFunction:
+                  "多种粒子形态动态切换变形效果，支持超新星螺旋、量子晶格、恒星环面、天体螺旋",
+                suggestedCategory: "11. 可视化与数据",
+                filePath: "examples/examples/visualization-particle-transform",
+                notes: "数据可视化示例 (自动推断)",
+              },
             },
             {
-              "id": "visualization-radar-uv",
-              "title": "UV雷达扩散特效",
-              "description": "基于UV坐标的雷达扩散波纹动画效果",
-              "thumbnail": "images/visualization-radar-uv.jpg",
-              "version": "r179",
-              "url": "examples/visualization-radar-uv",
-              "features": {
-                "coreTech": "Data Visualization, Shader",
-                "secondaryTech": "数据处理, 特效渲染",
-                "difficulty": "进阶",
-                "actualFunction": "基于UV坐标的雷达扩散波纹动画效果",
-                "suggestedCategory": "11. 可视化与数据",
-                "filePath": "examples/examples/visualization-radar-uv",
-                "notes": "数据可视化示例 (自动推断)"
-              }
+              id: "visualization-radar-uv",
+              title: "UV雷达扩散特效",
+              description: "基于UV坐标的雷达扩散波纹动画效果",
+              thumbnail: "images/visualization-radar-uv.jpg",
+              version: "r179",
+              url: "examples/visualization-radar-uv",
+              features: {
+                coreTech: "Data Visualization, Shader",
+                secondaryTech: "数据处理, 特效渲染",
+                difficulty: "进阶",
+                actualFunction: "基于UV坐标的雷达扩散波纹动画效果",
+                suggestedCategory: "11. 可视化与数据",
+                filePath: "examples/examples/visualization-radar-uv",
+                notes: "数据可视化示例 (自动推断)",
+              },
             },
             {
-              "id": "visualization-radar-spread",
-              "title": "雷达扩散特效",
-              "description": "圆形波纹向外扩散效果，模拟雷达探测波",
-              "thumbnail": "images/visualization-radar-spread.jpg",
-              "version": "r179",
-              "url": "examples/visualization-radar-spread",
-              "features": {
-                "coreTech": "Data Visualization, Shader",
-                "secondaryTech": "数据处理, 特效渲染",
-                "difficulty": "进阶",
-                "actualFunction": "圆形波纹向外扩散效果，模拟雷达探测波",
-                "suggestedCategory": "11. 可视化与数据",
-                "filePath": "examples/examples/visualization-radar-spread",
-                "notes": "数据可视化示例 (自动推断)"
-              }
+              id: "visualization-radar-spread",
+              title: "雷达扩散特效",
+              description: "圆形波纹向外扩散效果，模拟雷达探测波",
+              thumbnail: "images/visualization-radar-spread.jpg",
+              version: "r179",
+              url: "examples/visualization-radar-spread",
+              features: {
+                coreTech: "Data Visualization, Shader",
+                secondaryTech: "数据处理, 特效渲染",
+                difficulty: "进阶",
+                actualFunction: "圆形波纹向外扩散效果，模拟雷达探测波",
+                suggestedCategory: "11. 可视化与数据",
+                filePath: "examples/examples/visualization-radar-spread",
+                notes: "数据可视化示例 (自动推断)",
+              },
             },
             {
-              "id": "visualization-radar-scan",
-              "title": "雷达扫描特效",
-              "description": "旋转扫描线效果，带有渐变衰减",
-              "thumbnail": "images/visualization-radar-scan.jpg",
-              "version": "r179",
-              "url": "examples/visualization-radar-scan",
-              "features": {
-                "coreTech": "Data Visualization, Shader",
-                "secondaryTech": "数据处理, 特效渲染",
-                "difficulty": "进阶",
-                "actualFunction": "旋转扫描线效果，带有渐变衰减",
-                "suggestedCategory": "11. 可视化与数据",
-                "filePath": "examples/examples/visualization-radar-scan",
-                "notes": "数据可视化示例 (自动推断)"
-              }
+              id: "visualization-radar-scan",
+              title: "雷达扫描特效",
+              description: "旋转扫描线效果，带有渐变衰减",
+              thumbnail: "images/visualization-radar-scan.jpg",
+              version: "r179",
+              url: "examples/visualization-radar-scan",
+              features: {
+                coreTech: "Data Visualization, Shader",
+                secondaryTech: "数据处理, 特效渲染",
+                difficulty: "进阶",
+                actualFunction: "旋转扫描线效果，带有渐变衰减",
+                suggestedCategory: "11. 可视化与数据",
+                filePath: "examples/examples/visualization-radar-scan",
+                notes: "数据可视化示例 (自动推断)",
+              },
             },
             {
-              "id": "visualization-earth-sweep",
-              "title": "地球渐变扫光",
-              "description": "地球表面的渐变扫描光效果",
-              "thumbnail": "images/visualization-earth-sweep.jpg",
-              "version": "r179",
-              "url": "examples/visualization-earth-sweep",
-              "features": {
-                "coreTech": "Data Visualization, Shader",
-                "secondaryTech": "数据处理, 特效渲染",
-                "difficulty": "进阶",
-                "actualFunction": "地球表面的渐变扫描光效果",
-                "suggestedCategory": "11. 可视化与数据",
-                "filePath": "examples/examples/visualization-earth-sweep",
-                "notes": "数据可视化示例 (自动推断)"
-              }
+              id: "visualization-earth-sweep",
+              title: "地球渐变扫光",
+              description: "地球表面的渐变扫描光效果",
+              thumbnail: "images/visualization-earth-sweep.jpg",
+              version: "r179",
+              url: "examples/visualization-earth-sweep",
+              features: {
+                coreTech: "Data Visualization, Shader",
+                secondaryTech: "数据处理, 特效渲染",
+                difficulty: "进阶",
+                actualFunction: "地球表面的渐变扫描光效果",
+                suggestedCategory: "11. 可视化与数据",
+                filePath: "examples/examples/visualization-earth-sweep",
+                notes: "数据可视化示例 (自动推断)",
+              },
             },
             {
-              "id": "visualization-earth-spot-sweep",
-              "title": "地球斑点扫光",
-              "description": "地球表面的斑点状扫描光效果",
-              "thumbnail": "images/visualization-earth-spot-sweep.jpg",
-              "version": "r179",
-              "url": "examples/visualization-earth-spot-sweep",
-              "features": {
-                "coreTech": "Data Visualization, Shader",
-                "secondaryTech": "数据处理, 特效渲染",
-                "difficulty": "进阶",
-                "actualFunction": "地球表面的斑点状扫描光效果",
-                "suggestedCategory": "11. 可视化与数据",
-                "filePath": "examples/examples/visualization-earth-spot-sweep",
-                "notes": "数据可视化示例 (自动推断)"
-              }
+              id: "visualization-earth-spot-sweep",
+              title: "地球斑点扫光",
+              description: "地球表面的斑点状扫描光效果",
+              thumbnail: "images/visualization-earth-spot-sweep.jpg",
+              version: "r179",
+              url: "examples/visualization-earth-spot-sweep",
+              features: {
+                coreTech: "Data Visualization, Shader",
+                secondaryTech: "数据处理, 特效渲染",
+                difficulty: "进阶",
+                actualFunction: "地球表面的斑点状扫描光效果",
+                suggestedCategory: "11. 可视化与数据",
+                filePath: "examples/examples/visualization-earth-spot-sweep",
+                notes: "数据可视化示例 (自动推断)",
+              },
             },
             {
-              "id": "visualization-merged-shape-monitor",
-              "title": "合并形状监测",
-              "description": "使用射线检测合并几何体中的单个形状动作",
-              "thumbnail": "images/visualization-merged-shape-monitor.jpg",
-              "version": "r179",
-              "url": "examples/visualization-merged-shape-monitor",
-              "features": {
-                "coreTech": "Data Visualization, Shader",
-                "secondaryTech": "数据处理, 特效渲染",
-                "difficulty": "进阶",
-                "actualFunction": "使用射线检测合并几何体中的单个形状动作",
-                "suggestedCategory": "11. 可视化与数据",
-                "filePath": "examples/examples/visualization-merged-shape-monitor",
-                "notes": "数据可视化示例 (自动推断)"
-              }
+              id: "visualization-merged-shape-monitor",
+              title: "合并形状监测",
+              description: "使用射线检测合并几何体中的单个形状动作",
+              thumbnail: "images/visualization-merged-shape-monitor.jpg",
+              version: "r179",
+              url: "examples/visualization-merged-shape-monitor",
+              features: {
+                coreTech: "Data Visualization, Shader",
+                secondaryTech: "数据处理, 特效渲染",
+                difficulty: "进阶",
+                actualFunction: "使用射线检测合并几何体中的单个形状动作",
+                suggestedCategory: "11. 可视化与数据",
+                filePath:
+                  "examples/examples/visualization-merged-shape-monitor",
+                notes: "数据可视化示例 (自动推断)",
+              },
             },
             {
-              "id": "visualization-earth-texture",
-              "title": "地球贴图",
-              "description": "带有纹理贴图的旋转地球",
-              "thumbnail": "images/visualization-earth-texture.jpg",
-              "version": "r179",
-              "url": "examples/visualization-earth-texture",
-              "features": {
-                "coreTech": "Data Visualization, Shader",
-                "secondaryTech": "数据处理, 特效渲染",
-                "difficulty": "进阶",
-                "actualFunction": "带有纹理贴图的旋转地球",
-                "suggestedCategory": "11. 可视化与数据",
-                "filePath": "examples/examples/visualization-earth-texture",
-                "notes": "数据可视化示例 (自动推断)"
-              }
+              id: "visualization-earth-texture",
+              title: "地球贴图",
+              description: "带有纹理贴图的旋转地球",
+              thumbnail: "images/visualization-earth-texture.jpg",
+              version: "r179",
+              url: "examples/visualization-earth-texture",
+              features: {
+                coreTech: "Data Visualization, Shader",
+                secondaryTech: "数据处理, 特效渲染",
+                difficulty: "进阶",
+                actualFunction: "带有纹理贴图的旋转地球",
+                suggestedCategory: "11. 可视化与数据",
+                filePath: "examples/examples/visualization-earth-texture",
+                notes: "数据可视化示例 (自动推断)",
+              },
             },
             {
-              "id": "visualization-earth-columns",
-              "title": "地球柱体",
-              "description": "使用InstancedMesh实现的地球柱状图",
-              "thumbnail": "images/visualization-earth-columns.jpg",
-              "version": "r179",
-              "url": "examples/visualization-earth-columns",
-              "features": {
-                "coreTech": "Data Visualization, Shader",
-                "secondaryTech": "数据处理, 特效渲染",
-                "difficulty": "进阶",
-                "actualFunction": "使用InstancedMesh实现的地球柱状图",
-                "suggestedCategory": "11. 可视化与数据",
-                "filePath": "examples/examples/visualization-earth-columns",
-                "notes": "数据可视化示例 (自动推断)"
-              }
+              id: "visualization-earth-columns",
+              title: "地球柱体",
+              description: "使用InstancedMesh实现的地球柱状图",
+              thumbnail: "images/visualization-earth-columns.jpg",
+              version: "r179",
+              url: "examples/visualization-earth-columns",
+              features: {
+                coreTech: "Data Visualization, Shader",
+                secondaryTech: "数据处理, 特效渲染",
+                difficulty: "进阶",
+                actualFunction: "使用InstancedMesh实现的地球柱状图",
+                suggestedCategory: "11. 可视化与数据",
+                filePath: "examples/examples/visualization-earth-columns",
+                notes: "数据可视化示例 (自动推断)",
+              },
             },
             {
-              "id": "visualization-earth-columns-optimized",
-              "title": "地球柱体优化",
-              "description": "使用BufferGeometryUtils.mergeGeometries合并优化的地球柱状图",
-              "thumbnail": "images/visualization-earth-columns-optimized.jpg",
-              "version": "r179",
-              "url": "examples/visualization-earth-columns-optimized",
-              "features": {
-                "coreTech": "Data Visualization, Shader",
-                "secondaryTech": "数据处理, 特效渲染",
-                "difficulty": "进阶",
-                "actualFunction": "使用BufferGeometryUtils.mergeGeometries合并优化的地球柱状图",
-                "suggestedCategory": "11. 可视化与数据",
-                "filePath": "examples/examples/visualization-earth-columns-optimized",
-                "notes": "数据可视化示例 (自动推断)"
-              }
+              id: "visualization-earth-columns-optimized",
+              title: "地球柱体优化",
+              description:
+                "使用BufferGeometryUtils.mergeGeometries合并优化的地球柱状图",
+              thumbnail: "images/visualization-earth-columns-optimized.jpg",
+              version: "r179",
+              url: "examples/visualization-earth-columns-optimized",
+              features: {
+                coreTech: "Data Visualization, Shader",
+                secondaryTech: "数据处理, 特效渲染",
+                difficulty: "进阶",
+                actualFunction:
+                  "使用BufferGeometryUtils.mergeGeometries合并优化的地球柱状图",
+                suggestedCategory: "11. 可视化与数据",
+                filePath:
+                  "examples/examples/visualization-earth-columns-optimized",
+                notes: "数据可视化示例 (自动推断)",
+              },
             },
             {
-              "id": "visualization-earth-columns-animation",
-              "title": "地球柱体合并优化动画",
-              "description": "带动画效果的地球柱状图，柱体高度随时间波动",
-              "thumbnail": "images/visualization-earth-columns-animation.jpg",
-              "version": "r179",
-              "url": "examples/visualization-earth-columns-animation",
-              "features": {
-                "coreTech": "Data Visualization, Shader",
-                "secondaryTech": "数据处理, 特效渲染",
-                "difficulty": "进阶",
-                "actualFunction": "带动画效果的地球柱状图，柱体高度随时间波动",
-                "suggestedCategory": "11. 可视化与数据",
-                "filePath": "examples/examples/visualization-earth-columns-animation",
-                "notes": "数据可视化示例 (自动推断)"
-              }
+              id: "visualization-earth-columns-animation",
+              title: "地球柱体合并优化动画",
+              description: "带动画效果的地球柱状图，柱体高度随时间波动",
+              thumbnail: "images/visualization-earth-columns-animation.jpg",
+              version: "r179",
+              url: "examples/visualization-earth-columns-animation",
+              features: {
+                coreTech: "Data Visualization, Shader",
+                secondaryTech: "数据处理, 特效渲染",
+                difficulty: "进阶",
+                actualFunction: "带动画效果的地球柱状图，柱体高度随时间波动",
+                suggestedCategory: "11. 可视化与数据",
+                filePath:
+                  "examples/examples/visualization-earth-columns-animation",
+                notes: "数据可视化示例 (自动推断)",
+              },
             },
             {
-              "id": "visualization-earth-sweep",
-              "title": "地球渐变扫光",
-              "description": "地球表面的渐变扫描光效果",
-              "thumbnail": "images/visualization-earth-sweep.jpg",
-              "version": "r179",
-              "url": "examples/visualization-earth-sweep",
-              "features": {
-                "coreTech": "Data Visualization, Shader",
-                "secondaryTech": "数据处理, 特效渲染",
-                "difficulty": "进阶",
-                "actualFunction": "地球表面的渐变扫描光效果",
-                "suggestedCategory": "11. 可视化与数据",
-                "filePath": "examples/examples/visualization-earth-sweep",
-                "notes": "数据可视化示例 (自动推断)"
-              }
+              id: "visualization-earth-sweep",
+              title: "地球渐变扫光",
+              description: "地球表面的渐变扫描光效果",
+              thumbnail: "images/visualization-earth-sweep.jpg",
+              version: "r179",
+              url: "examples/visualization-earth-sweep",
+              features: {
+                coreTech: "Data Visualization, Shader",
+                secondaryTech: "数据处理, 特效渲染",
+                difficulty: "进阶",
+                actualFunction: "地球表面的渐变扫描光效果",
+                suggestedCategory: "11. 可视化与数据",
+                filePath: "examples/examples/visualization-earth-sweep",
+                notes: "数据可视化示例 (自动推断)",
+              },
             },
             {
-              "id": "visualization-earth-spot-sweep",
-              "title": "地球斑点扫光",
-              "description": "地球表面的斑点状扫描光效果",
-              "thumbnail": "images/visualization-earth-spot-sweep.jpg",
-              "version": "r179",
-              "url": "examples/visualization-earth-spot-sweep",
-              "features": {
-                "coreTech": "Data Visualization, Shader",
-                "secondaryTech": "数据处理, 特效渲染",
-                "difficulty": "进阶",
-                "actualFunction": "地球表面的斑点状扫描光效果",
-                "suggestedCategory": "11. 可视化与数据",
-                "filePath": "examples/examples/visualization-earth-spot-sweep",
-                "notes": "数据可视化示例 (自动推断)"
-              }
+              id: "visualization-earth-spot-sweep",
+              title: "地球斑点扫光",
+              description: "地球表面的斑点状扫描光效果",
+              thumbnail: "images/visualization-earth-spot-sweep.jpg",
+              version: "r179",
+              url: "examples/visualization-earth-spot-sweep",
+              features: {
+                coreTech: "Data Visualization, Shader",
+                secondaryTech: "数据处理, 特效渲染",
+                difficulty: "进阶",
+                actualFunction: "地球表面的斑点状扫描光效果",
+                suggestedCategory: "11. 可视化与数据",
+                filePath: "examples/examples/visualization-earth-spot-sweep",
+                notes: "数据可视化示例 (自动推断)",
+              },
             },
             {
-              "id": "visualization-heatmap-2d",
-              "title": "2D热力图",
-              "description": "平面热力图可视化，支持动态热点",
-              "thumbnail": "images/visualization-heatmap-2d.jpg",
-              "version": "r179",
-              "url": "examples/visualization-heatmap-2d",
-              "features": {
-                "coreTech": "Data Visualization, Shader",
-                "secondaryTech": "数据处理, 特效渲染",
-                "difficulty": "进阶",
-                "actualFunction": "平面热力图可视化，支持动态热点",
-                "suggestedCategory": "11. 可视化与数据",
-                "filePath": "examples/examples/visualization-heatmap-2d",
-                "notes": "数据可视化示例 (自动推断)"
-              }
+              id: "visualization-heatmap-2d",
+              title: "2D热力图",
+              description: "平面热力图可视化，支持动态热点",
+              thumbnail: "images/visualization-heatmap-2d.jpg",
+              version: "r179",
+              url: "examples/visualization-heatmap-2d",
+              features: {
+                coreTech: "Data Visualization, Shader",
+                secondaryTech: "数据处理, 特效渲染",
+                difficulty: "进阶",
+                actualFunction: "平面热力图可视化，支持动态热点",
+                suggestedCategory: "11. 可视化与数据",
+                filePath: "examples/examples/visualization-heatmap-2d",
+                notes: "数据可视化示例 (自动推断)",
+              },
             },
             {
-              "id": "visualization-smooth-seconds",
-              "title": "平滑运动秒针",
-              "description": "使用弹性缓动函数实现的平滑运动秒针",
-              "thumbnail": "images/visualization-smooth-seconds.jpg",
-              "version": "r179",
-              "url": "examples/visualization-smooth-seconds",
-              "features": {
-                "coreTech": "Data Visualization, Shader",
-                "secondaryTech": "数据处理, 特效渲染",
-                "difficulty": "进阶",
-                "actualFunction": "使用弹性缓动函数实现的平滑运动秒针",
-                "suggestedCategory": "11. 可视化与数据",
-                "filePath": "examples/examples/visualization-smooth-seconds",
-                "notes": "数据可视化示例 (自动推断)"
-              }
+              id: "visualization-smooth-seconds",
+              title: "平滑运动秒针",
+              description: "使用弹性缓动函数实现的平滑运动秒针",
+              thumbnail: "images/visualization-smooth-seconds.jpg",
+              version: "r179",
+              url: "examples/visualization-smooth-seconds",
+              features: {
+                coreTech: "Data Visualization, Shader",
+                secondaryTech: "数据处理, 特效渲染",
+                difficulty: "进阶",
+                actualFunction: "使用弹性缓动函数实现的平滑运动秒针",
+                suggestedCategory: "11. 可视化与数据",
+                filePath: "examples/examples/visualization-smooth-seconds",
+                notes: "数据可视化示例 (自动推断)",
+              },
             },
             {
-              "id": "visualization-heatmap-3d-hill",
-              "title": "3D热力山丘图",
-              "description": "3D热力图山丘可视化，带光照和颜色渐变",
-              "thumbnail": "images/visualization-heatmap-3d-hill.jpg",
-              "version": "r179",
-              "url": "examples/visualization-heatmap-3d-hill",
-              "features": {
-                "coreTech": "Data Visualization, Shader",
-                "secondaryTech": "数据处理, 特效渲染",
-                "difficulty": "进阶",
-                "actualFunction": "3D热力图山丘可视化，带光照和颜色渐变",
-                "suggestedCategory": "11. 可视化与数据",
-                "filePath": "examples/examples/visualization-heatmap-3d-hill",
-                "notes": "数据可视化示例 (自动推断)"
-              }
+              id: "visualization-heatmap-3d-hill",
+              title: "3D热力山丘图",
+              description: "3D热力图山丘可视化，带光照和颜色渐变",
+              thumbnail: "images/visualization-heatmap-3d-hill.jpg",
+              version: "r179",
+              url: "examples/visualization-heatmap-3d-hill",
+              features: {
+                coreTech: "Data Visualization, Shader",
+                secondaryTech: "数据处理, 特效渲染",
+                difficulty: "进阶",
+                actualFunction: "3D热力图山丘可视化，带光照和颜色渐变",
+                suggestedCategory: "11. 可视化与数据",
+                filePath: "examples/examples/visualization-heatmap-3d-hill",
+                notes: "数据可视化示例 (自动推断)",
+              },
             },
             {
-              "id": "visualization-contour-line-3d",
-              "title": "纯色3D等高线图",
-              "description": "基于热力图数据的3D等高线可视化，纯色线条",
-              "thumbnail": "images/visualization-contour-line-3d.jpg",
-              "version": "r179",
-              "url": "examples/visualization-contour-line-3d",
-              "features": {
-                "coreTech": "Data Visualization, Shader",
-                "secondaryTech": "数据处理, 特效渲染",
-                "difficulty": "进阶",
-                "actualFunction": "基于热力图数据的3D等高线可视化，纯色线条",
-                "suggestedCategory": "11. 可视化与数据",
-                "filePath": "examples/examples/visualization-contour-line-3d",
-                "notes": "数据可视化示例 (自动推断)"
-              }
+              id: "visualization-contour-line-3d",
+              title: "纯色3D等高线图",
+              description: "基于热力图数据的3D等高线可视化，纯色线条",
+              thumbnail: "images/visualization-contour-line-3d.jpg",
+              version: "r179",
+              url: "examples/visualization-contour-line-3d",
+              features: {
+                coreTech: "Data Visualization, Shader",
+                secondaryTech: "数据处理, 特效渲染",
+                difficulty: "进阶",
+                actualFunction: "基于热力图数据的3D等高线可视化，纯色线条",
+                suggestedCategory: "11. 可视化与数据",
+                filePath: "examples/examples/visualization-contour-line-3d",
+                notes: "数据可视化示例 (自动推断)",
+              },
             },
             {
-              "id": "visualization-contour-line-3d-colored",
-              "title": "彩色3D等高线图",
-              "description": "基于热力图数据的3D彩色等高线可视化",
-              "thumbnail": "images/visualization-contour-line-3d-colored.jpg",
-              "version": "r179",
-              "url": "examples/visualization-contour-line-3d-colored",
-              "features": {
-                "coreTech": "Data Visualization, Shader",
-                "secondaryTech": "数据处理, 特效渲染",
-                "difficulty": "进阶",
-                "actualFunction": "基于热力图数据的3D彩色等高线可视化",
-                "suggestedCategory": "11. 可视化与数据",
-                "filePath": "examples/examples/visualization-contour-line-3d-colored",
-                "notes": "数据可视化示例 (自动推断)"
-              }
+              id: "visualization-contour-line-3d-colored",
+              title: "彩色3D等高线图",
+              description: "基于热力图数据的3D彩色等高线可视化",
+              thumbnail: "images/visualization-contour-line-3d-colored.jpg",
+              version: "r179",
+              url: "examples/visualization-contour-line-3d-colored",
+              features: {
+                coreTech: "Data Visualization, Shader",
+                secondaryTech: "数据处理, 特效渲染",
+                difficulty: "进阶",
+                actualFunction: "基于热力图数据的3D彩色等高线可视化",
+                suggestedCategory: "11. 可视化与数据",
+                filePath:
+                  "examples/examples/visualization-contour-line-3d-colored",
+                notes: "数据可视化示例 (自动推断)",
+              },
             },
             {
-              "id": "visualization-contour-heatmap-3d",
-              "title": "3D等高线图+热力图",
-              "description": "同时显示等高线和热力渐变效果的3D可视化",
-              "thumbnail": "images/visualization-contour-heatmap-3d.jpg",
-              "version": "r179",
-              "url": "examples/visualization-contour-heatmap-3d",
-              "features": {
-                "coreTech": "Data Visualization, Shader",
-                "secondaryTech": "数据处理, 特效渲染",
-                "difficulty": "进阶",
-                "actualFunction": "同时显示等高线和热力渐变效果的3D可视化",
-                "suggestedCategory": "11. 可视化与数据",
-                "filePath": "examples/examples/visualization-contour-heatmap-3d",
-                "notes": "数据可视化示例 (自动推断)"
-              }
+              id: "visualization-contour-heatmap-3d",
+              title: "3D等高线图+热力图",
+              description: "同时显示等高线和热力渐变效果的3D可视化",
+              thumbnail: "images/visualization-contour-heatmap-3d.jpg",
+              version: "r179",
+              url: "examples/visualization-contour-heatmap-3d",
+              features: {
+                coreTech: "Data Visualization, Shader",
+                secondaryTech: "数据处理, 特效渲染",
+                difficulty: "进阶",
+                actualFunction: "同时显示等高线和热力渐变效果的3D可视化",
+                suggestedCategory: "11. 可视化与数据",
+                filePath: "examples/examples/visualization-contour-heatmap-3d",
+                notes: "数据可视化示例 (自动推断)",
+              },
             },
             {
-              "id": "visualization-stepped-contour-heatmap-3d",
-              "title": "3D断层阶梯热力图",
-              "description": "阶梯状热力图可视化，形成断层效果",
-              "thumbnail": "images/visualization-stepped-contour-heatmap-3d.jpg",
-              "version": "r179",
-              "url": "examples/visualization-stepped-contour-heatmap-3d",
-              "features": {
-                "coreTech": "Data Visualization, Shader",
-                "secondaryTech": "数据处理, 特效渲染",
-                "difficulty": "进阶",
-                "actualFunction": "阶梯状热力图可视化，形成断层效果",
-                "suggestedCategory": "11. 可视化与数据",
-                "filePath": "examples/examples/visualization-stepped-contour-heatmap-3d",
-                "notes": "数据可视化示例 (自动推断)"
-              }
+              id: "visualization-stepped-contour-heatmap-3d",
+              title: "3D断层阶梯热力图",
+              description: "阶梯状热力图可视化，形成断层效果",
+              thumbnail: "images/visualization-stepped-contour-heatmap-3d.jpg",
+              version: "r179",
+              url: "examples/visualization-stepped-contour-heatmap-3d",
+              features: {
+                coreTech: "Data Visualization, Shader",
+                secondaryTech: "数据处理, 特效渲染",
+                difficulty: "进阶",
+                actualFunction: "阶梯状热力图可视化，形成断层效果",
+                suggestedCategory: "11. 可视化与数据",
+                filePath:
+                  "examples/examples/visualization-stepped-contour-heatmap-3d",
+                notes: "数据可视化示例 (自动推断)",
+              },
             },
             {
-              "id": "visualization-framebuffer",
-              "title": "帧缓存基础",
-              "description": "演示帧缓冲区和后处理技术，包括雾气、暗角、色差、扫描线效果",
-              "thumbnail": "images/visualization-framebuffer.jpg",
-              "version": "r179",
-              "url": "examples/visualization-framebuffer",
-              "features": {
-                "coreTech": "Data Visualization, Shader",
-                "secondaryTech": "数据处理, 特效渲染",
-                "difficulty": "进阶",
-                "actualFunction": "演示帧缓冲区和后处理技术，包括雾气、暗角、色差、扫描线效果",
-                "suggestedCategory": "11. 可视化与数据",
-                "filePath": "examples/examples/visualization-framebuffer",
-                "notes": "数据可视化示例 (自动推断)"
-              }
+              id: "visualization-framebuffer",
+              title: "帧缓存基础",
+              description:
+                "演示帧缓冲区和后处理技术，包括雾气、暗角、色差、扫描线效果",
+              thumbnail: "images/visualization-framebuffer.jpg",
+              version: "r179",
+              url: "examples/visualization-framebuffer",
+              features: {
+                coreTech: "Data Visualization, Shader",
+                secondaryTech: "数据处理, 特效渲染",
+                difficulty: "进阶",
+                actualFunction:
+                  "演示帧缓冲区和后处理技术，包括雾气、暗角、色差、扫描线效果",
+                suggestedCategory: "11. 可视化与数据",
+                filePath: "examples/examples/visualization-framebuffer",
+                notes: "数据可视化示例 (自动推断)",
+              },
             },
             {
-              "id": "visualization-rain-snow",
-              "title": "雨雪雾天气",
-              "description": "使用粒子系统实现雨雪天气效果，支持雨、雪、雾三种天气切换",
-              "thumbnail": "images/visualization-rain-snow.jpg",
-              "version": "r179",
-              "url": "examples/visualization-rain-snow",
-              "features": {
-                "coreTech": "Data Visualization, Shader",
-                "secondaryTech": "数据处理, 特效渲染",
-                "difficulty": "进阶",
-                "actualFunction": "使用粒子系统实现雨雪天气效果，支持雨、雪、雾三种天气切换",
-                "suggestedCategory": "11. 可视化与数据",
-                "filePath": "examples/examples/visualization-rain-snow",
-                "notes": "数据可视化示例 (自动推断)"
-              }
-            }
-          ]
-        }
-      ]
+              id: "visualization-rain-snow",
+              title: "雨雪雾天气",
+              description:
+                "使用粒子系统实现雨雪天气效果，支持雨、雪、雾三种天气切换",
+              thumbnail: "images/visualization-rain-snow.jpg",
+              version: "r179",
+              url: "examples/visualization-rain-snow",
+              features: {
+                coreTech: "Data Visualization, Shader",
+                secondaryTech: "数据处理, 特效渲染",
+                difficulty: "进阶",
+                actualFunction:
+                  "使用粒子系统实现雨雪天气效果，支持雨、雪、雾三种天气切换",
+                suggestedCategory: "11. 可视化与数据",
+                filePath: "examples/examples/visualization-rain-snow",
+                notes: "数据可视化示例 (自动推断)",
+              },
+            },
+          ],
+        },
+      ],
     },
     {
-      "id": "音视频与媒体",
-      "name": "13. 音视频与媒体",
-      "icon": "bi-music-note-beamed",
-      "subcategories": [
+      id: "数学与算法",
+      name: "12. 数学与算法",
+      icon: "bi-calculator",
+      subcategories: [
         {
-          "id": "音视频与媒体-13.1-其他",
-          "name": "13.1 其他",
-          "examples": [
+          id: "数学与算法-12.1-曲线与几何",
+          name: "12.1 曲线与几何",
+          examples: [
             {
-              "id": "videoModel",
-              "title": "模型视频材质",
-              "description": "使用CanvasTexture实现视频纹理贴图效果",
-              "thumbnail": "images/videoModel.jpg",
-              "version": "r179",
-              "url": "examples/z258/videoModel"
-            }
-          ]
-        }
-      ]
+              id: "advanced-curve-drawing",
+              title: "曲线绘制",
+              description:
+                "使用Three.js绘制各种曲线，包括椭圆曲线、样条曲线、二次/三次贝塞尔曲线和曲线路径组合",
+              thumbnail: "images/advanced-curve-drawing.jpg",
+              version: "r179",
+              url: "examples/advanced-curve-drawing",
+              features: {
+                coreTech:
+                  "Three.js, EllipseCurve, SplineCurve, BezierCurve, CurvePath",
+                secondaryTech: "曲线绘制, 数学几何, 插值算法",
+                difficulty: "中级",
+                actualFunction:
+                  "展示多种曲线API的使用方法，包括椭圆、样条、贝塞尔曲线和路径组合",
+                suggestedCategory: "12. 数学与算法 > 12.1 曲线与几何",
+                filePath: "examples/examples/advanced-curve-drawing",
+                notes: "包含控制点可视化，支持曲线分段数调节",
+              },
+            },
+          ],
+        },
+      ],
     },
     {
-      "id": "应用场景",
-      "name": "14. 应用场景",
-      "icon": "bi-app",
-      "subcategories": [
+      id: "音视频与媒体",
+      name: "13. 音视频与媒体",
+      icon: "bi-music-note-beamed",
+      subcategories: [
         {
-          "id": "应用场景-14.1-其他",
-          "name": "14.1 其他",
-          "examples": [
-            {
-              "id": "application-measure",
-              "title": "3D测量工具",
-              "description": "3D场景中的测量工具，支持距离和角度测量，点击物体或地面放置测量点",
-              "thumbnail": "images/application-measure.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-measure",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "3D场景中的测量工具，支持距离和角度测量，点击物体或地面放置测量点",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-measure",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-mathVisual",
-              "title": "3D数学函数可视化",
-              "description": "展示各种数学函数生成的3D曲面，包括正弦波、涟漪、马鞍面等",
-              "thumbnail": "images/application-mathVisual.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-mathVisual",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "展示各种数学函数生成的3D曲面，包括正弦波、涟漪、马鞍面等",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-mathVisual",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-matrixTransform",
-              "title": "3D矩阵变换可视化",
-              "description": "可视化展示3D矩阵变换（平移、旋转、缩放）及其组合效果",
-              "thumbnail": "images/application-matrixTransform.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-matrixTransform",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "可视化展示3D矩阵变换（平移、旋转、缩放）及其组合效果",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-matrixTransform",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-modelViewer",
-              "title": "3D模型查看器",
-              "description": "支持多种几何体预览和材质调节的3D模型查看器",
-              "thumbnail": "images/application-modelViewer.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-modelViewer",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "支持多种几何体预览和材质调节的3D模型查看器",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-modelViewer",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-fpsRoaming",
-              "title": "第一人称漫游",
-              "description": "使用Pointer Lock Controls实现的第一人称视角漫游体验",
-              "thumbnail": "images/application-fpsRoaming.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-fpsRoaming",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "使用Pointer Lock Controls实现的第一人称视角漫游体验",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-fpsRoaming",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-happyYear",
-              "title": "新年快乐",
-              "description": "3D新年庆祝场景，包含发光文字、灯笼和烟花粒子效果",
-              "thumbnail": "images/application-happyYear.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-happyYear",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "3D新年庆祝场景，包含发光文字、灯笼和烟花粒子效果",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-happyYear",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-houseExplorer",
-              "title": "房屋探索",
-              "description": "第一人称视角房屋探索，包含多个房间和家具",
-              "thumbnail": "images/application-houseExplorer.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-houseExplorer",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "第一人称视角房屋探索，包含多个房间和家具",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-houseExplorer",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-modelNavigator",
-              "title": "模型导航",
-              "description": "3D模型导航系统，支持8种几何体预览和相机导航",
-              "thumbnail": "images/application-modelNavigator.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-modelNavigator",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "3D模型导航系统，支持8种几何体预览和相机导航",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-modelNavigator",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-measureTool",
-              "title": "测量工具",
-              "description": "3D测量工具，支持距离和角度测量",
-              "thumbnail": "images/application-measureTool.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-measureTool",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "3D测量工具，支持距离和角度测量",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-measureTool",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-videoEffect",
-              "title": "视频碎片",
-              "description": "视频碎片效果，展示视频碎片化动画",
-              "thumbnail": "images/application-videoEffect.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-videoEffect",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "视频碎片效果，展示视频碎片化动画",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-videoEffect",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-videoFloor",
-              "title": "视频地板",
-              "description": "视频地板效果，展示视频投影在地板上的效果",
-              "thumbnail": "images/application-videoFloor.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-videoFloor",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "视频地板效果，展示视频投影在地板上的效果",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-videoFloor",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-mathApply",
-              "title": "数学公式应用",
-              "description": "使用数学函数生成3D曲面，包括正弦波、涟漪、马鞍面等",
-              "thumbnail": "images/application-mathApply.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-mathApply",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "使用数学函数生成3D曲面，包括正弦波、涟漪、马鞍面等",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-mathApply",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-matrixOper",
-              "title": "矩阵操作",
-              "description": "可视化展示 Three.js 矩阵变换，包括平移、旋转、缩放",
-              "thumbnail": "images/application-matrixOper.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-matrixOper",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "可视化展示 Three.js 矩阵变换，包括平移、旋转、缩放",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-matrixOper",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-imageMove",
-              "title": "图片移动",
-              "description": "展示图片在3D空间中的多种移动效果",
-              "thumbnail": "images/application-imageMove.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-imageMove",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "展示图片在3D空间中的多种移动效果",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-imageMove",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-vrVideo",
-              "title": "VR 全景视频",
-              "description": "360度全景视频播放，支持鼠标拖动查看",
-              "thumbnail": "images/application-vrVideo.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-vrVideo",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "360度全景视频播放，支持鼠标拖动查看",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-vrVideo",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-modelParticle",
-              "title": "模型粒子化",
-              "description": "将3D模型转换为粒子效果，支持爆炸动画",
-              "thumbnail": "images/application-modelParticle.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-modelParticle",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "将3D模型转换为粒子效果，支持爆炸动画",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-modelParticle",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-pointCloudFpsOctree",
-              "title": "点云第一人称漫游",
-              "description": "使用八叉树优化的点云场景第一人称漫游",
-              "thumbnail": "images/application-pointCloudFpsOctree.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-pointCloudFpsOctree",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "使用八叉树优化的点云场景第一人称漫游",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-pointCloudFpsOctree",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-drawFaceInner",
-              "title": "绘制面_内置点",
-              "description": "在3D平面上绘制内置点标记，支持多种分布模式",
-              "thumbnail": "images/application-drawFaceInner.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-drawFaceInner",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "在3D平面上绘制内置点标记，支持多种分布模式",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-drawFaceInner",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-modelNav",
-              "title": "自动寻路",
-              "description": "3D场景中的自动寻路和路径规划",
-              "thumbnail": "images/application-modelNav.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-modelNav",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "3D场景中的自动寻路和路径规划",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-modelNav",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-gsapTimeLine",
-              "title": "时间轴动画",
-              "description": "使用GSAP时间线创建花园动画场景，展示花朵生长和蝴蝶飞舞",
-              "thumbnail": "images/application-gsapTimeLine.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-gsapTimeLine",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "使用GSAP时间线创建花园动画场景，展示花朵生长和蝴蝶飞舞",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-gsapTimeLine",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-measurement",
-              "title": "测量",
-              "description": "使用Three.js创建测量尺子和箭头测量线，展示Canvas文字渲染",
-              "thumbnail": "images/application-measurement.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-measurement",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "使用Three.js创建测量尺子和箭头测量线，展示Canvas文字渲染",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-measurement",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-coffeeMug",
-              "title": "咖啡蒸汽",
-              "description": "GLTF咖啡杯模型加载，展示蒸汽粒子Shader效果",
-              "thumbnail": "images/application-coffeeMug.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-coffeeMug",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "GLTF咖啡杯模型加载，展示蒸汽粒子Shader效果",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-coffeeMug",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-modelBase",
-              "title": "模型底座",
-              "description": "根据模型边界框自动生成圆形底座，支持颜色和透明度调整",
-              "thumbnail": "images/application-modelBase.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-modelBase",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "根据模型边界框自动生成圆形底座，支持颜色和透明度调整",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-modelBase",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-driving",
-              "title": "无限行驶",
-              "description": "无限道路滚动效果，汽车行驶动画和GUI速度控制",
-              "thumbnail": "images/application-driving.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-driving",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "无限道路滚动效果，汽车行驶动画和GUI速度控制",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-driving",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-modelBorder",
-              "title": "模型边框",
-              "description": "使用 EdgesGeometry 提取模型边缘线，展示模型边框效果",
-              "thumbnail": "images/application-modelBorder.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-modelBorder",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "使用 EdgesGeometry 提取模型边缘线，展示模型边框效果",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-modelBorder",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-geometryMerge",
-              "title": "几何体合并",
-              "description": "将模型所有网格合并为单一几何体，优化渲染性能",
-              "thumbnail": "images/application-geometryMerge.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-geometryMerge",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "将模型所有网格合并为单一几何体，优化渲染性能",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-geometryMerge",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-pie3D",
-              "title": "3D饼图",
-              "description": "使用 ExtrudeGeometry 创建可交互的3D饼图，支持分离效果和标签显示",
-              "thumbnail": "images/application-pie3D.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-pie3D",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "使用 ExtrudeGeometry 创建可交互的3D饼图，支持分离效果和标签显示",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-pie3D",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-terrain",
-              "title": "程序化地形",
-              "description": "使用分形布朗运动生成程序化地形，支持多种参数调节",
-              "thumbnail": "images/application-terrain.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-terrain",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "使用分形布朗运动生成程序化地形，支持多种参数调节",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-terrain",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-coneMesh",
-              "title": "圆锥网格",
-              "description": "使用程序化渐变纹理创建发光圆锥，带泛光后处理效果",
-              "thumbnail": "images/application-coneMesh.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-coneMesh",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "使用程序化渐变纹理创建发光圆锥，带泛光后处理效果",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-coneMesh",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-drawFence",
-              "title": "绘制围栏",
-              "description": "交互式点击地面绘制围栏，支持高度和颜色调节",
-              "thumbnail": "images/application-drawFence.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-drawFence",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "交互式点击地面绘制围栏，支持高度和颜色调节",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-drawFence",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-dynamicTube",
-              "title": "动态管道",
-              "description": "变径管道展示，带流动纹理和泛光后处理效果",
-              "thumbnail": "images/application-dynamicTube.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-dynamicTube",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "变径管道展示，带流动纹理和泛光后处理效果",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-dynamicTube",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-sportFence",
-              "title": "流动围栏",
-              "description": "使用程序化纹理创建动态围栏效果，带网格和流动线条",
-              "thumbnail": "images/application-sportFence.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-sportFence",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "使用程序化纹理创建动态围栏效果，带网格和流动线条",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-sportFence",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-modelHeatmap",
-              "title": "模型热力图",
-              "description": "使用ShaderMaterial在模型底部生成热力图，支持参数调节",
-              "thumbnail": "images/application-modelHeatmap.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-modelHeatmap",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "使用ShaderMaterial在模型底部生成热力图，支持参数调节",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-modelHeatmap",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-faceMesh",
-              "title": "表情",
-              "description": "使用程序化生成面部纹理，展示在球体表面",
-              "thumbnail": "images/application-faceMesh.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-faceMesh",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "使用程序化生成面部纹理，展示在球体表面",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-faceMesh",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-measureDraw",
-              "title": "画线测量",
-              "description": "交互式画线测量距离，支持点击添加节点、拖拽调整位置",
-              "thumbnail": "images/application-measureDraw.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-measureDraw",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "交互式画线测量距离，支持点击添加节点、拖拽调整位置",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-measureDraw",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-measureArea",
-              "title": "测量面积",
-              "description": "交互式绘制多边形测量面积，实时显示面积结果在面中心",
-              "thumbnail": "images/application-measureArea.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-measureArea",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "交互式绘制多边形测量面积，实时显示面积结果在面中心",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-measureArea",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-textSphere",
-              "title": "球体文字",
-              "description": "在球体表面分布3D文字标签，展示WebGL相关技术词汇",
-              "thumbnail": "images/application-textSphere.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-textSphere",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "在球体表面分布3D文字标签，展示WebGL相关技术词汇",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-textSphere",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-lightBar",
-              "title": "光柱",
-              "description": "创建带有纹理和发光效果的3D光柱，支持动态纹理滚动",
-              "thumbnail": "images/application-lightBar.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-lightBar",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "创建带有纹理和发光效果的3D光柱，支持动态纹理滚动",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-lightBar",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-gridFloor",
-              "title": "贴图网格地面",
-              "description": "使用纹理贴图创建科技风格网格地面，带自发光效果",
-              "thumbnail": "images/application-gridFloor.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-gridFloor",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "使用纹理贴图创建科技风格网格地面，带自发光效果",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-gridFloor",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-flowerRain",
-              "title": "花瓣雨",
-              "description": "使用精灵粒子创建飘落的花瓣效果，带飘动动画",
-              "thumbnail": "images/application-flowerRain.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-flowerRain",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "使用精灵粒子创建飘落的花瓣效果，带飘动动画",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-flowerRain",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-customGrid",
-              "title": "自定义网格",
-              "description": "使用BufferGeometry创建自定义网格，通过顶点颜色实现带主次网格线的坐标网格",
-              "thumbnail": "images/application-customGrid.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-customGrid",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "使用BufferGeometry创建自定义网格，通过顶点颜色实现带主次网格线的坐标网格",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-customGrid",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-isoline",
-              "title": "等值线",
-              "description": "使用SimplexNoise生成地形高度，通过CanvasTexture绘制等值线纹理展示地形",
-              "thumbnail": "images/application-isoline.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-isoline",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "使用SimplexNoise生成地形高度，通过CanvasTexture绘制等值线纹理展示地形",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-isoline",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-radarScan",
-              "title": "雷达扫描",
-              "description": "使用Three.js创建雷达扫描效果，通过自定义着色器实现雷达扫描动画和尾迹效果",
-              "thumbnail": "images/application-radarScan.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-radarScan",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "使用Three.js创建雷达扫描效果，通过自定义着色器实现雷达扫描动画和尾迹效果",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-radarScan",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-flowTube",
-              "title": "管道表面运动",
-              "description": "使用Three.js创建管道表面运动效果，通过自定义着色器实现流动的管道接头动画",
-              "thumbnail": "images/application-flowTube.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-flowTube",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "使用Three.js创建管道表面运动效果，通过自定义着色器实现流动的管道接头动画",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-flowTube",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-whiteModel",
-              "title": "随机城市白膜",
-              "description": "使用Three.js创建随机城市白膜效果，通过程序化生成建筑展示城市模型",
-              "thumbnail": "images/application-whiteModel.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-whiteModel",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "使用Three.js创建随机城市白膜效果，通过程序化生成建筑展示城市模型",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-whiteModel",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-windMove",
-              "title": "风吹动画",
-              "description": "使用Three.js创建风吹动画效果，通过自定义着色器实现龙卷风螺旋运动",
-              "thumbnail": "images/application-windMove.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-windMove",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "使用Three.js创建风吹动画效果，通过自定义着色器实现龙卷风螺旋运动",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-windMove",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-samplexWave",
-              "title": "采样波",
-              "description": "使用Three.js创建采样波动画效果，通过后期处理辉光效果展示波浪运动",
-              "thumbnail": "images/application-samplexWave.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-samplexWave",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "使用Three.js创建采样波动画效果，通过后期处理辉光效果展示波浪运动",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-samplexWave",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-tweenFire",
-              "title": "精灵火花",
-              "description": "使用Three.js创建精灵火花效果，通过CanvasTexture和Tween实现粒子动画",
-              "thumbnail": "images/application-tweenFire.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-tweenFire",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "使用Three.js创建精灵火花效果，通过CanvasTexture和Tween实现粒子动画",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-tweenFire",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-girdMaterial",
-              "title": "网格材质",
-              "description": "使用Three.js创建网格材质效果，通过自定义着色器实现程序化网格线",
-              "thumbnail": "images/application-girdMaterial.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-girdMaterial",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "使用Three.js创建网格材质效果，通过自定义着色器实现程序化网格线",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-girdMaterial",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "application-windTurbineWake",
-              "title": "风力涡轮机尾迹",
-              "description": "使用Three.js创建风力涡轮机尾迹效果，通过粒子系统模拟湍流尾流",
-              "thumbnail": "images/application-windTurbineWake.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-windTurbineWake",
-              "features": {
-                "coreTech": "Application, Integration",
-                "secondaryTech": "实际应用, 业务逻辑",
-                "difficulty": "进阶",
-                "actualFunction": "使用Three.js创建风力涡轮机尾迹效果，通过粒子系统模拟湍流尾流",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/z258/application-windTurbineWake",
-                "notes": "应用示例 (自动推断)"
-              }
-            },
-            {
-              "id": "digital-twin-particle-system",
-              "title": "粒子系统",
-              "description": "创建各种粒子特效，如烟雾、火焰、雨雪等环境效果",
-              "thumbnail": "images/digital-twin-particle-system.jpg",
-              "version": "r179",
-              "url": "examples/digital-twin-particle-system",
-              "features": {
-                "coreTech": "Digital Twin, Visualization",
-                "secondaryTech": "数据驱动, 实时监控",
-                "difficulty": "进阶",
-                "actualFunction": "创建各种粒子特效，如烟雾、火焰、雨雪等环境效果",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/digital-twin-particle-system",
-                "notes": "数字孪生示例 (自动推断)"
-              }
-            },
-            {
-              "id": "digital-twin-water-simulation",
-              "title": "水面模拟",
-              "description": "模拟真实的水面波动效果，适用于海洋、湖泊场景",
-              "thumbnail": "images/digital-twin-water-simulation.jpg",
-              "version": "r179",
-              "url": "examples/digital-twin-water-simulation",
-              "features": {
-                "coreTech": "Digital Twin, Visualization",
-                "secondaryTech": "数据驱动, 实时监控",
-                "difficulty": "进阶",
-                "actualFunction": "模拟真实的水面波动效果，适用于海洋、湖泊场景",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/digital-twin-water-simulation",
-                "notes": "数字孪生示例 (自动推断)"
-              }
-            },
-            {
-              "id": "digital-twin-fog-atmosphere",
-              "title": "雾气大气",
-              "description": "创建逼真的雾气和大气散射效果，增强场景真实感",
-              "thumbnail": "images/digital-twin-fog-atmosphere.jpg",
-              "version": "r179",
-              "url": "examples/digital-twin-fog-atmosphere",
-              "features": {
-                "coreTech": "Digital Twin, Visualization",
-                "secondaryTech": "数据驱动, 实时监控",
-                "difficulty": "进阶",
-                "actualFunction": "创建逼真的雾气和大气散射效果，增强场景真实感",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/digital-twin-fog-atmosphere",
-                "notes": "数字孪生示例 (自动推断)"
-              }
-            },
-            {
-              "id": "digital-twin-volumetric-lighting",
-              "title": "体积光照",
-              "description": "实现体积光照效果，如光束、光柱等戏剧性光照",
-              "thumbnail": "images/digital-twin-volumetric-lighting.jpg",
-              "version": "r179",
-              "url": "examples/digital-twin-volumetric-lighting",
-              "features": {
-                "coreTech": "Digital Twin, Visualization",
-                "secondaryTech": "数据驱动, 实时监控",
-                "difficulty": "进阶",
-                "actualFunction": "实现体积光照效果，如光束、光柱等戏剧性光照",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/digital-twin-volumetric-lighting",
-                "notes": "数字孪生示例 (自动推断)"
-              }
-            },
-            {
-              "id": "digital-twin-data-flow",
-              "title": "数据流动画",
-              "description": "可视化数据在系统中的流动过程，适用于网络拓扑展示",
-              "thumbnail": "images/digital-twin-data-flow.jpg",
-              "version": "r179",
-              "url": "examples/digital-twin-data-flow",
-              "features": {
-                "coreTech": "Digital Twin, Visualization",
-                "secondaryTech": "数据驱动, 实时监控",
-                "difficulty": "进阶",
-                "actualFunction": "可视化数据在系统中的流动过程，适用于网络拓扑展示",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/digital-twin-data-flow",
-                "notes": "数字孪生示例 (自动推断)"
-              }
-            },
-            {
-              "id": "digital-twin-heatmap",
-              "title": "热力图显示",
-              "description": "在3D场景中展示热力图数据，如温度分布、人流密度等",
-              "thumbnail": "images/digital-twin-heatmap.jpg",
-              "version": "r179",
-              "url": "examples/digital-twin-heatmap",
-              "features": {
-                "coreTech": "Digital Twin, Visualization",
-                "secondaryTech": "数据驱动, 实时监控",
-                "difficulty": "进阶",
-                "actualFunction": "在3D场景中展示热力图数据，如温度分布、人流密度等",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/digital-twin-heatmap",
-                "notes": "数字孪生示例 (自动推断)"
-              }
-            },
-            {
-              "id": "digital-twin-sensor-visualization",
-              "title": "传感器可视化",
-              "description": "实时显示传感器数据，包括状态指示和数据变化动画",
-              "thumbnail": "images/digital-twin-sensor-visualization.jpg",
-              "version": "r179",
-              "url": "examples/digital-twin-sensor-visualization",
-              "features": {
-                "coreTech": "Digital Twin, Visualization",
-                "secondaryTech": "数据驱动, 实时监控",
-                "difficulty": "进阶",
-                "actualFunction": "实时显示传感器数据，包括状态指示和数据变化动画",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/digital-twin-sensor-visualization",
-                "notes": "数字孪生示例 (自动推断)"
-              }
-            },
-            {
-              "id": "digital-twin-device-control",
-              "title": "设备控制面板",
-              "description": "3D场景中的设备控制界面，支持实时操作和状态反馈",
-              "thumbnail": "images/digital-twin-device-control.jpg",
-              "version": "r179",
-              "url": "examples/digital-twin-device-control",
-              "features": {
-                "coreTech": "Digital Twin, Visualization",
-                "secondaryTech": "数据驱动, 实时监控",
-                "difficulty": "进阶",
-                "actualFunction": "3D场景中的设备控制界面，支持实时操作和状态反馈",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/digital-twin-device-control",
-                "notes": "数字孪生示例 (自动推断)"
-              }
-            },
-            {
-              "id": "digital-twin-path-planning",
-              "title": "路径规划",
-              "description": "可视化路径规划算法，适用于机器人导航和物流优化",
-              "thumbnail": "images/digital-twin-path-planning.jpg",
-              "version": "r179",
-              "url": "examples/digital-twin-path-planning",
-              "features": {
-                "coreTech": "Digital Twin, Visualization",
-                "secondaryTech": "数据驱动, 实时监控",
-                "difficulty": "进阶",
-                "actualFunction": "可视化路径规划算法，适用于机器人导航和物流优化",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/digital-twin-path-planning",
-                "notes": "数字孪生示例 (自动推断)"
-              }
-            },
-            {
-              "id": "digital-twin-alarm-system",
-              "title": "报警系统",
-              "description": "3D场景中的报警提示和状态指示，包括声光报警效果",
-              "thumbnail": "images/digital-twin-alarm-system.jpg",
-              "version": "r179",
-              "url": "examples/digital-twin-alarm-system",
-              "features": {
-                "coreTech": "Digital Twin, Visualization",
-                "secondaryTech": "数据驱动, 实时监控",
-                "difficulty": "进阶",
-                "actualFunction": "3D场景中的报警提示和状态指示，包括声光报警效果",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/digital-twin-alarm-system",
-                "notes": "数字孪生示例 (自动推断)"
-              }
-            },
-            {
-              "id": "digital-twin-virtual-assembly",
-              "title": "虚拟装配",
-              "description": "模拟产品装配过程，支持拖拽组装和碰撞检测",
-              "thumbnail": "images/digital-twin-virtual-assembly.jpg",
-              "version": "r179",
-              "url": "examples/digital-twin-virtual-assembly",
-              "features": {
-                "coreTech": "Digital Twin, Visualization",
-                "secondaryTech": "数据驱动, 实时监控",
-                "difficulty": "进阶",
-                "actualFunction": "模拟产品装配过程，支持拖拽组装和碰撞检测",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/digital-twin-virtual-assembly",
-                "notes": "数字孪生示例 (自动推断)"
-              }
-            },
-            {
-              "id": "digital-twin-factory-simulation",
-              "title": "工厂仿真",
-              "description": "完整的工厂生产线仿真，包括设备运行和产品流转",
-              "thumbnail": "images/digital-twin-factory-simulation.jpg",
-              "version": "r179",
-              "url": "examples/digital-twin-factory-simulation",
-              "features": {
-                "coreTech": "Digital Twin, Visualization",
-                "secondaryTech": "数据驱动, 实时监控",
-                "difficulty": "进阶",
-                "actualFunction": "完整的工厂生产线仿真，包括设备运行和产品流转",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/digital-twin-factory-simulation",
-                "notes": "数字孪生示例 (自动推断)"
-              }
-            },
-            {
-              "id": "digital-twin-city-simulation",
-              "title": "城市仿真",
-              "description": "智慧城市场景仿真，包括交通流、人流和基础设施",
-              "thumbnail": "images/digital-twin-city-simulation.jpg",
-              "version": "r179",
-              "url": "examples/digital-twin-city-simulation",
-              "features": {
-                "coreTech": "Digital Twin, Visualization",
-                "secondaryTech": "数据驱动, 实时监控",
-                "difficulty": "进阶",
-                "actualFunction": "智慧城市场景仿真，包括交通流、人流和基础设施",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/digital-twin-city-simulation",
-                "notes": "数字孪生示例 (自动推断)"
-              }
-            },
-            {
-              "id": "digital-twin-building-bim",
-              "title": "建筑BIM",
-              "description": "建筑信息模型展示，支持楼层切换和构件信息查看",
-              "thumbnail": "images/digital-twin-building-bim.jpg",
-              "version": "r179",
-              "url": "examples/digital-twin-building-bim",
-              "features": {
-                "coreTech": "Digital Twin, Visualization",
-                "secondaryTech": "数据驱动, 实时监控",
-                "difficulty": "进阶",
-                "actualFunction": "建筑信息模型展示，支持楼层切换和构件信息查看",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/digital-twin-building-bim",
-                "notes": "数字孪生示例 (自动推断)"
-              }
-            },
-            {
-              "id": "digital-twin-energy-flow",
-              "title": "能源流动",
-              "description": "可视化能源系统中的电力、热力等能源流动过程",
-              "thumbnail": "images/digital-twin-energy-flow.jpg",
-              "version": "r179",
-              "url": "examples/digital-twin-energy-flow",
-              "features": {
-                "coreTech": "Digital Twin, Visualization",
-                "secondaryTech": "数据驱动, 实时监控",
-                "difficulty": "进阶",
-                "actualFunction": "可视化能源系统中的电力、热力等能源流动过程",
-                "suggestedCategory": "14. 应用场景",
-                "filePath": "examples/examples/digital-twin-energy-flow",
-                "notes": "数字孪生示例 (自动推断)"
-              }
-            }
-          ]
-        }
-      ]
+          id: "音视频与媒体-13.1-其他",
+          name: "13.1 其他",
+          examples: [
+            {
+              id: "videoModel",
+              title: "模型视频材质",
+              description: "使用CanvasTexture实现视频纹理贴图效果",
+              thumbnail: "images/videoModel.jpg",
+              version: "r179",
+              url: "examples/z258/videoModel",
+            },
+          ],
+        },
+      ],
     },
     {
-      "id": "游戏类",
-      "name": "15. 游戏类",
-      "icon": "bi-controller",
-      "subcategories": [
+      id: "应用场景",
+      name: "14. 应用场景",
+      icon: "bi-app",
+      subcategories: [
         {
-          "id": "游戏类-15.1-其他",
-          "name": "15.1 其他",
-          "examples": [
+          id: "应用场景-14.1-实用工具",
+          name: "14.1 实用工具",
+          examples: [
             {
-              "id": "game-snake3D",
-              "title": "3D贪吃蛇",
-              "description": "经典贪吃蛇游戏的3D版本，支持键盘控制和碰撞检测",
-              "thumbnail": "images/game-snake3D.jpg",
-              "version": "r179",
-              "url": "examples/z258/game-snake3D"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "id": "扩展功能",
-      "name": "16. 扩展功能",
-      "icon": "bi-puzzle",
-      "subcategories": [
-        {
-          "id": "扩展功能-16.1-性能优化",
-          "name": "16.1 性能优化",
-          "examples": [
-            {
-              "id": "performance-instancing",
-              "title": "实例化渲染",
-              "description": "使用实例化技术渲染大量相似对象",
-              "thumbnail": "images/performance-instancing.jpg",
-              "version": "r150",
-              "url": "examples/performance-instancing",
-              "features": {
-                "coreTech": "Performance Optimization",
-                "secondaryTech": "实例化, LOD",
-                "difficulty": "进阶",
-                "actualFunction": "使用实例化技术渲染大量相似对象",
-                "suggestedCategory": "16. 扩展功能 > 性能优化",
-                "filePath": "examples/examples/performance-instancing",
-                "notes": "性能优化示例 (自动推断)"
-              }
+              id: "application-measure",
+              title: "3D测量工具",
+              description:
+                "3D场景中的测量工具，支持距离和角度测量，点击物体或地面放置测量点",
+              thumbnail: "images/application-measure.jpg",
+              version: "r179",
+              url: "examples/z258/application-measure",
+              features: {
+                coreTech: "Application, Integration",
+                secondaryTech: "实际应用, 业务逻辑",
+                difficulty: "进阶",
+                actualFunction:
+                  "3D场景中的测量工具，支持距离和角度测量，点击物体或地面放置测量点",
+                suggestedCategory: "14. 应用场景 > 14.1 实用工具",
+                filePath: "examples/examples/z258/application-measure",
+                notes: "应用示例 (自动推断)",
+              },
             },
             {
-              "id": "performance-lod",
-              "title": "LOD 技术",
-              "description": "根据距离使用不同细节级别的模型",
-              "thumbnail": "images/performance-lod.jpg",
-              "version": "r150",
-              "url": "examples/performance-lod",
-              "features": {
-                "coreTech": "Performance Optimization",
-                "secondaryTech": "实例化, LOD",
-                "difficulty": "进阶",
-                "actualFunction": "根据距离使用不同细节级别的模型",
-                "suggestedCategory": "16. 扩展功能 > 性能优化",
-                "filePath": "examples/examples/performance-lod",
-                "notes": "性能优化示例 (自动推断)"
-              }
-            }
-          ]
+              id: "application-modelViewer",
+              title: "3D模型查看器",
+              description: "支持多种几何体预览和材质调节的3D模型查看器",
+              thumbnail: "images/application-modelViewer.jpg",
+              version: "r179",
+              url: "examples/z258/application-modelViewer",
+              features: {
+                coreTech: "Application, Integration",
+                secondaryTech: "实际应用, 业务逻辑",
+                difficulty: "进阶",
+                actualFunction: "支持多种几何体预览和材质调节的3D模型查看器",
+                suggestedCategory: "14. 应用场景 > 14.1 实用工具",
+                filePath: "examples/examples/z258/application-modelViewer",
+                notes: "应用示例 (自动推断)",
+              },
+            },
+            {
+              id: "application-fpsRoaming",
+              title: "第一人称漫游",
+              description:
+                "使用Pointer Lock Controls实现的第一人称视角漫游体验",
+              thumbnail: "images/application-fpsRoaming.jpg",
+              version: "r179",
+              url: "examples/z258/application-fpsRoaming",
+              features: {
+                coreTech: "Application, Integration",
+                secondaryTech: "实际应用, 业务逻辑",
+                difficulty: "进阶",
+                actualFunction:
+                  "使用Pointer Lock Controls实现的第一人称视角漫游体验",
+                suggestedCategory: "14. 应用场景 > 14.1 实用工具",
+                filePath: "examples/examples/z258/application-fpsRoaming",
+                notes: "应用示例 (自动推断)",
+              },
+            },
+            {
+              id: "application-happyYear",
+              title: "新年快乐",
+              description: "3D新年庆祝场景，包含发光文字、灯笼和烟花粒子效果",
+              thumbnail: "images/application-happyYear.jpg",
+              version: "r179",
+              url: "examples/z258/application-happyYear",
+              features: {
+                coreTech: "Application, Integration",
+                secondaryTech: "实际应用, 业务逻辑",
+                difficulty: "进阶",
+                actualFunction:
+                  "3D新年庆祝场景，包含发光文字、灯笼和烟花粒子效果",
+                suggestedCategory: "14. 应用场景 > 14.1 实用工具",
+                filePath: "examples/examples/z258/application-happyYear",
+                notes: "应用示例 (自动推断)",
+              },
+            },
+            {
+              id: "application-houseExplorer",
+              title: "房屋探索",
+              description: "第一人称视角房屋探索，包含多个房间和家具",
+              thumbnail: "images/application-houseExplorer.jpg",
+              version: "r179",
+              url: "examples/z258/application-houseExplorer",
+              features: {
+                coreTech: "Application, Integration",
+                secondaryTech: "实际应用, 业务逻辑",
+                difficulty: "进阶",
+                actualFunction: "第一人称视角房屋探索，包含多个房间和家具",
+                suggestedCategory: "14. 应用场景 > 14.1 实用工具",
+                filePath: "examples/examples/z258/application-houseExplorer",
+                notes: "应用示例 (自动推断)",
+              },
+            },
+            {
+              id: "application-modelNavigator",
+              title: "模型导航",
+              description: "3D模型导航系统，支持8种几何体预览和相机导航",
+              thumbnail: "images/application-modelNavigator.jpg",
+              version: "r179",
+              url: "examples/z258/application-modelNavigator",
+              features: {
+                coreTech: "Application, Integration",
+                secondaryTech: "实际应用, 业务逻辑",
+                difficulty: "进阶",
+                actualFunction: "3D模型导航系统，支持8种几何体预览和相机导航",
+                suggestedCategory: "14. 应用场景 > 14.1 实用工具",
+                filePath: "examples/examples/z258/application-modelNavigator",
+                notes: "应用示例 (自动推断)",
+              },
+            },
+            {
+              id: "application-measureTool",
+              title: "测量工具",
+              description: "3D测量工具，支持距离和角度测量",
+              thumbnail: "images/application-measureTool.jpg",
+              version: "r179",
+              url: "examples/z258/application-measureTool",
+              features: {
+                coreTech: "Application, Integration",
+                secondaryTech: "实际应用, 业务逻辑",
+                difficulty: "进阶",
+                actualFunction: "3D测量工具，支持距离和角度测量",
+                suggestedCategory: "14. 应用场景 > 14.1 实用工具",
+                filePath: "examples/examples/z258/application-measureTool",
+                notes: "应用示例 (自动推断)",
+              },
+            },
+            {
+              id: "application-videoEffect",
+              title: "视频碎片",
+              description: "视频碎片效果，展示视频碎片化动画",
+              thumbnail: "images/application-videoEffect.jpg",
+              version: "r179",
+              url: "examples/z258/application-videoEffect",
+              features: {
+                coreTech: "Application, Integration",
+                secondaryTech: "实际应用, 业务逻辑",
+                difficulty: "进阶",
+                actualFunction: "视频碎片效果，展示视频碎片化动画",
+                suggestedCategory: "14. 应用场景 > 14.1 实用工具",
+                filePath: "examples/examples/z258/application-videoEffect",
+                notes: "应用示例 (自动推断)",
+              },
+            },
+            {
+              id: "application-videoFloor",
+              title: "视频地板",
+              description: "视频地板效果，展示视频投影在地板上的效果",
+              thumbnail: "images/application-videoFloor.jpg",
+              version: "r179",
+              url: "examples/z258/application-videoFloor",
+              features: {
+                coreTech: "Application, Integration",
+                secondaryTech: "实际应用, 业务逻辑",
+                difficulty: "进阶",
+                actualFunction: "视频地板效果，展示视频投影在地板上的效果",
+                suggestedCategory: "14. 应用场景 > 14.1 实用工具",
+                filePath: "examples/examples/z258/application-videoFloor",
+                notes: "应用示例 (自动推断)",
+              },
+            },
+            {
+              id: "application-imageMove",
+              title: "图片移动",
+              description: "展示图片在3D空间中的多种移动效果",
+              thumbnail: "images/application-imageMove.jpg",
+              version: "r179",
+              url: "examples/z258/application-imageMove",
+              features: {
+                coreTech: "Application, Integration",
+                secondaryTech: "实际应用, 业务逻辑",
+                difficulty: "进阶",
+                actualFunction: "展示图片在3D空间中的多种移动效果",
+                suggestedCategory: "14. 应用场景 > 14.1 实用工具",
+                filePath: "examples/examples/z258/application-imageMove",
+                notes: "应用示例 (自动推断)",
+              },
+            },
+            {
+              id: "application-vrVideo",
+              title: "VR 全景视频",
+              description: "360度全景视频播放，支持鼠标拖动查看",
+              thumbnail: "images/application-vrVideo.jpg",
+              version: "r179",
+              url: "examples/z258/application-vrVideo",
+              features: {
+                coreTech: "Application, Integration",
+                secondaryTech: "实际应用, 业务逻辑",
+                difficulty: "进阶",
+                actualFunction: "360度全景视频播放，支持鼠标拖动查看",
+                suggestedCategory: "14. 应用场景 > 14.1 实用工具",
+                filePath: "examples/examples/z258/application-vrVideo",
+                notes: "应用示例 (自动推断)",
+              },
+            },
+            {
+              id: "application-modelParticle",
+              title: "模型粒子化",
+              description: "将3D模型转换为粒子效果，支持爆炸动画",
+              thumbnail: "images/application-modelParticle.jpg",
+              version: "r179",
+              url: "examples/z258/application-modelParticle",
+              features: {
+                coreTech: "Application, Integration",
+                secondaryTech: "实际应用, 业务逻辑",
+                difficulty: "进阶",
+                actualFunction: "将3D模型转换为粒子效果，支持爆炸动画",
+                suggestedCategory: "14. 应用场景 > 14.1 实用工具",
+                filePath: "examples/examples/z258/application-modelParticle",
+                notes: "应用示例 (自动推断)",
+              },
+            },
+            {
+              id: "application-pointCloudFpsOctree",
+              title: "点云第一人称漫游",
+              description: "使用八叉树优化的点云场景第一人称漫游",
+              thumbnail: "images/application-pointCloudFpsOctree.jpg",
+              version: "r179",
+              url: "examples/z258/application-pointCloudFpsOctree",
+              features: {
+                coreTech: "Application, Integration",
+                secondaryTech: "实际应用, 业务逻辑",
+                difficulty: "进阶",
+                actualFunction: "使用八叉树优化的点云场景第一人称漫游",
+                suggestedCategory: "14. 应用场景 > 14.1 实用工具",
+                filePath:
+                  "examples/examples/z258/application-pointCloudFpsOctree",
+                notes: "应用示例 (自动推断)",
+              },
+            },
+            {
+              id: "application-drawFaceInner",
+              title: "绘制面_内置点",
+              description: "在3D平面上绘制内置点标记，支持多种分布模式",
+              thumbnail: "images/application-drawFaceInner.jpg",
+              version: "r179",
+              url: "examples/z258/application-drawFaceInner",
+              features: {
+                coreTech: "Application, Integration",
+                secondaryTech: "实际应用, 业务逻辑",
+                difficulty: "进阶",
+                actualFunction: "在3D平面上绘制内置点标记，支持多种分布模式",
+                suggestedCategory: "14. 应用场景 > 14.1 实用工具",
+                filePath: "examples/examples/z258/application-drawFaceInner",
+                notes: "应用示例 (自动推断)",
+              },
+            },
+            {
+              id: "application-modelNav",
+              title: "自动寻路",
+              description: "3D场景中的自动寻路和路径规划",
+              thumbnail: "images/application-modelNav.jpg",
+              version: "r179",
+              url: "examples/z258/application-modelNav",
+              features: {
+                coreTech: "Application, Integration",
+                secondaryTech: "实际应用, 业务逻辑",
+                difficulty: "进阶",
+                actualFunction: "3D场景中的自动寻路和路径规划",
+                suggestedCategory: "14. 应用场景 > 14.1 实用工具",
+                filePath: "examples/examples/z258/application-modelNav",
+                notes: "应用示例 (自动推断)",
+              },
+            },
+            {
+              id: "application-gsapTimeLine",
+              title: "时间轴动画",
+              description:
+                "使用GSAP时间线创建花园动画场景，展示花朵生长和蝴蝶飞舞",
+              thumbnail: "images/application-gsapTimeLine.jpg",
+              version: "r179",
+              url: "examples/z258/application-gsapTimeLine",
+              features: {
+                coreTech: "Application, Integration",
+                secondaryTech: "实际应用, 业务逻辑",
+                difficulty: "进阶",
+                actualFunction:
+                  "使用GSAP时间线创建花园动画场景，展示花朵生长和蝴蝶飞舞",
+                suggestedCategory: "14. 应用场景 > 14.1 实用工具",
+                filePath: "examples/examples/z258/application-gsapTimeLine",
+                notes: "应用示例 (自动推断)",
+              },
+            },
+            {
+              id: "application-measurement",
+              title: "测量",
+              description:
+                "使用Three.js创建测量尺子和箭头测量线，展示Canvas文字渲染",
+              thumbnail: "images/application-measurement.jpg",
+              version: "r179",
+              url: "examples/z258/application-measurement",
+              features: {
+                coreTech: "Application, Integration",
+                secondaryTech: "实际应用, 业务逻辑",
+                difficulty: "进阶",
+                actualFunction:
+                  "使用Three.js创建测量尺子和箭头测量线，展示Canvas文字渲染",
+                suggestedCategory: "14. 应用场景 > 14.1 实用工具",
+                filePath: "examples/examples/z258/application-measurement",
+                notes: "应用示例 (自动推断)",
+              },
+            },
+            {
+              id: "application-coffeeMug",
+              title: "咖啡蒸汽",
+              description: "GLTF咖啡杯模型加载，展示蒸汽粒子Shader效果",
+              thumbnail: "images/application-coffeeMug.jpg",
+              version: "r179",
+              url: "examples/z258/application-coffeeMug",
+              features: {
+                coreTech: "Application, Integration",
+                secondaryTech: "实际应用, 业务逻辑",
+                difficulty: "进阶",
+                actualFunction: "GLTF咖啡杯模型加载，展示蒸汽粒子Shader效果",
+                suggestedCategory: "14. 应用场景 > 14.1 实用工具",
+                filePath: "examples/examples/z258/application-coffeeMug",
+                notes: "应用示例 (自动推断)",
+              },
+            },
+            {
+              id: "application-modelBase",
+              title: "模型底座",
+              description:
+                "根据模型边界框自动生成圆形底座，支持颜色和透明度调整",
+              thumbnail: "images/application-modelBase.jpg",
+              version: "r179",
+              url: "examples/z258/application-modelBase",
+              features: {
+                coreTech: "Application, Integration",
+                secondaryTech: "实际应用, 业务逻辑",
+                difficulty: "进阶",
+                actualFunction:
+                  "根据模型边界框自动生成圆形底座，支持颜色和透明度调整",
+                suggestedCategory: "14. 应用场景 > 14.1 实用工具",
+                filePath: "examples/examples/z258/application-modelBase",
+                notes: "应用示例 (自动推断)",
+              },
+            },
+            {
+              id: "application-driving",
+              title: "无限行驶",
+              description: "无限道路滚动效果，汽车行驶动画和GUI速度控制",
+              thumbnail: "images/application-driving.jpg",
+              version: "r179",
+              url: "examples/z258/application-driving",
+              features: {
+                coreTech: "Application, Integration",
+                secondaryTech: "实际应用, 业务逻辑",
+                difficulty: "进阶",
+                actualFunction: "无限道路滚动效果，汽车行驶动画和GUI速度控制",
+                suggestedCategory: "14. 应用场景 > 14.1 实用工具",
+                filePath: "examples/examples/z258/application-driving",
+                notes: "应用示例 (自动推断)",
+              },
+            },
+            {
+              id: "application-windTurbineWake",
+              title: "风力涡轮机尾迹",
+              description:
+                "使用Three.js创建风力涡轮机尾迹效果，通过粒子系统模拟湍流尾流",
+              thumbnail: "images/application-windTurbineWake.jpg",
+              version: "r179",
+              url: "examples/z258/application-windTurbineWake",
+              features: {
+                coreTech: "Application, Integration",
+                secondaryTech: "实际应用, 业务逻辑",
+                difficulty: "进阶",
+                actualFunction:
+                  "使用Three.js创建风力涡轮机尾迹效果，通过粒子系统模拟湍流尾流",
+                suggestedCategory: "14. 应用场景 > 14.1 实用工具",
+                filePath: "examples/examples/z258/application-windTurbineWake",
+                notes: "应用示例 (自动推断)",
+              },
+            },
+          ],
         },
         {
-          "id": "扩展功能-16.2-高级技术",
-          "name": "16.2 高级技术",
-          "examples": [
+          id: "应用场景-14.2-数据可视化",
+          name: "14.2 数据可视化",
+          examples: [
             {
-              "id": "advanced-rain-roof",
-              "title": "雨和屋顶效果",
-              "description": "使用深度纹理和自定义着色器实现雨滴与物体的真实交互效果，包括动态屋顶",
-              "thumbnail": "images/advanced-rain-roof.jpg",
-              "version": "r179",
-              "url": "examples/advanced-rain-roof",
-              "features": {
-                "coreTech": "Advanced Three.js",
-                "secondaryTech": "高级技术",
-                "difficulty": "高级",
-                "actualFunction": "使用深度纹理和自定义着色器实现雨滴与物体的真实交互效果，包括动态屋顶",
-                "suggestedCategory": "高级技术",
-                "filePath": "examples/examples/advanced-rain-roof",
-                "notes": "高级示例 (自动推断)"
-              }
+              id: "application-mathVisual",
+              title: "3D数学函数可视化",
+              description:
+                "展示各种数学函数生成的3D曲面，包括正弦波、涟漪、马鞍面等",
+              thumbnail: "images/application-mathVisual.jpg",
+              version: "r179",
+              url: "examples/z258/application-mathVisual",
+              features: {
+                coreTech: "Application, Integration",
+                secondaryTech: "实际应用, 业务逻辑",
+                difficulty: "进阶",
+                actualFunction:
+                  "展示各种数学函数生成的3D曲面，包括正弦波、涟漪、马鞍面等",
+                suggestedCategory: "14. 应用场景 > 14.2 数据可视化",
+                filePath: "examples/examples/z258/application-mathVisual",
+                notes: "应用示例 (自动推断)",
+              },
             },
             {
-              "id": "advanced-postprocessing-sceneScissor",
-              "title": "场景裁剪与后处理对比",
-              "description": "使用ScissorTest实现场景分割显示，左侧无辉光效果，右侧带辉光效果，可拖动滑块调整分割位置",
-              "thumbnail": "images/advanced-postprocessing-sceneScissor.jpg",
-              "version": "r179",
-              "url": "examples/z258/advanced-postprocessing-sceneScissor",
-              "features": {
-                "coreTech": "Advanced Three.js",
-                "secondaryTech": "高级技术",
-                "difficulty": "高级",
-                "actualFunction": "使用ScissorTest实现场景分割显示，左侧无辉光效果，右侧带辉光效果，可拖动滑块调整分割位置",
-                "suggestedCategory": "高级技术",
-                "filePath": "examples/examples/z258/advanced-postprocessing-sceneScissor",
-                "notes": "高级示例 (自动推断)"
-              }
+              id: "application-matrixTransform",
+              title: "3D矩阵变换可视化",
+              description:
+                "可视化展示3D矩阵变换（平移、旋转、缩放）及其组合效果",
+              thumbnail: "images/application-matrixTransform.jpg",
+              version: "r179",
+              url: "examples/z258/application-matrixTransform",
+              features: {
+                coreTech: "Application, Integration",
+                secondaryTech: "实际应用, 业务逻辑",
+                difficulty: "进阶",
+                actualFunction:
+                  "可视化展示3D矩阵变换（平移、旋转、缩放）及其组合效果",
+                suggestedCategory: "14. 应用场景 > 14.2 数据可视化",
+                filePath: "examples/examples/z258/application-matrixTransform",
+                notes: "应用示例 (自动推断)",
+              },
             },
             {
-              "id": "advanced-postprocessing-outlinePass",
-              "title": "轮廓光",
-              "description": "展示OutlinePass的使用，点击物体显示轮廓光效果",
-              "thumbnail": "images/advanced-postprocessing-outlinePass.jpg",
-              "version": "r179",
-              "url": "examples/z258/advanced-postprocessing-outlinePass",
-              "features": {
-                "coreTech": "Advanced Three.js",
-                "secondaryTech": "高级技术",
-                "difficulty": "高级",
-                "actualFunction": "展示OutlinePass的使用，点击物体显示轮廓光效果",
-                "suggestedCategory": "高级技术",
-                "filePath": "examples/examples/z258/advanced-postprocessing-outlinePass",
-                "notes": "高级示例 (自动推断)"
-              }
+              id: "application-mathApply",
+              title: "数学公式应用",
+              description: "使用数学函数生成3D曲面，包括正弦波、涟漪、马鞍面等",
+              thumbnail: "images/application-mathApply.jpg",
+              version: "r179",
+              url: "examples/z258/application-mathApply",
+              features: {
+                coreTech: "Application, Integration",
+                secondaryTech: "实际应用, 业务逻辑",
+                difficulty: "进阶",
+                actualFunction:
+                  "使用数学函数生成3D曲面，包括正弦波、涟漪、马鞍面等",
+                suggestedCategory: "14. 应用场景 > 14.2 数据可视化",
+                filePath: "examples/examples/z258/application-mathApply",
+                notes: "应用示例 (自动推断)",
+              },
             },
             {
-              "id": "advanced-postprocessing-multOutlinePass",
-              "title": "多轮廓光",
-              "description": "展示多个OutlinePass的使用，每个物体可以有不同颜色的轮廓光效果",
-              "thumbnail": "images/advanced-postprocessing-multOutlinePass.jpg",
-              "version": "r179",
-              "url": "examples/z258/advanced-postprocessing-multOutlinePass",
-              "features": {
-                "coreTech": "Advanced Three.js",
-                "secondaryTech": "高级技术",
-                "difficulty": "高级",
-                "actualFunction": "展示多个OutlinePass的使用，每个物体可以有不同颜色的轮廓光效果",
-                "suggestedCategory": "高级技术",
-                "filePath": "examples/examples/z258/advanced-postprocessing-multOutlinePass",
-                "notes": "高级示例 (自动推断)"
-              }
+              id: "application-matrixOper",
+              title: "矩阵操作",
+              description: "可视化展示 Three.js 矩阵变换，包括平移、旋转、缩放",
+              thumbnail: "images/application-matrixOper.jpg",
+              version: "r179",
+              url: "examples/z258/application-matrixOper",
+              features: {
+                coreTech: "Application, Integration",
+                secondaryTech: "实际应用, 业务逻辑",
+                difficulty: "进阶",
+                actualFunction:
+                  "可视化展示 Three.js 矩阵变换，包括平移、旋转、缩放",
+                suggestedCategory: "14. 应用场景 > 14.2 数据可视化",
+                filePath: "examples/examples/z258/application-matrixOper",
+                notes: "应用示例 (自动推断)",
+              },
+            },
+          ],
+        },
+        {
+          id: "应用场景-14.3-前沿技术",
+          name: "14.3 前沿技术",
+          examples: [
+            {
+              id: "advanced-spark-3dgs",
+              title: "高斯泼溅渲染器 (Spark 3DGS)",
+              description:
+                "使用Three.js和Spark库构建高斯泼溅3D渲染器，展示3D蝴蝶的超写实效果，支持LOD流式传输",
+              thumbnail: "images/advanced-spark-3dgs.jpg",
+              version: "r179",
+              url: "examples/advanced-spark-3dgs",
+              features: {
+                coreTech: "Spark, Three.js, WebGL2, Gaussian Splatting",
+                secondaryTech: "新兴渲染技术, 3DGS, 体积渲染",
+                difficulty: "高级",
+                actualFunction:
+                  "使用Three.js和Spark库构建高斯泼溅3D渲染器，展示3D蝴蝶的超写实效果",
+                suggestedCategory: "14. 应用场景 > 14.3 前沿技术",
+                filePath: "examples/examples/advanced-spark-3dgs",
+                notes: "使用Spark库加载.spz格式的高斯泼溅模型",
+              },
             },
             {
-              "id": "advanced-postprocessing-effectComposer",
-              "title": "渲染器配置",
-              "description": "展示EffectComposer的配置和渲染方式切换，支持多种色调映射模式",
-              "thumbnail": "images/advanced-postprocessing-effectComposer.jpg",
-              "version": "r179",
-              "url": "examples/z258/advanced-postprocessing-effectComposer",
-              "features": {
-                "coreTech": "Advanced Three.js",
-                "secondaryTech": "高级技术",
-                "difficulty": "高级",
-                "actualFunction": "展示EffectComposer的配置和渲染方式切换，支持多种色调映射模式",
-                "suggestedCategory": "高级技术",
-                "filePath": "examples/examples/z258/advanced-postprocessing-effectComposer",
-                "notes": "高级示例 (自动推断)"
-              }
+              id: "advanced-vr-stereo",
+              title: "双相机VR立体效果",
+              description:
+                "使用Three.js双相机技术实现VR立体效果，无需头显即可体验沉浸式3D视觉，支持瞳距调节",
+              thumbnail: "images/advanced-vr-stereo.jpg",
+              version: "r179",
+              url: "examples/advanced-vr-stereo",
+              features: {
+                coreTech: "Three.js, 双相机渲染, ScissorTest",
+                secondaryTech: "VR应用, 立体视觉, 分屏渲染",
+                difficulty: "高级",
+                actualFunction:
+                  "使用双相机和分屏渲染技术模拟人眼视差，实现立体3D效果",
+                suggestedCategory: "14. 应用场景 > 14.3 前沿技术",
+                filePath: "examples/examples/advanced-vr-stereo",
+                notes: "支持瞳距(IPD)实时调节，可开关立体效果",
+              },
             },
             {
-              "id": "advanced-physics-cannon",
-              "title": "Cannon.js 物理",
-              "description": "使用 Cannon.js 实现物理碰撞和重力效果",
-              "thumbnail": "images/advanced-physics-cannon.jpg",
-              "version": "r150",
-              "url": "examples/advanced-physics-cannon",
-              "features": {
-                "coreTech": "Advanced Three.js",
-                "secondaryTech": "高级技术",
-                "difficulty": "高级",
-                "actualFunction": "使用 Cannon.js 实现物理碰撞和重力效果",
-                "suggestedCategory": "高级技术",
-                "filePath": "examples/examples/advanced-physics-cannon",
-                "notes": "高级示例 (自动推断)"
-              }
+              id: "advanced-three-balls",
+              title: "三球轮播交互落地页",
+              description:
+                "Three.js沉浸式三球轮播落地页，自定义着色器实现大气散射与边缘发光效果，支持点击切换焦点和滚动翻页",
+              thumbnail: "images/advanced-three-balls.jpg",
+              version: "r179",
+              url: "examples/advanced-three-balls",
+              features: {
+                coreTech: "Three.js, GSAP, ShaderMaterial, Raycaster",
+                secondaryTech: "自定义着色器, 大气散射, 边缘发光, 响应式布局",
+                difficulty: "高级",
+                actualFunction:
+                  "沉浸式三球轮播落地页，点击球体切换焦点，支持滚动翻页",
+                suggestedCategory: "14. 应用场景 > 14.3 前沿技术",
+                filePath: "examples/examples/advanced-three-balls",
+                notes: "使用Canvas生成程序纹理模拟星球表面，GSAP实现丝滑动画",
+              },
             },
-            {
-              "id": "advanced-physics-ammo",
-              "title": "Ammo.js 物理",
-              "description": "使用 Ammo.js 创建复杂的物理交互场景",
-              "thumbnail": "images/advanced-physics-ammo.jpg",
-              "version": "r150",
-              "url": "examples/advanced-physics-ammo",
-              "features": {
-                "coreTech": "Advanced Three.js",
-                "secondaryTech": "高级技术",
-                "difficulty": "高级",
-                "actualFunction": "使用 Ammo.js 创建复杂的物理交互场景",
-                "suggestedCategory": "高级技术",
-                "filePath": "examples/examples/advanced-physics-ammo",
-                "notes": "高级示例 (自动推断)"
-              }
-            }
-          ]
-        }
-      ]
+          ],
+        },
+      ],
     },
     {
-      "id": "骨骼与蒙皮",
-      "name": "17. 骨骼与蒙皮",
-      "icon": "bi-person",
-      "subcategories": [
+      id: "游戏类",
+      name: "15. 游戏类",
+      icon: "bi-controller",
+      subcategories: [
         {
-          "id": "骨骼与蒙皮-17.1-骨骼动画基础",
-          "name": "17.1 骨骼动画基础",
-          "examples": [
+          id: "游戏类-15.1-其他",
+          name: "15.1 其他",
+          examples: [
             {
-              "id": "basic-skeletonBone",
-              "title": "骨骼动画",
-              "description": "使用Three.js展示骨骼动画和蒙皮网格，包含骨骼层级结构和动画控制",
-              "thumbnail": "images/basic-skeletonBone.jpg",
-              "version": "r179",
-              "url": "examples/z258/basic-skeletonBone",
-              "features": {
-                "coreTech": "Three.js Core",
-                "secondaryTech": "基础功能",
-                "difficulty": "基础",
-                "actualFunction": "使用Three.js展示骨骼动画和蒙皮网格，包含骨骼层级结构和动画控制",
-                "suggestedCategory": "1. 基础入门",
-                "filePath": "examples/examples/z258/basic-skeletonBone",
-                "notes": "基础功能示例 (自动推断)"
-              }
-            }
-          ]
-        }
-      ]
+              id: "game-snake3D",
+              title: "3D贪吃蛇",
+              description: "经典贪吃蛇游戏的3D版本，支持键盘控制和碰撞检测",
+              thumbnail: "images/game-snake3D.jpg",
+              version: "r179",
+              url: "examples/z258/game-snake3D",
+            },
+          ],
+        },
+      ],
     },
     {
-      "id": "环境与环境贴图",
-      "name": "18. 环境与环境贴图",
-      "icon": "bi-globe",
-      "subcategories": [
+      id: "扩展功能",
+      name: "16. 扩展功能",
+      icon: "bi-puzzle",
+      subcategories: [
         {
-          "id": "环境与环境贴图-18.1-环境光照",
-          "name": "18.1 环境光照",
-          "examples": [
+          id: "扩展功能-16.1-性能优化",
+          name: "16.1 性能优化",
+          examples: [
             {
-              "id": "lighting-ambient-occlusion",
-              "title": "环境光遮蔽",
-              "description": "使用环境光遮蔽增强场景深度感",
-              "thumbnail": "images/lighting-ambient-occlusion.jpg",
-              "version": "r179",
-              "url": "examples/lighting-ambient-occlusion",
-              "features": {
-                "coreTech": "AO贴图, 环境光遮蔽, 接触阴影",
-                "secondaryTech": "SSAO, 烘焙AO, 细节阴影",
-                "difficulty": "进阶",
-                "actualFunction": "使用AO贴图增强场景细节阴影",
-                "suggestedCategory": "18. 环境与环境贴图 > 18.4 环境光照 > 环境光遮蔽",
-                "filePath": "examples/lighting-ambient-occlusion.html",
-                "notes": "提升场景真实感"
-              }
-            }
-          ]
-        }
-      ]
+              id: "performance-instancing",
+              title: "实例化渲染",
+              description: "使用实例化技术渲染大量相似对象",
+              thumbnail: "images/performance-instancing.jpg",
+              version: "r150",
+              url: "examples/performance-instancing",
+              features: {
+                coreTech: "Performance Optimization",
+                secondaryTech: "实例化, LOD",
+                difficulty: "进阶",
+                actualFunction: "使用实例化技术渲染大量相似对象",
+                suggestedCategory: "16. 扩展功能 > 性能优化",
+                filePath: "examples/examples/performance-instancing",
+                notes: "性能优化示例 (自动推断)",
+              },
+            },
+            {
+              id: "performance-lod",
+              title: "LOD 技术",
+              description: "根据距离使用不同细节级别的模型",
+              thumbnail: "images/performance-lod.jpg",
+              version: "r150",
+              url: "examples/performance-lod",
+              features: {
+                coreTech: "Performance Optimization",
+                secondaryTech: "实例化, LOD",
+                difficulty: "进阶",
+                actualFunction: "根据距离使用不同细节级别的模型",
+                suggestedCategory: "16. 扩展功能 > 性能优化",
+                filePath: "examples/examples/performance-lod",
+                notes: "性能优化示例 (自动推断)",
+              },
+            },
+          ],
+        },
+        {
+          id: "扩展功能-16.2-高级技术",
+          name: "16.2 高级技术",
+          examples: [
+            {
+              id: "advanced-rain-roof",
+              title: "雨和屋顶效果",
+              description:
+                "使用深度纹理和自定义着色器实现雨滴与物体的真实交互效果，包括动态屋顶",
+              thumbnail: "images/advanced-rain-roof.jpg",
+              version: "r179",
+              url: "examples/advanced-rain-roof",
+              features: {
+                coreTech: "Advanced Three.js",
+                secondaryTech: "高级技术",
+                difficulty: "高级",
+                actualFunction:
+                  "使用深度纹理和自定义着色器实现雨滴与物体的真实交互效果，包括动态屋顶",
+                suggestedCategory: "高级技术",
+                filePath: "examples/examples/advanced-rain-roof",
+                notes: "高级示例 (自动推断)",
+              },
+            },
+            {
+              id: "advanced-postprocessing-sceneScissor",
+              title: "场景裁剪与后处理对比",
+              description:
+                "使用ScissorTest实现场景分割显示，左侧无辉光效果，右侧带辉光效果，可拖动滑块调整分割位置",
+              thumbnail: "images/advanced-postprocessing-sceneScissor.jpg",
+              version: "r179",
+              url: "examples/z258/advanced-postprocessing-sceneScissor",
+              features: {
+                coreTech: "Advanced Three.js",
+                secondaryTech: "高级技术",
+                difficulty: "高级",
+                actualFunction:
+                  "使用ScissorTest实现场景分割显示，左侧无辉光效果，右侧带辉光效果，可拖动滑块调整分割位置",
+                suggestedCategory: "高级技术",
+                filePath:
+                  "examples/examples/z258/advanced-postprocessing-sceneScissor",
+                notes: "高级示例 (自动推断)",
+              },
+            },
+            {
+              id: "advanced-postprocessing-outlinePass",
+              title: "轮廓光",
+              description: "展示OutlinePass的使用，点击物体显示轮廓光效果",
+              thumbnail: "images/advanced-postprocessing-outlinePass.jpg",
+              version: "r179",
+              url: "examples/z258/advanced-postprocessing-outlinePass",
+              features: {
+                coreTech: "Advanced Three.js",
+                secondaryTech: "高级技术",
+                difficulty: "高级",
+                actualFunction: "展示OutlinePass的使用，点击物体显示轮廓光效果",
+                suggestedCategory: "高级技术",
+                filePath:
+                  "examples/examples/z258/advanced-postprocessing-outlinePass",
+                notes: "高级示例 (自动推断)",
+              },
+            },
+            {
+              id: "advanced-postprocessing-multOutlinePass",
+              title: "多轮廓光",
+              description:
+                "展示多个OutlinePass的使用，每个物体可以有不同颜色的轮廓光效果",
+              thumbnail: "images/advanced-postprocessing-multOutlinePass.jpg",
+              version: "r179",
+              url: "examples/z258/advanced-postprocessing-multOutlinePass",
+              features: {
+                coreTech: "Advanced Three.js",
+                secondaryTech: "高级技术",
+                difficulty: "高级",
+                actualFunction:
+                  "展示多个OutlinePass的使用，每个物体可以有不同颜色的轮廓光效果",
+                suggestedCategory: "高级技术",
+                filePath:
+                  "examples/examples/z258/advanced-postprocessing-multOutlinePass",
+                notes: "高级示例 (自动推断)",
+              },
+            },
+            {
+              id: "advanced-postprocessing-effectComposer",
+              title: "渲染器配置",
+              description:
+                "展示EffectComposer的配置和渲染方式切换，支持多种色调映射模式",
+              thumbnail: "images/advanced-postprocessing-effectComposer.jpg",
+              version: "r179",
+              url: "examples/z258/advanced-postprocessing-effectComposer",
+              features: {
+                coreTech: "Advanced Three.js",
+                secondaryTech: "高级技术",
+                difficulty: "高级",
+                actualFunction:
+                  "展示EffectComposer的配置和渲染方式切换，支持多种色调映射模式",
+                suggestedCategory: "高级技术",
+                filePath:
+                  "examples/examples/z258/advanced-postprocessing-effectComposer",
+                notes: "高级示例 (自动推断)",
+              },
+            },
+            {
+              id: "advanced-physics-cannon",
+              title: "Cannon.js 物理",
+              description: "使用 Cannon.js 实现物理碰撞和重力效果",
+              thumbnail: "images/advanced-physics-cannon.jpg",
+              version: "r150",
+              url: "examples/advanced-physics-cannon",
+              features: {
+                coreTech: "Advanced Three.js",
+                secondaryTech: "高级技术",
+                difficulty: "高级",
+                actualFunction: "使用 Cannon.js 实现物理碰撞和重力效果",
+                suggestedCategory: "高级技术",
+                filePath: "examples/examples/advanced-physics-cannon",
+                notes: "高级示例 (自动推断)",
+              },
+            },
+            {
+              id: "advanced-physics-ammo",
+              title: "Ammo.js 物理",
+              description: "使用 Ammo.js 创建复杂的物理交互场景",
+              thumbnail: "images/advanced-physics-ammo.jpg",
+              version: "r150",
+              url: "examples/advanced-physics-ammo",
+              features: {
+                coreTech: "Advanced Three.js",
+                secondaryTech: "高级技术",
+                difficulty: "高级",
+                actualFunction: "使用 Ammo.js 创建复杂的物理交互场景",
+                suggestedCategory: "高级技术",
+                filePath: "examples/examples/advanced-physics-ammo",
+                notes: "高级示例 (自动推断)",
+              },
+            },
+          ],
+        },
+      ],
     },
     {
-      "id": "other",
-      "name": "其他",
-      "icon": "bi-collection",
-      "subcategories": [
+      id: "骨骼与蒙皮",
+      name: "17. 骨骼与蒙皮",
+      icon: "bi-person",
+      subcategories: [
         {
-          "id": "other-其他.1-其他",
-          "name": "其他.1 其他",
-          "examples": [
+          id: "骨骼与蒙皮-17.1-骨骼动画基础",
+          name: "17.1 骨骼动画基础",
+          examples: [
             {
-              "id": "effect-cyberCorridor",
-              "title": "赛博走廊",
-              "description": "纯GLSL实现无限延伸的赛博朋克走廊，程序化纹理和Raymarching",
-              "thumbnail": "images/effect-cyberCorridor.jpg",
-              "version": "r179",
-              "url": "examples/z258/effect-cyberCorridor"
+              id: "basic-skeletonBone",
+              title: "骨骼动画",
+              description:
+                "使用Three.js展示骨骼动画和蒙皮网格，包含骨骼层级结构和动画控制",
+              thumbnail: "images/basic-skeletonBone.jpg",
+              version: "r179",
+              url: "examples/z258/basic-skeletonBone",
+              features: {
+                coreTech: "Three.js Core",
+                secondaryTech: "基础功能",
+                difficulty: "基础",
+                actualFunction:
+                  "使用Three.js展示骨骼动画和蒙皮网格，包含骨骼层级结构和动画控制",
+                suggestedCategory: "1. 基础入门",
+                filePath: "examples/examples/z258/basic-skeletonBone",
+                notes: "基础功能示例 (自动推断)",
+              },
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: "环境与环境贴图",
+      name: "18. 环境与环境贴图",
+      icon: "bi-globe",
+      subcategories: [
+        {
+          id: "环境与环境贴图-18.1-环境光照",
+          name: "18.1 环境光照",
+          examples: [
+            {
+              id: "lighting-ambient-occlusion",
+              title: "环境光遮蔽",
+              description: "使用环境光遮蔽增强场景深度感",
+              thumbnail: "images/lighting-ambient-occlusion.jpg",
+              version: "r179",
+              url: "examples/lighting-ambient-occlusion",
+              features: {
+                coreTech: "AO贴图, 环境光遮蔽, 接触阴影",
+                secondaryTech: "SSAO, 烘焙AO, 细节阴影",
+                difficulty: "进阶",
+                actualFunction: "使用AO贴图增强场景细节阴影",
+                suggestedCategory:
+                  "18. 环境与环境贴图 > 18.4 环境光照 > 环境光遮蔽",
+                filePath: "examples/lighting-ambient-occlusion.html",
+                notes: "提升场景真实感",
+              },
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: "other",
+      name: "其他",
+      icon: "bi-collection",
+      subcategories: [
+        {
+          id: "other-其他.1-其他",
+          name: "其他.1 其他",
+          examples: [
+            {
+              id: "effect-cyberCorridor",
+              title: "赛博走廊",
+              description:
+                "纯GLSL实现无限延伸的赛博朋克走廊，程序化纹理和Raymarching",
+              thumbnail: "images/effect-cyberCorridor.jpg",
+              version: "r179",
+              url: "examples/z258/effect-cyberCorridor",
             },
             {
-              "id": "effect-fireworks",
-              "title": "3D烟花庆祝",
-              "description": "粒子系统实现的3D烟花效果，支持自动发射和庆祝模式",
-              "thumbnail": "images/effect-fireworks.jpg",
-              "version": "r179",
-              "url": "examples/z258/effect-fireworks"
+              id: "effect-fireworks",
+              title: "3D烟花庆祝",
+              description: "粒子系统实现的3D烟花效果，支持自动发射和庆祝模式",
+              thumbnail: "images/effect-fireworks.jpg",
+              version: "r179",
+              url: "examples/z258/effect-fireworks",
             },
             {
-              "id": "effectComposer-saturationPass",
-              "title": "饱和度",
-              "description": "使用后期处理ShaderPass调整场景饱和度和亮度，支持HSV色彩空间转换",
-              "thumbnail": "images/effectComposer-saturationPass.jpg",
-              "version": "r179",
-              "url": "examples/z258/effectComposer-saturationPass"
+              id: "effectComposer-saturationPass",
+              title: "饱和度",
+              description:
+                "使用后期处理ShaderPass调整场景饱和度和亮度，支持HSV色彩空间转换",
+              thumbnail: "images/effectComposer-saturationPass.jpg",
+              version: "r179",
+              url: "examples/z258/effectComposer-saturationPass",
             },
             {
-              "id": "effectComposer-edgeBlurringEffect",
-              "title": "边缘模糊效果",
-              "description": "使用自定义ShaderMaterial实现平面边缘渐变透明效果，支持调整边缘宽度和颜色",
-              "thumbnail": "images/effectComposer-edgeBlurringEffect.jpg",
-              "version": "r179",
-              "url": "examples/z258/effectComposer-edgeBlurringEffect"
+              id: "effectComposer-edgeBlurringEffect",
+              title: "边缘模糊效果",
+              description:
+                "使用自定义ShaderMaterial实现平面边缘渐变透明效果，支持调整边缘宽度和颜色",
+              thumbnail: "images/effectComposer-edgeBlurringEffect.jpg",
+              version: "r179",
+              url: "examples/z258/effectComposer-edgeBlurringEffect",
             },
             {
-              "id": "effectComposer-threeSelectBloom",
-              "title": "选择性辉光",
-              "description": "使用图层系统实现选择性辉光效果，点击物体可切换辉光状态",
-              "thumbnail": "images/effectComposer-threeSelectBloom.jpg",
-              "version": "r179",
-              "url": "examples/z258/effectComposer-threeSelectBloom"
+              id: "effectComposer-threeSelectBloom",
+              title: "选择性辉光",
+              description:
+                "使用图层系统实现选择性辉光效果，点击物体可切换辉光状态",
+              thumbnail: "images/effectComposer-threeSelectBloom.jpg",
+              version: "r179",
+              url: "examples/z258/effectComposer-threeSelectBloom",
             },
             {
-              "id": "effectComposer-selectBloomPass",
-              "title": "辉光-postprocessing",
-              "description": "UnrealBloomPass辉光效果，支持参数调节",
-              "thumbnail": "images/effectComposer-selectBloomPass.jpg",
-              "version": "r179",
-              "url": "examples/z258/effectComposer-selectBloomPass"
+              id: "effectComposer-selectBloomPass",
+              title: "辉光-postprocessing",
+              description: "UnrealBloomPass辉光效果，支持参数调节",
+              thumbnail: "images/effectComposer-selectBloomPass.jpg",
+              version: "r179",
+              url: "examples/z258/effectComposer-selectBloomPass",
             },
             {
-              "id": "characterBlur",
-              "title": "人物虚化",
-              "description": "使用自定义shader实现人物虚化效果，带有走路动画",
-              "thumbnail": "images/characterBlur.jpg",
-              "version": "r179",
-              "url": "examples/z258/characterBlur"
+              id: "characterBlur",
+              title: "人物虚化",
+              description: "使用自定义shader实现人物虚化效果，带有走路动画",
+              thumbnail: "images/characterBlur.jpg",
+              version: "r179",
+              url: "examples/z258/characterBlur",
             },
             {
-              "id": "canvasTexture",
-              "title": "Canvas贴图",
-              "description": "使用echarts图表作为Three.js纹理贴图",
-              "thumbnail": "images/canvasTexture.jpg",
-              "version": "r179",
-              "url": "examples/z258/canvasTexture"
+              id: "canvasTexture",
+              title: "Canvas贴图",
+              description: "使用echarts图表作为Three.js纹理贴图",
+              thumbnail: "images/canvasTexture.jpg",
+              version: "r179",
+              url: "examples/z258/canvasTexture",
             },
             {
-              "id": "flowLine",
-              "title": "贴图飞线",
-              "description": "使用纹理贴图实现飞线流动效果",
-              "thumbnail": "images/flowLine.jpg",
-              "version": "r179",
-              "url": "examples/z258/flowLine"
+              id: "flowLine",
+              title: "贴图飞线",
+              description: "使用纹理贴图实现飞线流动效果",
+              thumbnail: "images/flowLine.jpg",
+              version: "r179",
+              url: "examples/z258/flowLine",
             },
             {
-              "id": "flyLine",
-              "title": "飞线效果",
-              "description": "使用自定义shader实现飞线动画效果",
-              "thumbnail": "images/flyLine.jpg",
-              "version": "r179",
-              "url": "examples/z258/flyLine"
+              id: "flyLine",
+              title: "飞线效果",
+              description: "使用自定义shader实现飞线动画效果",
+              thumbnail: "images/flyLine.jpg",
+              version: "r179",
+              url: "examples/z258/flyLine",
             },
             {
-              "id": "pipeFlow",
-              "title": "管道流动",
-              "description": "使用gsap实现管道内流体流动效果",
-              "thumbnail": "images/pipeFlow.jpg",
-              "version": "r179",
-              "url": "examples/z258/pipeFlow"
+              id: "pipeFlow",
+              title: "管道流动",
+              description: "使用gsap实现管道内流体流动效果",
+              thumbnail: "images/pipeFlow.jpg",
+              version: "r179",
+              url: "examples/z258/pipeFlow",
             },
             {
-              "id": "buildingLine",
-              "title": "建筑线条",
-              "description": "使用LineSegments2实现建筑轮廓线条效果",
-              "thumbnail": "images/buildingLine.jpg",
-              "version": "r179",
-              "url": "examples/z258/buildingLine"
+              id: "buildingLine",
+              title: "建筑线条",
+              description: "使用LineSegments2实现建筑轮廓线条效果",
+              thumbnail: "images/buildingLine.jpg",
+              version: "r179",
+              url: "examples/z258/buildingLine",
             },
             {
-              "id": "spriteText",
-              "title": "精灵文字",
-              "description": "使用Sprite和Canvas实现3D空间文字标签",
-              "thumbnail": "images/spriteText.jpg",
-              "version": "r179",
-              "url": "examples/z258/spriteText"
+              id: "spriteText",
+              title: "精灵文字",
+              description: "使用Sprite和Canvas实现3D空间文字标签",
+              thumbnail: "images/spriteText.jpg",
+              version: "r179",
+              url: "examples/z258/spriteText",
             },
             {
-              "id": "simpleColl",
-              "title": "简单碰撞检测",
-              "description": "实现球体之间的简单碰撞检测和物理反弹",
-              "thumbnail": "images/simpleColl.jpg",
-              "version": "r179",
-              "url": "examples/z258/simpleColl"
+              id: "simpleColl",
+              title: "简单碰撞检测",
+              description: "实现球体之间的简单碰撞检测和物理反弹",
+              thumbnail: "images/simpleColl.jpg",
+              version: "r179",
+              url: "examples/z258/simpleColl",
             },
             {
-              "id": "diffuseLine",
-              "title": "发散飞线",
-              "description": "从中心向外发散的飞线效果",
-              "thumbnail": "images/diffuseLine.jpg",
-              "version": "r179",
-              "url": "examples/z258/diffuseLine"
+              id: "diffuseLine",
+              title: "发散飞线",
+              description: "从中心向外发散的飞线效果",
+              thumbnail: "images/diffuseLine.jpg",
+              version: "r179",
+              url: "examples/z258/diffuseLine",
             },
             {
-              "id": "lampshade",
-              "title": "灯罩",
-              "description": "3D灯罩模型，带有照明效果",
-              "thumbnail": "images/lampshade.jpg",
-              "version": "r179",
-              "url": "examples/z258/lampshade"
+              id: "lampshade",
+              title: "灯罩",
+              description: "3D灯罩模型，带有照明效果",
+              thumbnail: "images/lampshade.jpg",
+              version: "r179",
+              url: "examples/z258/lampshade",
             },
             {
-              "id": "diffuseLine2",
-              "title": "发散飞线2",
-              "description": "使用Shader实现的高级发散飞线效果",
-              "thumbnail": "images/diffuseLine2.jpg",
-              "version": "r179",
-              "url": "examples/z258/diffuseLine2"
+              id: "diffuseLine2",
+              title: "发散飞线2",
+              description: "使用Shader实现的高级发散飞线效果",
+              thumbnail: "images/diffuseLine2.jpg",
+              version: "r179",
+              url: "examples/z258/diffuseLine2",
             },
             {
-              "id": "smokeAir",
-              "title": "烟雾效果",
-              "description": "使用粒子系统模拟烟雾效果",
-              "thumbnail": "images/smokeAir.jpg",
-              "version": "r179",
-              "url": "examples/z258/smokeAir"
+              id: "smokeAir",
+              title: "烟雾效果",
+              description: "使用粒子系统模拟烟雾效果",
+              thumbnail: "images/smokeAir.jpg",
+              version: "r179",
+              url: "examples/z258/smokeAir",
             },
             {
-              "id": "lightIcon",
-              "title": "亮光标记",
-              "description": "使用Shader实现发光标记点效果",
-              "thumbnail": "images/lightIcon.jpg",
-              "version": "r179",
-              "url": "examples/z258/lightIcon"
+              id: "lightIcon",
+              title: "亮光标记",
+              description: "使用Shader实现发光标记点效果",
+              thumbnail: "images/lightIcon.jpg",
+              version: "r179",
+              url: "examples/z258/lightIcon",
             },
             {
-              "id": "drawFace",
-              "title": "绘制面",
-              "description": "在平面上点击绘制点，右键生成多边形面",
-              "thumbnail": "images/application-drawFace.jpg",
-              "version": "r179",
-              "url": "examples/z258/application-drawFace"
+              id: "drawFace",
+              title: "绘制面",
+              description: "在平面上点击绘制点，右键生成多边形面",
+              thumbnail: "images/application-drawFace.jpg",
+              version: "r179",
+              url: "examples/z258/application-drawFace",
             },
             {
-              "id": "jumpAnimate",
-              "title": "跳跃动画",
-              "description": "使用Shader实现动态跳跃变形动画效果",
-              "thumbnail": "images/jumpAnimate.jpg",
-              "version": "r179",
-              "url": "examples/z258/jumpAnimate"
+              id: "jumpAnimate",
+              title: "跳跃动画",
+              description: "使用Shader实现动态跳跃变形动画效果",
+              thumbnail: "images/jumpAnimate.jpg",
+              version: "r179",
+              url: "examples/z258/jumpAnimate",
             },
             {
-              "id": "expand-heatmap3D",
-              "title": "3D热力图",
-              "description": "使用heatmap.js生成热力图纹理，通过着色器实现3D高度可视化",
-              "thumbnail": "images/expand-heatmap3D.jpg",
-              "version": "r179",
-              "url": "examples/z258/expand-heatmap3D"
+              id: "expand-heatmap3D",
+              title: "3D热力图",
+              description:
+                "使用heatmap.js生成热力图纹理，通过着色器实现3D高度可视化",
+              thumbnail: "images/expand-heatmap3D.jpg",
+              version: "r179",
+              url: "examples/z258/expand-heatmap3D",
             },
             {
-              "id": "expand-multViews",
-              "title": "多视图",
-              "description": "多视图展示，同时显示主视图、前视图、左视图和俯视图",
-              "thumbnail": "images/expand-multViews.jpg",
-              "version": "r179",
-              "url": "examples/z258/expand-multViews"
+              id: "expand-multViews",
+              title: "多视图",
+              description: "多视图展示，同时显示主视图、前视图、左视图和俯视图",
+              thumbnail: "images/expand-multViews.jpg",
+              version: "r179",
+              url: "examples/z258/expand-multViews",
             },
             {
-              "id": "expand-blurReflect",
-              "title": "模糊反射",
-              "description": "模糊反射效果，展示镜面反射和模糊反射",
-              "thumbnail": "images/expand-blurReflect.jpg",
-              "version": "r179",
-              "url": "examples/z258/expand-blurReflect"
+              id: "expand-blurReflect",
+              title: "模糊反射",
+              description: "模糊反射效果，展示镜面反射和模糊反射",
+              thumbnail: "images/expand-blurReflect.jpg",
+              version: "r179",
+              url: "examples/z258/expand-blurReflect",
             },
             {
-              "id": "expand-geoBorder",
-              "title": "地理边界",
-              "description": "地理边界可视化，展示中国边界线效果",
-              "thumbnail": "images/expand-geoBorder.jpg",
-              "version": "r179",
-              "url": "examples/z258/expand-geoBorder"
+              id: "expand-geoBorder",
+              title: "地理边界",
+              description: "地理边界可视化，展示中国边界线效果",
+              thumbnail: "images/expand-geoBorder.jpg",
+              version: "r179",
+              url: "examples/z258/expand-geoBorder",
             },
             {
-              "id": "expand-useIndexDB",
-              "title": "IndexedDB使用",
-              "description": "展示如何使用IndexedDB存储和读取3D场景数据",
-              "thumbnail": "images/expand-useIndexDB.jpg",
-              "version": "r179",
-              "url": "examples/z258/expand-useIndexDB"
+              id: "expand-useIndexDB",
+              title: "IndexedDB使用",
+              description: "展示如何使用IndexedDB存储和读取3D场景数据",
+              thumbnail: "images/expand-useIndexDB.jpg",
+              version: "r179",
+              url: "examples/z258/expand-useIndexDB",
             },
             {
-              "id": "expand-localModel",
-              "title": "本地模型加载",
-              "description": "支持拖拽加载本地GLTF/GLB/OBJ/FBX模型文件",
-              "thumbnail": "images/expand-localModel.jpg",
-              "version": "r179",
-              "url": "examples/z258/expand-localModel"
+              id: "expand-localModel",
+              title: "本地模型加载",
+              description: "支持拖拽加载本地GLTF/GLB/OBJ/FBX模型文件",
+              thumbnail: "images/expand-localModel.jpg",
+              version: "r179",
+              url: "examples/z258/expand-localModel",
             },
             {
-              "id": "expand-map3D",
-              "title": "3D地图",
-              "description": "程序生成3D地形地图，支持高度图和热力图展示",
-              "thumbnail": "images/expand-map3D.jpg",
-              "version": "r179",
-              "url": "examples/z258/expand-map3D"
+              id: "expand-map3D",
+              title: "3D地图",
+              description: "程序生成3D地形地图，支持高度图和热力图展示",
+              thumbnail: "images/expand-map3D.jpg",
+              version: "r179",
+              url: "examples/z258/expand-map3D",
             },
             {
-              "id": "expand-areaMap",
-              "title": "分级地图",
-              "description": "3D分级统计地图，支持数据可视化和区域高亮",
-              "thumbnail": "images/expand-areaMap.jpg",
-              "version": "r179",
-              "url": "examples/z258/expand-areaMap"
+              id: "expand-areaMap",
+              title: "分级地图",
+              description: "3D分级统计地图，支持数据可视化和区域高亮",
+              thumbnail: "images/expand-areaMap.jpg",
+              version: "r179",
+              url: "examples/z258/expand-areaMap",
             },
             {
-              "id": "expand-loadTiles",
-              "title": "3D Tiles加载",
-              "description": "加载3D Tiles格式的大规模地形和建筑数据",
-              "thumbnail": "images/expand-loadTiles.jpg",
-              "version": "r179",
-              "url": "examples/z258/expand-loadTiles"
-            }
-          ]
-        }
-      ]
-    }
-  ]
+              id: "expand-loadTiles",
+              title: "3D Tiles加载",
+              description: "加载3D Tiles格式的大规模地形和建筑数据",
+              thumbnail: "images/expand-loadTiles.jpg",
+              version: "r179",
+              url: "examples/z258/expand-loadTiles",
+            },
+          ],
+        },
+      ],
+    },
+  ],
 };
 
 // 导出数据
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = threejsData;
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = threejsData;
 }

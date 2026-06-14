@@ -345,6 +345,89 @@ gui.domElement.style.position = 'relative';
 
 按照这个流程，您可以轻松地为项目贡献新的示例，丰富Three.js示例库的内容。
 
+## 高级示例参考
+
+### 1. 高斯泼溅渲染器 (Spark 3DGS)
+
+**文件**: `examples/advanced-spark-3dgs.html`
+
+**技术要点**:
+- 使用 Spark 库加载和渲染 `.spz` 格式的高斯泼溅模型
+- 动态导入外部 ES 模块（绕过 import map 限制）
+- 实现粒子背景效果和动态动画
+
+**关键代码**:
+```javascript
+// 动态加载 Spark 模块
+async function loadSpark() {
+    const sparkModule = await import('https://sparkjs.dev/releases/spark/0.1.9/spark.module.js');
+    return sparkModule;
+}
+
+// 创建高斯泼溅网格
+const butterfly = new SplatMesh({ 
+    url: 'https://sparkjs.dev/assets/splats/butterfly.spz' 
+});
+```
+
+### 2. 双相机 VR 立体效果
+
+**文件**: `examples/advanced-vr-stereo.html`
+
+**技术要点**:
+- 使用双相机模拟人眼视差（瞳距 IPD ≈ 72mm）
+- 使用 `ScissorTest` 实现分屏渲染
+- 左右眼画面分别渲染到屏幕左右两半
+
+**关键代码**:
+```javascript
+// 设置渲染器
+renderer.autoClear = false;
+renderer.setScissorTest(true);
+
+// 渲染左眼（左半屏）
+renderer.setScissor(0, 0, halfW, h);
+renderer.setViewport(0, 0, halfW, h);
+renderer.render(scene, leftCamera);
+
+// 渲染右眼（右半屏）
+renderer.setScissor(halfW, 0, w - halfW, h);
+renderer.setViewport(halfW, 0, w - halfW, h);
+renderer.render(scene, rightCamera);
+```
+
+### 3. 曲线绘制
+
+**文件**: `examples/advanced-curve-drawing.html`
+
+**技术要点**:
+- 使用 Three.js 曲线 API 绘制各种数学曲线
+- EllipseCurve 椭圆曲线、SplineCurve 样条曲线
+- QuadraticBezierCurve 二次贝塞尔曲线、CubicBezierCurve3 三次贝塞尔曲线
+- CurvePath 曲线路径组合
+
+**关键代码**:
+```javascript
+// 椭圆曲线
+const ellipseCurve = new THREE.EllipseCurve(0, 0, 100, 50);
+const points = ellipseCurve.getPoints(50);
+const geometry = new THREE.BufferGeometry().setFromPoints(points);
+
+// 样条曲线（穿过所有控制点）
+const splineCurve = new THREE.SplineCurve(controlPoints);
+const points = splineCurve.getPoints(50);
+
+// 三次贝塞尔曲线（3D空间）
+const curve = new THREE.CubicBezierCurve3(p1, p2, p3, p4);
+const points = curve.getPoints(50);
+
+// 曲线路径组合
+const curvePath = new THREE.CurvePath();
+curvePath.add(line1);
+curvePath.add(arc);
+curvePath.add(line2);
+```
+
 ## 附录：示例模板结构
 
 ```html
