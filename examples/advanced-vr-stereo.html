@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="使用Three.js双相机技术实现VR立体效果，无需头显即可体验沉浸式3D视觉">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 双相机VR立体效果</title>
+    <link rel="stylesheet" href="../css/example-common.css">
+    <style>
+        body { margin: 0; overflow: hidden; }
+        #info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: white;
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(6px);
+            padding: 8px 18px;
+            border-radius: 24px;
+            font-size: 14px;
+            pointer-events: none;
+            z-index: 100;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            border-left: 3px solid #ffaa44;
+        }
+        #controls-note {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            color: rgba(255, 255, 255, 0.7);
+            background: rgba(0, 0, 0, 0.5);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-family: monospace;
+            pointer-events: none;
+            z-index: 100;
+        }
+        #vrControls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            padding: 15px 20px;
+            border-radius: 12px;
+            color: white;
+            font-size: 13px;
+            z-index: 100;
+        }
+        #vrControls label {
+            display: block;
+            margin-bottom: 10px;
+        }
+        #vrControls input[type="range"] {
+            width: 140px;
+            vertical-align: middle;
+            margin-left: 8px;
+        }
+        #vrControls span {
+            display: inline-block;
+            width: 45px;
+            text-align: right;
+            font-family: monospace;
+        }
+        #vrControls input[type="checkbox"] {
+            margin-right: 6px;
+        }
+        @media (max-width: 600px) {
+            #info { font-size: 10px; bottom: 12px; left: 12px; }
+            #controls-note { font-size: 9px; }
+            #vrControls { padding: 10px 12px; font-size: 11px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="info">🧠 双相机立体渲染 (平行眼VR) | 左右分屏 | 大脑融合产生景深</div>
+    <div id="controls-note">🖱️ 鼠标拖拽旋转视角 | 右键平移 | 滚轮缩放</div>
+    <div id="vrControls">
+        <label>
+            瞳距 (IPD): <span id="ipdValue">72</span>mm
+            <input type="range" id="ipdSlider" min="50" max="80" value="72">
+        </label>
+        <label>
+            <input type="checkbox" id="stereoToggle" checked> 启用立体效果
+        </label>
+    </div>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../libs/three/r179/build/three.module.js",
+                "three/addons/": "../libs/three/r179/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // Three.js 核心变量 - 暴露给全局作用域以便截图功能使用
+        window.scene = null;
+        window.camera = null;
+        window.renderer = null;
+
+        // --- 创建场景 ---
+        window.scene = new THREE.Scene();
+        window.scene.background = new THREE.Color(0x050b1a); // 深邃星空蓝黑
+        window.scene.fog = new THREE.FogExp2(0x050b1a, 0.012); // 轻微雾效，增强景深
+
+        // 添加地面网格（增强空间参考）
+        const gridHelper = new THREE.GridHelper(12, 24, 0x66ccff, 0x336699);
+        gridHelper.position.y = -0.8;
+        gridHelper.material.transparent = true;
+        gridHelper.material.opacity = 0.55;
+        window.scene.add(gridHelper);
+
+        // 添加一个半透明的参考圆环平面，增强空间感
+        const ringGeometry = new THREE.RingGeometry(2.2, 3.2, 32);
+        const ringMaterial = new THREE.MeshStandardMaterial({
+            color: 0x3a86ff,
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0.2,
+            emissive: 0x001133
+        });
+        const groundRing = new THREE.Mesh(ringGeometry, ringMaterial);
+        groundRing.rotation.x = -Math.PI / 2;
+        groundRing.position.y = -0.75;
+        window.scene.add(groundRing);
+
+        // 添加一组彩色立方体，形成前后层次
+        const cubesData = [
+            { color: 0xff4d4d, pos: [-2.2, 0.4, -1.5], size: 0.7 }, // 红，近景偏左
+            { color: 0x4dff4d, pos: [0, 0.3, 0.8], size: 0.8 },     // 绿，中间靠前
+            { color: 0x4d4dff, pos: [2.0, 0.5, -1.0], size: 0.7 },  // 蓝，右侧
+            { color: 0xffdd44, pos: [-1.2, 0.6, 2.2], size: 0.65 }, // 金黄，远处左侧
+            { color: 0xff66cc, pos: [1.5, 0.4, 2.5], size: 0.7 },   // 粉紫，远处右侧
+            { color: 0x44ffcc, pos: [0.5, 0.2, -2.0], size: 0.6 }   // 青绿，近处中间偏后
+        ];
+        const cubes = [];
+        cubesData.forEach(data => {
+            const geometry = new THREE.BoxGeometry(data.size, data.size, data.size);
+            const material = new THREE.MeshStandardMaterial({
+                color: data.color,
+                roughness: 0.25,
+                metalness: 0.4
+            });
+            const cube = new THREE.Mesh(geometry, material);
+            cube.position.set(data.pos[0], data.pos[1], data.pos[2]);
+            cube.castShadow = true;
+            window.scene.add(cube);
+            cubes.push(cube);
+        });
+
+        // 添加悬浮环面结，增强视觉趣味
+        const torusKnot = new THREE.Mesh(
+            new THREE.TorusKnotGeometry(1.0, 0.22, 120, 12, 3, 4),
+            new THREE.MeshStandardMaterial({
+                color: 0xffaa55,
+                roughness: 0.3,
+                metalness: 0.7,
+                emissive: 0x442200
+            })
+        );
+        torusKnot.position.set(0, 1.2, 0.2);
+        torusKnot.castShadow = true;
+        window.scene.add(torusKnot);
+
+        // 添加几个悬浮小球体，绕Y轴旋转，体现立体环绕感
+        const sphereGroup = [];
+        const sphereColors = [0xff8888, 0x88ff88, 0x8888ff, 0xffaa88];
+        for (let i = 0; i < 6; i++) {
+            const sphereGeo = new THREE.SphereGeometry(0.25, 24, 24);
+            const sphereMat = new THREE.MeshStandardMaterial({
+                color: sphereColors[i % sphereColors.length],
+                emissive: 0x221100
+            });
+            const sphere = new THREE.Mesh(sphereGeo, sphereMat);
+            const angle = (i / 6) * Math.PI * 2;
+            const radius = 2.4;
+            sphere.position.set(Math.cos(angle) * radius, 0.5 + Math.sin(angle * 2) * 0.3, Math.sin(angle) * radius);
+            sphere.castShadow = true;
+            window.scene.add(sphere);
+            sphereGroup.push(sphere);
+        }
+
+        // 添加一些漂浮粒子 (星辰效果，增强空间沉浸)
+        const starCount = 800;
+        const starGeometry = new THREE.BufferGeometry();
+        const starPositions = new Float32Array(starCount * 3);
+        for (let i = 0; i < starCount; i++) {
+            starPositions[i * 3] = (Math.random() - 0.5) * 40;
+            starPositions[i * 3 + 1] = (Math.random() - 0.5) * 15;
+            starPositions[i * 3 + 2] = (Math.random() - 0.5) * 25 - 10;
+        }
+        starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+        const starMaterial = new THREE.PointsMaterial({
+            color: 0xaaccff,
+            size: 0.08,
+            transparent: true,
+            opacity: 0.6,
+            blending: THREE.AdditiveBlending
+        });
+        const stars = new THREE.Points(starGeometry, starMaterial);
+        window.scene.add(stars);
+
+        // 灯光系统 (营造立体感光照)
+        const ambientLight = new THREE.AmbientLight(0x404066, 0.65);
+        window.scene.add(ambientLight);
+
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        dirLight.position.set(3, 5, 2);
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 1024;
+        dirLight.shadow.mapSize.height = 1024;
+        window.scene.add(dirLight);
+
+        const backLight = new THREE.PointLight(0xffaa66, 0.5);
+        backLight.position.set(-2, 1, -3);
+        window.scene.add(backLight);
+
+        const fillLight = new THREE.PointLight(0x6688ff, 0.4);
+        fillLight.position.set(2, 1.5, 2);
+        window.scene.add(fillLight);
+
+        // --- 渲染器配置（关键）---
+        window.renderer = new THREE.WebGLRenderer({ antialias: true });
+        window.renderer.setSize(window.innerWidth, window.innerHeight);
+        window.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        window.renderer.autoClear = false;      // 手动清除，避免右眼覆盖左眼
+        window.renderer.setScissorTest(true);   // 开启裁剪测试，实现分屏
+        window.renderer.shadowMap.enabled = true;
+        document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+
+        // --- 瞳距与双相机 ---
+        let ipd = 0.072;  // 瞳距72mm（根据场景大小微调，让视差更明显）
+        let stereoEnabled = true;
+
+        // 中心相机（用于轨道控制）
+        const centerCamera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+        centerCamera.position.set(3.5, 2.2, 4.8);
+        centerCamera.lookAt(0, 0.6, 0);
+        // 暴露给截图功能使用
+        window.camera = centerCamera;
+
+        // 左眼相机与右眼相机
+        const leftCamera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+        const rightCamera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+
+        // 轨道控制器（绑定中心相机）
+        const controls = new OrbitControls(centerCamera, window.renderer.domElement);
+        controls.target.set(0, 0.6, 0);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.06;
+        controls.rotateSpeed = 1.0;
+        controls.zoomSpeed = 1.2;
+        controls.panSpeed = 0.8;
+        controls.update();
+
+        // GUI 控制
+        const ipdSlider = document.getElementById('ipdSlider');
+        const ipdValue = document.getElementById('ipdValue');
+        const stereoToggle = document.getElementById('stereoToggle');
+
+        ipdSlider.addEventListener('input', (e) => {
+            const value = parseInt(e.target.value);
+            ipd = value / 1000;
+            ipdValue.textContent = value;
+        });
+
+        stereoToggle.addEventListener('change', (e) => {
+            stereoEnabled = e.target.checked;
+        });
+
+        // 窗口自适应
+        window.addEventListener('resize', () => {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            window.renderer.setSize(w, h);
+            centerCamera.aspect = w / h;
+            centerCamera.updateProjectionMatrix();
+            leftCamera.aspect = w / h;
+            leftCamera.updateProjectionMatrix();
+            rightCamera.aspect = w / h;
+            rightCamera.updateProjectionMatrix();
+        });
+
+        // 动画时间
+        let time = 0;
+
+        // 场景动画更新
+        function updateSceneAnimations() {
+            time += 0.012;
+            // 环面结自转与轻微摆动
+            torusKnot.rotation.x = Math.sin(time * 0.5) * 0.2;
+            torusKnot.rotation.y += 0.008;
+            torusKnot.rotation.z = Math.cos(time * 0.4) * 0.1;
+
+            // 立方体整体微动
+            cubes.forEach((cube, idx) => {
+                cube.rotation.y += 0.005;
+                cube.rotation.x = Math.sin(time * 0.8 + idx) * 0.1;
+            });
+
+            // 小球体绕Y轴公转并上下起伏
+            sphereGroup.forEach((sphere, i) => {
+                const angle = time * 0.7 + (i / sphereGroup.length) * Math.PI * 2;
+                const radius = 2.6;
+                sphere.position.x = Math.cos(angle) * radius;
+                sphere.position.z = Math.sin(angle) * radius;
+                sphere.position.y = 0.7 + Math.sin(angle * 1.8) * 0.25;
+            });
+
+            // 星星粒子缓慢自转
+            stars.rotation.y += 0.0005;
+            stars.rotation.x += 0.0003;
+        }
+
+        // --- 动画循环（核心渲染逻辑）---
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            updateSceneAnimations();
+
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+
+            if (stereoEnabled) {
+                // 立体渲染模式
+                const halfW = Math.floor(w / 2);
+
+                // 计算中心相机的右方向向量
+                const rightDir = new THREE.Vector3(1, 0, 0);
+                rightDir.applyQuaternion(centerCamera.quaternion);
+
+                // 更新左右相机位置
+                leftCamera.position.copy(centerCamera.position).addScaledVector(rightDir, -ipd / 2);
+                rightCamera.position.copy(centerCamera.position).addScaledVector(rightDir, ipd / 2);
+
+                // 左右相机旋转与中心相机保持一致
+                leftCamera.quaternion.copy(centerCamera.quaternion);
+                rightCamera.quaternion.copy(centerCamera.quaternion);
+
+                // 手动清屏
+                window.renderer.clear();
+
+                // 渲染左眼（左半屏）
+                window.renderer.setScissor(0, 0, halfW, h);
+                window.renderer.setViewport(0, 0, halfW, h);
+                window.renderer.render(window.scene, leftCamera);
+
+                // 渲染右眼（右半屏）
+                window.renderer.setScissor(halfW, 0, w - halfW, h);
+                window.renderer.setViewport(halfW, 0, w - halfW, h);
+                window.renderer.render(window.scene, rightCamera);
+            } else {
+                // 普通渲染模式
+                window.renderer.setScissor(0, 0, w, h);
+                window.renderer.setViewport(0, 0, w, h);
+                window.renderer.clear();
+                window.renderer.render(window.scene, centerCamera);
+            }
+        }
+        animate();
+
+        console.log('✅ Three.js 双相机 VR 立体效果已启动 | 瞳距(IPD): ' + ipd + 'm');
+        console.log('🎯 左右相机基于中心相机偏移, 实时跟随 OrbitControls');
+    </script>
+
+    <!--
+    ===================================================
+    截图功能脚本 - 请勿修改此部分
+    此脚本处理从父窗口发来的截图请求，用于生成示例封面
+    ===================================================
+    -->
+    <script>
+        let _screenshotRenderer;
+        const MAX_RETRY = 3;
+        const RETRY_DELAY = 200;
+
+        function doScreenshot(retryCount = 0) {
+            try {
+                if (!_screenshotRenderer && window.renderer) {
+                    _screenshotRenderer = window.renderer;
+                }
+                if (!_screenshotRenderer) {
+                    throw new Error('渲染器未初始化');
+                }
+                if (!window.scene || !window.camera) {
+                    throw new Error('场景或相机未初始化');
+                }
+                _screenshotRenderer.render(window.scene, window.camera);
+                const quality = 0.8;
+                const canvas = _screenshotRenderer.domElement;
+                if (canvas.width === 0 || canvas.height === 0) {
+                    throw new Error('Canvas尺寸无效');
+                }
+                const tempCanvas = document.createElement('canvas');
+                const maxSize = 600;
+                const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                tempCanvas.width = Math.floor(canvas.width * scale);
+                tempCanvas.height = Math.floor(canvas.height * scale);
+                const ctx = tempCanvas.getContext('2d');
+                ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                window.parent.postMessage({
+                    type: 'screenshot-data',
+                    dataUrl: dataUrl
+                }, '*');
+                console.log('截图成功');
+            } catch (error) {
+                console.error('截图失败 (尝试 ' + (retryCount + 1) + '):', error);
+                if (retryCount < MAX_RETRY) {
+                    setTimeout(() => { doScreenshot(retryCount + 1); }, RETRY_DELAY * (retryCount + 1));
+                } else {
+                    window.parent.postMessage({
+                        type: 'screenshot-error',
+                        error: error.message
+                    }, '*');
+                }
+            }
+        }
+
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                requestAnimationFrame(() => { doScreenshot(); });
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="使用Three.js绘制各种曲线，包括椭圆曲线、样条曲线、贝塞尔曲线和曲线路径组合">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 曲线绘制</title>
+    <link rel="stylesheet" href="../css/example-common.css">
+    <style>
+        body { margin: 0; overflow: hidden; }
+        #info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 15px 20px;
+            font-family: 'Segoe UI', sans-serif;
+            pointer-events: none;
+            z-index: 100;
+            max-width: 300px;
+        }
+        #info h3 {
+            margin: 0 0 8px 0;
+            font-size: 18px;
+            color: #ffaa44;
+        }
+        #info p {
+            margin: 0;
+            font-size: 12px;
+            opacity: 0.8;
+            line-height: 1.5;
+        }
+        .curve-label {
+            position: absolute;
+            color: white;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            pointer-events: none;
+            z-index: 50;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">
+        <h3>📈 曲线绘制示例</h3>
+        <p>展示 Three.js 中的多种曲线 API：<br>
+        • 椭圆曲线 (EllipseCurve)<br>
+        • 样条曲线 (SplineCurve)<br>
+        • 二次贝塞尔曲线 (QuadraticBezierCurve)<br>
+        • 三次贝塞尔曲线 (CubicBezierCurve3)<br>
+        • 曲线路径组合 (CurvePath)</p>
+    </div>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../libs/three/r179/build/three.module.js",
+                "three/addons/": "../libs/three/r179/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        // Three.js 核心变量 - 暴露给全局作用域以便截图功能使用
+        window.scene = null;
+        window.camera = null;
+        window.renderer = null;
+
+        // 参数配置
+        const params = {
+            showEllipse: true,
+            showSpline: true,
+            showQuadratic: true,
+            showCubic: true,
+            showCurvePath: true,
+            showControlPoints: true,
+            curveSegments: 50,
+            autoRotate: true
+        };
+
+        // 曲线对象存储
+        const curves = {};
+
+        function init() {
+            // 创建场景
+            window.scene = new THREE.Scene();
+            window.scene.background = new THREE.Color(0x1a1a2e);
+
+            // 创建相机
+            window.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            window.camera.position.set(0, 60, 120);
+            window.camera.lookAt(0, 0, 0);
+
+            // 创建渲染器
+            window.renderer = new THREE.WebGLRenderer({ antialias: true });
+            window.renderer.setSize(window.innerWidth, window.innerHeight);
+            window.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+
+            // 添加控制器
+            const controls = new OrbitControls(window.camera, window.renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.autoRotate = params.autoRotate;
+            controls.autoRotateSpeed = 0.5;
+
+            // 添加坐标轴辅助
+            const axesHelper = new THREE.AxesHelper(50);
+            window.scene.add(axesHelper);
+
+            // 添加网格
+            const gridHelper = new THREE.GridHelper(200, 40, 0x444444, 0x222222);
+            window.scene.add(gridHelper);
+
+            // ========== 1. 椭圆曲线 ==========
+            createEllipseCurve();
+
+            // ========== 2. 样条曲线 ==========
+            createSplineCurve();
+
+            // ========== 3. 二次贝塞尔曲线 ==========
+            createQuadraticBezierCurve();
+
+            // ========== 4. 三次贝塞尔曲线 ==========
+            createCubicBezierCurve();
+
+            // ========== 5. 曲线路径组合 ==========
+            createCurvePath();
+
+            // 创建GUI
+            createGUI();
+
+            // 动画循环
+            function animate() {
+                requestAnimationFrame(animate);
+                controls.update();
+                window.renderer.render(window.scene, window.camera);
+            }
+            animate();
+
+            // 窗口自适应
+            window.addEventListener('resize', () => {
+                window.camera.aspect = window.innerWidth / window.innerHeight;
+                window.camera.updateProjectionMatrix();
+                window.renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+
+            console.log('✅ 曲线绘制示例启动成功');
+        }
+
+        // 创建椭圆曲线
+        function createEllipseCurve() {
+            const group = new THREE.Group();
+            group.name = 'ellipseGroup';
+
+            // 椭圆曲线：中心(0,0)，长半轴100，短半轴50
+            const ellipseCurve = new THREE.EllipseCurve(0, 0, 100, 50);
+            const points = ellipseCurve.getPoints(params.curveSegments);
+
+            // 创建线几何体
+            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            const material = new THREE.LineBasicMaterial({
+                color: 0xffaa44,
+                linewidth: 2
+            });
+            const line = new THREE.Line(geometry, material);
+            line.position.set(-80, 1, -80);
+            group.add(line);
+
+            // 添加标签
+            const label = createLabel('椭圆曲线 (EllipseCurve)', 0xffaa44);
+            label.position.set(-80, 5, -80);
+            group.add(label);
+
+            window.scene.add(group);
+            curves.ellipse = group;
+        }
+
+        // 创建样条曲线
+        function createSplineCurve() {
+            const group = new THREE.Group();
+            group.name = 'splineGroup';
+
+            // 定义控制点
+            const controlPoints = [
+                new THREE.Vector2(-100, 0),
+                new THREE.Vector2(-50, 50),
+                new THREE.Vector2(0, 0),
+                new THREE.Vector2(50, -50),
+                new THREE.Vector2(100, 0)
+            ];
+
+            // 创建样条曲线
+            const splineCurve = new THREE.SplineCurve(controlPoints);
+            const points = splineCurve.getPoints(params.curveSegments);
+
+            // 创建曲线线条
+            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            const material = new THREE.LineBasicMaterial({ color: 0x44ff88 });
+            const line = new THREE.Line(geometry, material);
+            line.position.set(0, 1, -80);
+            group.add(line);
+
+            // 显示控制点
+            const controlGeometry = new THREE.BufferGeometry().setFromPoints(controlPoints);
+            const controlMaterial = new THREE.PointsMaterial({
+                color: 0xff4444,
+                size: 5
+            });
+            const controlPointsMesh = new THREE.Points(controlGeometry, controlMaterial);
+            controlPointsMesh.position.set(0, 1, -80);
+            controlPointsMesh.name = 'controlPoints';
+            group.add(controlPointsMesh);
+
+            // 控制点连线
+            const controlLineMaterial = new THREE.LineBasicMaterial({
+                color: 0xff4444,
+                transparent: true,
+                opacity: 0.3
+            });
+            const controlLine = new THREE.Line(controlGeometry, controlLineMaterial);
+            controlLine.position.set(0, 1, -80);
+            controlLine.name = 'controlLines';
+            group.add(controlLine);
+
+            // 添加标签
+            const label = createLabel('样条曲线 (SplineCurve)', 0x44ff88);
+            label.position.set(0, 5, -80);
+            group.add(label);
+
+            window.scene.add(group);
+            curves.spline = group;
+        }
+
+        // 创建二次贝塞尔曲线
+        function createQuadraticBezierCurve() {
+            const group = new THREE.Group();
+            group.name = 'quadraticGroup';
+
+            // 二次贝塞尔曲线：起点、控制点、终点
+            const p1 = new THREE.Vector2(0, 0);
+            const p2 = new THREE.Vector2(50, 100);
+            const p3 = new THREE.Vector2(100, 0);
+
+            const curve = new THREE.QuadraticBezierCurve(p1, p2, p3);
+            const points = curve.getPoints(params.curveSegments);
+
+            // 曲线线条
+            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            const material = new THREE.LineBasicMaterial({ color: 0x4488ff });
+            const line = new THREE.Line(geometry, material);
+            line.position.set(-80, 1, 0);
+            group.add(line);
+
+            // 显示控制点
+            const controlPoints = [p1, p2, p3];
+            const controlGeometry = new THREE.BufferGeometry().setFromPoints(controlPoints);
+            const controlMaterial = new THREE.PointsMaterial({
+                color: 0xff66cc,
+                size: 5
+            });
+            const controlPointsMesh = new THREE.Points(controlGeometry, controlMaterial);
+            controlPointsMesh.position.set(-80, 1, 0);
+            controlPointsMesh.name = 'controlPoints';
+            group.add(controlPointsMesh);
+
+            // 控制点连线
+            const controlLineMaterial = new THREE.LineBasicMaterial({
+                color: 0xff66cc,
+                transparent: true,
+                opacity: 0.3
+            });
+            const controlLine = new THREE.Line(controlGeometry, controlLineMaterial);
+            controlLine.position.set(-80, 1, 0);
+            controlLine.name = 'controlLines';
+            group.add(controlLine);
+
+            // 添加标签
+            const label = createLabel('二次贝塞尔曲线 (QuadraticBezier)', 0x4488ff);
+            label.position.set(-80, 5, 0);
+            group.add(label);
+
+            window.scene.add(group);
+            curves.quadratic = group;
+        }
+
+        // 创建三次贝塞尔曲线
+        function createCubicBezierCurve() {
+            const group = new THREE.Group();
+            group.name = 'cubicGroup';
+
+            // 三次贝塞尔曲线：起点、控制点1、控制点2、终点（3D空间）
+            const p1 = new THREE.Vector3(-100, 0, 0);
+            const p2 = new THREE.Vector3(50, 100, 0);
+            const p3 = new THREE.Vector3(100, 0, 100);
+            const p4 = new THREE.Vector3(100, 0, 0);
+
+            const curve = new THREE.CubicBezierCurve3(p1, p2, p3, p4);
+            const points = curve.getPoints(params.curveSegments);
+
+            // 曲线线条
+            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            const material = new THREE.LineBasicMaterial({ color: 0xff6644 });
+            const line = new THREE.Line(geometry, material);
+            line.position.set(0, 1, 0);
+            group.add(line);
+
+            // 显示控制点
+            const controlPoints = [p1, p2, p3, p4];
+            const controlGeometry = new THREE.BufferGeometry().setFromPoints(controlPoints);
+            const controlMaterial = new THREE.PointsMaterial({
+                color: 0xaa66ff,
+                size: 5
+            });
+            const controlPointsMesh = new THREE.Points(controlGeometry, controlMaterial);
+            controlPointsMesh.position.set(0, 1, 0);
+            controlPointsMesh.name = 'controlPoints';
+            group.add(controlPointsMesh);
+
+            // 控制点连线
+            const controlLineMaterial = new THREE.LineBasicMaterial({
+                color: 0xaa66ff,
+                transparent: true,
+                opacity: 0.3
+            });
+            const controlLine = new THREE.Line(controlGeometry, controlLineMaterial);
+            controlLine.position.set(0, 1, 0);
+            controlLine.name = 'controlLines';
+            group.add(controlLine);
+
+            // 添加标签
+            const label = createLabel('三次贝塞尔曲线 (CubicBezier3D)', 0xff6644);
+            label.position.set(0, 5, 0);
+            group.add(label);
+
+            window.scene.add(group);
+            curves.cubic = group;
+        }
+
+        // 创建曲线路径组合
+        function createCurvePath() {
+            const group = new THREE.Group();
+            group.name = 'curvePathGroup';
+
+            // 创建多条曲线并组合
+            const p1 = new THREE.Vector2(0, 0);
+            const p2 = new THREE.Vector2(100, 100);
+            const line1 = new THREE.LineCurve(p1, p2);
+
+            const arc = new THREE.EllipseCurve(0, 100, 100, 100, 0, Math.PI);
+
+            const p3 = new THREE.Vector2(-100, 100);
+            const p4 = new THREE.Vector2(0, 0);
+            const line2 = new THREE.LineCurve(p3, p4);
+
+            // 组合成曲线路径
+            const curvePath = new THREE.CurvePath();
+            curvePath.add(line1);
+            curvePath.add(arc);
+            curvePath.add(line2);
+
+            const points = curvePath.getPoints(params.curveSegments);
+
+            // 绘制组合路径
+            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            const material = new THREE.LineBasicMaterial({ color: 0x44ddff });
+            const line = new THREE.Line(geometry, material);
+            line.position.set(0, 1, 80);
+            group.add(line);
+
+            // 添加标签
+            const label = createLabel('曲线路径组合 (CurvePath)', 0x44ddff);
+            label.position.set(0, 5, 80);
+            group.add(label);
+
+            window.scene.add(group);
+            curves.curvePath = group;
+        }
+
+        // 创建文字标签
+        function createLabel(text, color) {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = 256;
+            canvas.height = 64;
+
+            context.fillStyle = '#' + new THREE.Color(color).getHexString();
+            context.font = 'bold 16px "Microsoft YaHei", sans-serif';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.fillText(text, 128, 32);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            const material = new THREE.SpriteMaterial({ map: texture, transparent: true });
+            const sprite = new THREE.Sprite(material);
+            sprite.scale.set(40, 10, 1);
+
+            return sprite;
+        }
+
+        // 创建GUI
+        function createGUI() {
+            const gui = new GUI({ title: '曲线控制' });
+            gui.domElement.style.marginTop = '60px';
+
+            gui.add(params, 'showEllipse').name('显示椭圆曲线').onChange(updateVisibility);
+            gui.add(params, 'showSpline').name('显示样条曲线').onChange(updateVisibility);
+            gui.add(params, 'showQuadratic').name('显示二次贝塞尔').onChange(updateVisibility);
+            gui.add(params, 'showCubic').name('显示三次贝塞尔').onChange(updateVisibility);
+            gui.add(params, 'showCurvePath').name('显示曲线路径').onChange(updateVisibility);
+            gui.add(params, 'showControlPoints').name('显示控制点').onChange(updateVisibility);
+            gui.add(params, 'curveSegments', 10, 100, 1).name('曲线分段数').onChange(updateCurves);
+            gui.add(params, 'autoRotate').name('自动旋转').onChange((value) => {
+                const controls = window.scene.userData.controls;
+                if (controls) controls.autoRotate = value;
+            });
+
+            // 保存controls引用
+            window.scene.userData = { controls: window.scene.getObjectByProperty('type', 'OrbitControls') };
+        }
+
+        // 更新可见性
+        function updateVisibility() {
+            if (curves.ellipse) curves.ellipse.visible = params.showEllipse;
+            if (curves.spline) curves.spline.visible = params.showSpline;
+            if (curves.quadratic) curves.quadratic.visible = params.showQuadratic;
+            if (curves.cubic) curves.cubic.visible = params.showCubic;
+            if (curves.curvePath) curves.curvePath.visible = params.showCurvePath;
+
+            // 更新控制点可见性
+            Object.values(curves).forEach(group => {
+                if (group) {
+                    group.children.forEach(child => {
+                        if (child.name === 'controlPoints' || child.name === 'controlLines') {
+                            child.visible = params.showControlPoints;
+                        }
+                    });
+                }
+            });
+        }
+
+        // 更新曲线（当分段数改变时）
+        function updateCurves() {
+            // 清除旧曲线
+            Object.values(curves).forEach(group => {
+                if (group) window.scene.remove(group);
+            });
+
+            // 重新创建
+            createEllipseCurve();
+            createSplineCurve();
+            createQuadraticBezierCurve();
+            createCubicBezierCurve();
+            createCurvePath();
+
+            // 应用当前可见性设置
+            updateVisibility();
+        }
+
+        init();
+    </script>
+
+    <!--
+    ===================================================
+    截图功能脚本 - 请勿修改此部分
+    此脚本处理从父窗口发来的截图请求，用于生成示例封面
+    ===================================================
+    -->
+    <script>
+        let _screenshotRenderer;
+        const MAX_RETRY = 3;
+        const RETRY_DELAY = 200;
+
+        function doScreenshot(retryCount = 0) {
+            try {
+                if (!_screenshotRenderer && window.renderer) {
+                    _screenshotRenderer = window.renderer;
+                }
+                if (!_screenshotRenderer) {
+                    throw new Error('渲染器未初始化');
+                }
+                if (!window.scene || !window.camera) {
+                    throw new Error('场景或相机未初始化');
+                }
+                _screenshotRenderer.render(window.scene, window.camera);
+                const quality = 0.8;
+                const canvas = _screenshotRenderer.domElement;
+                if (canvas.width === 0 || canvas.height === 0) {
+                    throw new Error('Canvas尺寸无效');
+                }
+                const tempCanvas = document.createElement('canvas');
+                const maxSize = 600;
+                const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                tempCanvas.width = Math.floor(canvas.width * scale);
+                tempCanvas.height = Math.floor(canvas.height * scale);
+                const ctx = tempCanvas.getContext('2d');
+                ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                window.parent.postMessage({
+                    type: 'screenshot-data',
+                    dataUrl: dataUrl
+                }, '*');
+                console.log('截图成功');
+            } catch (error) {
+                console.error('截图失败 (尝试 ' + (retryCount + 1) + '):', error);
+                if (retryCount < MAX_RETRY) {
+                    setTimeout(() => { doScreenshot(retryCount + 1); }, RETRY_DELAY * (retryCount + 1));
+                } else {
+                    window.parent.postMessage({
+                        type: 'screenshot-error',
+                        error: error.message
+                    }, '*');
+                }
+            }
+        }
+
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                requestAnimationFrame(() => { doScreenshot(); });
+            }
+        });
+    </script>
+</body>
+</html>

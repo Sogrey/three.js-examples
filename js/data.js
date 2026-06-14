@@ -4841,6 +4841,36 @@ const threejsData = {
       ]
     },
     {
+      "id": "数学与算法",
+      "name": "12. 数学与算法",
+      "icon": "bi-calculator",
+      "subcategories": [
+        {
+          "id": "数学与算法-12.1-曲线与几何",
+          "name": "12.1 曲线与几何",
+          "examples": [
+            {
+              "id": "advanced-curve-drawing",
+              "title": "曲线绘制",
+              "description": "使用Three.js绘制各种曲线，包括椭圆曲线、样条曲线、二次/三次贝塞尔曲线和曲线路径组合",
+              "thumbnail": "images/advanced-curve-drawing.jpg",
+              "version": "r179",
+              "url": "examples/advanced-curve-drawing",
+              "features": {
+                "coreTech": "Three.js, EllipseCurve, SplineCurve, BezierCurve, CurvePath",
+                "secondaryTech": "曲线绘制, 数学几何, 插值算法",
+                "difficulty": "中级",
+                "actualFunction": "展示多种曲线API的使用方法，包括椭圆、样条、贝塞尔曲线和路径组合",
+                "suggestedCategory": "12. 数学与算法 > 12.1 曲线与几何",
+                "filePath": "examples/examples/advanced-curve-drawing",
+                "notes": "包含控制点可视化，支持曲线分段数调节"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
       "id": "音视频与媒体",
       "name": "13. 音视频与媒体",
       "icon": "bi-music-note-beamed",
@@ -5973,6 +6003,40 @@ const threejsData = {
                 "suggestedCategory": "14. 应用场景",
                 "filePath": "examples/examples/digital-twin-energy-flow",
                 "notes": "数字孪生示例 (自动推断)"
+              }
+            },
+            {
+              "id": "advanced-spark-3dgs",
+              "title": "高斯泼溅渲染器 (Spark 3DGS)",
+              "description": "使用Three.js和Spark库构建高斯泼溅3D渲染器，展示3D蝴蝶的超写实效果，支持LOD流式传输",
+              "thumbnail": "images/advanced-spark-3dgs.jpg",
+              "version": "r179",
+              "url": "examples/advanced-spark-3dgs",
+              "features": {
+                "coreTech": "Spark, Three.js, WebGL2, Gaussian Splatting",
+                "secondaryTech": "新兴渲染技术, 3DGS, 体积渲染",
+                "difficulty": "高级",
+                "actualFunction": "使用Three.js和Spark库构建高斯泼溅3D渲染器，展示3D蝴蝶的超写实效果",
+                "suggestedCategory": "14. 应用场景 > 新兴渲染技术",
+                "filePath": "examples/examples/advanced-spark-3dgs",
+                "notes": "使用Spark库加载.spz格式的高斯泼溅模型"
+              }
+            },
+            {
+              "id": "advanced-vr-stereo",
+              "title": "双相机VR立体效果",
+              "description": "使用Three.js双相机技术实现VR立体效果，无需头显即可体验沉浸式3D视觉，支持瞳距调节",
+              "thumbnail": "images/advanced-vr-stereo.jpg",
+              "version": "r179",
+              "url": "examples/advanced-vr-stereo",
+              "features": {
+                "coreTech": "Three.js, 双相机渲染, ScissorTest",
+                "secondaryTech": "VR应用, 立体视觉, 分屏渲染",
+                "difficulty": "高级",
+                "actualFunction": "使用双相机和分屏渲染技术模拟人眼视差，实现立体3D效果",
+                "suggestedCategory": "14. 应用场景 > VR/AR应用",
+                "filePath": "examples/examples/advanced-vr-stereo",
+                "notes": "支持瞳距(IPD)实时调节，可开关立体效果"
               }
             }
           ]

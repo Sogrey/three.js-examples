@@ -265,6 +265,48 @@ Three.js示例导航项目提供了丰富的Three.js功能示例，涵盖了基�
 - 适当的纹理尺寸和格式选择
 - 优化的动画循环和事件处理
 
+### 新增高级示例（2025-06）
+
+#### 4. 高斯泼溅渲染器 (Spark 3DGS)
+- **文件**: `examples/advanced-spark-3dgs.html`
+- **技术栈**: Three.js + Spark + WebGL2
+- **核心功能**:
+  - 使用 Spark 库加载 `.spz` 格式的高斯泼溅模型
+  - 动态导入外部 ES 模块（绕过 import map 限制）
+  - 实现粒子背景效果和动态动画
+- **技术亮点**:
+  - 支持 LOD 流式传输，可处理亿级 Splat
+  - 动态模块加载的备选方案（ES Module + UMD）
+  - 超写实 3D 渲染效果
+
+#### 5. 双相机 VR 立体效果
+- **文件**: `examples/advanced-vr-stereo.html`
+- **技术栈**: Three.js + ScissorTest
+- **核心功能**:
+  - 使用双相机模拟人眼视差（瞳距 IPD ≈ 72mm）
+  - 使用 `ScissorTest` 实现分屏渲染
+  - 支持瞳距实时调节和立体效果开关
+- **技术亮点**:
+  - 无需头显即可体验沉浸式 3D 视觉
+  - 左右相机同步跟随中心相机
+  - 平行视线模拟真实人眼立体视觉
+  - 丰富的场景元素（环面结、粒子、浮动立方体）
+
+#### 6. 曲线绘制
+- **文件**: `examples/advanced-curve-drawing.html`
+- **技术栈**: Three.js 曲线 API
+- **核心功能**:
+  - EllipseCurve 椭圆曲线
+  - SplineCurve 样条曲线（Catmull-Rom 插值）
+  - QuadraticBezierCurve 二次贝塞尔曲线
+  - CubicBezierCurve3 三次贝塞尔曲线（3D空间）
+  - CurvePath 曲线路径组合
+- **技术亮点**:
+  - 控制点可视化
+  - 可调节曲线分段数
+  - 支持显示/隐藏各类型曲线
+  - 适合学习曲线数学原理
+
 ### 未来扩展建议
 
 1. **内容扩展**：

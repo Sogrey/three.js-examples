@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="使用Three.js和Spark库构建高斯泼溅3D渲染器，展示3D蝴蝶的超写实效果">
+    <meta name="three-version" content="r179">
+    <title>Three.js 示例 - 高斯泼溅渲染器 (Spark 3DGS)</title>
+    <link rel="stylesheet" href="../css/example-common.css">
+    <style>
+        #info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            background: rgba(10, 10, 20, 0.75);
+            backdrop-filter: blur(8px);
+            border-radius: 16px;
+            padding: 12px 24px;
+            border-left: 4px solid #ff6b9d;
+            pointer-events: none;
+            z-index: 100;
+        }
+        #info h3 {
+            margin: 0 0 8px 0;
+            font-size: 16px;
+        }
+        #info p {
+            margin: 0;
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        #status {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.6);
+            padding: 8px 16px;
+            border-radius: 8px;
+            color: #0f0;
+            font-family: monospace;
+            font-size: 12px;
+            pointer-events: none;
+        }
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.7);
+            padding: 16px 32px;
+            border-radius: 40px;
+            color: white;
+            font-size: 14px;
+            pointer-events: none;
+            transition: opacity 0.5s;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">
+        <h3>🦋 Gaussian Splatting · 高斯泼溅实时渲染</h3>
+        <p>Spark 渲染引擎 + Three.js | 蝴蝶模型动态旋转</p>
+    </div>
+    <div id="loading">🔄 加载高斯泼溅模型...</div>
+    <div id="status">⏳ 初始化中...</div>
+    <div class="three-container" id="threeContainer"></div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../libs/three/r179/build/three.module.js",
+                "three/addons/": "../libs/three/r179/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // Three.js 核心变量 - 暴露给全局作用域以便截图功能使用
+        window.scene = null;
+        window.camera = null;
+        window.renderer = null;
+
+        const statusDiv = document.getElementById('status');
+        const loadingDiv = document.getElementById('loading');
+
+        function updateStatus(message, isError = false) {
+            statusDiv.textContent = message;
+            statusDiv.style.color = isError ? '#f00' : '#0f0';
+            console.log(message);
+        }
+
+        // 动态加载 Spark 模块
+        async function loadSpark() {
+            updateStatus('📦 加载 Spark 模块...');
+            try {
+                const sparkModule = await import('https://sparkjs.dev/releases/spark/0.1.9/spark.module.js');
+                updateStatus('✅ Spark 加载成功');
+                return sparkModule;
+            } catch (error) {
+                console.warn('动态 import 失败，尝试备用方法:', error);
+                // 备用方法：使用 script 标签加载 UMD 版本
+                return new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+                    script.src = 'https://sparkjs.dev/releases/spark/0.1.9/spark.umd.js';
+                    script.onload = () => {
+                        if (window.Spark) {
+                            updateStatus('✅ Spark 加载成功 (UMD)');
+                            resolve(window.Spark);
+                        } else {
+                            reject(new Error('Spark UMD 加载后未找到导出'));
+                        }
+                    };
+                    script.onerror = () => reject(new Error('Spark UMD 脚本加载失败'));
+                    document.head.appendChild(script);
+                });
+            }
+        }
+
+        async function init() {
+            try {
+                // 加载 Spark
+                const spark = await loadSpark();
+                const SplatMesh = spark.SplatMesh || spark.default?.SplatMesh;
+
+                if (!SplatMesh) {
+                    throw new Error('无法获取 SplatMesh 构造函数');
+                }
+
+                // 创建场景
+                window.scene = new THREE.Scene();
+                window.scene.background = new THREE.Color(0x0a0a2a);
+                window.scene.fog = new THREE.FogExp2(0x0a0a2a, 0.008);
+
+                // 相机配置
+                window.camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 1000);
+                window.camera.position.set(0, 0.5, 4.5);
+
+                // 渲染器配置
+                window.renderer = new THREE.WebGLRenderer({ antialias: true });
+                window.renderer.setSize(window.innerWidth, window.innerHeight);
+                window.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                window.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+                window.renderer.toneMappingExposure = 1.2;
+                document.getElementById('threeContainer').appendChild(window.renderer.domElement);
+
+                // 添加轨道控制器
+                const controls = new OrbitControls(window.camera, window.renderer.domElement);
+                controls.enableDamping = true;
+                controls.dampingFactor = 0.05;
+                controls.target.set(0, 0, 0);
+
+                // 环境光照
+                const ambientLight = new THREE.AmbientLight(0x404060, 0.6);
+                window.scene.add(ambientLight);
+
+                const backLight = new THREE.DirectionalLight(0x88aaff, 0.5);
+                backLight.position.set(2, 3, -4);
+                window.scene.add(backLight);
+
+                // 极坐标网格
+                const gridHelper = new THREE.PolarGridHelper(4, 12, 8, 32, 0x88aaff, 0x335588);
+                gridHelper.position.y = -1.2;
+                gridHelper.material.transparent = true;
+                gridHelper.material.opacity = 0.35;
+                window.scene.add(gridHelper);
+
+                // 地面圆环装饰
+                const circleGeometry = new THREE.RingGeometry(1.6, 2.2, 32);
+                const circleMaterial = new THREE.MeshStandardMaterial({
+                    color: 0x3a6ea5,
+                    side: THREE.DoubleSide,
+                    transparent: true,
+                    opacity: 0.15,
+                    emissive: 0x112233
+                });
+                const groundRing = new THREE.Mesh(circleGeometry, circleMaterial);
+                groundRing.rotation.x = -Math.PI / 2;
+                groundRing.position.y = -1.18;
+                window.scene.add(groundRing);
+
+                // 粒子背景效果
+                const particleCount = 800;
+                const particleGeometry = new THREE.BufferGeometry();
+                const particlePositions = new Float32Array(particleCount * 3);
+                for (let i = 0; i < particleCount; i++) {
+                    const radius = 4 + Math.random() * 3.5;
+                    const theta = Math.random() * Math.PI * 2;
+                    const phi = Math.acos(2 * Math.random() - 1);
+                    particlePositions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+                    particlePositions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta) * 0.5;
+                    particlePositions[i * 3 + 2] = radius * Math.cos(phi);
+                }
+                particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+                const particleMaterial = new THREE.PointsMaterial({
+                    color: 0x77aaff,
+                    size: 0.04,
+                    transparent: true,
+                    opacity: 0.4,
+                    blending: THREE.AdditiveBlending
+                });
+                const starsField = new THREE.Points(particleGeometry, particleMaterial);
+                window.scene.add(starsField);
+
+                // 加载高斯泼溅模型
+                updateStatus('🦋 加载模型...');
+                const splatURL = 'https://sparkjs.dev/assets/splats/butterfly.spz';
+                const butterfly = new SplatMesh({ url: splatURL });
+                butterfly.position.set(0, -0.3, 0);
+                butterfly.quaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), -0.2);
+                butterfly.scale.set(0.95, 0.95, 0.95);
+                window.scene.add(butterfly);
+
+                // 隐藏加载提示
+                setTimeout(() => {
+                    loadingDiv.style.opacity = '0';
+                    setTimeout(() => loadingDiv.style.display = 'none', 500);
+                }, 1000);
+
+                updateStatus('✨ 渲染中...');
+
+                // 动画循环
+                let time = 0;
+                function animate() {
+                    requestAnimationFrame(animate);
+                    time += 0.012;
+
+                    if (butterfly) {
+                        butterfly.rotation.y += 0.006;
+                        butterfly.position.y = -0.3 + Math.sin(time * 1.2) * 0.08;
+                        const scaleVal = 0.95 + Math.sin(time * 2.5) * 0.008;
+                        butterfly.scale.set(scaleVal, scaleVal, scaleVal);
+                    }
+
+                    starsField.rotation.y += 0.0005;
+                    starsField.rotation.x += 0.0003;
+                    controls.update();
+                    window.renderer.render(window.scene, window.camera);
+                }
+                animate();
+
+                // 窗口自适应
+                window.addEventListener('resize', () => {
+                    window.camera.aspect = window.innerWidth / window.innerHeight;
+                    window.camera.updateProjectionMatrix();
+                    window.renderer.setSize(window.innerWidth, window.innerHeight);
+                });
+
+                console.log('✅ 高斯泼溅渲染器启动成功');
+            } catch (error) {
+                console.error('初始化失败:', error);
+                updateStatus('❌ 失败: ' + error.message, true);
+                loadingDiv.innerHTML = '⚠️ 加载失败，请刷新重试';
+            }
+        }
+
+        init();
+    </script>
+
+    <!--
+    ===================================================
+    截图功能脚本 - 请勿修改此部分
+    此脚本处理从父窗口发来的截图请求，用于生成示例封面
+    ===================================================
+    -->
+    <script>
+        let _screenshotRenderer;
+        const MAX_RETRY = 3;
+        const RETRY_DELAY = 200;
+
+        function doScreenshot(retryCount = 0) {
+            try {
+                if (!_screenshotRenderer && window.renderer) {
+                    _screenshotRenderer = window.renderer;
+                }
+                if (!_screenshotRenderer) {
+                    throw new Error('渲染器未初始化');
+                }
+                if (!window.scene || !window.camera) {
+                    throw new Error('场景或相机未初始化');
+                }
+                _screenshotRenderer.render(window.scene, window.camera);
+                const quality = 0.8;
+                const canvas = _screenshotRenderer.domElement;
+                if (canvas.width === 0 || canvas.height === 0) {
+                    throw new Error('Canvas尺寸无效');
+                }
+                const tempCanvas = document.createElement('canvas');
+                const maxSize = 600;
+                const scale = Math.min(maxSize / canvas.width, maxSize / canvas.height);
+                tempCanvas.width = Math.floor(canvas.width * scale);
+                tempCanvas.height = Math.floor(canvas.height * scale);
+                const ctx = tempCanvas.getContext('2d');
+                ctx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+                const dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+                window.parent.postMessage({
+                    type: 'screenshot-data',
+                    dataUrl: dataUrl
+                }, '*');
+                console.log('截图成功');
+            } catch (error) {
+                console.error('截图失败 (尝试 ' + (retryCount + 1) + '):', error);
+                if (retryCount < MAX_RETRY) {
+                    setTimeout(() => { doScreenshot(retryCount + 1); }, RETRY_DELAY * (retryCount + 1));
+                } else {
+                    window.parent.postMessage({
+                        type: 'screenshot-error',
+                        error: error.message
+                    }, '*');
+                }
+            }
+        }
+
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'take-screenshot') {
+                requestAnimationFrame(() => { doScreenshot(); });
+            }
+        });
+    </script>
+</body>
+</html>
