@@ -1,0 +1,280 @@
+<!--
+CodeSandbox 分享文件
+生成时间: 2026/6/14 10:47:39
+页面标题: 🦋 Gaussian Splatting · 高斯泼溅实时渲染
+原始页面链接: https://sogrey.top/CodeSandbox/
+-->
+
+<!-- CodeSandbox Template File -->
+<!-- 该文件包含完整的模板数据和设置信息，可以被重新导入 -->
+<engine-type>three.js</engine-type>
+<title>🦋 Gaussian Splatting · 高斯泼溅实时渲染</title>
+<meta name="description" content="使用Three.js和Spark库，在网页中加载并旋转展示一个3D高斯泼溅蝴蝶模型。" />
+<template>
+<div id="badge">⚡ Spark + Three.js | WebGL2 | 3DGS</div>
+<div id="loading">🔄 加载高斯泼溅模型 (Butterfly.spz) ... 请稍候</div>
+<div id="status">⏳ 正在初始化...</div>
+
+<!-- 使用全局 script 加载 Spark（避免 import map 解析问题） -->
+<script type="import-shim">
+  // 这个 script 不会被框架处理，实际使用下面的 module 方式
+    </script>
+</template>
+<script type="module">
+ import * as THREE from 'three';
+
+ const statusDiv = document.getElementById('status');
+ const loadingDiv = document.getElementById('loading');
+
+ function updateStatus(message, isError = false) {
+   statusDiv.textContent = message;
+   statusDiv.style.color = isError ? '#f00' : '#0f0';
+   console.log(message);
+ }
+
+ // 动态加载 Spark 模块（绕过 import map 限制）
+ async function loadSpark() {
+   updateStatus('📦 正在加载 Spark 模块...');
+
+   // 方法1: 使用动态 import 并直接指定完整 URL
+   try {
+     const sparkModule = await import('https://sparkjs.dev/releases/spark/0.1.9/spark.module.js');
+     updateStatus('✅ Spark 加载成功 (动态 import)');
+     return sparkModule;
+   } catch (error) {
+     console.warn('动态 import 失败，尝试备用方法:', error);
+
+     // 方法2: 使用 createElement script 方式加载 UMD 版本
+     return new Promise((resolve, reject) => {
+       const script = document.createElement('script');
+       script.src = 'https://sparkjs.dev/releases/spark/0.1.9/spark.umd.js';
+       script.onload = () => {
+         // UMD 版本会暴露全局变量
+         if (window.Spark) {
+           updateStatus('✅ Spark 加载成功 (UMD)');
+           resolve(window.Spark);
+         } else if (window.SplatMesh) {
+           updateStatus('✅ Spark 加载成功 (全局 SplatMesh)');
+           resolve({
+             SplatMesh: window.SplatMesh
+           });
+         } else {
+           reject(new Error('Spark UMD 加载后未找到导出'));
+         }
+       };
+       script.onerror = () => reject(new Error('Spark UMD 脚本加载失败'));
+       document.head.appendChild(script);
+     });
+   }
+ }
+
+ async function init() {
+   try {
+     updateStatus('📦 Three.js 就绪');
+
+     // 加载 Spark
+     const spark = await loadSpark();
+     const SplatMesh = spark.SplatMesh || spark.default?.SplatMesh;
+
+     if (!SplatMesh) {
+       throw new Error('无法获取 SplatMesh 构造函数');
+     }
+
+     updateStatus('🎨 初始化场景...');
+
+     // 创建场景
+     const scene = new THREE.Scene();
+     scene.background = new THREE.Color(0x0a0a2a);
+     scene.fog = new THREE.FogExp2(0x0a0a2a, 0.008);
+
+     const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 1000);
+     camera.position.set(0, 0.5, 4.5);
+
+     const renderer = new THREE.WebGLRenderer({
+       antialias: true
+     });
+     renderer.setSize(window.innerWidth, window.innerHeight);
+     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+     renderer.toneMapping = THREE.ACESFilmicToneMapping;
+     renderer.toneMappingExposure = 1.2;
+     document.body.appendChild(renderer.domElement);
+
+     // 环境光照
+     const ambientLight = new THREE.AmbientLight(0x404060, 0.6);
+     scene.add(ambientLight);
+
+     const backLight = new THREE.DirectionalLight(0x88aaff, 0.5);
+     backLight.position.set(2, 3, -4);
+     scene.add(backLight);
+
+     // 网格辅助
+     const gridHelper = new THREE.PolarGridHelper(4, 12, 8, 32, 0x88aaff, 0x335588);
+     gridHelper.position.y = -1.2;
+     gridHelper.material.transparent = true;
+     gridHelper.material.opacity = 0.35;
+     scene.add(gridHelper);
+
+     // 地面圆环装饰
+     const circleGeometry = new THREE.RingGeometry(1.6, 2.2, 32);
+     const circleMaterial = new THREE.MeshStandardMaterial({
+       color: 0x3a6ea5,
+       side: THREE.DoubleSide,
+       transparent: true,
+       opacity: 0.15,
+       emissive: 0x112233
+     });
+     const groundRing = new THREE.Mesh(circleGeometry, circleMaterial);
+     groundRing.rotation.x = -Math.PI / 2;
+     groundRing.position.y = -1.18;
+     scene.add(groundRing);
+
+     // 粒子背景效果
+     const particleCount = 800;
+     const particleGeometry = new THREE.BufferGeometry();
+     const particlePositions = new Float32Array(particleCount * 3);
+     for (let i = 0; i < particleCount; i++) {
+       const radius = 4 + Math.random() * 3.5;
+       const theta = Math.random() * Math.PI * 2;
+       const phi = Math.acos(2 * Math.random() - 1);
+       particlePositions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+       particlePositions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta) * 0.5;
+       particlePositions[i * 3 + 2] = radius * Math.cos(phi);
+     }
+     particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+     const particleMaterial = new THREE.PointsMaterial({
+       color: 0x77aaff,
+       size: 0.04,
+       transparent: true,
+       opacity: 0.4,
+       blending: THREE.AdditiveBlending
+     });
+     const starsField = new THREE.Points(particleGeometry, particleMaterial);
+     scene.add(starsField);
+
+     updateStatus('🦋 加载高斯泼溅模型...');
+
+     // 加载 Spark 高斯泼溅模型
+     const splatURL = 'https://sparkjs.dev/assets/splats/butterfly.spz';
+     const butterfly = new SplatMesh({
+       url: splatURL
+     });
+     butterfly.position.set(0, -0.3, 0);
+     butterfly.quaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), -0.2);
+     butterfly.scale.set(0.95, 0.95, 0.95);
+     scene.add(butterfly);
+
+     // 模型加载完成后隐藏 loading 提示
+     setTimeout(() => {
+       loadingDiv.style.opacity = '0';
+       setTimeout(() => {
+         loadingDiv.style.display = 'none';
+       }, 500);
+     }, 1000);
+
+     updateStatus('✨ 渲染中...');
+
+     // 动画循环
+     let time = 0;
+
+     function animate() {
+       time += 0.012;
+
+       if (butterfly) {
+         butterfly.rotation.y += 0.006;
+         butterfly.position.y = -0.3 + Math.sin(time * 1.2) * 0.08;
+         const scaleVal = 0.95 + Math.sin(time * 2.5) * 0.008;
+         butterfly.scale.set(scaleVal, scaleVal, scaleVal);
+       }
+
+       starsField.rotation.y += 0.0005;
+       starsField.rotation.x += 0.0003;
+       renderer.render(scene, camera);
+       requestAnimationFrame(animate);
+     }
+     animate();
+
+     // 窗口适配
+     window.addEventListener('resize', () => {
+       camera.aspect = window.innerWidth / window.innerHeight;
+       camera.updateProjectionMatrix();
+       renderer.setSize(window.innerWidth, window.innerHeight);
+     });
+
+     console.log('✅ Spark 高斯泼溅渲染器启动成功');
+     console.log('📦 Three.js 版本:', THREE.REVISION);
+
+   } catch (error) {
+     console.error('初始化失败:', error);
+     updateStatus('❌ 初始化失败: ' + error.message, true);
+     loadingDiv.innerHTML = '⚠️ 初始化失败，请检查网络<br>' + error.message;
+     loadingDiv.style.backgroundColor = 'rgba(200,50,50,0.8)';
+     loadingDiv.style.whiteSpace = 'normal';
+     loadingDiv.style.textAlign = 'center';
+   }
+ }
+
+ // 启动应用
+ init();
+</script>
+<style>
+ body {
+   margin: 0;
+   overflow: hidden;
+   font-family: 'Segoe UI', sans-serif;
+ }
+
+ #badge {
+   position: absolute;
+   bottom: 16px;
+   right: 16px;
+   background: rgba(0, 0, 0, 0.5);
+   padding: 6px 12px;
+   border-radius: 20px;
+   font-size: 12px;
+   color: #ccc;
+   font-family: monospace;
+   pointer-events: none;
+ }
+
+ #loading {
+   position: absolute;
+   bottom: 30%;
+   left: 50%;
+   transform: translate(-50%, -50%);
+   background: rgba(0, 0, 0, 0.7);
+   padding: 12px 24px;
+   border-radius: 40px;
+   color: white;
+   font-size: 14px;
+   z-index: 200;
+   pointer-events: none;
+   white-space: nowrap;
+ }
+
+ #status {
+   position: absolute;
+   top: 20px;
+   right: 20px;
+   background: rgba(0, 0, 0, 0.6);
+   padding: 8px 16px;
+   border-radius: 8px;
+   color: #0f0;
+   font-family: monospace;
+   font-size: 12px;
+   z-index: 100;
+   pointer-events: none;
+ }
+</style>
+
+<!-- Settings Section - 设置数据，将被自动解析 -->
+<settings>
+<head-metadata>
+
+</head-metadata>
+<css-links>
+
+</css-links>
+<js-links>
+
+</js-links>
+</settings>
