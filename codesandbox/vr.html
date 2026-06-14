@@ -1,0 +1,376 @@
+<!--
+CodeSandbox 分享文件
+生成时间: 2026/6/14 11:26:26
+页面标题: Three.js 双相机 VR 立体效果 | 无需头显的沉浸体验
+原始页面链接: https://sogrey.top/CodeSandbox/
+-->
+
+<!-- CodeSandbox Template File -->
+<!-- 该文件包含完整的模板数据和设置信息，可以被重新导入 -->
+<engine-type>three.js</engine-type>
+<title>Three.js 双相机 VR 立体效果 | 无需头显的沉浸体验</title>
+<meta name="description" content="使用Three.js构建左右眼双相机，通过分屏渲染模拟出立体视觉，并支持鼠标拖拽旋转视角。" />
+<template>
+ <div id="info">
+   🧠 双相机立体渲染 (平行眼VR) | 左右分屏 | 大脑融合产生景深
+ </div>
+ <div id="controls-note">
+   🖱️ 鼠标拖拽旋转视角 | 右键平移 | 滚轮缩放
+ </div>
+</template>
+<script type="module">
+  import * as THREE from 'three';
+  import {
+    OrbitControls
+  } from 'three/addons/controls/OrbitControls.js';
+
+  // --- 初始化场景 (丰富且有层次感, 便于观察立体深度) ---
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x050b1a); // 深邃星空蓝黑
+  scene.fog = new THREE.FogExp2(0x050b1a, 0.012); // 轻微雾效，增强景深
+
+  // ----- 辅助元素: 地面网格 (参考平面, 突出前后关系) -----
+  const gridHelper = new THREE.GridHelper(12, 24, 0x66ccff, 0x336699);
+  gridHelper.position.y = -0.8;
+  gridHelper.material.transparent = true;
+  gridHelper.material.opacity = 0.55;
+  scene.add(gridHelper);
+
+  // 添加一个半透明的参考圆环平面，增强空间感
+  const ringGeometry = new THREE.RingGeometry(2.2, 3.2, 32);
+  const ringMaterial = new THREE.MeshStandardMaterial({
+    color: 0x3a86ff,
+    side: THREE.DoubleSide,
+    transparent: true,
+    opacity: 0.2,
+    emissive: 0x001133
+  });
+  const groundRing = new THREE.Mesh(ringGeometry, ringMaterial);
+  groundRing.rotation.x = -Math.PI / 2;
+  groundRing.position.y = -0.75;
+  scene.add(groundRing);
+
+  // ----- 核心物体: 一组彩色立方体 (前后错落, 突出视差) -----
+  const cubesData = [{
+      color: 0xff4d4d,
+      pos: [-2.2, 0.4, -1.5],
+      size: 0.7
+    }, // 红，近景偏左
+    {
+      color: 0x4dff4d,
+      pos: [0, 0.3, 0.8],
+      size: 0.8
+    }, // 绿，中间靠前
+    {
+      color: 0x4d4dff,
+      pos: [2.0, 0.5, -1.0],
+      size: 0.7
+    }, // 蓝，右侧
+    {
+      color: 0xffdd44,
+      pos: [-1.2, 0.6, 2.2],
+      size: 0.65
+    }, // 金黄，远处左侧
+    {
+      color: 0xff66cc,
+      pos: [1.5, 0.4, 2.5],
+      size: 0.7
+    }, // 粉紫，远处右侧
+    {
+      color: 0x44ffcc,
+      pos: [0.5, 0.2, -2.0],
+      size: 0.6
+    } // 青绿，近处中间偏后
+  ];
+
+  const cubes = [];
+  cubesData.forEach(data => {
+    const geometry = new THREE.BoxGeometry(data.size, data.size, data.size);
+    const material = new THREE.MeshStandardMaterial({
+      color: data.color,
+      roughness: 0.25,
+      metalness: 0.4
+    });
+    const cube = new THREE.Mesh(geometry, material);
+    cube.position.set(data.pos[0], data.pos[1], data.pos[2]);
+    cube.castShadow = true;
+    cube.receiveShadow = false;
+    scene.add(cube);
+    cubes.push(cube);
+  });
+
+  // ----- 悬浮的环面结 (增加视觉趣味, 并体现立体旋转感) -----
+  const torusKnot = new THREE.Mesh(
+    new THREE.TorusKnotGeometry(1.0, 0.22, 120, 12, 3, 4),
+    new THREE.MeshStandardMaterial({
+      color: 0xffaa55,
+      roughness: 0.3,
+      metalness: 0.7,
+      emissive: 0x442200
+    })
+  );
+  torusKnot.position.set(0, 1.2, 0.2);
+  torusKnot.castShadow = true;
+  scene.add(torusKnot);
+
+  // 添加几个悬浮小球体，绕Y轴旋转，体现立体环绕感
+  const sphereGroup = [];
+  const sphereColors = [0xff8888, 0x88ff88, 0x8888ff, 0xffaa88];
+  for (let i = 0; i < 6; i++) {
+    const sphereGeo = new THREE.SphereGeometry(0.25, 24, 24);
+    const sphereMat = new THREE.MeshStandardMaterial({
+      color: sphereColors[i % sphereColors.length],
+      emissive: 0x221100
+    });
+    const sphere = new THREE.Mesh(sphereGeo, sphereMat);
+    const angle = (i / 6) * Math.PI * 2;
+    const radius = 2.4;
+    sphere.position.set(Math.cos(angle) * radius, 0.5 + Math.sin(angle * 2) * 0.3, Math.sin(angle) * radius);
+    sphere.castShadow = true;
+    scene.add(sphere);
+    sphereGroup.push(sphere);
+  }
+
+  // 添加一些漂浮粒子 (星辰效果，增强空间沉浸)
+  const starCount = 800;
+  const starGeometry = new THREE.BufferGeometry();
+  const starPositions = new Float32Array(starCount * 3);
+  for (let i = 0; i < starCount; i++) {
+    // 分布在较大范围，深度感更强
+    starPositions[i * 3] = (Math.random() - 0.5) * 40;
+    starPositions[i * 3 + 1] = (Math.random() - 0.5) * 15;
+    starPositions[i * 3 + 2] = (Math.random() - 0.5) * 25 - 10;
+  }
+  starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+  const starMaterial = new THREE.PointsMaterial({
+    color: 0xaaccff,
+    size: 0.08,
+    transparent: true,
+    opacity: 0.6,
+    blending: THREE.AdditiveBlending
+  });
+  const stars = new THREE.Points(starGeometry, starMaterial);
+  scene.add(stars);
+
+  // ----- 光照系统 (营造立体感光照) -----
+  // 环境光
+  const ambientLight = new THREE.AmbientLight(0x404066, 0.65);
+  scene.add(ambientLight);
+  // 主光源方向光 + 阴影 (为增强立体感)
+  const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+  dirLight.position.set(3, 5, 2);
+  dirLight.castShadow = true;
+  dirLight.receiveShadow = false;
+  dirLight.shadow.mapSize.width = 1024;
+  dirLight.shadow.mapSize.height = 1024;
+  scene.add(dirLight);
+  // 辅助背光暖色
+  const backLight = new THREE.PointLight(0xffaa66, 0.5);
+  backLight.position.set(-2, 1, -3);
+  scene.add(backLight);
+  // 冷色填充光
+  const fillLight = new THREE.PointLight(0x6688ff, 0.4);
+  fillLight.position.set(2, 1.5, 2);
+  scene.add(fillLight);
+
+  // 简单旋转动画用的小助手: 让环面结和部分小球缓慢自转/公转
+  let time = 0;
+
+  // --- 渲染器设置 (关键: 手动控制清除, 开启剪裁测试) ---
+  const renderer = new THREE.WebGLRenderer({
+    antialias: true
+  });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.autoClear = false; // 重要: 手动清除, 避免右眼渲染时清除左半画面
+  renderer.setScissorTest(true); // 启用剪裁测试, 实现精确分屏
+  renderer.shadowMap.enabled = true; // 开启阴影映射增强立体感
+  document.body.appendChild(renderer.domElement);
+
+  // --- 瞳距 (IPD) 与 双相机创建 ---
+  // 根据场景大小微调瞳距: 0.064 适合现实比例, 但为了立体感更强, 设置为 0.072 (让视差稍明显)
+  const ipd = 0.072;
+
+  // 中心相机 (虚拟, 用于 OrbitControls 控制, 左右相机跟随其位置与朝向)
+  const centerCamera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+  centerCamera.position.set(3.5, 2.2, 4.8);
+  centerCamera.lookAt(0, 0.6, 0);
+
+  // 左眼相机 & 右眼相机
+  const leftCamera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+  const rightCamera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+
+  // --- 轨道控制器 (绑定中心相机, 实现视角拖拽) ---
+  const controls = new OrbitControls(centerCamera, renderer.domElement);
+  controls.target.set(0, 0.6, 0);
+  controls.enableDamping = true; // 惯性效果
+  controls.dampingFactor = 0.06;
+  controls.rotateSpeed = 1.0;
+  controls.zoomSpeed = 1.2;
+  controls.panSpeed = 0.8;
+  controls.update();
+
+  // --- 窗口自适应 (更新相机宽高比和渲染器尺寸) ---
+  function onWindowResize() {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    renderer.setSize(width, height);
+
+    centerCamera.aspect = width / height;
+    centerCamera.updateProjectionMatrix();
+    leftCamera.aspect = width / height;
+    leftCamera.updateProjectionMatrix();
+    rightCamera.aspect = width / height;
+    rightCamera.updateProjectionMatrix();
+  }
+  window.addEventListener('resize', onWindowResize);
+
+  // 辅助: 简单动画让场景生动 (环面结自转 + 悬浮小球轻微上下浮动)
+  function updateSceneAnimations() {
+    time += 0.012;
+    // 环面结自转与轻微摆动
+    torusKnot.rotation.x = Math.sin(time * 0.5) * 0.2;
+    torusKnot.rotation.y += 0.008;
+    torusKnot.rotation.z = Math.cos(time * 0.4) * 0.1;
+
+    // 立方体整体微动 (营造鲜活感)
+    cubes.forEach((cube, idx) => {
+      cube.rotation.y += 0.005;
+      cube.rotation.x = Math.sin(time * 0.8 + idx) * 0.1;
+    });
+
+    // 小球体绕Y轴公转并上下起伏
+    sphereGroup.forEach((sphere, i) => {
+      const angle = time * 0.7 + (i / sphereGroup.length) * Math.PI * 2;
+      const radius = 2.6;
+      sphere.position.x = Math.cos(angle) * radius;
+      sphere.position.z = Math.sin(angle) * radius;
+      sphere.position.y = 0.7 + Math.sin(angle * 1.8) * 0.25;
+    });
+
+    // 星星粒子缓慢自转，增加沉浸感
+    stars.rotation.y += 0.0005;
+    stars.rotation.x += 0.0003;
+  }
+
+  // --- 核心动画循环 (双相机分屏渲染) ---
+  function animate() {
+    requestAnimationFrame(animate);
+
+    // 更新轨道控制器 (使得中心相机位置/四元数更新)
+    controls.update();
+
+    // 更新场景内物体的动态效果
+    updateSceneAnimations();
+
+    // 关键: 根据中心相机的朝向计算右向量 (水平方向)
+    // 左右相机沿中心相机局部X轴偏移 ± ipd/2
+    const rightDir = new THREE.Vector3(1, 0, 0);
+    rightDir.applyQuaternion(centerCamera.quaternion);
+
+    // 左相机: 中心位置 - 右向量 * (ipd/2)
+    leftCamera.position.copy(centerCamera.position).addScaledVector(rightDir, -ipd / 2);
+    // 右相机: 中心位置 + 右向量 * (ipd/2)
+    rightCamera.position.copy(centerCamera.position).addScaledVector(rightDir, ipd / 2);
+
+    // 左右相机旋转与中心相机完全一致 (保持视线平行)
+    leftCamera.quaternion.copy(centerCamera.quaternion);
+    rightCamera.quaternion.copy(centerCamera.quaternion);
+
+    // 获取当前窗口宽高，计算左右分屏边界
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const halfW = Math.floor(w / 2); // 整数边界，避免模糊
+
+    // 手动清除整帧的颜色、深度、模板缓冲区 (因为 autoClear = false)
+    renderer.clear();
+
+    // ----- 渲染左眼 (左半屏) -----
+    // 设置剪裁区域 (0,0 到 halfW, h)
+    renderer.setScissor(0, 0, halfW, h);
+    renderer.setViewport(0, 0, halfW, h);
+    renderer.render(scene, leftCamera);
+
+    // ----- 渲染右眼 (右半屏) -----
+    // 设置剪裁区域 (halfW, 0 到 剩余宽度, h)
+    renderer.setScissor(halfW, 0, w - halfW, h);
+    renderer.setViewport(halfW, 0, w - halfW, h);
+    renderer.render(scene, rightCamera);
+
+    // 可选: 在左右分屏中间添加一条细分割线 (增强视觉效果，但非必要)
+    // 为了不引入额外开销，此处省略，但保持了纯净的双目渲染。
+  }
+
+  // 启动渲染循环
+  animate();
+
+  // 控制台输出启动信息
+  console.log('✅ Three.js 双相机 VR 立体效果已启动 | 瞳距(IPD): ' + ipd + 'm');
+  console.log('🎯 左右相机基于中心相机偏移, 实时跟随 OrbitControls');
+
+  // 简单提示: 在移动端或需要全屏时，可以添加一个手势提示，但不影响核心功能
+</script>
+<style>
+  body {
+    margin: 0;
+    overflow: hidden;
+    font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+  }
+
+  #info {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    color: white;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(6px);
+    padding: 8px 18px;
+    border-radius: 24px;
+    font-size: 14px;
+    pointer-events: none;
+    user-select: none;
+    z-index: 10;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    border-left: 3px solid #ffaa44;
+  }
+
+  #controls-note {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    color: rgba(255, 255, 255, 0.7);
+    background: rgba(0, 0, 0, 0.5);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-family: monospace;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  @media (max-width: 600px) {
+    #info {
+      font-size: 10px;
+      bottom: 12px;
+      left: 12px;
+    }
+
+    #controls-note {
+      font-size: 9px;
+    }
+  }
+</style>
+
+<!-- Settings Section - 设置数据，将被自动解析 -->
+<settings>
+<head-metadata>
+
+</head-metadata>
+<css-links>
+
+</css-links>
+<js-links>
+
+</js-links>
+</settings>
