@@ -1767,6 +1767,23 @@ const threejsData = {
                 notes: "完整的雪花效果，包含顶点着色器和片元着色器",
               },
             },
+            {
+              id: "particle-holographic-clock",
+              title: "全息时钟粒子变形",
+              description: "50000个粒子的高性能全息时钟，支持圆形/方形/六边形三种形状切换，带有时针分针秒针动画",
+              thumbnail: "images/particle-holographic-clock.jpg",
+              version: "r179",
+              url: "examples/particle-holographic-clock",
+              features: {
+                coreTech: "Particle System, ShaderMaterial, BufferGeometry, EffectComposer",
+                secondaryTech: "自定义着色器, Bloom后处理, 形状变形, 粒子动画",
+                difficulty: "高级",
+                actualFunction: "全息时钟粒子变形系统，50000个粒子实现高性能时钟，支持三种形状切换",
+                suggestedCategory: "6. 粒子系统 > 6.2 特效粒子",
+                filePath: "examples/particle-holographic-clock.html",
+                notes: "使用自定义着色器实现形状变形，支持圆形/方形/六边形切换"
+              }
+            }
           ],
         },
         {
